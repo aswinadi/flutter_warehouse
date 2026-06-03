@@ -14,6 +14,7 @@ Detailed documentation is available in the [`.docs`](./.docs) folder:
 - [Architecture](./.docs/architecture.md)
 - [API Integration](./.docs/api_integration.md)
 - [Printing](./.docs/printing.md)
+- [Auto-Update System](./.docs/update_system.md)
 - [Getting Started](./.docs/getting_started.md)
 
 ## 🛠 Tech Stack

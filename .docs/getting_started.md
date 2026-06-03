@@ -23,9 +23,22 @@ When adding new models or providers:
 3. Run `dart run build_runner watch` to auto-generate code on save.
 
 ## Multi-Platform Builds
+Build command format is:
 - **Android**: `flutter build apk`
 - **Windows**: `flutter build windows`
 - **Web**: `flutter build web`
 
+### Build Versioning for Production Releases
+To control version names and code increments when building for release (which dictates the behavior of the auto-update triggers), override the default `pubspec.yaml` version info at build time using the `--build-name` and `--build-number` parameters:
+```bash
+# Example building version 1.2.0 with build number 2
+flutter build apk --release --build-name=1.2.0 --build-number=2
+flutter build windows --release --build-name=1.2.0 --build-number=2
+```
+*Note: In Android, `--build-name` maps to `versionName` and `--build-number` maps to `versionCode`. In Windows, `--build-name` maps to major/minor/patch versions and `--build-number` maps to build suffix.*
+
 ## Deployment
-Ensure the `baseUrl` in `core/api/dio_client.dart` points to the production Laravel API before building for release.
+1. Ensure the `baseUrl` in `core/api/dio_client.dart` points to the production Laravel API before building.
+2. Build the target platform artifacts with the updated `--build-number`.
+3. Upload the compiled APK/EXE files to the shared hosting web server download folder.
+4. Update the JSON manifest on the server (`/api/v1/wh/app-version`) with the corresponding `build_number` and URLs.

@@ -2,6 +2,23 @@
 
 All notable changes to the Maxmar Warehouse Flutter project will be documented in this file.
 
+## [1.2.0] - 2026-06-03
+
+### Added
+- **Self-Hosted In-App Auto-Update System**:
+  - Implemented version checking and download coordination in `UpdaterService` using `package_info_plus`, `ota_update`, and `url_launcher`.
+  - Added background downloader and direct package installer execution on Android platforms.
+  - Added browser-redirect download routing for Windows desktop and web environments.
+  - Configured app startup trigger inside `main_shell.dart` following successful authentication.
+- **Detailed Documentation**:
+  - Added [Auto-Update System Documentation](.docs/update_system.md) describing the backend schema and platform integration details.
+
+### Fixed
+- **Dropdown Runtime Crash**: Resolved `NoSuchMethodError: Class '_$WarehouseImpl' has no instance getter 'warehouseName'` in Stock Mutation dropdown by updating target lookup code to map to the correct `.name` field.
+- **QR Asset Verification Scan**: Implemented url parsing utility to extract raw asset codes (e.g. `AST-MAU-xxxxx`) from scanned URL pathways, preventing verification failures on web-linked QR code tags.
+- **Company-Dependent Warehouse Filters**: Enforced sequential selection behavior on Stock Mutations. The warehouse dropdown now stays disabled until a company is active, and selection changes correctly purge state stores.
+- **Windows Desktop Compile Error**: Cleaned cached CMake builds and resolved `url_launcher` package compiler issues.
+
 ## [1.1.0] - 2026-05-28
 
 ### Added

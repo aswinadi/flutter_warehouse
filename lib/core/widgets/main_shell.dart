@@ -7,14 +7,28 @@ import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/models/user.dart';
 import '../config/menu_items.dart';
 import '../../features/notifications/providers/notification_provider.dart';
+import '../services/updater_service.dart';
 
 final sidebarCollapsedProvider = StateProvider<bool>((ref) => false);
 final expandedMenuIndexProvider = StateProvider<int?>((ref) => null);
 final lastActiveParentIndexProvider = StateProvider<int?>((ref) => null);
 
-class MainShell extends ConsumerWidget {
+class MainShell extends ConsumerStatefulWidget {
   final Widget child;
   const MainShell({super.key, required this.child});
+
+  @override
+  ConsumerState<MainShell> createState() => _MainShellState();
+}
+
+class _MainShellState extends ConsumerState<MainShell> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(updaterServiceProvider).checkForUpdates(context);
+    });
+  }
 
   bool _isRouteActive(BuildContext context, NavItemConfig item) {
     final String location = GoRouterState.of(context).uri.path;
@@ -66,7 +80,7 @@ class MainShell extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final isDesktop = ResponsiveBreakpoints.of(context).largerThan(MOBILE);
     final authState = ref.watch(authProvider);
     final isCollapsed = ref.watch(sidebarCollapsedProvider);
@@ -103,7 +117,7 @@ class MainShell extends ConsumerWidget {
         children: [
           if (isDesktop)
             _buildSidebar(context, ref, navItems, isCollapsed, unreadCount, currentExpandedIndex),
-          Expanded(child: child),
+          Expanded(child: widget.child),
         ],
       ),
       bottomNavigationBar: isDesktop ? null : _buildBottomNav(context, navItems, unreadCount),

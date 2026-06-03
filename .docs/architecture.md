@@ -1,0 +1,53 @@
+# Warehouse Flutter Project Architecture
+
+## Tech Stack
+- **Framework**: Flutter (Multi-platform: Android, Web, Windows)
+- **State Management**: Riverpod 2.x (with code generation)
+- **Networking**: Dio with custom Interceptors
+- **Routing**: GoRouter (ShellRoute for adaptive UI)
+- **Models**: Freezed (Immutable models)
+- **Persistence**: Flutter Secure Storage (Auth Tokens)
+- **Scanning**: Mobile Scanner (QR/Barcode)
+- **Printing**: Network Raw Sockets (ZPL II & ESC/POS)
+- **Reporting**: PDF & Excel (xlsx)
+
+## Folder Structure
+```text
+lib/
+├── core/
+│   ├── api/          # Dio Client, Interceptors, Router
+│   ├── services/     # Printer, Reporting, Barcode Utils
+│   └── widgets/      # MainShell (Adaptive UI)
+├── features/
+│   ├── auth/         # Login & Session Management
+│   ├── purchase_request/ # PR List, Approval, Rejection
+│   ├── purchase_order/   # PO List & Progress Tracking
+│   ├── receiving/        # Scan-to-Receive & QR detection
+│   ├── inventory/        # Stock View & Search
+│   └── usage/            # Farm (Tambak) Usage Logs
+└── main.dart         # Entry point & Theme
+```
+
+## State Management Pattern
+We use **Riverpod Generator**. 
+- Async data is handled via `FutureProvider` or `AsyncNotifier`.
+- Global state (Auth, Company ID) is injected via Dio Interceptors.
+
+## Responsive Design
+We use `responsive_framework` with standard breakpoints:
+- **Mobile**: Bottom Navigation + Single Column
+- **Desktop/Web**: Sidebar Navigation + Multi-column layouts
+
+## Dynamic Navigation & Role-Based Access Control (RBAC)
+We employ a centralized navigation configuration defined in [menu_items.dart](file:///C:/Projects/flutter_warehouse/lib/core/config/menu_items.dart) that acts as the single source of truth for both the Sidebar and the Dashboard Grid:
+- **RBAC Model**: Extends the `User` model with `roles` and `permissions` matching Spatie / Filament Shield schemas.
+- **Super Admin Bypass**: If a user carries the `super_admin` role, all permission requirements are bypassed automatically.
+- **Permission Checking**: Dynamic evaluation uses `user.effectivePermissions`, which combines API-returned permissions with local rule overrides (e.g. mapping `approvalTypes` to `'approve_pr'`).
+- **Placeholder Routes**: Navigation nodes with `path: null` are rendered as placeholder options with localized "coming soon" snackbars. They are automatically hidden on mobile bottom navigation bars.
+
+## Localization & Internationalization (l10n)
+Internationalization is powered by standard Flutter toolchain code-generation:
+- **Config**: Configured in [l10n.yaml](file:///C:/Projects/flutter_warehouse/l10n.yaml) with translation keys placed in `lib/l10n/`.
+- **Dictionaries**: Dictionaries are written in Application Resource Bundle format: [app_id.arb](file:///C:/Projects/flutter_warehouse/lib/l10n/app_id.arb) (Indonesian - default locale) and [app_en.arb](file:///C:/Projects/flutter_warehouse/lib/l10n/app_en.arb) (English - fallback locale).
+- **Binding**: Resolved in widgets using standard delegate lookups `AppLocalizations.of(context)!` and dynamic label builder delegates: `labelBuilder: (l10n) => l10n.dashboard`.
+

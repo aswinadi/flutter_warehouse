@@ -1,0 +1,324 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'payment_request_repository.dart';
+
+// **************************************************************************
+// RiverpodGenerator
+// **************************************************************************
+
+String _$paymentRequestRepositoryHash() =>
+    r'6ab549952c20008043e70c7df112d524e6d184ab';
+
+/// See also [paymentRequestRepository].
+@ProviderFor(paymentRequestRepository)
+final paymentRequestRepositoryProvider =
+    AutoDisposeProvider<PaymentRequestRepository>.internal(
+  paymentRequestRepository,
+  name: r'paymentRequestRepositoryProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$paymentRequestRepositoryHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef PaymentRequestRepositoryRef
+    = AutoDisposeProviderRef<PaymentRequestRepository>;
+String _$paymentRequestDetailHash() =>
+    r'fe0e6907323eba2fb98b22a65157bbd03811da74';
+
+/// Copied from Dart SDK
+class _SystemHash {
+  _SystemHash._();
+
+  static int combine(int hash, int value) {
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + value);
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
+    return hash ^ (hash >> 6);
+  }
+
+  static int finish(int hash) {
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
+    // ignore: parameter_assignments
+    hash = hash ^ (hash >> 11);
+    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
+  }
+}
+
+/// See also [paymentRequestDetail].
+@ProviderFor(paymentRequestDetail)
+const paymentRequestDetailProvider = PaymentRequestDetailFamily();
+
+/// See also [paymentRequestDetail].
+class PaymentRequestDetailFamily extends Family<AsyncValue<PaymentRequest>> {
+  /// See also [paymentRequestDetail].
+  const PaymentRequestDetailFamily();
+
+  /// See also [paymentRequestDetail].
+  PaymentRequestDetailProvider call(
+    int id,
+  ) {
+    return PaymentRequestDetailProvider(
+      id,
+    );
+  }
+
+  @override
+  PaymentRequestDetailProvider getProviderOverride(
+    covariant PaymentRequestDetailProvider provider,
+  ) {
+    return call(
+      provider.id,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'paymentRequestDetailProvider';
+}
+
+/// See also [paymentRequestDetail].
+class PaymentRequestDetailProvider
+    extends AutoDisposeFutureProvider<PaymentRequest> {
+  /// See also [paymentRequestDetail].
+  PaymentRequestDetailProvider(
+    int id,
+  ) : this._internal(
+          (ref) => paymentRequestDetail(
+            ref as PaymentRequestDetailRef,
+            id,
+          ),
+          from: paymentRequestDetailProvider,
+          name: r'paymentRequestDetailProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$paymentRequestDetailHash,
+          dependencies: PaymentRequestDetailFamily._dependencies,
+          allTransitiveDependencies:
+              PaymentRequestDetailFamily._allTransitiveDependencies,
+          id: id,
+        );
+
+  PaymentRequestDetailProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.id,
+  }) : super.internal();
+
+  final int id;
+
+  @override
+  Override overrideWith(
+    FutureOr<PaymentRequest> Function(PaymentRequestDetailRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: PaymentRequestDetailProvider._internal(
+        (ref) => create(ref as PaymentRequestDetailRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        id: id,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<PaymentRequest> createElement() {
+    return _PaymentRequestDetailProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PaymentRequestDetailProvider && other.id == id;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, id.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin PaymentRequestDetailRef on AutoDisposeFutureProviderRef<PaymentRequest> {
+  /// The parameter `id` of this provider.
+  int get id;
+}
+
+class _PaymentRequestDetailProviderElement
+    extends AutoDisposeFutureProviderElement<PaymentRequest>
+    with PaymentRequestDetailRef {
+  _PaymentRequestDetailProviderElement(super.provider);
+
+  @override
+  int get id => (origin as PaymentRequestDetailProvider).id;
+}
+
+String _$paymentRequestsHash() => r'9f5b2b6579bf7b21d16c0ce7c2da29ba01af1c54';
+
+abstract class _$PaymentRequests
+    extends BuildlessAutoDisposeAsyncNotifier<List<PaymentRequest>> {
+  late final String? status;
+
+  FutureOr<List<PaymentRequest>> build({
+    String? status,
+  });
+}
+
+/// See also [PaymentRequests].
+@ProviderFor(PaymentRequests)
+const paymentRequestsProvider = PaymentRequestsFamily();
+
+/// See also [PaymentRequests].
+class PaymentRequestsFamily extends Family<AsyncValue<List<PaymentRequest>>> {
+  /// See also [PaymentRequests].
+  const PaymentRequestsFamily();
+
+  /// See also [PaymentRequests].
+  PaymentRequestsProvider call({
+    String? status,
+  }) {
+    return PaymentRequestsProvider(
+      status: status,
+    );
+  }
+
+  @override
+  PaymentRequestsProvider getProviderOverride(
+    covariant PaymentRequestsProvider provider,
+  ) {
+    return call(
+      status: provider.status,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'paymentRequestsProvider';
+}
+
+/// See also [PaymentRequests].
+class PaymentRequestsProvider extends AutoDisposeAsyncNotifierProviderImpl<
+    PaymentRequests, List<PaymentRequest>> {
+  /// See also [PaymentRequests].
+  PaymentRequestsProvider({
+    String? status,
+  }) : this._internal(
+          () => PaymentRequests()..status = status,
+          from: paymentRequestsProvider,
+          name: r'paymentRequestsProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$paymentRequestsHash,
+          dependencies: PaymentRequestsFamily._dependencies,
+          allTransitiveDependencies:
+              PaymentRequestsFamily._allTransitiveDependencies,
+          status: status,
+        );
+
+  PaymentRequestsProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.status,
+  }) : super.internal();
+
+  final String? status;
+
+  @override
+  FutureOr<List<PaymentRequest>> runNotifierBuild(
+    covariant PaymentRequests notifier,
+  ) {
+    return notifier.build(
+      status: status,
+    );
+  }
+
+  @override
+  Override overrideWith(PaymentRequests Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: PaymentRequestsProvider._internal(
+        () => create()..status = status,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        status: status,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<PaymentRequests, List<PaymentRequest>>
+      createElement() {
+    return _PaymentRequestsProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PaymentRequestsProvider && other.status == status;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, status.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin PaymentRequestsRef
+    on AutoDisposeAsyncNotifierProviderRef<List<PaymentRequest>> {
+  /// The parameter `status` of this provider.
+  String? get status;
+}
+
+class _PaymentRequestsProviderElement
+    extends AutoDisposeAsyncNotifierProviderElement<PaymentRequests,
+        List<PaymentRequest>> with PaymentRequestsRef {
+  _PaymentRequestsProviderElement(super.provider);
+
+  @override
+  String? get status => (origin as PaymentRequestsProvider).status;
+}
+// ignore_for_file: type=lint
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

@@ -347,8 +347,9 @@ mixin _$StockMutationDetail {
   @JsonKey(name: 'product_name')
   String get productName => throw _privateConstructorUsedError;
   String get unit => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: stringOrNullFromJson)
   String? get description => throw _privateConstructorUsedError;
-  @JsonKey(name: 'ref_number')
+  @JsonKey(name: 'ref_number', fromJson: stringOrNullFromJson)
   String? get refNumber => throw _privateConstructorUsedError;
   @JsonKey(name: 'in_qty', fromJson: doubleFromJson)
   double get inQty => throw _privateConstructorUsedError;
@@ -374,8 +375,9 @@ abstract class $StockMutationDetailCopyWith<$Res> {
       String sku,
       @JsonKey(name: 'product_name') String productName,
       String unit,
-      String? description,
-      @JsonKey(name: 'ref_number') String? refNumber,
+      @JsonKey(fromJson: stringOrNullFromJson) String? description,
+      @JsonKey(name: 'ref_number', fromJson: stringOrNullFromJson)
+      String? refNumber,
       @JsonKey(name: 'in_qty', fromJson: doubleFromJson) double inQty,
       @JsonKey(name: 'out_qty', fromJson: doubleFromJson) double outQty});
 }
@@ -464,8 +466,9 @@ abstract class _$$StockMutationDetailImplCopyWith<$Res>
       String sku,
       @JsonKey(name: 'product_name') String productName,
       String unit,
-      String? description,
-      @JsonKey(name: 'ref_number') String? refNumber,
+      @JsonKey(fromJson: stringOrNullFromJson) String? description,
+      @JsonKey(name: 'ref_number', fromJson: stringOrNullFromJson)
+      String? refNumber,
       @JsonKey(name: 'in_qty', fromJson: doubleFromJson) double inQty,
       @JsonKey(name: 'out_qty', fromJson: doubleFromJson) double outQty});
 }
@@ -547,8 +550,9 @@ class _$StockMutationDetailImpl implements _StockMutationDetail {
       required this.sku,
       @JsonKey(name: 'product_name') required this.productName,
       required this.unit,
-      this.description,
-      @JsonKey(name: 'ref_number') this.refNumber,
+      @JsonKey(fromJson: stringOrNullFromJson) this.description,
+      @JsonKey(name: 'ref_number', fromJson: stringOrNullFromJson)
+      this.refNumber,
       @JsonKey(name: 'in_qty', fromJson: doubleFromJson) required this.inQty,
       @JsonKey(name: 'out_qty', fromJson: doubleFromJson)
       required this.outQty});
@@ -570,9 +574,10 @@ class _$StockMutationDetailImpl implements _StockMutationDetail {
   @override
   final String unit;
   @override
+  @JsonKey(fromJson: stringOrNullFromJson)
   final String? description;
   @override
-  @JsonKey(name: 'ref_number')
+  @JsonKey(name: 'ref_number', fromJson: stringOrNullFromJson)
   final String? refNumber;
   @override
   @JsonKey(name: 'in_qty', fromJson: doubleFromJson)
@@ -634,8 +639,9 @@ abstract class _StockMutationDetail implements StockMutationDetail {
       required final String sku,
       @JsonKey(name: 'product_name') required final String productName,
       required final String unit,
-      final String? description,
-      @JsonKey(name: 'ref_number') final String? refNumber,
+      @JsonKey(fromJson: stringOrNullFromJson) final String? description,
+      @JsonKey(name: 'ref_number', fromJson: stringOrNullFromJson)
+      final String? refNumber,
       @JsonKey(name: 'in_qty', fromJson: doubleFromJson)
       required final double inQty,
       @JsonKey(name: 'out_qty', fromJson: doubleFromJson)
@@ -658,9 +664,10 @@ abstract class _StockMutationDetail implements StockMutationDetail {
   @override
   String get unit;
   @override
+  @JsonKey(fromJson: stringOrNullFromJson)
   String? get description;
   @override
-  @JsonKey(name: 'ref_number')
+  @JsonKey(name: 'ref_number', fromJson: stringOrNullFromJson)
   String? get refNumber;
   @override
   @JsonKey(name: 'in_qty', fromJson: doubleFromJson)

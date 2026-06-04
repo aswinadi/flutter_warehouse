@@ -41,8 +41,8 @@ _$StockMutationDetailImpl _$$StockMutationDetailImplFromJson(
       sku: json['sku'] as String,
       productName: json['product_name'] as String,
       unit: json['unit'] as String,
-      description: json['description'] as String?,
-      refNumber: json['ref_number'] as String?,
+      description: stringOrNullFromJson(json['description']),
+      refNumber: stringOrNullFromJson(json['ref_number']),
       inQty: doubleFromJson(json['in_qty']),
       outQty: doubleFromJson(json['out_qty']),
     );

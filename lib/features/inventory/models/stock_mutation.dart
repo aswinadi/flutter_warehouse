@@ -30,8 +30,8 @@ class StockMutationDetail with _$StockMutationDetail {
     required String sku,
     @JsonKey(name: 'product_name') required String productName,
     required String unit,
-    String? description,
-    @JsonKey(name: 'ref_number') String? refNumber,
+    @JsonKey(fromJson: stringOrNullFromJson) String? description,
+    @JsonKey(name: 'ref_number', fromJson: stringOrNullFromJson) String? refNumber,
     @JsonKey(name: 'in_qty', fromJson: doubleFromJson) required double inQty,
     @JsonKey(name: 'out_qty', fromJson: doubleFromJson) required double outQty,
   }) = _StockMutationDetail;

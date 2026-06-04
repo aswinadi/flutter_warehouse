@@ -11,3 +11,8 @@ double? doubleOrNullFromJson(dynamic json) {
   if (json is String) return double.tryParse(json);
   return null;
 }
+
+String? stringOrNullFromJson(dynamic json) {
+  if (json == null) return null;
+  return json.toString();
+}

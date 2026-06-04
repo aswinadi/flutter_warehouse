@@ -117,7 +117,11 @@ class _MainShellState extends ConsumerState<MainShell> {
         children: [
           if (isDesktop)
             _buildSidebar(context, ref, navItems, isCollapsed, unreadCount, currentExpandedIndex),
-          Expanded(child: widget.child),
+          Expanded(
+            child: SelectionArea(
+              child: widget.child,
+            ),
+          ),
         ],
       ),
       bottomNavigationBar: isDesktop ? null : _buildBottomNav(context, navItems, unreadCount),

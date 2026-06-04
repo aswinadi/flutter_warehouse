@@ -2,6 +2,18 @@
 
 All notable changes to the Maxmar Warehouse Flutter project will be documented in this file.
 
+## [1.3.0] - 2026-06-04
+
+### Added
+- **Global Text Copy-Paste Selection**:
+  - Wrapped main route content with `SelectionArea` in `main_shell.dart` to make all screen text (product names, SKUs, barcode codes, transaction codes) fully copyable.
+
+### Changed
+- **Fluid Multi-Breakpoint Screen Adaptations**:
+  - Replaced binary wide-screen toggle with dynamic width caps (`maxLayoutWidth` of 650px, 600px, 500px, or full-width) to fit 4K, Desktop, Laptop, and Tablet resolutions beautifully on the Stock Adjustment screen.
+  - Re-positioned the submit button from the Scaffold's `bottomNavigationBar` directly into the bottom of the body `Column` inside the `ConstrainedBox`, solving horizontal content alignment displacement on wide screens.
+  - Automatically stacked the manual SKU/barcode search field and search button vertically on narrow screen sizes (width < 400px) instead of horizontally to prevent cramped layout clipping.
+
 ## [1.2.0] - 2026-06-03
 
 ### Added

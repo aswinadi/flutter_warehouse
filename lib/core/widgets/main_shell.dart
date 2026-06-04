@@ -135,7 +135,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     final l10n = AppLocalizations.of(context)!;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      width: isCollapsed ? 70 : 250,
+      width: isCollapsed ? 70 : 265,
       color: Colors.blue[900],
       child: Column(
         children: [
@@ -455,8 +455,9 @@ class _SidebarItem extends StatelessWidget {
         hoverColor: Colors.white12,
         child: Stack(
           children: [
-            SizedBox(
-              height: 48,
+            Container(
+              constraints: const BoxConstraints(minHeight: 48),
+              padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
                 children: [
                   SizedBox(width: indentation),
@@ -479,16 +480,19 @@ class _SidebarItem extends StatelessWidget {
                   ),
                   if (!isCollapsed)
                     Expanded(
-                      child: Text(
-                        label,
-                        style: TextStyle(
-                          color: isActive ? Colors.white : Colors.white70,
-                          fontSize: 14,
-                          fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: Text(
+                          label,
+                          style: TextStyle(
+                            color: isActive ? Colors.white : Colors.white70,
+                            fontSize: 14,
+                            fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: true,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.fade,
-                        softWrap: false,
                       ),
                     ),
                 ],

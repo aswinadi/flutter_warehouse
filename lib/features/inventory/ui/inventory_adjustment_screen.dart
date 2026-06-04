@@ -5,7 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../models/inventory.dart';
-import '../providers/inventory_repository.dart';
+import '../providers/inventory_provider.dart';
 import '../providers/inventory_adjustment_repository.dart';
 import '../../../core/widgets/company_switcher.dart';
 

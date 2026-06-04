@@ -34,6 +34,7 @@ class WarehouseOnHand with _$WarehouseOnHand {
 @freezed
 class LocationOnHand with _$LocationOnHand {
   const factory LocationOnHand({
+    @JsonKey(name: 'inventory_id') int? inventoryId,
     @JsonKey(name: 'location_id') int? locationId,
     @JsonKey(name: 'location_code') required String locationCode,
     required double quantity,

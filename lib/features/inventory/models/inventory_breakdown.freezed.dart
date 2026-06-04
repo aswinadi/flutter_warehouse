@@ -520,6 +520,8 @@ LocationOnHand _$LocationOnHandFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$LocationOnHand {
+  @JsonKey(name: 'inventory_id')
+  int? get inventoryId => throw _privateConstructorUsedError;
   @JsonKey(name: 'location_id')
   int? get locationId => throw _privateConstructorUsedError;
   @JsonKey(name: 'location_code')
@@ -539,7 +541,8 @@ abstract class $LocationOnHandCopyWith<$Res> {
       _$LocationOnHandCopyWithImpl<$Res, LocationOnHand>;
   @useResult
   $Res call(
-      {@JsonKey(name: 'location_id') int? locationId,
+      {@JsonKey(name: 'inventory_id') int? inventoryId,
+      @JsonKey(name: 'location_id') int? locationId,
       @JsonKey(name: 'location_code') String locationCode,
       double quantity});
 }
@@ -557,11 +560,16 @@ class _$LocationOnHandCopyWithImpl<$Res, $Val extends LocationOnHand>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? inventoryId = freezed,
     Object? locationId = freezed,
     Object? locationCode = null,
     Object? quantity = null,
   }) {
     return _then(_value.copyWith(
+      inventoryId: freezed == inventoryId
+          ? _value.inventoryId
+          : inventoryId // ignore: cast_nullable_to_non_nullable
+              as int?,
       locationId: freezed == locationId
           ? _value.locationId
           : locationId // ignore: cast_nullable_to_non_nullable
@@ -587,7 +595,8 @@ abstract class _$$LocationOnHandImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {@JsonKey(name: 'location_id') int? locationId,
+      {@JsonKey(name: 'inventory_id') int? inventoryId,
+      @JsonKey(name: 'location_id') int? locationId,
       @JsonKey(name: 'location_code') String locationCode,
       double quantity});
 }
@@ -603,11 +612,16 @@ class __$$LocationOnHandImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? inventoryId = freezed,
     Object? locationId = freezed,
     Object? locationCode = null,
     Object? quantity = null,
   }) {
     return _then(_$LocationOnHandImpl(
+      inventoryId: freezed == inventoryId
+          ? _value.inventoryId
+          : inventoryId // ignore: cast_nullable_to_non_nullable
+              as int?,
       locationId: freezed == locationId
           ? _value.locationId
           : locationId // ignore: cast_nullable_to_non_nullable
@@ -628,13 +642,17 @@ class __$$LocationOnHandImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$LocationOnHandImpl implements _LocationOnHand {
   const _$LocationOnHandImpl(
-      {@JsonKey(name: 'location_id') this.locationId,
+      {@JsonKey(name: 'inventory_id') this.inventoryId,
+      @JsonKey(name: 'location_id') this.locationId,
       @JsonKey(name: 'location_code') required this.locationCode,
       required this.quantity});
 
   factory _$LocationOnHandImpl.fromJson(Map<String, dynamic> json) =>
       _$$LocationOnHandImplFromJson(json);
 
+  @override
+  @JsonKey(name: 'inventory_id')
+  final int? inventoryId;
   @override
   @JsonKey(name: 'location_id')
   final int? locationId;
@@ -646,7 +664,7 @@ class _$LocationOnHandImpl implements _LocationOnHand {
 
   @override
   String toString() {
-    return 'LocationOnHand(locationId: $locationId, locationCode: $locationCode, quantity: $quantity)';
+    return 'LocationOnHand(inventoryId: $inventoryId, locationId: $locationId, locationCode: $locationCode, quantity: $quantity)';
   }
 
   @override
@@ -654,6 +672,8 @@ class _$LocationOnHandImpl implements _LocationOnHand {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$LocationOnHandImpl &&
+            (identical(other.inventoryId, inventoryId) ||
+                other.inventoryId == inventoryId) &&
             (identical(other.locationId, locationId) ||
                 other.locationId == locationId) &&
             (identical(other.locationCode, locationCode) ||
@@ -665,7 +685,7 @@ class _$LocationOnHandImpl implements _LocationOnHand {
   @JsonKey(ignore: true)
   @override
   int get hashCode =>
-      Object.hash(runtimeType, locationId, locationCode, quantity);
+      Object.hash(runtimeType, inventoryId, locationId, locationCode, quantity);
 
   @JsonKey(ignore: true)
   @override
@@ -684,13 +704,17 @@ class _$LocationOnHandImpl implements _LocationOnHand {
 
 abstract class _LocationOnHand implements LocationOnHand {
   const factory _LocationOnHand(
-      {@JsonKey(name: 'location_id') final int? locationId,
+      {@JsonKey(name: 'inventory_id') final int? inventoryId,
+      @JsonKey(name: 'location_id') final int? locationId,
       @JsonKey(name: 'location_code') required final String locationCode,
       required final double quantity}) = _$LocationOnHandImpl;
 
   factory _LocationOnHand.fromJson(Map<String, dynamic> json) =
       _$LocationOnHandImpl.fromJson;
 
+  @override
+  @JsonKey(name: 'inventory_id')
+  int? get inventoryId;
   @override
   @JsonKey(name: 'location_id')
   int? get locationId;

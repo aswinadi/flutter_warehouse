@@ -329,14 +329,15 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                       onPressed: () {
                                         Navigator.pop(context); // Close bottom sheet
                                         final firstWh = breakdown.onHand.isNotEmpty ? breakdown.onHand.first : null;
+                                        final firstLoc = (firstWh != null && firstWh.locations.isNotEmpty) ? firstWh.locations.first : null;
                                         final item = Inventory(
-                                          id: firstWh?.id ?? 0,
+                                          id: firstLoc?.inventoryId ?? 0,
                                           sku: breakdown.sku,
                                           productName: breakdown.productName,
                                           quantity: totalOnHand,
                                           status: 'available',
                                           warehouseName: firstWh?.warehouseName,
-                                          locationCode: firstWh?.binLocations.isNotEmpty == true ? firstWh?.binLocations.first.code : null,
+                                          locationCode: firstLoc?.locationCode,
                                           unit: breakdown.unit,
                                         );
                                         context.push('/inventory-adjustments', extra: item);
@@ -617,14 +618,15 @@ class StockDetailPane extends ConsumerWidget {
                     ElevatedButton.icon(
                       onPressed: () {
                         final firstWh = breakdown.onHand.isNotEmpty ? breakdown.onHand.first : null;
+                        final firstLoc = (firstWh != null && firstWh.locations.isNotEmpty) ? firstWh.locations.first : null;
                         final item = Inventory(
-                          id: firstWh?.id ?? 0,
+                          id: firstLoc?.inventoryId ?? 0,
                           sku: breakdown.sku,
                           productName: breakdown.productName,
                           quantity: totalOnHand,
                           status: 'available',
                           warehouseName: firstWh?.warehouseName,
-                          locationCode: firstWh?.binLocations.isNotEmpty == true ? firstWh?.binLocations.first.code : null,
+                          locationCode: firstLoc?.locationCode,
                           unit: breakdown.unit,
                         );
                         context.push('/inventory-adjustments', extra: item);

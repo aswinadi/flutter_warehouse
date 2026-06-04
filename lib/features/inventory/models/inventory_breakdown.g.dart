@@ -60,6 +60,7 @@ Map<String, dynamic> _$$WarehouseOnHandImplToJson(
 
 _$LocationOnHandImpl _$$LocationOnHandImplFromJson(Map<String, dynamic> json) =>
     _$LocationOnHandImpl(
+      inventoryId: (json['inventory_id'] as num?)?.toInt(),
       locationId: (json['location_id'] as num?)?.toInt(),
       locationCode: json['location_code'] as String,
       quantity: (json['quantity'] as num).toDouble(),
@@ -68,6 +69,7 @@ _$LocationOnHandImpl _$$LocationOnHandImplFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$$LocationOnHandImplToJson(
         _$LocationOnHandImpl instance) =>
     <String, dynamic>{
+      'inventory_id': instance.inventoryId,
       'location_id': instance.locationId,
       'location_code': instance.locationCode,
       'quantity': instance.quantity,

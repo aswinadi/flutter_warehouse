@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/inventory_provider.dart';
 import '../../../core/widgets/company_switcher.dart';
 import 'barcode_lookup_bottom_sheet.dart';
 import '../providers/inventory_breakdown_provider.dart';
 import '../models/inventory_breakdown.dart';
+import '../models/inventory.dart';
 
 class InventoryScreen extends ConsumerStatefulWidget {
   const InventoryScreen({super.key});
@@ -322,6 +324,32 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                       'SKU: ${breakdown.sku}',
                                       style: const TextStyle(color: Colors.white54, fontSize: 13),
                                     ),
+                                    const SizedBox(height: 12),
+                                    ElevatedButton.icon(
+                                      onPressed: () {
+                                        Navigator.pop(context); // Close bottom sheet
+                                        final firstWh = breakdown.onHand.isNotEmpty ? breakdown.onHand.first : null;
+                                        final item = Inventory(
+                                          id: firstWh?.id ?? 0,
+                                          sku: breakdown.sku,
+                                          productName: breakdown.productName,
+                                          quantity: totalOnHand,
+                                          status: 'available',
+                                          warehouseName: firstWh?.warehouseName,
+                                          locationCode: firstWh?.binLocations.isNotEmpty == true ? firstWh?.binLocations.first.code : null,
+                                          unit: breakdown.unit,
+                                        );
+                                        context.push('/inventory-adjustments', extra: item);
+                                      },
+                                      icon: const Icon(Icons.settings_backup_restore, size: 16),
+                                      label: const Text('Sesuaikan / Pakai Stok'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF6E56CF),
+                                        foregroundColor: Colors.white,
+                                        minimumSize: const Size.fromHeight(40),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -584,6 +612,31 @@ class StockDetailPane extends ConsumerWidget {
                     Text(
                       'SKU: ${breakdown.sku}',
                       style: const TextStyle(color: Colors.white54, fontSize: 14),
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        final firstWh = breakdown.onHand.isNotEmpty ? breakdown.onHand.first : null;
+                        final item = Inventory(
+                          id: firstWh?.id ?? 0,
+                          sku: breakdown.sku,
+                          productName: breakdown.productName,
+                          quantity: totalOnHand,
+                          status: 'available',
+                          warehouseName: firstWh?.warehouseName,
+                          locationCode: firstWh?.binLocations.isNotEmpty == true ? firstWh?.binLocations.first.code : null,
+                          unit: breakdown.unit,
+                        );
+                        context.push('/inventory-adjustments', extra: item);
+                      },
+                      icon: const Icon(Icons.settings_backup_restore, size: 16),
+                      label: const Text('Sesuaikan / Pakai Stok'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6E56CF),
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size.fromHeight(40),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
                     ),
                   ],
                 ),

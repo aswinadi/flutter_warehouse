@@ -111,6 +111,12 @@ final List<NavItemConfig> menuConfig = [
         requiredPermissions: ['view_inventory'],
       ),
       NavItemConfig(
+        icon: Icons.settings_backup_restore,
+        labelBuilder: (l10n) => 'Penyesuaian & Pemakaian',
+        path: '/inventory-adjustments',
+        requiredPermissions: ['view_inventory'],
+      ),
+      NavItemConfig(
         icon: Icons.computer,
         labelBuilder: (l10n) => 'Hardware Assets',
         path: '/assets',

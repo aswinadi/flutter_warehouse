@@ -31,6 +31,8 @@ import '../widgets/pdf_preview_screen.dart';
 import '../../features/inventory/ui/asset_list_screen.dart';
 import '../../features/inventory/ui/asset_detail_screen.dart';
 import '../../features/inventory/ui/add_asset_screen.dart';
+import '../../features/inventory/ui/inventory_adjustment_screen.dart';
+import '../../features/inventory/models/inventory.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -182,6 +184,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/feed-logs',
             builder: (context, state) => const FeedLogScreen(),
+          ),
+          GoRoute(
+            path: '/inventory-adjustments',
+            builder: (context, state) {
+              final item = state.extra as Inventory?;
+              return InventoryAdjustmentScreen(prefilledItem: item);
+            },
           ),
           GoRoute(
             path: '/stock-mutation',

@@ -283,7 +283,19 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.of(context).size.width > 900;
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    // Fluid responsive constraints for various screen size classes
+    final double maxLayoutWidth;
+    if (screenWidth > 1200) {
+      maxLayoutWidth = 650; // Ultra-wide / 4K / Large Desktop
+    } else if (screenWidth > 800) {
+      maxLayoutWidth = 600; // Standard Desktop / Laptop / Landscape Tablet
+    } else if (screenWidth > 600) {
+      maxLayoutWidth = 500; // Portrait Tablet
+    } else {
+      maxLayoutWidth = double.infinity; // Mobile (expands fully with margins)
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -291,7 +303,7 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
       ),
       body: Center(
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: isWide ? 650 : double.infinity),
+          constraints: BoxConstraints(maxWidth: maxLayoutWidth),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -346,6 +358,9 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
 
 
   Widget _buildItemSelectionCard() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobileNarrow = screenWidth < 400;
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -382,37 +397,68 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
                 ],
               ),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: const InputDecoration(
-                        hintText: 'Masukkan Barcode atau SKU...',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              if (isMobileNarrow) ...[
+                TextField(
+                  controller: _searchController,
+                  decoration: const InputDecoration(
+                    hintText: 'Masukkan Barcode atau SKU...',
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  onSubmitted: (val) => _lookupItem(val),
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: _isLoadingItem ? null : () => _lookupItem(_searchController.text),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0F172A),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    minimumSize: const Size.fromHeight(48),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: _isLoadingItem
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Cari'),
+                ),
+              ] else ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: const InputDecoration(
+                          hintText: 'Masukkan Barcode atau SKU...',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        ),
+                        onSubmitted: (val) => _lookupItem(val),
                       ),
-                      onSubmitted: (val) => _lookupItem(val),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: _isLoadingItem ? null : () => _lookupItem(_searchController.text),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0F172A),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    const SizedBox(width: 12),
+                    ElevatedButton(
+                      onPressed: _isLoadingItem ? null : () => _lookupItem(_searchController.text),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0F172A),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: _isLoadingItem
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Text('Cari'),
                     ),
-                    child: _isLoadingItem
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                        : const Text('Cari'),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
               if (_itemErrorMessage != null) ...[
                 const SizedBox(height: 12),
                 Text(

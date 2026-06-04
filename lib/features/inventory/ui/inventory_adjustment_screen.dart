@@ -289,15 +289,16 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
       appBar: AppBar(
         title: const Text('Penyesuaian & Pemakaian'),
       ),
-      body: Column(
-        children: [
-          const CompanySwitcher(),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: isWide ? 650 : double.infinity),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: isWide ? 650 : double.infinity),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const CompanySwitcher(),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -308,21 +309,13 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
                   ),
                 ),
               ),
-            ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: _selectedItem == null
-          ? null
-          : Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
-              ),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: isWide ? 650 : double.infinity),
+              if (_selectedItem != null)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+                  ),
                   child: ElevatedButton(
                     onPressed: _isSubmitting ? null : _submit,
                     style: ElevatedButton.styleFrom(
@@ -344,10 +337,13 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
                           ),
                   ),
                 ),
-              ),
-            ),
+            ],
+          ),
+        ),
+      ),
     );
   }
+
 
   Widget _buildItemSelectionCard() {
     return Card(

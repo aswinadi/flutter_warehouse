@@ -23,7 +23,7 @@ _$PurchaseOrderImpl _$$PurchaseOrderImplFromJson(Map<String, dynamic> json) =>
       receivedItems: (json['received_items'] as num?)?.toInt() ?? 0,
       canApprove: json['can_approve'] as bool? ?? false,
       pdfUrl: json['pdf_url'] as String?,
-      totalAmount: (json['total_amount'] as num?)?.toDouble(),
+      totalAmount: doubleOrNullFromJson(json['total_amount']),
       items: (json['items'] as List<dynamic>?)
               ?.map(
                   (e) => PurchaseOrderItem.fromJson(e as Map<String, dynamic>))
@@ -58,12 +58,12 @@ _$PurchaseOrderItemImpl _$$PurchaseOrderItemImplFromJson(
       id: (json['id'] as num).toInt(),
       sku: json['sku'] as String,
       productName: json['product_name'] as String,
-      orderedQty: (json['ordered_qty'] as num).toDouble(),
-      receivedQty: (json['received_qty'] as num).toDouble(),
-      remainingQty: (json['remaining_qty'] as num).toDouble(),
+      orderedQty: doubleFromJson(json['ordered_qty']),
+      receivedQty: doubleFromJson(json['received_qty']),
+      remainingQty: doubleFromJson(json['remaining_qty']),
       unit: json['unit'] as String,
       imageUrl: json['image_url'] as String?,
-      unitPrice: (json['unit_price'] as num?)?.toDouble(),
+      unitPrice: doubleOrNullFromJson(json['unit_price']),
       detailNotes: json['detail_notes'] as String?,
       detailSpec: json['detail_spec'] as String?,
       version: (json['version'] as num?)?.toInt() ?? 0,

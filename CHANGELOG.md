@@ -13,6 +13,16 @@ All notable changes to the Maxmar Warehouse Flutter project will be documented i
   - Replaced binary wide-screen toggle with dynamic width caps (`maxLayoutWidth` of 650px, 600px, 500px, or full-width) to fit 4K, Desktop, Laptop, and Tablet resolutions beautifully on the Stock Adjustment screen.
   - Re-positioned the submit button from the Scaffold's `bottomNavigationBar` directly into the bottom of the body `Column` inside the `ConstrainedBox`, solving horizontal content alignment displacement on wide screens.
   - Automatically stacked the manual SKU/barcode search field and search button vertically on narrow screen sizes (width < 400px) instead of horizontally to prevent cramped layout clipping.
+- **Indonesian Number Formatting Localization**:
+  - Configured the global formatter in `currency_utils.dart` to use the `id_ID` locale to format numeric values using a dot (`.`) as the thousand separator and a comma (`,`) as the decimal separator.
+
+### Fixed
+- **Purchase Order Loading Crash (Type Cast Mismatch)**:
+  - Decorated quantities and pricing/amount fields (`ordered_qty`, `received_qty`, `remaining_qty`, `unit_price`, and `total_amount`) in the `PurchaseOrder` and `PurchaseOrderItem` models with `doubleFromJson` and `doubleOrNullFromJson` deserializers.
+  - Resolved `type 'String' is not a subtype of type 'num?' in type cast` crash on Goods Receiving detail screen loading.
+- **Payment Transactions Infinite Loading Loop**:
+  - Refactored `PaymentTransactionsList` in `payment_transaction_provider.dart` to be a family provider accepting `hasProof` and `search` parameters directly.
+  - Removed stateful side-effect setters (`setHasProof` and `setSearchQuery` calling `ref.invalidateSelf()`) and post-frame callbacks in `payment_transaction_list_screen.dart` that caused recursive trigger loops.
 
 ## [1.2.0] - 2026-06-03
 

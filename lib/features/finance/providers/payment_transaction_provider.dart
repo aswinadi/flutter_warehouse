@@ -70,13 +70,14 @@ class PaymentTransactionsList extends _$PaymentTransactionsList {
   int _currentPage = 1;
   bool _hasMore = true;
   bool _isLoadingMore = false;
-  String _searchQuery = '';
-  bool? _hasProof;
 
   bool get hasMore => _hasMore;
 
   @override
-  Future<List<PaymentTransaction>> build() async {
+  Future<List<PaymentTransaction>> build({
+    bool? hasProof,
+    String? search,
+  }) async {
     ref.watch(paymentTransactionRepositoryProvider);
     ref.watch(selectedCompanyProvider);
 
@@ -86,20 +87,6 @@ class PaymentTransactionsList extends _$PaymentTransactionsList {
     return _fetchPage(1);
   }
 
-  void setSearchQuery(String query) {
-    _searchQuery = query;
-    _currentPage = 1;
-    _hasMore = true;
-    ref.invalidateSelf();
-  }
-
-  void setHasProof(bool? hasProof) {
-    _hasProof = hasProof;
-    _currentPage = 1;
-    _hasMore = true;
-    ref.invalidateSelf();
-  }
-
   Future<List<PaymentTransaction>> _fetchPage(int page) async {
     final repository = ref.read(paymentTransactionRepositoryProvider);
     final selectedCompany = ref.read(selectedCompanyProvider);
@@ -107,8 +94,8 @@ class PaymentTransactionsList extends _$PaymentTransactionsList {
     final response = await repository.getTransactions(
       page: page,
       companyId: selectedCompany?.id,
-      search: _searchQuery.isEmpty ? null : _searchQuery,
-      hasProof: _hasProof,
+      search: (search?.isEmpty ?? true) ? null : search,
+      hasProof: hasProof,
     );
 
     if (response.meta != null) {

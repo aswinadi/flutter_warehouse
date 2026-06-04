@@ -1,8 +1,8 @@
 import 'package:intl/intl.dart';
 
 String formatCurrency(num amount, String currencyCode) {
-  // Enforce comma for thousand separator and dot for decimal separator
-  final formatter = NumberFormat('#,##0.##', 'en_US');
+  // Enforce dot for thousand separator and comma for decimal separator
+  final formatter = NumberFormat('#,##0.##', 'id_ID');
   return formatter.format(amount);
 }
 

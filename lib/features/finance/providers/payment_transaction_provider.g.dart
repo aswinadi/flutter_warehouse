@@ -180,22 +180,174 @@ class _PaymentTransactionDetailsProviderElement
 }
 
 String _$paymentTransactionsListHash() =>
-    r'4dadf0a01ea40de47c43cb3060d308aa0fde1bf1';
+    r'b7ba5beea3981135a5b13247c58118d06e48be90';
+
+abstract class _$PaymentTransactionsList
+    extends BuildlessAutoDisposeAsyncNotifier<List<PaymentTransaction>> {
+  late final bool? hasProof;
+  late final String? search;
+
+  FutureOr<List<PaymentTransaction>> build({
+    bool? hasProof,
+    String? search,
+  });
+}
 
 /// See also [PaymentTransactionsList].
 @ProviderFor(PaymentTransactionsList)
-final paymentTransactionsListProvider = AutoDisposeAsyncNotifierProvider<
-    PaymentTransactionsList, List<PaymentTransaction>>.internal(
-  PaymentTransactionsList.new,
-  name: r'paymentTransactionsListProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$paymentTransactionsListHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+const paymentTransactionsListProvider = PaymentTransactionsListFamily();
 
-typedef _$PaymentTransactionsList
-    = AutoDisposeAsyncNotifier<List<PaymentTransaction>>;
+/// See also [PaymentTransactionsList].
+class PaymentTransactionsListFamily
+    extends Family<AsyncValue<List<PaymentTransaction>>> {
+  /// See also [PaymentTransactionsList].
+  const PaymentTransactionsListFamily();
+
+  /// See also [PaymentTransactionsList].
+  PaymentTransactionsListProvider call({
+    bool? hasProof,
+    String? search,
+  }) {
+    return PaymentTransactionsListProvider(
+      hasProof: hasProof,
+      search: search,
+    );
+  }
+
+  @override
+  PaymentTransactionsListProvider getProviderOverride(
+    covariant PaymentTransactionsListProvider provider,
+  ) {
+    return call(
+      hasProof: provider.hasProof,
+      search: provider.search,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'paymentTransactionsListProvider';
+}
+
+/// See also [PaymentTransactionsList].
+class PaymentTransactionsListProvider
+    extends AutoDisposeAsyncNotifierProviderImpl<PaymentTransactionsList,
+        List<PaymentTransaction>> {
+  /// See also [PaymentTransactionsList].
+  PaymentTransactionsListProvider({
+    bool? hasProof,
+    String? search,
+  }) : this._internal(
+          () => PaymentTransactionsList()
+            ..hasProof = hasProof
+            ..search = search,
+          from: paymentTransactionsListProvider,
+          name: r'paymentTransactionsListProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$paymentTransactionsListHash,
+          dependencies: PaymentTransactionsListFamily._dependencies,
+          allTransitiveDependencies:
+              PaymentTransactionsListFamily._allTransitiveDependencies,
+          hasProof: hasProof,
+          search: search,
+        );
+
+  PaymentTransactionsListProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.hasProof,
+    required this.search,
+  }) : super.internal();
+
+  final bool? hasProof;
+  final String? search;
+
+  @override
+  FutureOr<List<PaymentTransaction>> runNotifierBuild(
+    covariant PaymentTransactionsList notifier,
+  ) {
+    return notifier.build(
+      hasProof: hasProof,
+      search: search,
+    );
+  }
+
+  @override
+  Override overrideWith(PaymentTransactionsList Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: PaymentTransactionsListProvider._internal(
+        () => create()
+          ..hasProof = hasProof
+          ..search = search,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        hasProof: hasProof,
+        search: search,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<PaymentTransactionsList,
+      List<PaymentTransaction>> createElement() {
+    return _PaymentTransactionsListProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PaymentTransactionsListProvider &&
+        other.hasProof == hasProof &&
+        other.search == search;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, hasProof.hashCode);
+    hash = _SystemHash.combine(hash, search.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin PaymentTransactionsListRef
+    on AutoDisposeAsyncNotifierProviderRef<List<PaymentTransaction>> {
+  /// The parameter `hasProof` of this provider.
+  bool? get hasProof;
+
+  /// The parameter `search` of this provider.
+  String? get search;
+}
+
+class _PaymentTransactionsListProviderElement
+    extends AutoDisposeAsyncNotifierProviderElement<PaymentTransactionsList,
+        List<PaymentTransaction>> with PaymentTransactionsListRef {
+  _PaymentTransactionsListProviderElement(super.provider);
+
+  @override
+  bool? get hasProof => (origin as PaymentTransactionsListProvider).hasProof;
+  @override
+  String? get search => (origin as PaymentTransactionsListProvider).search;
+}
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

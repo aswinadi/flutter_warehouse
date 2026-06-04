@@ -46,7 +46,10 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
     final maxScroll = _noProofScrollController.position.maxScrollExtent;
     final currentScroll = _noProofScrollController.position.pixels;
     if (currentScroll >= maxScroll * 0.9) {
-      ref.read(paymentTransactionsListProvider.notifier).loadMore();
+      ref.read(paymentTransactionsListProvider(
+        hasProof: false,
+        search: _searchQuery,
+      ).notifier).loadMore();
     }
   }
 
@@ -55,7 +58,10 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
     final maxScroll = _allScrollController.position.maxScrollExtent;
     final currentScroll = _allScrollController.position.pixels;
     if (currentScroll >= maxScroll * 0.9) {
-      ref.read(paymentTransactionsListProvider.notifier).loadMore();
+      ref.read(paymentTransactionsListProvider(
+        hasProof: null,
+        search: _searchQuery,
+      ).notifier).loadMore();
     }
   }
 
@@ -107,9 +113,6 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
                             _searchController.clear();
                             _searchQuery = '';
                           });
-                          ref
-                              .read(paymentTransactionsListProvider.notifier)
-                              .setSearchQuery('');
                         },
                       )
                     : null,
@@ -125,9 +128,6 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
                 setState(() {
                   _searchQuery = value;
                 });
-                ref
-                    .read(paymentTransactionsListProvider.notifier)
-                    .setSearchQuery(value);
               },
             ),
           ),
@@ -146,21 +146,17 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
   }
 
   Widget _buildTabContent(bool isWide, {required bool? hasProofFilter, required ScrollController controller}) {
-    // Set the filter on build of the tab
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ref.read(paymentTransactionsListProvider.notifier).setHasProof(hasProofFilter);
-      }
-    });
-
-    final transactionsAsync = ref.watch(paymentTransactionsListProvider);
+    final transactionsAsync = ref.watch(paymentTransactionsListProvider(
+      hasProof: hasProofFilter,
+      search: _searchQuery,
+    ));
 
     if (isWide) {
       return Row(
         children: [
           SizedBox(
             width: 380,
-            child: _buildListPanel(transactionsAsync, controller, isWide),
+            child: _buildListPanel(transactionsAsync, controller, isWide, hasProofFilter),
           ),
           const VerticalDivider(width: 1, thickness: 1, color: Color(0xFFE2E8F0)),
           Expanded(
@@ -168,7 +164,10 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
                 ? PaymentTransactionDetailWidget(
                     transactionId: _selectedTransactionId!,
                     onUploadSuccess: () {
-                      ref.invalidate(paymentTransactionsListProvider);
+                      ref.invalidate(paymentTransactionsListProvider(
+                        hasProof: hasProofFilter,
+                        search: _searchQuery,
+                      ));
                     },
                   )
                 : const Center(
@@ -181,7 +180,7 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
         ],
       );
     } else {
-      return _buildListPanel(transactionsAsync, controller, isWide);
+      return _buildListPanel(transactionsAsync, controller, isWide, hasProofFilter);
     }
   }
 
@@ -189,6 +188,7 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
     AsyncValue<List<PaymentTransaction>> transactionsAsync,
     ScrollController controller,
     bool isWide,
+    bool? hasProofFilter,
   ) {
     return transactionsAsync.when(
       data: (transactions) {
@@ -208,7 +208,10 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
         return ListView.separated(
           controller: controller,
           padding: const EdgeInsets.all(16),
-          itemCount: transactions.length + (ref.read(paymentTransactionsListProvider.notifier).hasMore ? 1 : 0),
+          itemCount: transactions.length + (ref.read(paymentTransactionsListProvider(
+            hasProof: hasProofFilter,
+            search: _searchQuery,
+          ).notifier).hasMore ? 1 : 0),
           separatorBuilder: (context, index) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             if (index == transactions.length) {
@@ -363,7 +366,10 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
               const SizedBox(height: 12),
               ElevatedButton(
                 onPressed: () {
-                  ref.invalidate(paymentTransactionsListProvider);
+                  ref.invalidate(paymentTransactionsListProvider(
+                    hasProof: hasProofFilter,
+                    search: _searchQuery,
+                  ));
                 },
                 child: const Text('Coba Lagi'),
               ),

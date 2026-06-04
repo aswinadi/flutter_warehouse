@@ -48,7 +48,7 @@ mixin _$PurchaseOrder {
   bool get canApprove => throw _privateConstructorUsedError;
   @JsonKey(name: 'pdf_url')
   String? get pdfUrl => throw _privateConstructorUsedError;
-  @JsonKey(name: 'total_amount')
+  @JsonKey(name: 'total_amount', fromJson: doubleOrNullFromJson)
   double? get totalAmount => throw _privateConstructorUsedError;
   List<PurchaseOrderItem> get items => throw _privateConstructorUsedError;
 
@@ -80,7 +80,8 @@ abstract class $PurchaseOrderCopyWith<$Res> {
       @JsonKey(name: 'received_items') int receivedItems,
       @JsonKey(name: 'can_approve') bool canApprove,
       @JsonKey(name: 'pdf_url') String? pdfUrl,
-      @JsonKey(name: 'total_amount') double? totalAmount,
+      @JsonKey(name: 'total_amount', fromJson: doubleOrNullFromJson)
+      double? totalAmount,
       List<PurchaseOrderItem> items});
 }
 
@@ -212,7 +213,8 @@ abstract class _$$PurchaseOrderImplCopyWith<$Res>
       @JsonKey(name: 'received_items') int receivedItems,
       @JsonKey(name: 'can_approve') bool canApprove,
       @JsonKey(name: 'pdf_url') String? pdfUrl,
-      @JsonKey(name: 'total_amount') double? totalAmount,
+      @JsonKey(name: 'total_amount', fromJson: doubleOrNullFromJson)
+      double? totalAmount,
       List<PurchaseOrderItem> items});
 }
 
@@ -337,7 +339,8 @@ class _$PurchaseOrderImpl implements _PurchaseOrder {
       @JsonKey(name: 'received_items') this.receivedItems = 0,
       @JsonKey(name: 'can_approve') this.canApprove = false,
       @JsonKey(name: 'pdf_url') this.pdfUrl,
-      @JsonKey(name: 'total_amount') this.totalAmount,
+      @JsonKey(name: 'total_amount', fromJson: doubleOrNullFromJson)
+      this.totalAmount,
       final List<PurchaseOrderItem> items = const []})
       : _items = items;
 
@@ -388,7 +391,7 @@ class _$PurchaseOrderImpl implements _PurchaseOrder {
   @JsonKey(name: 'pdf_url')
   final String? pdfUrl;
   @override
-  @JsonKey(name: 'total_amount')
+  @JsonKey(name: 'total_amount', fromJson: doubleOrNullFromJson)
   final double? totalAmount;
   final List<PurchaseOrderItem> _items;
   @override
@@ -494,7 +497,8 @@ abstract class _PurchaseOrder implements PurchaseOrder {
       @JsonKey(name: 'received_items') final int receivedItems,
       @JsonKey(name: 'can_approve') final bool canApprove,
       @JsonKey(name: 'pdf_url') final String? pdfUrl,
-      @JsonKey(name: 'total_amount') final double? totalAmount,
+      @JsonKey(name: 'total_amount', fromJson: doubleOrNullFromJson)
+      final double? totalAmount,
       final List<PurchaseOrderItem> items}) = _$PurchaseOrderImpl;
 
   factory _PurchaseOrder.fromJson(Map<String, dynamic> json) =
@@ -544,7 +548,7 @@ abstract class _PurchaseOrder implements PurchaseOrder {
   @JsonKey(name: 'pdf_url')
   String? get pdfUrl;
   @override
-  @JsonKey(name: 'total_amount')
+  @JsonKey(name: 'total_amount', fromJson: doubleOrNullFromJson)
   double? get totalAmount;
   @override
   List<PurchaseOrderItem> get items;
@@ -564,16 +568,16 @@ mixin _$PurchaseOrderItem {
   String get sku => throw _privateConstructorUsedError;
   @JsonKey(name: 'product_name')
   String get productName => throw _privateConstructorUsedError;
-  @JsonKey(name: 'ordered_qty')
+  @JsonKey(name: 'ordered_qty', fromJson: doubleFromJson)
   double get orderedQty => throw _privateConstructorUsedError;
-  @JsonKey(name: 'received_qty')
+  @JsonKey(name: 'received_qty', fromJson: doubleFromJson)
   double get receivedQty => throw _privateConstructorUsedError;
-  @JsonKey(name: 'remaining_qty')
+  @JsonKey(name: 'remaining_qty', fromJson: doubleFromJson)
   double get remainingQty => throw _privateConstructorUsedError;
   String get unit => throw _privateConstructorUsedError;
   @JsonKey(name: 'image_url')
   String? get imageUrl => throw _privateConstructorUsedError;
-  @JsonKey(name: 'unit_price')
+  @JsonKey(name: 'unit_price', fromJson: doubleOrNullFromJson)
   double? get unitPrice => throw _privateConstructorUsedError;
   @JsonKey(name: 'detail_notes')
   String? get detailNotes => throw _privateConstructorUsedError;
@@ -597,12 +601,15 @@ abstract class $PurchaseOrderItemCopyWith<$Res> {
       {int id,
       String sku,
       @JsonKey(name: 'product_name') String productName,
-      @JsonKey(name: 'ordered_qty') double orderedQty,
-      @JsonKey(name: 'received_qty') double receivedQty,
-      @JsonKey(name: 'remaining_qty') double remainingQty,
+      @JsonKey(name: 'ordered_qty', fromJson: doubleFromJson) double orderedQty,
+      @JsonKey(name: 'received_qty', fromJson: doubleFromJson)
+      double receivedQty,
+      @JsonKey(name: 'remaining_qty', fromJson: doubleFromJson)
+      double remainingQty,
       String unit,
       @JsonKey(name: 'image_url') String? imageUrl,
-      @JsonKey(name: 'unit_price') double? unitPrice,
+      @JsonKey(name: 'unit_price', fromJson: doubleOrNullFromJson)
+      double? unitPrice,
       @JsonKey(name: 'detail_notes') String? detailNotes,
       @JsonKey(name: 'detail_spec') String? detailSpec,
       int version});
@@ -699,12 +706,15 @@ abstract class _$$PurchaseOrderItemImplCopyWith<$Res>
       {int id,
       String sku,
       @JsonKey(name: 'product_name') String productName,
-      @JsonKey(name: 'ordered_qty') double orderedQty,
-      @JsonKey(name: 'received_qty') double receivedQty,
-      @JsonKey(name: 'remaining_qty') double remainingQty,
+      @JsonKey(name: 'ordered_qty', fromJson: doubleFromJson) double orderedQty,
+      @JsonKey(name: 'received_qty', fromJson: doubleFromJson)
+      double receivedQty,
+      @JsonKey(name: 'remaining_qty', fromJson: doubleFromJson)
+      double remainingQty,
       String unit,
       @JsonKey(name: 'image_url') String? imageUrl,
-      @JsonKey(name: 'unit_price') double? unitPrice,
+      @JsonKey(name: 'unit_price', fromJson: doubleOrNullFromJson)
+      double? unitPrice,
       @JsonKey(name: 'detail_notes') String? detailNotes,
       @JsonKey(name: 'detail_spec') String? detailSpec,
       int version});
@@ -794,12 +804,16 @@ class _$PurchaseOrderItemImpl implements _PurchaseOrderItem {
       {required this.id,
       required this.sku,
       @JsonKey(name: 'product_name') required this.productName,
-      @JsonKey(name: 'ordered_qty') required this.orderedQty,
-      @JsonKey(name: 'received_qty') required this.receivedQty,
-      @JsonKey(name: 'remaining_qty') required this.remainingQty,
+      @JsonKey(name: 'ordered_qty', fromJson: doubleFromJson)
+      required this.orderedQty,
+      @JsonKey(name: 'received_qty', fromJson: doubleFromJson)
+      required this.receivedQty,
+      @JsonKey(name: 'remaining_qty', fromJson: doubleFromJson)
+      required this.remainingQty,
       required this.unit,
       @JsonKey(name: 'image_url') this.imageUrl,
-      @JsonKey(name: 'unit_price') this.unitPrice,
+      @JsonKey(name: 'unit_price', fromJson: doubleOrNullFromJson)
+      this.unitPrice,
       @JsonKey(name: 'detail_notes') this.detailNotes,
       @JsonKey(name: 'detail_spec') this.detailSpec,
       this.version = 0});
@@ -815,13 +829,13 @@ class _$PurchaseOrderItemImpl implements _PurchaseOrderItem {
   @JsonKey(name: 'product_name')
   final String productName;
   @override
-  @JsonKey(name: 'ordered_qty')
+  @JsonKey(name: 'ordered_qty', fromJson: doubleFromJson)
   final double orderedQty;
   @override
-  @JsonKey(name: 'received_qty')
+  @JsonKey(name: 'received_qty', fromJson: doubleFromJson)
   final double receivedQty;
   @override
-  @JsonKey(name: 'remaining_qty')
+  @JsonKey(name: 'remaining_qty', fromJson: doubleFromJson)
   final double remainingQty;
   @override
   final String unit;
@@ -829,7 +843,7 @@ class _$PurchaseOrderItemImpl implements _PurchaseOrderItem {
   @JsonKey(name: 'image_url')
   final String? imageUrl;
   @override
-  @JsonKey(name: 'unit_price')
+  @JsonKey(name: 'unit_price', fromJson: doubleOrNullFromJson)
   final double? unitPrice;
   @override
   @JsonKey(name: 'detail_notes')
@@ -910,12 +924,16 @@ abstract class _PurchaseOrderItem implements PurchaseOrderItem {
       {required final int id,
       required final String sku,
       @JsonKey(name: 'product_name') required final String productName,
-      @JsonKey(name: 'ordered_qty') required final double orderedQty,
-      @JsonKey(name: 'received_qty') required final double receivedQty,
-      @JsonKey(name: 'remaining_qty') required final double remainingQty,
+      @JsonKey(name: 'ordered_qty', fromJson: doubleFromJson)
+      required final double orderedQty,
+      @JsonKey(name: 'received_qty', fromJson: doubleFromJson)
+      required final double receivedQty,
+      @JsonKey(name: 'remaining_qty', fromJson: doubleFromJson)
+      required final double remainingQty,
       required final String unit,
       @JsonKey(name: 'image_url') final String? imageUrl,
-      @JsonKey(name: 'unit_price') final double? unitPrice,
+      @JsonKey(name: 'unit_price', fromJson: doubleOrNullFromJson)
+      final double? unitPrice,
       @JsonKey(name: 'detail_notes') final String? detailNotes,
       @JsonKey(name: 'detail_spec') final String? detailSpec,
       final int version}) = _$PurchaseOrderItemImpl;
@@ -931,13 +949,13 @@ abstract class _PurchaseOrderItem implements PurchaseOrderItem {
   @JsonKey(name: 'product_name')
   String get productName;
   @override
-  @JsonKey(name: 'ordered_qty')
+  @JsonKey(name: 'ordered_qty', fromJson: doubleFromJson)
   double get orderedQty;
   @override
-  @JsonKey(name: 'received_qty')
+  @JsonKey(name: 'received_qty', fromJson: doubleFromJson)
   double get receivedQty;
   @override
-  @JsonKey(name: 'remaining_qty')
+  @JsonKey(name: 'remaining_qty', fromJson: doubleFromJson)
   double get remainingQty;
   @override
   String get unit;
@@ -945,7 +963,7 @@ abstract class _PurchaseOrderItem implements PurchaseOrderItem {
   @JsonKey(name: 'image_url')
   String? get imageUrl;
   @override
-  @JsonKey(name: 'unit_price')
+  @JsonKey(name: 'unit_price', fromJson: doubleOrNullFromJson)
   double? get unitPrice;
   @override
   @JsonKey(name: 'detail_notes')

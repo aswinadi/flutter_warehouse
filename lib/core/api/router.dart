@@ -28,6 +28,7 @@ import '../../features/finance/ui/payment_transaction_detail_screen.dart';
 import '../../features/purchase_order/ui/po_approval_screen.dart';
 import '../../features/notifications/ui/notification_inbox_screen.dart';
 import '../widgets/pdf_preview_screen.dart';
+import '../../features/finance/ui/inventory_valuation_screen.dart';
 import '../../features/inventory/ui/asset_list_screen.dart';
 import '../../features/inventory/ui/asset_detail_screen.dart';
 import '../../features/inventory/ui/add_asset_screen.dart';
@@ -212,6 +213,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                 },
               ),
             ],
+          ),
+          GoRoute(
+            path: '/inventory-valuation',
+            builder: (context, state) => const InventoryValuationScreen(),
           ),
           GoRoute(
             path: '/assets',

@@ -204,6 +204,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     if (isCollapsed) {
       // Collapsed: Show popup slide-out menu with styling matching design rules
       return Theme(
+        key: ValueKey('${item.labelBuilder(l10n)}_collapsed'),
         data: Theme.of(context).copyWith(
           cardColor: Colors.blue[950],
           canvasColor: Colors.blue[950],
@@ -273,6 +274,7 @@ class _MainShellState extends ConsumerState<MainShell> {
       // Expanded: Show accordion-style ExpansionTile
       final isExpanded = expandedIndex == index;
       return Theme(
+        key: ValueKey('${item.labelBuilder(l10n)}_expanded'),
         data: Theme.of(context).copyWith(
           dividerColor: Colors.transparent,
           hoverColor: Colors.white12,

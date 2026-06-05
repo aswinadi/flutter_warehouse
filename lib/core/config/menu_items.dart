@@ -158,6 +158,12 @@ final List<NavItemConfig> menuConfig = [
         path: '/payment-transactions',
         requiredPermissions: ['view_payments'],
       ),
+      NavItemConfig(
+        icon: Icons.analytics,
+        labelBuilder: (l10n) => 'Valuasi Inventaris',
+        path: '/inventory-valuation',
+        requiredPermissions: ['view_payments'],
+      ),
     ],
   ),
 ];

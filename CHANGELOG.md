@@ -2,6 +2,21 @@
 
 All notable changes to the Maxmar Warehouse Flutter project will be documented in this file.
 
+## [1.4.0] - 2026-06-05
+
+### Added
+- **Interactive Inventory Valuation Screen**:
+  - Implemented a premium 2-pane interactive screen for the **Inventory Valuation Report** under the Finance (**Keuangan**) section.
+  - Linked the `/inventory-valuation` route and restricted access using the Spatie `view_payments` permission constraint.
+  - Integrated standard Riverpod providers (`inventoryValuationListProvider` and `inventoryValuationBreakdownProvider`) and lightweight Dart DTO models.
+  - Built direct action triggers in the AppBar to directly export PDF and Excel reports bypassing the preview screen (saving files to native downloads on desktop, and invoking native share sheets on mobile).
+
+### Fixed
+- **Sidebar Key Reuse Layout Bug**:
+  - Assigned unique `ValueKey` identifiers (`_collapsed`/`_expanded`) to the submenu themes in `main_shell.dart` to resolve the `RenderBox was not laid out` drawer animation crash.
+- **PDF Request Download Timeout**:
+  - Extended the `receiveTimeout` specifically to `120` seconds inside `pdf_preview_screen.dart` to prevent premature transfer aborts when fetching generated PDF reports over slow connections/ngrok tunnels.
+
 ## [1.3.0] - 2026-06-04
 
 ### Added

@@ -22,14 +22,7 @@ _$UserImpl _$$UserImplFromJson(Map<String, dynamic> json) => _$UserImpl(
       permissions: (json['permissions'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
-          const [
-            'view_dashboard',
-            'view_pr',
-            'view_po',
-            'view_receiving',
-            'view_inventory',
-            'view_usage'
-          ],
+          const [],
     );
 
 Map<String, dynamic> _$$UserImplToJson(_$UserImpl instance) =>

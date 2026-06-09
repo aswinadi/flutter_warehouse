@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../../../core/api/token_provider.dart';
+import '../../../core/config/app_config.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -154,6 +155,42 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     initial: () => const SizedBox.shrink(),
                     loading: () => const SizedBox.shrink(),
                   ),
+                if (AppConfig.isDev) ...[
+                  const SizedBox(height: 32),
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.amber.shade300),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.warning_amber_rounded, color: Colors.amber.shade800, size: 20),
+                            const SizedBox(width: 8),
+                            Text(
+                              'DEVELOPMENT ENVIRONMENT',
+                              style: TextStyle(
+                                color: Colors.amber.shade900,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          AppConfig.baseUrl,
+                          style: TextStyle(color: Colors.amber.shade800, fontSize: 10),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

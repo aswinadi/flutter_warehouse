@@ -26,6 +26,7 @@ class _MainShellState extends ConsumerState<MainShell> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       ref.read(updaterServiceProvider).checkForUpdates(context);
     });
   }
@@ -103,6 +104,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     // Auto-update expanded state when active parent index changes (e.g. on navigation)
     if (activeParentIndex != lastActiveParent) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         ref.read(lastActiveParentIndexProvider.notifier).state = activeParentIndex;
         if (activeParentIndex != -1) {
           ref.read(expandedMenuIndexProvider.notifier).state = activeParentIndex;

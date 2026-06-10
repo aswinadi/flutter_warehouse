@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_app/l10n/app_localizations.dart';
 
 class NavItemConfig {
@@ -19,21 +19,21 @@ class NavItemConfig {
 
 final List<NavItemConfig> menuConfig = [
   NavItemConfig(
-    icon: Icons.dashboard,
+    icon: CupertinoIcons.square_grid_2x2,
     labelBuilder: (l10n) => l10n.dashboard,
     path: '/',
   ),
   NavItemConfig(
-    icon: Icons.notifications,
+    icon: CupertinoIcons.bell,
     labelBuilder: (l10n) => 'Pemberitahuan',
     path: '/notifications',
   ),
   NavItemConfig(
-    icon: Icons.assignment_turned_in,
+    icon: CupertinoIcons.checkmark_seal,
     labelBuilder: (l10n) => l10n.persetujuan,
     subItems: [
       NavItemConfig(
-        icon: Icons.assignment_turned_in,
+        icon: CupertinoIcons.checkmark_seal,
         labelBuilder: (l10n) => l10n.approvals,
         path: '/approvals',
         requiredPermissions: ['approve_pr'],
@@ -41,17 +41,17 @@ final List<NavItemConfig> menuConfig = [
     ],
   ),
   NavItemConfig(
-    icon: Icons.shopping_bag,
+    icon: CupertinoIcons.bag,
     labelBuilder: (l10n) => l10n.purchasing,
     subItems: [
       NavItemConfig(
-        icon: Icons.shopping_cart,
+        icon: CupertinoIcons.cart,
         labelBuilder: (l10n) => l10n.purchaseRequest,
         path: '/pr',
         requiredPermissions: ['view_pr'],
       ),
       NavItemConfig(
-        icon: Icons.receipt_long,
+        icon: CupertinoIcons.doc_plaintext,
         labelBuilder: (l10n) => l10n.purchaseOrders,
         path: '/po',
         requiredPermissions: ['view_po'],
@@ -59,53 +59,53 @@ final List<NavItemConfig> menuConfig = [
     ],
   ),
   NavItemConfig(
-    icon: Icons.store,
+    icon: CupertinoIcons.house,
     labelBuilder: (l10n) => l10n.warehouse,
     subItems: [
       NavItemConfig(
-        icon: Icons.receipt_long,
+        icon: CupertinoIcons.doc_plaintext,
         labelBuilder: (l10n) => l10n.packingList,
         path: '/packing-list',
         requiredPermissions: ['view_containers'],
       ),
       NavItemConfig(
-        icon: Icons.qr_code_scanner,
+        icon: CupertinoIcons.qrcode_viewfinder,
         labelBuilder: (l10n) => l10n.receiving,
         path: '/receiving',
         requiredPermissions: ['view_receiving'],
       ),
       NavItemConfig(
-        icon: Icons.send_to_mobile,
+        icon: CupertinoIcons.arrow_up_square,
         labelBuilder: (l10n) => l10n.sendToBranch,
         path: '/transfer-out',
         requiredPermissions: ['view_inventory'],
       ),
       NavItemConfig(
-        icon: Icons.move_to_inbox,
+        icon: CupertinoIcons.arrow_down_square,
         labelBuilder: (l10n) => l10n.receiveFromBranch,
         path: '/transfer-in',
         requiredPermissions: ['view_receiving'],
       ),
       NavItemConfig(
-        icon: Icons.inventory_2,
+        icon: CupertinoIcons.archivebox,
         labelBuilder: (l10n) => l10n.inventoryStock,
         path: '/inventory',
         requiredPermissions: ['view_inventory'],
       ),
       NavItemConfig(
-        icon: Icons.history,
+        icon: CupertinoIcons.time,
         labelBuilder: (l10n) => l10n.stockMutation,
         path: '/stock-mutation',
         requiredPermissions: ['view_inventory'],
       ),
       NavItemConfig(
-        icon: Icons.settings_backup_restore,
+        icon: CupertinoIcons.arrow_counterclockwise,
         labelBuilder: (l10n) => 'Penyesuaian & Pemakaian',
         path: '/inventory-adjustments',
         requiredPermissions: ['view_inventory'],
       ),
       NavItemConfig(
-        icon: Icons.computer,
+        icon: CupertinoIcons.desktopcomputer,
         labelBuilder: (l10n) => 'Hardware Assets',
         path: '/assets',
         requiredPermissions: ['view_inventory'],
@@ -113,17 +113,17 @@ final List<NavItemConfig> menuConfig = [
     ],
   ),
   NavItemConfig(
-    icon: Icons.agriculture,
+    icon: CupertinoIcons.tree,
     labelBuilder: (l10n) => l10n.operasionalTambak,
     subItems: [
       NavItemConfig(
-        icon: Icons.agriculture,
+        icon: CupertinoIcons.tree,
         labelBuilder: (l10n) => l10n.pemakaian,
         path: '/usage',
         requiredPermissions: ['view_usage'],
       ),
       NavItemConfig(
-        icon: Icons.bubble_chart,
+        icon: CupertinoIcons.wind,
         labelBuilder: (l10n) => l10n.feedManagement,
         path: '/feed-logs',
         requiredPermissions: ['view_usage'],
@@ -131,17 +131,17 @@ final List<NavItemConfig> menuConfig = [
     ],
   ),
   NavItemConfig(
-    icon: Icons.account_balance_wallet,
+    icon: CupertinoIcons.creditcard,
     labelBuilder: (l10n) => l10n.finance,
     subItems: [
       NavItemConfig(
-        icon: Icons.receipt,
+        icon: CupertinoIcons.doc_text,
         labelBuilder: (l10n) => 'Purchase Invoice',
         path: '/purchase-invoices',
         requiredPermissions: ['view_payments'],
       ),
       NavItemConfig(
-        icon: Icons.payment,
+        icon: CupertinoIcons.creditcard,
         labelBuilder: (l10n) => l10n.paymentTransactions,
         path: '/payment-transactions',
         requiredPermissions: ['view_payments'],

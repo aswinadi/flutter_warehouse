@@ -7,6 +7,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:ota_update/ota_update.dart';
 import '../api/dio_client.dart';
+import '../config/app_config.dart';
 
 final updaterServiceProvider = Provider<UpdaterService>((ref) {
   return UpdaterService(ref.watch(dioProvider));
@@ -18,6 +19,7 @@ class UpdaterService {
   UpdaterService(this._dio);
 
   Future<void> checkForUpdates(BuildContext context) async {
+    if (AppConfig.isDev) return;
     try {
       // 1. Fetch latest metadata from backend
       final response = await _dio.get('wh/app-version');

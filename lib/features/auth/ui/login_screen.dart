@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../../../core/api/token_provider.dart';
+import '../../../core/config/app_config.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -37,8 +38,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
-    return Scaffold(
-      body: Center(
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.systemGroupedBackground,
+      child: Center(
         child: SingleChildScrollView(
           child: Container(
             constraints: const BoxConstraints(maxWidth: 400),
@@ -50,32 +52,64 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const Text(
                   'MAXMAR WAREHOUSE',
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: 26,
                     fontWeight: FontWeight.bold,
-                    color: Colors.blue,
+                    color: CupertinoColors.activeBlue,
                   ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 48),
-                TextField(
+                CupertinoTextField(
                   controller: _usernameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Username',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.person),
+                  placeholder: 'Username',
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.secondarySystemGroupedBackground,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: CupertinoColors.separator,
+                      width: 0.5,
+                    ),
+                  ),
+                  prefix: const Padding(
+                    padding: EdgeInsets.only(left: 12),
+                    child: Icon(
+                      CupertinoIcons.person,
+                      color: CupertinoColors.placeholderText,
+                      size: 20,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
-                TextField(
+                CupertinoTextField(
                   controller: _passwordController,
+                  placeholder: 'Password',
                   obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(),
-                    prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.secondarySystemGroupedBackground,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: CupertinoColors.separator,
+                      width: 0.5,
+                    ),
+                  ),
+                  prefix: const Padding(
+                    padding: EdgeInsets.only(left: 12),
+                    child: Icon(
+                      CupertinoIcons.lock,
+                      color: CupertinoColors.placeholderText,
+                      size: 20,
+                    ),
+                  ),
+                  suffix: Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      child: Icon(
+                        _obscurePassword ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
+                        color: CupertinoColors.placeholderText,
+                        size: 20,
                       ),
                       onPressed: () {
                         setState(() {
@@ -85,22 +119,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
                 Row(
                   children: [
-                    Checkbox(
+                    CupertinoSwitch(
                       value: _rememberMe,
                       onChanged: (value) {
                         setState(() {
-                          _rememberMe = value ?? false;
+                          _rememberMe = value;
                         });
                       },
                     ),
-                    const Text('Ingat saya'),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Ingat saya',
+                      style: TextStyle(
+                        color: CupertinoColors.label.resolveFrom(context),
+                        fontSize: 15,
+                      ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                ElevatedButton(
+                const SizedBox(height: 24),
+                CupertinoButton.filled(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  borderRadius: BorderRadius.circular(10),
                   onPressed: authState.isLoading
                       ? null
                       : () {
@@ -115,29 +158,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 _passwordController.text,
                               );
                         },
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                  ),
                   child: authState.isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation(Colors.white),
-                          ),
+                      ? const CupertinoActivityIndicator(
+                          color: CupertinoColors.white,
                         )
-                      : const Text('MASUK'),
+                      : const Text(
+                          'MASUK',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
                 ),
-                if (authState.hasValue)
+                if (authState.hasError)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 16),
+                    child: Text(
+                      'Sesi kadaluarsa, silakan login kembali.',
+                      style: TextStyle(color: CupertinoColors.destructiveRed),
+                      textAlign: TextAlign.center,
+                    ),
+                  )
+                else if (authState.hasValue)
                   authState.value!.when(
                     authenticated: (user, token) => const Padding(
                       padding: EdgeInsets.only(top: 16),
                       child: Text(
                         'Berhasil masuk!',
-                        style: TextStyle(color: Colors.green),
+                        style: TextStyle(color: CupertinoColors.activeGreen),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -146,7 +194,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             padding: const EdgeInsets.only(top: 16),
                             child: Text(
                               message,
-                              style: const TextStyle(color: Colors.red),
+                              style: const TextStyle(color: CupertinoColors.destructiveRed),
                               textAlign: TextAlign.center,
                             ),
                           )
@@ -154,6 +202,52 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     initial: () => const SizedBox.shrink(),
                     loading: () => const SizedBox.shrink(),
                   ),
+                if (AppConfig.isDev) ...[
+                  const SizedBox(height: 32),
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.systemOrange.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: CupertinoColors.systemOrange.withValues(alpha: 0.3),
+                        width: 0.5,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              CupertinoIcons.exclamationmark_triangle_fill,
+                              color: CupertinoColors.systemOrange,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'DEVELOPMENT ENVIRONMENT',
+                              style: TextStyle(
+                                color: CupertinoColors.systemOrange,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          AppConfig.baseUrl,
+                          style: const TextStyle(
+                            color: CupertinoColors.secondaryLabel,
+                            fontSize: 11,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

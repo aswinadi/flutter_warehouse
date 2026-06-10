@@ -2,9 +2,21 @@
 
 All notable changes to the Maxmar Warehouse Flutter project will be documented in this file.
 
-## [1.4.0] - 2026-06-05
+## [1.4.0] - 2026-06-10
 
 ### Added
+- **iOS/Cupertino UI Theme & Foundations**:
+  - Replaced root `MaterialApp` with `CupertinoApp` to align with native iOS design principles.
+  - Implemented dynamic global theme switching (`light`, `dark`, or `system` modes) utilizing Riverpod (`themeModeProvider` in `theme_provider.dart`).
+  - Added dedicated iOS theme configuration using `CupertinoThemeData` for automatic light/dark mode adaptation.
+  - Replaced standard Material `Icons` with native Apple `CupertinoIcons` (e.g., `CupertinoIcons.square_grid_2x2` for dashboard, `CupertinoIcons.qrcode_viewfinder` for receiving, `CupertinoIcons.checkmark_seal` for approvals, `CupertinoIcons.tree` for operasional tambak).
+- **Responsive Shell Layout Navigation**:
+  - Custom responsive layout using `CupertinoTabBar` for mobile and a custom navigation sidebar drawer for desktop/tablet platforms.
+  - Replaced Material context menus on collapsed sidebars with native Cupertino sheet popups (`showCupertinoModalPopup` and `CupertinoActionSheet`).
+  - Implemented a custom lightweight submenu accordion (`_SubMenuAccordion`) to run independent of Material's `ExpansionTile`.
+- **Cupertino Screens Migration**:
+  - **Login Screen**: Migrated to `CupertinoPageScaffold`, using `CupertinoTextField` for text entry, `CupertinoSwitch` for "Remember Me" toggle, and `CupertinoButton.filled` for login execution with custom dynamic label styling.
+  - **Dashboard Screen**: Migrated to `CupertinoPageScaffold` using `CupertinoSliverNavigationBar` with scrolling large titles. Replaced Material `Card` widgets with iOS-styled rounded containers and dynamic separator lines.
 - **Interactive Inventory Valuation Screen**:
   - Implemented a premium 2-pane interactive screen for the **Inventory Valuation Report** under the Finance (**Keuangan**) section.
   - Linked the `/inventory-valuation` route and restricted access using the Spatie `view_payments` permission constraint.
@@ -12,6 +24,8 @@ All notable changes to the Maxmar Warehouse Flutter project will be documented i
   - Built direct action triggers in the AppBar to directly export PDF and Excel reports bypassing the preview screen (saving files to native downloads on desktop, and invoking native share sheets on mobile).
 
 ### Fixed
+- **Compilation/Syntax Error in main_shell.dart**:
+  - Resolved dynamic text style resolution issues inside the header title by removing the `const` keyword on the wrapping `Expanded` widget, fixing `Not a constant expression` compile errors on web/desktop.
 - **Sidebar Key Reuse Layout Bug**:
   - Assigned unique `ValueKey` identifiers (`_collapsed`/`_expanded`) to the submenu themes in `main_shell.dart` to resolve the `RenderBox was not laid out` drawer animation crash.
 - **PDF Request Download Timeout**:

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:responsive_framework/responsive_framework.dart';
@@ -8,6 +8,7 @@ import '../../auth/models/user.dart';
 import '../../../core/config/menu_items.dart';
 import '../../../core/widgets/main_shell.dart';
 import '../../inventory/ui/barcode_lookup_bottom_sheet.dart';
+import '../../../core/providers/theme_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -49,22 +50,30 @@ class DashboardScreen extends ConsumerWidget {
   Color _getMenuColor(String? path) {
     switch (path) {
       case '/pr':
-        return Colors.blue;
+        return CupertinoColors.activeBlue;
       case '/approvals':
-        return Colors.orange;
+        return CupertinoColors.activeOrange;
       case '/po':
-        return Colors.teal;
+        return CupertinoColors.systemTeal;
       case '/receiving':
-        return Colors.green;
+        return CupertinoColors.activeGreen;
       case '/inventory':
-        return Colors.purple;
+        return CupertinoColors.systemPurple;
       case '/usage':
-        return Colors.brown;
+        return CupertinoColors.systemBrown;
       case '/assets':
-        return Colors.indigo;
+        return CupertinoColors.systemIndigo;
       default:
-        return Colors.blueGrey;
+        return CupertinoColors.inactiveGray;
     }
+  }
+
+  void _showBarcodeLookup(BuildContext context) {
+    showCupertinoModalPopup(
+      context: context,
+      barrierColor: CupertinoColors.black.withValues(alpha: 0.4),
+      builder: (context) => const BarcodeLookupBottomSheet(),
+    );
   }
 
   @override
@@ -84,55 +93,90 @@ class DashboardScreen extends ConsumerWidget {
     // Grouped section configurations based on menuConfig entries with sub-items
     final sections = navItems.where((item) => item.subItems != null && item.subItems!.isNotEmpty).toList();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.dashboard),
-        backgroundColor: Colors.blue.shade900,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
-      backgroundColor: Colors.grey.shade50,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-            builder: (context) => const BarcodeLookupBottomSheet(),
-          );
-        },
-        backgroundColor: Colors.blue.shade900,
-        foregroundColor: Colors.white,
-        child: const Icon(Icons.qr_code_scanner),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: sections.map((section) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 24),
-            child: _buildMenuSection(
-              context,
-              title: section.labelBuilder(l10n),
-              sidebarWidth: sidebarWidth,
-              items: section.subItems!.map((childItem) {
-                return _MenuItem(
-                  icon: childItem.icon,
-                  label: childItem.labelBuilder(l10n),
-                  onTap: () {
-                    if (childItem.path != null) {
-                      context.go(childItem.path!);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(l10n.comingSoon)),
-                      );
-                    }
-                  },
-                  color: _getMenuColor(childItem.path),
-                );
-              }).toList(),
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.systemGroupedBackground,
+      child: CustomScrollView(
+        slivers: [
+          CupertinoSliverNavigationBar(
+            largeTitle: Text(l10n.dashboard),
+            backgroundColor: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context).withValues(alpha: 0.96),
+            border: Border(
+              bottom: BorderSide(
+                color: CupertinoColors.separator.resolveFrom(context),
+                width: 0.5,
+              ),
             ),
-          );
-        }).toList(),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  child: Icon(
+                    ref.watch(themeModeProvider) == ThemeModeState.dark 
+                        ? CupertinoIcons.sun_max_fill 
+                        : CupertinoIcons.moon_fill,
+                    size: 20,
+                  ),
+                  onPressed: () {
+                    ref.read(themeModeProvider.notifier).toggleTheme();
+                  },
+                ),
+                const SizedBox(width: 8),
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: () => _showBarcodeLookup(context),
+                  child: const Icon(
+                    CupertinoIcons.qrcode_viewfinder,
+                    size: 24,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate(
+                sections.map((section) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 28),
+                    child: _buildMenuSection(
+                      context,
+                      title: section.labelBuilder(l10n),
+                      sidebarWidth: sidebarWidth,
+                      items: section.subItems!.map((childItem) {
+                        return _MenuItem(
+                          icon: childItem.icon,
+                          label: childItem.labelBuilder(l10n),
+                          onTap: () {
+                            if (childItem.path != null) {
+                              context.go(childItem.path!);
+                            } else {
+                              showCupertinoDialog(
+                                context: context,
+                                builder: (context) => CupertinoAlertDialog(
+                                  title: const Text('Coming Soon'),
+                                  content: Text(l10n.comingSoon),
+                                  actions: [
+                                    CupertinoDialogAction(
+                                      child: const Text('OK'),
+                                      onPressed: () => Navigator.pop(context),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+                          },
+                          color: _getMenuColor(childItem.path),
+                        );
+                      }).toList(),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -158,7 +202,7 @@ class DashboardScreen extends ConsumerWidget {
             style: TextStyle(
               fontSize: 18, 
               fontWeight: FontWeight.bold,
-              color: Colors.blueGrey.shade800,
+              color: CupertinoColors.label.resolveFrom(context),
             ),
           ),
         ),
@@ -178,7 +222,7 @@ class DashboardScreen extends ConsumerWidget {
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
               childAspectRatio: childAspectRatio,
-              children: items.map((item) => _buildMenuCard(item)).toList(),
+              children: items.map((item) => _buildMenuCard(context, item)).toList(),
             );
           },
         ),
@@ -186,39 +230,44 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildMenuCard(_MenuItem item) {
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.zero, // Remove card default margin to maximize available height
-      shape: RoundedRectangleBorder(
+  Widget _buildMenuCard(BuildContext context, _MenuItem item) {
+    return Container(
+      decoration: BoxDecoration(
+        color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: Color(0xFFE2E8F0)),
+        border: Border.all(
+          color: CupertinoColors.separator.resolveFrom(context).withValues(alpha: 0.15),
+          width: 0.5,
+        ),
       ),
-      color: Colors.white,
-      child: InkWell(
+      child: GestureDetector(
         onTap: item.onTap,
-        borderRadius: BorderRadius.circular(12),
+        behavior: HitTestBehavior.opaque,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(8), // Reduced padding for robust safety margins
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: item.color.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(item.icon, size: 22, color: item.color), // Slightly smaller icon
+                child: Icon(
+                  item.icon,
+                  size: 22,
+                  color: item.color,
+                ),
               ),
-              const SizedBox(height: 8), // Reduced spacing
+              const SizedBox(height: 8),
               Text(
                 item.label,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12, 
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1E293B), // Charcoal / Ink
+                  color: CupertinoColors.label.resolveFrom(context),
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -229,8 +278,6 @@ class DashboardScreen extends ConsumerWidget {
       ),
     );
   }
-
-
 }
 
 class _MenuItem {

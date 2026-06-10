@@ -41,7 +41,8 @@ class _WebScrollBehavior extends MaterialScrollBehavior {
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 class PRListScreen extends ConsumerStatefulWidget {
-  const PRListScreen({super.key});
+  final String? initialStatus;
+  const PRListScreen({super.key, this.initialStatus});
 
   @override
   ConsumerState<PRListScreen> createState() => _PRListScreenState();
@@ -136,6 +137,9 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialStatus != null) {
+      _selectedStatus = widget.initialStatus;
+    }
     _scrollController.addListener(_onScroll);
   }
 

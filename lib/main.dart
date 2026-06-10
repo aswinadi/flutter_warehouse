@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -8,6 +8,7 @@ import 'package:flutter_app/l10n/app_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/api/router.dart';
+import 'core/providers/theme_provider.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -36,8 +37,15 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
-    return MaterialApp.router(
+    // Resolve system brightness
+    final systemBrightness = MediaQuery.platformBrightnessOf(context);
+    final isDark = themeMode == ThemeModeState.dark ||
+        (themeMode == ThemeModeState.system && systemBrightness == Brightness.dark);
+    final brightness = isDark ? Brightness.dark : Brightness.light;
+
+    return CupertinoApp.router(
       title: 'Warehouse App',
       debugShowCheckedModeBanner: false,
       routerConfig: router,
@@ -58,23 +66,20 @@ class MyApp extends ConsumerWidget {
           const Breakpoint(start: 1921, end: double.infinity, name: '4K'),
         ],
       ),
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue.shade900,
-        ).copyWith(
-          // M3 PopupMenuButton reads surfaceContainer for its background.
-          // Override it to dark navy so our sidebar popup menus are readable.
-          surfaceContainer: Colors.blue.shade900,
-        ),
-        useMaterial3: true,
-        popupMenuTheme: PopupMenuThemeData(
-          color: Colors.blue[950],
-          surfaceTintColor: Colors.transparent,
-          textStyle: const TextStyle(color: Colors.white70),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: BorderSide(color: Colors.blue.shade800, width: 1),
-          ),
+      theme: CupertinoThemeData(
+        brightness: brightness,
+        primaryColor: CupertinoColors.activeBlue,
+        primaryContrastingColor: CupertinoColors.white,
+        barBackgroundColor: isDark
+            ? const Color(0xFF1C1C1E)
+            : CupertinoColors.systemBackground,
+        scaffoldBackgroundColor: isDark
+            ? const Color(0xFF000000)
+            : CupertinoColors.systemGroupedBackground,
+        textTheme: CupertinoTextThemeData(
+          primaryColor: isDark
+              ? CupertinoColors.white
+              : CupertinoColors.label,
         ),
       ),
     );

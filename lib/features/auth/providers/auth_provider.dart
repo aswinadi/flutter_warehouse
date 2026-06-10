@@ -15,20 +15,25 @@ class Auth extends _$Auth {
     final token = await storage.getToken();
     
     if (token != null) {
-      final repository = AuthRepositoryImpl(ref.read(dioProvider));
-      final user = await repository.getCurrentUser();
-      if (user != null) {
-        Future.microtask(() async {
-          try {
-            final notificationService = ref.read(notificationServiceProvider);
-            await notificationService.initialize();
-            final deviceToken = await notificationService.getDeviceToken();
-            if (deviceToken != null) {
-              await repository.registerDeviceToken(deviceToken);
-            }
-          } catch (_) {}
-        });
-        return AuthState.authenticated(user: user, token: token);
+      try {
+        final repository = AuthRepositoryImpl(ref.read(dioProvider));
+        final user = await repository.getCurrentUser();
+        if (user != null) {
+          Future.microtask(() async {
+            try {
+              final notificationService = ref.read(notificationServiceProvider);
+              await notificationService.initialize();
+              final deviceToken = await notificationService.getDeviceToken();
+              if (deviceToken != null) {
+                await repository.registerDeviceToken(deviceToken);
+              }
+            } catch (_) {}
+          });
+          return AuthState.authenticated(user: user, token: token);
+        }
+      } catch (_) {
+        // Stale or expired token — clear it and force re-login
+        await storage.clearAll();
       }
     }
     

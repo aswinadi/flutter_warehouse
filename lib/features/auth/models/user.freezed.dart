@@ -197,14 +197,7 @@ class _$UserImpl extends _User {
       @JsonKey(name: 'approval_types')
       final List<String> approvalTypes = const [],
       final List<String> roles = const [],
-      final List<String> permissions = const [
-        'view_dashboard',
-        'view_pr',
-        'view_po',
-        'view_receiving',
-        'view_inventory',
-        'view_usage'
-      ]})
+      final List<String> permissions = const []})
       : _approvalTypes = approvalTypes,
         _roles = roles,
         _permissions = permissions,

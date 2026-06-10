@@ -13,21 +13,34 @@ class User with _$User {
     @JsonKey(name: 'company_id') int? companyId,
     @Default([]) @JsonKey(name: 'approval_types') List<String> approvalTypes,
     @Default([]) List<String> roles,
-    @Default([
-      'view_dashboard',
-      'view_pr',
-      'view_po',
-      'view_receiving',
-      'view_inventory',
-      'view_usage'
-    ])
-    List<String> permissions,
+    @Default([]) List<String> permissions,
   }) = _User;
 
   const User._();
 
   List<String> get effectivePermissions {
-    final list = List<String>.from(permissions);
+    final list = <String>['view_dashboard']; // Everyone sees dashboard
+
+    for (final perm in permissions) {
+      if (perm == 'view_purchase_request') {
+        list.add('view_pr');
+      } else if (perm == 'view_purchase_order') {
+        list.add('view_po');
+      } else if (perm == 'view_receiving') {
+        list.add('view_receiving');
+      } else if (perm == 'view_inventory') {
+        list.add('view_inventory');
+      } else if (perm == 'view_warehouse' || perm == 'view_containers') {
+        list.addAll(['view_containers', 'view_warehouse']);
+      } else if (perm == 'view_usage') {
+        list.add('view_usage');
+      } else if (perm == 'view_payment_request' || perm == 'view_payments') {
+        list.add('view_payments');
+      } else {
+        list.add(perm); // Fallback pass-through
+      }
+    }
+
     if (approvalTypes.isNotEmpty) {
       list.add('approve_pr');
     }

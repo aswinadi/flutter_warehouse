@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:responsive_framework/responsive_framework.dart';
@@ -8,6 +8,7 @@ import '../../features/auth/models/user.dart';
 import '../config/menu_items.dart';
 import '../../features/notifications/providers/notification_provider.dart';
 import '../services/updater_service.dart';
+import '../providers/theme_provider.dart';
 
 final sidebarCollapsedProvider = StateProvider<bool>((ref) => false);
 final expandedMenuIndexProvider = StateProvider<int?>((ref) => null);
@@ -26,6 +27,7 @@ class _MainShellState extends ConsumerState<MainShell> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       ref.read(updaterServiceProvider).checkForUpdates(context);
     });
   }
@@ -103,6 +105,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     // Auto-update expanded state when active parent index changes (e.g. on navigation)
     if (activeParentIndex != lastActiveParent) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         ref.read(lastActiveParentIndexProvider.notifier).state = activeParentIndex;
         if (activeParentIndex != -1) {
           ref.read(expandedMenuIndexProvider.notifier).state = activeParentIndex;
@@ -112,19 +115,29 @@ class _MainShellState extends ConsumerState<MainShell> {
 
     final currentExpandedIndex = expandedIndex ?? (activeParentIndex != -1 ? activeParentIndex : null);
 
-    return Scaffold(
-      body: Row(
-        children: [
-          if (isDesktop)
-            _buildSidebar(context, ref, navItems, isCollapsed, unreadCount, currentExpandedIndex),
-          Expanded(
-            child: SelectionArea(
-              child: widget.child,
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.systemGroupedBackground,
+      child: SafeArea(
+        top: false,
+        bottom: false,
+        child: Row(
+          children: [
+            if (isDesktop)
+              _buildSidebar(context, ref, navItems, isCollapsed, unreadCount, currentExpandedIndex),
+            Expanded(
+              child: Column(
+                children: [
+                  Expanded(
+                    child: widget.child,
+                  ),
+                  if (!isDesktop)
+                    _buildBottomNav(context, navItems, unreadCount),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-      bottomNavigationBar: isDesktop ? null : _buildBottomNav(context, navItems, unreadCount),
     );
   }
 
@@ -140,19 +153,27 @@ class _MainShellState extends ConsumerState<MainShell> {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       width: isCollapsed ? 70 : 265,
-      color: Colors.blue[900],
+      decoration: BoxDecoration(
+        color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
+        border: Border(
+          right: BorderSide(
+            color: CupertinoColors.separator.resolveFrom(context),
+            width: 0.5,
+          ),
+        ),
+      ),
       child: Column(
         children: [
           _buildHeader(context, ref, isCollapsed),
           Expanded(
             child: ListView(
-              padding: EdgeInsets.zero,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
               children: [
                 ...navItems.asMap().entries.map((entry) {
                   final index = entry.key;
                   final item = entry.value;
                   if (item.subItems != null && item.subItems!.isNotEmpty) {
-                    return _buildSubMenu(context, item, isCollapsed, index, currentExpandedIndex, ref);
+                    return _buildSubMenu(context, item, isCollapsed, index, currentExpandedIndex, ref, unreadCount);
                   } else {
                     return _SidebarItem(
                       icon: item.icon,
@@ -164,8 +185,18 @@ class _MainShellState extends ConsumerState<MainShell> {
                         if (item.path != null) {
                           context.go(item.path!);
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(l10n.comingSoon)),
+                          showCupertinoDialog(
+                            context: context,
+                            builder: (context) => CupertinoAlertDialog(
+                              title: const Text('Coming Soon'),
+                              content: Text(l10n.comingSoon),
+                              actions: [
+                                CupertinoDialogAction(
+                                  child: const Text('OK'),
+                                  onPressed: () => Navigator.pop(context),
+                                ),
+                              ],
+                            ),
                           );
                         }
                       },
@@ -175,14 +206,38 @@ class _MainShellState extends ConsumerState<MainShell> {
               ],
             ),
           ),
-          _SidebarItem(
-            icon: Icons.logout,
-            label: l10n.logout,
-            isCollapsed: isCollapsed,
-            isActive: false,
-            onTap: () {
-              ref.read(authProvider.notifier).logout();
-            },
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: _SidebarItem(
+              icon: CupertinoIcons.square_arrow_right,
+              label: l10n.logout,
+              isCollapsed: isCollapsed,
+              isActive: false,
+              onTap: () {
+                showCupertinoDialog(
+                  context: context,
+                  builder: (context) => CupertinoAlertDialog(
+                    title: Text(l10n.logout),
+                    content: const Text('Apakah Anda yakin ingin keluar?'),
+                    actions: [
+                      CupertinoDialogAction(
+                        isDestructiveAction: true,
+                        child: const Text('Keluar'),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          ref.read(authProvider.notifier).logout();
+                        },
+                      ),
+                      CupertinoDialogAction(
+                        isDefaultAction: true,
+                        child: const Text('Batal'),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -196,182 +251,142 @@ class _MainShellState extends ConsumerState<MainShell> {
     int index,
     int? expandedIndex,
     WidgetRef ref,
+    int unreadCount,
   ) {
     final l10n = AppLocalizations.of(context)!;
-    final isParentActive = _isRouteActive(context, item);
     final parentLabel = item.labelBuilder(l10n);
 
     if (isCollapsed) {
-      // Collapsed: Show popup slide-out menu with styling matching design rules
-      return Theme(
-        key: ValueKey('${item.labelBuilder(l10n)}_collapsed'),
-        data: Theme.of(context).copyWith(
-          cardColor: Colors.blue[950],
-          canvasColor: Colors.blue[950],
-          colorScheme: Theme.of(context).colorScheme.copyWith(
-            surface: Colors.blue[950],
-          ),
-          popupMenuTheme: PopupMenuThemeData(
-            color: Colors.blue[950],
-            surfaceTintColor: Colors.transparent,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-              side: BorderSide(color: Colors.blue[850] ?? Colors.blue, width: 1),
-            ),
-          ),
-        ),
-        child: PopupMenuButton<String>(
-          tooltip: parentLabel,
-          offset: const Offset(70, 0),
-          color: Colors.blue[950],
-          surfaceTintColor: Colors.transparent, // Direct widget override for Material 3 tinting
-          elevation: 8,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: BorderSide(color: Colors.blue[850] ?? Colors.blue, width: 1),
-          ),
-          child: SizedBox(
-            height: 48,
-            width: 70,
-            child: Center(
-              child: Icon(
-                item.icon,
-                color: isParentActive ? Colors.white : Colors.white70,
-              ),
-            ),
-          ),
-          onSelected: (path) {
-            if (path.isNotEmpty) {
-              context.go(path);
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(l10n.comingSoon)),
-              );
-            }
-          },
-          itemBuilder: (context) => item.subItems!.map((subItem) {
-            final isChildActive = subItem.path != null && GoRouterState.of(context).uri.path == subItem.path;
-            return PopupMenuItem<String>(
-              value: subItem.path ?? '',
-              child: Row(
-                children: [
-                  Icon(subItem.icon, color: isChildActive ? Colors.white : Colors.white70, size: 20),
-                  const SizedBox(width: 12),
-                  Text(
-                    subItem.labelBuilder(l10n),
-                    style: TextStyle(
-                      color: isChildActive ? Colors.white : Colors.white70,
-                      fontWeight: isChildActive ? FontWeight.bold : FontWeight.normal,
-                    ),
+      // Collapsed: Show CupertinoActionSheet popup on tap
+      final isParentActive = _isRouteActive(context, item);
+      return GestureDetector(
+        onTap: () {
+          showCupertinoModalPopup(
+            context: context,
+            builder: (context) => CupertinoActionSheet(
+              title: Text(parentLabel),
+              actions: item.subItems!.map((subItem) {
+                return CupertinoActionSheetAction(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(subItem.icon, color: CupertinoColors.activeBlue, size: 20),
+                      const SizedBox(width: 12),
+                      Text(subItem.labelBuilder(l10n)),
+                    ],
                   ),
-                ],
+                  onPressed: () {
+                    Navigator.pop(context);
+                    if (subItem.path != null) {
+                      context.go(subItem.path!);
+                    }
+                  },
+                );
+              }).toList(),
+              cancelButton: CupertinoActionSheetAction(
+                isDefaultAction: true,
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Batal'),
               ),
-            );
-          }).toList(),
+            ),
+          );
+        },
+        child: Container(
+          height: 48,
+          width: 70,
+          margin: const EdgeInsets.symmetric(vertical: 2),
+          decoration: BoxDecoration(
+            color: isParentActive ? CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.12) : CupertinoColors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Center(
+            child: Icon(
+              item.icon,
+              color: isParentActive ? CupertinoColors.activeBlue.resolveFrom(context) : CupertinoColors.secondaryLabel.resolveFrom(context),
+            ),
+          ),
         ),
       );
     } else {
-      // Expanded: Show accordion-style ExpansionTile
-      final isExpanded = expandedIndex == index;
-      return Theme(
-        key: ValueKey('${item.labelBuilder(l10n)}_expanded'),
-        data: Theme.of(context).copyWith(
-          dividerColor: Colors.transparent,
-          hoverColor: Colors.white12,
-        ),
-        child: ExpansionTile(
-          key: Key('${item.labelBuilder(l10n)}_$isExpanded'),
-          shape: const Border(),
-          collapsedShape: const Border(),
-          iconColor: Colors.white,
-          collapsedIconColor: Colors.white70,
-          initiallyExpanded: isExpanded,
-          onExpansionChanged: (expanded) {
-            if (expanded) {
-              ref.read(expandedMenuIndexProvider.notifier).state = index;
-            } else {
-              if (ref.read(expandedMenuIndexProvider) == index) {
-                ref.read(expandedMenuIndexProvider.notifier).state = -1; // Explicitly collapsed
-              }
-            }
-          },
-          title: Text(
-            parentLabel,
-            style: TextStyle(
-              color: isParentActive ? Colors.white : Colors.white70,
-              fontSize: 14,
-              fontWeight: isParentActive ? FontWeight.bold : FontWeight.w500,
-            ),
-          ),
-          leading: SizedBox(
-            width: 40,
-            child: Icon(
-              item.icon,
-              color: isParentActive ? Colors.white : Colors.white70,
-            ),
-          ),
-          childrenPadding: const EdgeInsets.only(left: 16),
-          children: item.subItems!.map((subItem) {
-            final isChildActive = subItem.path != null && GoRouterState.of(context).uri.path == subItem.path;
-            return _SidebarItem(
-              icon: subItem.icon,
-              label: subItem.labelBuilder(l10n),
-              isCollapsed: false,
-              isActive: isChildActive,
-              indentation: 24,
-              onTap: () {
-                if (subItem.path != null) {
-                  context.go(subItem.path!);
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(l10n.comingSoon)),
-                  );
-                }
-              },
-            );
-          }).toList(),
-        ),
+      // Expanded: Custom Cupertino Accordion UI
+      return _SubMenuAccordion(
+        item: item,
+        isCollapsed: isCollapsed,
+        index: index,
+        expandedIndex: expandedIndex,
+        ref: ref,
+        isRouteActive: (itm) => _isRouteActive(context, itm),
+        parentLabel: parentLabel,
+        unreadCount: unreadCount,
       );
     }
   }
 
   Widget _buildHeader(BuildContext context, WidgetRef ref, bool isCollapsed) {
-    return SizedBox(
-      height: 100,
+    final themeMode = ref.watch(themeModeProvider);
+    return Container(
+      height: 80,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      alignment: Alignment.center,
       child: Row(
+        mainAxisAlignment: isCollapsed ? MainAxisAlignment.center : MainAxisAlignment.spaceBetween,
         children: [
           if (!isCollapsed)
             Expanded(
-              child: const Padding(
-                padding: EdgeInsets.only(left: 20),
-                child: Text(
-                  'MAXMAR\nWAREHOUSE',
-                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                  maxLines: 2,
-                  overflow: TextOverflow.fade,
-                  softWrap: false,
+              child: Text(
+                'MAXMAR\nWAREHOUSE',
+                style: TextStyle(
+                  color: CupertinoColors.label.resolveFrom(context),
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.fade,
+                softWrap: false,
               ),
             ),
-          SizedBox(
-            width: 70,
-            child: Center(
-              child: IconButton(
-                icon: const Icon(Icons.menu, color: Colors.white, size: 24),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!isCollapsed) ...[
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  minSize: 32,
+                  child: Icon(
+                    themeMode == ThemeModeState.dark 
+                        ? CupertinoIcons.sun_max_fill 
+                        : CupertinoIcons.moon_fill,
+                    color: CupertinoColors.activeBlue,
+                    size: 20,
+                  ),
+                  onPressed: () {
+                    ref.read(themeModeProvider.notifier).toggleTheme();
+                  },
+                ),
+                const SizedBox(width: 8),
+              ],
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minSize: 32,
+                child: Icon(
+                  isCollapsed ? CupertinoIcons.sidebar_right : CupertinoIcons.sidebar_left,
+                  color: CupertinoColors.activeBlue,
+                  size: 22,
+                ),
                 onPressed: () {
                   ref.read(sidebarCollapsedProvider.notifier).state = !isCollapsed;
                 },
               ),
-            ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget? _buildBottomNav(BuildContext context, List<NavItemConfig> navItems, int unreadCount) {
+  Widget _buildBottomNav(BuildContext context, List<NavItemConfig> navItems, int unreadCount) {
     final l10n = AppLocalizations.of(context)!;
-    // Flatten children for mobile bottom navigation (showing first 5 active routes, excluding placeholders)
+    // Flatten children for mobile bottom navigation (showing first 5 active routes)
     final List<NavItemConfig> flatItems = [];
     for (var item in navItems) {
       if (item.subItems != null) {
@@ -385,14 +400,13 @@ class _MainShellState extends ConsumerState<MainShell> {
 
     final displayItems = flatItems.take(5).toList();
     if (displayItems.length < 2) {
-      return null; // Return null to prevent BottomNavigationBar assertion crash when items < 2
+      return const SizedBox.shrink(); 
     }
     final selectedIndex = _calculateSelectedIndex(context, displayItems);
 
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: Colors.blue[900],
-      unselectedItemColor: Colors.grey,
+    return CupertinoTabBar(
+      activeColor: CupertinoColors.activeBlue,
+      inactiveColor: CupertinoColors.inactiveGray,
       currentIndex: selectedIndex,
       onTap: (index) => context.go(displayItems[index].path!),
       items: displayItems.map((item) {
@@ -408,10 +422,7 @@ class _MainShellState extends ConsumerState<MainShell> {
 
         return BottomNavigationBarItem(
           icon: isNotifications && unreadCount > 0
-              ? Badge(
-                  label: Text('$unreadCount'),
-                  child: Icon(item.icon),
-                )
+              ? _BadgeIcon(icon: item.icon, count: unreadCount)
               : Icon(item.icon),
           label: shortLabel,
         );
@@ -433,7 +444,7 @@ class _MainShellState extends ConsumerState<MainShell> {
   }
 }
 
-class _SidebarItem extends StatelessWidget {
+class _SidebarItem extends StatefulWidget {
   final IconData icon;
   final String label;
   final bool isCollapsed;
@@ -453,71 +464,255 @@ class _SidebarItem extends StatelessWidget {
   });
 
   @override
+  State<_SidebarItem> createState() => _SidebarItemState();
+}
+
+class _SidebarItemState extends State<_SidebarItem> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Material(
-      color: isActive ? Colors.white10 : Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        hoverColor: Colors.white12,
-        child: Stack(
-          children: [
-            Container(
-              constraints: const BoxConstraints(minHeight: 48),
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                children: [
-                  SizedBox(width: indentation),
-                  SizedBox(
-                    width: 70 - indentation,
-                    child: Center(
-                      child: badgeCount > 0
-                          ? Badge(
-                              label: Text('$badgeCount'),
-                              child: Icon(
-                                icon,
-                                color: isActive ? Colors.white : Colors.white70,
-                              ),
-                            )
-                          : Icon(
-                              icon,
-                              color: isActive ? Colors.white : Colors.white70,
-                            ),
+    final activeBg = CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.12);
+    final hoverBg = CupertinoColors.inactiveGray.resolveFrom(context).withValues(alpha: 0.08);
+    final bg = widget.isActive 
+        ? activeBg 
+        : (_isHovered ? hoverBg : CupertinoColors.transparent);
+
+    final textColor = widget.isActive 
+        ? CupertinoColors.activeBlue.resolveFrom(context) 
+        : CupertinoColors.label.resolveFrom(context);
+
+    final iconColor = widget.isActive 
+        ? CupertinoColors.activeBlue.resolveFrom(context) 
+        : CupertinoColors.secondaryLabel.resolveFrom(context);
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+          constraints: const BoxConstraints(minHeight: 40),
+          child: Row(
+            children: [
+              SizedBox(width: widget.indentation),
+              Icon(widget.icon, color: iconColor, size: 20),
+              if (!widget.isCollapsed) ...[
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    widget.label,
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 14,
+                      fontWeight: widget.isActive ? FontWeight.w600 : widget.isActive ? FontWeight.bold : FontWeight.w500,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  if (!isCollapsed)
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: Text(
-                          label,
-                          style: TextStyle(
-                            color: isActive ? Colors.white : Colors.white70,
-                            fontSize: 14,
-                            fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: true,
-                        ),
+                ),
+                if (widget.badgeCount > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.systemRed,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${widget.badgeCount}',
+                      style: const TextStyle(
+                        color: CupertinoColors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                ],
-              ),
-            ),
-            if (isActive)
-              Positioned(
-                left: 0,
-                top: 0,
-                bottom: 0,
-                width: 4,
-                child: Container(
-                  color: Colors.white,
-                ),
-              ),
-          ],
+                  ),
+              ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
+class _SubMenuAccordion extends StatefulWidget {
+  final NavItemConfig item;
+  final bool isCollapsed;
+  final int index;
+  final int? expandedIndex;
+  final WidgetRef ref;
+  final bool Function(NavItemConfig) isRouteActive;
+  final String parentLabel;
+  final int unreadCount;
+
+  const _SubMenuAccordion({
+    required this.item,
+    required this.isCollapsed,
+    required this.index,
+    required this.expandedIndex,
+    required this.ref,
+    required this.isRouteActive,
+    required this.parentLabel,
+    required this.unreadCount,
+  });
+
+  @override
+  State<_SubMenuAccordion> createState() => _SubMenuAccordionState();
+}
+
+class _SubMenuAccordionState extends State<_SubMenuAccordion> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isExpanded = widget.expandedIndex == widget.index;
+    final isParentActive = widget.isRouteActive(widget.item);
+
+    final activeBg = CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.06);
+    final hoverBg = CupertinoColors.inactiveGray.resolveFrom(context).withValues(alpha: 0.04);
+    final bg = isParentActive 
+        ? activeBg 
+        : (_isHovered ? hoverBg : CupertinoColors.transparent);
+
+    final textColor = isParentActive 
+        ? CupertinoColors.activeBlue.resolveFrom(context) 
+        : CupertinoColors.label.resolveFrom(context);
+
+    final iconColor = isParentActive 
+        ? CupertinoColors.activeBlue.resolveFrom(context) 
+        : CupertinoColors.secondaryLabel.resolveFrom(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        MouseRegion(
+          onEnter: (_) => setState(() => _isHovered = true),
+          onExit: (_) => setState(() => _isHovered = false),
+          child: GestureDetector(
+            onTap: () {
+              if (isExpanded) {
+                widget.ref.read(expandedMenuIndexProvider.notifier).state = -1;
+              } else {
+                widget.ref.read(expandedMenuIndexProvider.notifier).state = widget.index;
+              }
+            },
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              decoration: BoxDecoration(
+                color: bg,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              constraints: const BoxConstraints(minHeight: 40),
+              child: Row(
+                children: [
+                  Icon(widget.item.icon, color: iconColor, size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      widget.parentLabel,
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: 14,
+                        fontWeight: isParentActive ? FontWeight.w600 : FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Icon(
+                    isExpanded ? CupertinoIcons.chevron_down : CupertinoIcons.chevron_right,
+                    color: CupertinoColors.tertiaryLabel,
+                    size: 14,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (isExpanded)
+          ...widget.item.subItems!.map((subItem) {
+            final isChildActive = subItem.path != null && 
+                GoRouterState.of(context).uri.path == subItem.path;
+            final l10n = AppLocalizations.of(context)!;
+            return _SidebarItem(
+              icon: subItem.icon,
+              label: subItem.labelBuilder(l10n),
+              isCollapsed: false,
+              isActive: isChildActive,
+              indentation: 16,
+              onTap: () {
+                if (subItem.path != null) {
+                  context.go(subItem.path!);
+                } else {
+                  showCupertinoDialog(
+                    context: context,
+                    builder: (context) => CupertinoAlertDialog(
+                      title: const Text('Coming Soon'),
+                      content: Text(l10n.comingSoon),
+                      actions: [
+                        CupertinoDialogAction(
+                          child: const Text('OK'),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+              },
+            );
+          }),
+      ],
+    );
+  }
+}
+
+class _BadgeIcon extends StatelessWidget {
+  final IconData icon;
+  final int count;
+
+  const _BadgeIcon({required this.icon, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Icon(icon),
+        Positioned(
+          right: -6,
+          top: -3,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+            decoration: BoxDecoration(
+              color: CupertinoColors.systemRed,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            constraints: const BoxConstraints(
+              minWidth: 14,
+              minHeight: 14,
+            ),
+            child: Text(
+              '$count',
+              style: const TextStyle(
+                color: CupertinoColors.white,
+                fontSize: 8,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

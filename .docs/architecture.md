@@ -38,6 +38,12 @@ We use `responsive_framework` with standard breakpoints:
 - **Mobile**: Bottom Navigation + Single Column
 - **Desktop/Web**: Sidebar Navigation + Multi-column layouts
 
+## UI & Theme Architecture
+The application UI utilizes the iOS/Cupertino widget system:
+- **Cupertino Foundation**: Swapped root `MaterialApp` with `CupertinoApp` and implemented dedicated `CupertinoThemeData` for styling.
+- **Dynamic Light/Dark Mode**: Built a Riverpod provider (`themeModeProvider` in `lib/core/providers/theme_provider.dart`) to manage global theme states (`light`, `dark`, `system`).
+- **Dynamic Color Resolution**: Dynamic semantic Cupertino colors (such as `CupertinoColors.label`, `CupertinoColors.secondarySystemGroupedBackground`, `CupertinoColors.separator`) are dynamically resolved using `.resolveFrom(context)` to adapt seamlessly to theme brightness toggles.
+
 ## Dynamic Navigation & Role-Based Access Control (RBAC)
 We employ a centralized navigation configuration defined in [menu_items.dart](file:///C:/Projects/flutter_warehouse/lib/core/config/menu_items.dart) that acts as the single source of truth for both the Sidebar and the Dashboard Grid:
 - **RBAC Model**: Extends the `User` model with `roles` and `permissions` matching Spatie / Filament Shield schemas.

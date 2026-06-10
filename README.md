@@ -15,6 +15,7 @@ Detailed documentation is available in the [`.docs`](./.docs) folder:
 - [API Integration](./.docs/api_integration.md)
 - [Printing](./.docs/printing.md)
 - [Auto-Update System](./.docs/update_system.md)
+- [Cupertino UI Migration](./.docs/cupertino_migration.md)
 - [Getting Started](./.docs/getting_started.md)
 
 ## 🛠 Tech Stack

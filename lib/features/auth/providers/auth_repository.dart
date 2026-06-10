@@ -35,7 +35,31 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
     } catch (e) {
-      return AuthState.unauthenticated(message: e.toString());
+      if (e is DioException) {
+        final response = e.response;
+        if (response != null && response.data is Map) {
+          final errorData = response.data['error'];
+          if (errorData != null && errorData['message'] != null) {
+            final msg = errorData['message'].toString();
+            if (msg == 'Email atau password salah') {
+              return const AuthState.unauthenticated(message: 'Username atau password salah');
+            }
+            return AuthState.unauthenticated(message: msg);
+          }
+        }
+        if (e.response?.statusCode == 401) {
+          return const AuthState.unauthenticated(message: 'Username atau password salah');
+        }
+        if (e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.sendTimeout ||
+            e.type == DioExceptionType.connectionError) {
+          return const AuthState.unauthenticated(
+            message: 'Koneksi internet bermasalah. Silakan periksa koneksi Anda.',
+          );
+        }
+      }
+      return AuthState.unauthenticated(message: 'Gagal masuk: ${e.toString()}');
     }
   }
 

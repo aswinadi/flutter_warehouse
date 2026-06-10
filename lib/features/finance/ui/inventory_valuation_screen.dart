@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -256,15 +257,16 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
 
                     return Card(
                       margin: EdgeInsets.zero,
-                      shape: isSelected
-                          ? RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              side: const BorderSide(color: Color(0xFF6E56CF), width: 2),
-                            )
-                          : RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                      color: isSelected ? const Color(0xFF1E293B) : null,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
+                          color: isSelected ? const Color(0xFF6E56CF) : CupertinoColors.separator.resolveFrom(context),
+                          width: isSelected ? 2 : 0.5,
+                        ),
+                      ),
+                      color: isSelected 
+                          ? const Color(0xFF6E56CF).withValues(alpha: 0.08) 
+                          : CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
                       child: ListTile(
                         onTap: () {
                           if (isLargeScreen) {
@@ -280,7 +282,7 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
                           item.productName,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: isSelected ? Colors.white : null,
+                            color: CupertinoColors.label.resolveFrom(context),
                           ),
                         ),
                         subtitle: Padding(
@@ -290,12 +292,12 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
                             children: [
                               Text(
                                 'SKU: ${item.sku}',
-                                style: TextStyle(color: isSelected ? Colors.white70 : Colors.grey[600]),
+                                style: TextStyle(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 'HPP: ${_formatCurrency(item.hpp)}',
-                                style: TextStyle(color: isSelected ? Colors.white70 : Colors.grey[600]),
+                                style: TextStyle(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                               ),
                             ],
                           ),
@@ -306,10 +308,10 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
                           children: [
                             Text(
                               _formatCurrency(item.totalValuation),
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                color: isSelected ? const Color(0xFF38BDF8) : const Color(0xFF4F46E5),
+                                color: Color(0xFF6E56CF),
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -317,7 +319,7 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
                               '${_formatQty(item.quantity)} ${item.productUnit}',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: isSelected ? Colors.white30 : Colors.grey[500],
+                                color: CupertinoColors.secondaryLabel.resolveFrom(context),
                               ),
                             ),
                           ],
@@ -337,8 +339,8 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0F172A), // Navy Slate
-        foregroundColor: Colors.white,
+        backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
+        foregroundColor: CupertinoColors.label.resolveFrom(context),
         title: const Text('Valuasi Inventaris'),
         actions: [
           IconButton(
@@ -369,18 +371,18 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
                 Expanded(
                   flex: 2,
                   child: Container(
-                    color: const Color(0xFF0F172A),
+                    color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
                     child: _selectedSku != null && _selectedItem != null
                         ? ValuationDetailPane(item: _selectedItem!)
-                        : const Center(
+                        : Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.analytics_outlined, size: 48, color: Colors.white24),
-                                SizedBox(height: 16),
+                                Icon(Icons.analytics_outlined, size: 48, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                                const SizedBox(height: 16),
                                 Text(
                                   'Pilih barang untuk melihat rincian valuasi',
-                                  style: TextStyle(color: Colors.white38, fontSize: 14),
+                                  style: TextStyle(color: CupertinoColors.secondaryLabel.resolveFrom(context), fontSize: 14),
                                 ),
                               ],
                             ),
@@ -397,7 +399,7 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -413,7 +415,7 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.white24,
+                    color: CupertinoColors.separator.resolveFrom(context),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -423,22 +425,22 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Rincian Valuasi Barang',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: CupertinoColors.label.resolveFrom(context),
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white70),
+                      icon: Icon(Icons.close, color: CupertinoColors.label.resolveFrom(context)),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
                 ),
               ),
-              const Divider(color: Colors.white10),
+              Divider(color: CupertinoColors.separator.resolveFrom(context)),
               Expanded(
                 child: ValuationDetailPane(item: item),
               ),
@@ -477,15 +479,15 @@ class ValuationDetailPane extends ConsumerWidget {
       children: [
         Container(
           width: double.infinity,
-          color: const Color(0xFF1E293B),
+          color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 item.productName,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: CupertinoColors.label.resolveFrom(context),
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -493,8 +495,8 @@ class ValuationDetailPane extends ConsumerWidget {
               const SizedBox(height: 8),
               Text(
                 'SKU: ${item.sku}',
-                style: const TextStyle(
-                  color: Colors.white70,
+                style: TextStyle(
+                  color: CupertinoColors.secondaryLabel.resolveFrom(context),
                   fontSize: 14,
                 ),
               ),
@@ -505,28 +507,28 @@ class ValuationDetailPane extends ConsumerWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'TOTAL STOK',
-                        style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: CupertinoColors.secondaryLabel.resolveFrom(context), fontSize: 10, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '${_formatQty(item.quantity)} ${item.productUnit}',
-                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: CupertinoColors.label.resolveFrom(context), fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      const Text(
+                      Text(
                         'TOTAL VALUE',
-                        style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: CupertinoColors.secondaryLabel.resolveFrom(context), fontSize: 10, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         _formatCurrency(item.totalValuation),
-                        style: const TextStyle(color: Color(0xFF38BDF8), fontSize: 18, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: Color(0xFF6E56CF), fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -539,10 +541,10 @@ class ValuationDetailPane extends ConsumerWidget {
           child: breakdownAsync.when(
             data: (breakdowns) {
               if (breakdowns.isEmpty) {
-                return const Center(
+                return Center(
                   child: Text(
                     'Tidak ada rincian gudang',
-                    style: TextStyle(color: Colors.white38),
+                    style: TextStyle(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                   ),
                 );
               }
@@ -553,8 +555,11 @@ class ValuationDetailPane extends ConsumerWidget {
                 itemBuilder: (context, index) {
                   final bd = breakdowns[index];
                   return Card(
-                    color: const Color(0xFF1E293B),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    color: CupertinoColors.systemBackground.resolveFrom(context),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
+                    ),
                     margin: const EdgeInsets.only(bottom: 12),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -566,8 +571,8 @@ class ValuationDetailPane extends ConsumerWidget {
                             children: [
                               Text(
                                 bd.warehouseName,
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: CupertinoColors.label.resolveFrom(context),
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
                                 ),
@@ -575,7 +580,7 @@ class ValuationDetailPane extends ConsumerWidget {
                               Text(
                                 _formatCurrency(bd.totalValuation),
                                 style: const TextStyle(
-                                  color: Color(0xFF38BDF8),
+                                  color: Color(0xFF6E56CF),
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -587,15 +592,15 @@ class ValuationDetailPane extends ConsumerWidget {
                             children: [
                               Text(
                                 'Lokasi: ${bd.locationCode}',
-                                style: const TextStyle(
-                                  color: Colors.white54,
+                                style: TextStyle(
+                                  color: CupertinoColors.secondaryLabel.resolveFrom(context),
                                   fontSize: 12,
                                 ),
                               ),
                               Text(
                                 '${_formatQty(bd.quantity)} ${item.productUnit}',
-                                style: const TextStyle(
-                                  color: Colors.white70,
+                                style: TextStyle(
+                                  color: CupertinoColors.label.resolveFrom(context),
                                   fontSize: 12,
                                 ),
                               ),
@@ -612,7 +617,7 @@ class ValuationDetailPane extends ConsumerWidget {
             error: (err, stack) => Center(
               child: Text(
                 'Gagal memuat rincian: $err',
-                style: const TextStyle(color: Colors.white38),
+                style: TextStyle(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
               ),
             ),
           ),

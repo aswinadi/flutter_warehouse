@@ -29,6 +29,11 @@ import '../../features/purchase_order/ui/po_approval_screen.dart';
 import '../../features/notifications/ui/notification_inbox_screen.dart';
 import '../widgets/pdf_preview_screen.dart';
 import '../../features/finance/ui/inventory_valuation_screen.dart';
+import '../../features/finance/ui/invoice_biaya_list_screen.dart';
+import '../../features/finance/ui/invoice_biaya_detail_screen.dart';
+import '../../features/finance/ui/invoice_biaya_form_screen.dart';
+import '../../features/payment_request/ui/payment_request_list_screen.dart';
+import '../../features/payment_request/ui/payment_request_detail_screen.dart';
 import '../../features/inventory/ui/asset_list_screen.dart';
 import '../../features/inventory/ui/asset_detail_screen.dart';
 import '../../features/inventory/ui/add_asset_screen.dart';
@@ -200,6 +205,43 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/purchase-invoices',
             builder: (context, state) => const InvoiceListScreen(),
+          ),
+          GoRoute(
+            path: '/invoice-biaya',
+            builder: (context, state) => const InvoiceBiayaListScreen(),
+            routes: [
+              GoRoute(
+                path: 'create',
+                builder: (context, state) => const InvoiceBiayaFormScreen(),
+              ),
+              GoRoute(
+                path: ':id',
+                builder: (context, state) {
+                  final id = int.parse(state.pathParameters['id']!);
+                  return InvoiceBiayaDetailScreen(invoiceId: id);
+                },
+              ),
+              GoRoute(
+                path: ':id/edit',
+                builder: (context, state) {
+                  final id = int.parse(state.pathParameters['id']!);
+                  return InvoiceBiayaFormScreen(invoiceBiayaId: id);
+                },
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/payment-requests',
+            builder: (context, state) => const PaymentRequestListScreen(),
+            routes: [
+              GoRoute(
+                path: ':id',
+                builder: (context, state) {
+                  final id = int.parse(state.pathParameters['id']!);
+                  return PaymentRequestDetailScreen(prId: id);
+                },
+              ),
+            ],
           ),
           GoRoute(
             path: '/payment-transactions',

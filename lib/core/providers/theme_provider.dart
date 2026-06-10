@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 enum ThemeModeState { light, dark, system }
 
 class ThemeModeNotifier extends StateNotifier<ThemeModeState> {
-  ThemeModeNotifier() : super(ThemeModeState.system);
+  ThemeModeNotifier() : super(ThemeModeState.light);
 
   void toggleTheme() {
     if (state == ThemeModeState.light) {

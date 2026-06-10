@@ -23,6 +23,8 @@ class MainShell extends ConsumerStatefulWidget {
 }
 
 class _MainShellState extends ConsumerState<MainShell> {
+  String? _lastRoute;
+
   @override
   void initState() {
     super.initState();
@@ -34,15 +36,17 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   bool _isRouteActive(BuildContext context, NavItemConfig item) {
     final String location = GoRouterState.of(context).uri.path;
+    bool isPathActive(String path) {
+      if (location == path) return true;
+      if (path == '/') return false;
+      return location.startsWith('$path/');
+    }
+
     if (item.path != null) {
-      return location == item.path || (item.path != '/' && location.startsWith(item.path!));
+      return isPathActive(item.path!);
     }
     if (item.subItems != null) {
-      return item.subItems!.any((sub) {
-        final path = sub.path;
-        if (path == null) return false;
-        return location == path || (path != '/' && location.startsWith(path));
-      });
+      return item.subItems!.any((sub) => sub.path != null && isPathActive(sub.path!));
     }
     return false;
   }
@@ -100,10 +104,12 @@ class _MainShellState extends ConsumerState<MainShell> {
         item.subItems != null && item.subItems!.isNotEmpty && _isRouteActive(context, item));
 
     final expandedIndex = ref.watch(expandedMenuIndexProvider);
-    final lastActiveParent = ref.watch(lastActiveParentIndexProvider);
 
-    // Auto-update expanded state when active parent index changes (e.g. on navigation)
-    if (activeParentIndex != lastActiveParent) {
+    final String location = GoRouterState.of(context).uri.path;
+
+    // Auto-update expanded state when route changes (e.g. on navigation)
+    if (_lastRoute != location) {
+      _lastRoute = location;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         ref.read(lastActiveParentIndexProvider.notifier).state = activeParentIndex;
@@ -404,29 +410,32 @@ class _MainShellState extends ConsumerState<MainShell> {
     }
     final selectedIndex = _calculateSelectedIndex(context, displayItems);
 
-    return CupertinoTabBar(
-      activeColor: CupertinoColors.activeBlue,
-      inactiveColor: CupertinoColors.inactiveGray,
-      currentIndex: selectedIndex,
-      onTap: (index) => context.go(displayItems[index].path!),
-      items: displayItems.map((item) {
-        final label = item.labelBuilder(l10n);
-        final shortLabel = (label == 'Purchase Request' || label == 'Permintaan Pembelian (PR)') ? 'PR' :
-                           (label == 'Vendor Comparison' || label == 'Perbandingan Vendor') ? 'Vendor' :
-                           (label == 'Packing list' || label == 'Packing List' || label == 'Daftar Packing') ? 'Packing' :
-                           (label == 'Penerimaan Barang' || label == 'Receiving') ? 'Terima' :
-                           (label == 'Kirim ke Cabang' || label == 'Send to Branch') ? 'Kirim' :
-                           (label == 'Terima dari Cabang' || label == 'Receive from Branch') ? 'Terima' : label;
+    return SafeArea(
+      top: false,
+      child: CupertinoTabBar(
+        activeColor: CupertinoColors.activeBlue,
+        inactiveColor: CupertinoColors.inactiveGray,
+        currentIndex: selectedIndex,
+        onTap: (index) => context.go(displayItems[index].path!),
+        items: displayItems.map((item) {
+          final label = item.labelBuilder(l10n);
+          final shortLabel = (label == 'Purchase Request' || label == 'Permintaan Pembelian (PR)') ? 'PR' :
+                             (label == 'Vendor Comparison' || label == 'Perbandingan Vendor') ? 'Vendor' :
+                             (label == 'Packing list' || label == 'Packing List' || label == 'Daftar Packing') ? 'Packing' :
+                             (label == 'Penerimaan Barang' || label == 'Receiving') ? 'Terima' :
+                             (label == 'Kirim ke Cabang' || label == 'Send to Branch') ? 'Kirim' :
+                             (label == 'Terima dari Cabang' || label == 'Receive from Branch') ? 'Terima' : label;
 
-        final isNotifications = item.path == '/notifications';
+          final isNotifications = item.path == '/notifications';
 
-        return BottomNavigationBarItem(
-          icon: isNotifications && unreadCount > 0
-              ? _BadgeIcon(icon: item.icon, count: unreadCount)
-              : Icon(item.icon),
-          label: shortLabel,
-        );
-      }).toList(),
+          return BottomNavigationBarItem(
+            icon: isNotifications && unreadCount > 0
+                ? _BadgeIcon(icon: item.icon, count: unreadCount)
+                : Icon(item.icon),
+            label: shortLabel,
+          );
+        }).toList(),
+      ),
     );
   }
 

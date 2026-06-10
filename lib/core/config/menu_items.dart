@@ -136,8 +136,20 @@ final List<NavItemConfig> menuConfig = [
     subItems: [
       NavItemConfig(
         icon: CupertinoIcons.doc_text,
-        labelBuilder: (l10n) => 'Purchase Invoice',
+        labelBuilder: (l10n) => 'Purchase Invoice (Faktur)',
         path: '/purchase-invoices',
+        requiredPermissions: ['view_payments'],
+      ),
+      NavItemConfig(
+        icon: CupertinoIcons.doc_text_viewfinder,
+        labelBuilder: (l10n) => 'Invoice Biaya',
+        path: '/invoice-biaya',
+        requiredPermissions: ['view_payments'],
+      ),
+      NavItemConfig(
+        icon: CupertinoIcons.paperplane,
+        labelBuilder: (l10n) => 'Permintaan Pembayaran',
+        path: '/payment-requests',
         requiredPermissions: ['view_payments'],
       ),
       NavItemConfig(

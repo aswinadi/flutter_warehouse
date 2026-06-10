@@ -21,14 +21,14 @@ class ApprovalsScreen extends ConsumerWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Workspace Persetujuan'),
-          backgroundColor: const Color(0xFF0F172A),
-          foregroundColor: Colors.white,
-          bottom: const TabBar(
+          backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
+          foregroundColor: CupertinoColors.label.resolveFrom(context),
+          bottom: TabBar(
             isScrollable: true,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            indicatorColor: Colors.white,
-            tabs: [
+            labelColor: const Color(0xFF6E56CF),
+            unselectedLabelColor: CupertinoColors.secondaryLabel.resolveFrom(context),
+            indicatorColor: const Color(0xFF6E56CF),
+            tabs: const [
               Tab(text: 'Qty PR'),
               Tab(text: 'Vendor PR'),
               Tab(text: 'Invoice'),
@@ -317,65 +317,68 @@ class _PrQtyApprovalListState extends ConsumerState<_PrQtyApprovalList> {
   }
 
   Widget _buildBottomActionSheet(List<PurchaseRequestItem> allItems) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: const Border(top: BorderSide(color: Color(0xFFE2E8F0), width: 1.0)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _notesController,
-            decoration: InputDecoration(
-              labelText: 'Catatan Persetujuan (Opsional)',
-              labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
-              fillColor: const Color(0xFFF8FAFC),
-              filled: true,
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFF6E56CF), width: 2.0),
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: const Border(top: BorderSide(color: Color(0xFFE2E8F0), width: 1.0)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, -4),
             ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _isSubmitting ? null : () => _submitBatchApproval(allItems),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6E56CF),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _notesController,
+              decoration: InputDecoration(
+                labelText: 'Catatan Persetujuan (Opsional)',
+                labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                fillColor: const Color(0xFFF8FAFC),
+                filled: true,
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFF6E56CF), width: 2.0),
+                ),
+                border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: _isSubmitting
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                    )
-                  : Text('SETUJUI SELEKSI (${_selectedItemIds.length} BARANG)'),
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _isSubmitting ? null : () => _submitBatchApproval(allItems),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6E56CF),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: _isSubmitting
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
+                    : Text('SETUJUI SELEKSI (${_selectedItemIds.length} BARANG)'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

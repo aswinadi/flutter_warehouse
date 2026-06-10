@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/notification_model.dart';
 import 'notification_repository.dart';
@@ -100,7 +101,15 @@ class UnreadNotificationCount extends _$UnreadNotificationCount {
   Future<int> build() async {
     ref.watch(notificationRepositoryProvider);
     final repository = ref.read(notificationRepositoryProvider);
-    return repository.getUnreadCount();
+    try {
+      return await repository.getUnreadCount();
+    } on DioException catch (e) {
+      // Silently return 0 if unauthorized (e.g. token not yet ready)
+      if (e.response?.statusCode == 401) return 0;
+      rethrow;
+    } catch (_) {
+      return 0;
+    }
   }
 
   Future<void> refreshCount() async {
@@ -109,8 +118,15 @@ class UnreadNotificationCount extends _$UnreadNotificationCount {
       final repository = ref.read(notificationRepositoryProvider);
       final count = await repository.getUnreadCount();
       state = AsyncValue.data(count);
-    } catch (err, stack) {
-      state = AsyncValue.error(err, stack);
+    } on DioException catch (e) {
+      // Silently reset to 0 on auth errors
+      if (e.response?.statusCode == 401) {
+        state = const AsyncValue.data(0);
+      } else {
+        state = AsyncValue.error(e, StackTrace.current);
+      }
+    } catch (_) {
+      state = const AsyncValue.data(0);
     }
   }
 }

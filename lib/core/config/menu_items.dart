@@ -51,18 +51,6 @@ final List<NavItemConfig> menuConfig = [
         requiredPermissions: ['view_pr'],
       ),
       NavItemConfig(
-        icon: Icons.assignment_turned_in,
-        labelBuilder: (l10n) => l10n.prTracking,
-        path: null, // Placeholder
-        requiredPermissions: ['view_pr'],
-      ),
-      NavItemConfig(
-        icon: Icons.compare_arrows,
-        labelBuilder: (l10n) => l10n.vendorComparison,
-        path: null, // Placeholder
-        requiredPermissions: ['approve_pr'],
-      ),
-      NavItemConfig(
         icon: Icons.receipt_long,
         labelBuilder: (l10n) => l10n.purchaseOrders,
         path: '/po',

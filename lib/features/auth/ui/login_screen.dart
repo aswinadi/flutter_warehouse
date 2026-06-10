@@ -132,7 +132,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         )
                       : const Text('MASUK'),
                 ),
-                if (authState.hasValue)
+                if (authState.hasError)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Text(
+                      'Sesi kadaluarsa, silakan login kembali.',
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                  )
+                else if (authState.hasValue)
                   authState.value!.when(
                     authenticated: (user, token) => const Padding(
                       padding: EdgeInsets.only(top: 16),

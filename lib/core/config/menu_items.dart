@@ -147,7 +147,7 @@ final List<NavItemConfig> menuConfig = [
         requiredPermissions: ['view_payments'],
       ),
       NavItemConfig(
-        icon: Icons.analytics,
+        icon: CupertinoIcons.chart_bar_square,
         labelBuilder: (l10n) => 'Valuasi Inventaris',
         path: '/inventory-valuation',
         requiredPermissions: ['view_payments'],

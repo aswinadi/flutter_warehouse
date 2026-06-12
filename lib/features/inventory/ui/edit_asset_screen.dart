@@ -8,6 +8,7 @@ import '../models/asset.dart';
 import '../providers/asset_repository.dart';
 import '../../../core/providers/company_provider.dart';
 import '../../../core/models/company.dart';
+import '../../../core/config/app_config.dart';
 import '../../purchase_request/models/supplier.dart';
 
 class EditAssetScreen extends ConsumerStatefulWidget {

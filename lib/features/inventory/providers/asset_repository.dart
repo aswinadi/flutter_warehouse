@@ -75,6 +75,36 @@ class AssetRepository {
     return Asset.fromJson(response.data['data']);
   }
 
+  Future<Asset> updateAsset(int id, Map<String, dynamic> data, {XFile? photoFile}) async {
+    final formData = FormData();
+    
+    // Add text fields
+    data.forEach((key, value) {
+      if (value != null) {
+        formData.fields.add(MapEntry(key, value.toString()));
+      }
+    });
+
+    // Add photo if provided
+    if (photoFile != null) {
+      formData.files.add(MapEntry(
+        'files[]',
+        await MultipartFile.fromFile(photoFile.path, filename: photoFile.name),
+      ));
+    }
+
+    final response = await dio.post(
+      'wh/assets/$id',
+      data: formData,
+      options: Options(
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      ),
+    );
+    return Asset.fromJson(response.data['data']);
+  }
+
   Future<List<AssetOffice>> getOffices({int? companyId}) async {
     final response = await dio.get('wh/offices', queryParameters: {
       if (companyId != null) 'company_id': companyId,

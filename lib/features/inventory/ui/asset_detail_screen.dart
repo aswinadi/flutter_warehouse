@@ -139,8 +139,8 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
                 const SizedBox(height: 16),
               ],
 
-              // Action Print Button
-              _buildPrintActionCard(asset),
+              // Action Buttons (Edit & Print)
+              _buildActionButtons(asset),
               const SizedBox(height: 32),
             ],
           ),
@@ -529,22 +529,45 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
     );
   }
 
-  Widget _buildPrintActionCard(Asset asset) {
-    return SizedBox(
-      width: double.infinity,
-      child: CupertinoButton.filled(
-        onPressed: () {
-          context.push('/pdf-preview?title=Barcode Aset ${Uri.encodeComponent(asset.assetTag)}&url_path=pdf/assets/single/${asset.id}');
-        },
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(CupertinoIcons.qrcode, size: 20),
-            SizedBox(width: 8),
-            Text('Print QR Barcode Label', style: TextStyle(fontWeight: FontWeight.bold)),
-          ],
+  Widget _buildActionButtons(Asset asset) {
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: CupertinoButton(
+            color: const Color(0xFF6E56CF),
+            onPressed: () {
+              context.push('/assets/${asset.id}/edit');
+            },
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.pencil, size: 20, color: CupertinoColors.white),
+                SizedBox(width: 8),
+                Text('Edit Aset Hardware', style: TextStyle(fontWeight: FontWeight.bold, color: CupertinoColors.white)),
+              ],
+            ),
+          ),
         ),
-      ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: CupertinoButton(
+            color: CupertinoColors.activeBlue,
+            onPressed: () {
+              context.push('/pdf-preview?title=Barcode Aset ${Uri.encodeComponent(asset.assetTag)}&url_path=pdf/assets/single/${asset.id}');
+            },
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.qrcode, size: 20, color: CupertinoColors.white),
+                SizedBox(width: 8),
+                Text('Print QR Barcode Label', style: TextStyle(fontWeight: FontWeight.bold, color: CupertinoColors.white)),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 

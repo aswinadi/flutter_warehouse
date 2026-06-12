@@ -40,6 +40,7 @@ import '../../features/payment_request/ui/payment_request_detail_screen.dart';
 import '../../features/inventory/ui/asset_list_screen.dart';
 import '../../features/inventory/ui/asset_detail_screen.dart';
 import '../../features/inventory/ui/add_asset_screen.dart';
+import '../../features/inventory/ui/edit_asset_screen.dart';
 import '../../features/inventory/ui/inventory_adjustment_screen.dart';
 import '../../features/inventory/ui/stock_opname_list_screen.dart';
 import '../../features/inventory/ui/stock_opname_session_screen.dart';
@@ -318,6 +319,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) {
                   final id = int.parse(state.pathParameters['id']!);
                   return AssetDetailScreen(assetId: id);
+                },
+              ),
+              GoRoute(
+                path: ':id/edit',
+                builder: (context, state) {
+                  final id = int.parse(state.pathParameters['id']!);
+                  return EditAssetScreen(assetId: id);
                 },
               ),
             ],

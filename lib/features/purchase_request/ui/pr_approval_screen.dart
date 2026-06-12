@@ -17,7 +17,8 @@ import '../../../core/api/dio_client.dart';
 
 class PRApprovalScreen extends ConsumerWidget {
   final int prId;
-  const PRApprovalScreen({super.key, required this.prId});
+  final bool isEmbedded;
+  const PRApprovalScreen({super.key, required this.prId, this.isEmbedded = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -26,6 +27,7 @@ class PRApprovalScreen extends ConsumerWidget {
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
       navigationBar: CupertinoNavigationBar(
+        automaticallyImplyLeading: !isEmbedded,
         middle: const Text('Detail PR'),
         trailing: prAsync.when(
           data: (pr) => CupertinoButton(
@@ -40,7 +42,7 @@ class PRApprovalScreen extends ConsumerWidget {
         ),
       ),
       child: SafeArea(
-        child: PRDetailsView(prId: prId),
+        child: PRDetailsView(prId: prId, isEmbedded: isEmbedded),
       ),
     );
   }
@@ -48,7 +50,8 @@ class PRApprovalScreen extends ConsumerWidget {
 
 class PRDetailsView extends ConsumerStatefulWidget {
   final int prId;
-  const PRDetailsView({super.key, required this.prId});
+  final bool isEmbedded;
+  const PRDetailsView({super.key, required this.prId, this.isEmbedded = false});
 
   @override
   ConsumerState<PRDetailsView> createState() => _PRDetailsViewState();

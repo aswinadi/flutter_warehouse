@@ -8,7 +8,8 @@ import '../../../core/utils/currency_utils.dart';
 
 class POApprovalScreen extends ConsumerStatefulWidget {
   final int poId;
-  const POApprovalScreen({super.key, required this.poId});
+  final bool isEmbedded;
+  const POApprovalScreen({super.key, required this.poId, this.isEmbedded = false});
 
   @override
   ConsumerState<POApprovalScreen> createState() => _POApprovalScreenState();
@@ -24,7 +25,7 @@ class _POApprovalScreenState extends ConsumerState<POApprovalScreen> {
       ref.invalidate(purchaseOrdersProvider(status: 'submitted'));
       ref.invalidate(purchaseOrderDetailProvider(widget.poId));
       _showNotification('Pesanan Pembelian (PO) Berhasil Disetujui');
-      if (mounted) {
+      if (!widget.isEmbedded && mounted) {
         context.pop();
       }
     } catch (e) {
@@ -86,7 +87,7 @@ class _POApprovalScreenState extends ConsumerState<POApprovalScreen> {
         ref.invalidate(purchaseOrdersProvider(status: 'submitted'));
         ref.invalidate(purchaseOrderDetailProvider(widget.poId));
         _showNotification('Pesanan Pembelian (PO) Telah Ditolak');
-        if (mounted) {
+        if (!widget.isEmbedded && mounted) {
           context.pop();
         }
       } catch (e) {
@@ -192,6 +193,7 @@ class _POApprovalScreenState extends ConsumerState<POApprovalScreen> {
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
       navigationBar: CupertinoNavigationBar(
+        automaticallyImplyLeading: !widget.isEmbedded,
         middle: poAsync.when(
           data: (po) => Text(po.canApprove ? 'Persetujuan PO' : 'Detail PO'),
           loading: () => const Text('Memuat PO...'),

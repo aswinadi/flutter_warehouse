@@ -11,6 +11,11 @@ import '../../../core/utils/currency_utils.dart';
 import '../../purchase_request/models/purchase_request.dart';
 import '../../purchase_request/models/pr_approval.dart';
 import '../../purchase_order/providers/purchase_order_provider.dart';
+import '../../purchase_request/ui/pr_approval_screen.dart';
+import '../../purchase_request/ui/pr_vendor_approval_screen.dart';
+import '../../invoice/ui/invoice_approval_screen.dart';
+import '../../payment_request/ui/payment_request_approval_screen.dart';
+import '../../purchase_order/ui/po_approval_screen.dart';
 
 class CupertinoCheckbox extends StatelessWidget {
   final bool value;
@@ -60,10 +65,65 @@ class ApprovalsScreen extends ConsumerStatefulWidget {
 class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen> {
   int _selectedSegment = 0;
 
+  // Selected IDs for wide layout
+  int? _selectedPrQtyId;
+  int? _selectedPrVendorId;
+  int? _selectedInvoiceId;
+  int? _selectedPaymentRequestId;
+  int? _selectedPOId;
+
   @override
   Widget build(BuildContext context) {
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final bgColor = CupertinoColors.systemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+    final isWide = MediaQuery.of(context).size.width > 900;
+
+    final mainContent = Column(
+      children: [
+        const CompanySwitcher(),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          color: CupertinoColors.systemBackground.resolveFrom(context),
+          child: CupertinoSlidingSegmentedControl<int>(
+            groupValue: _selectedSegment,
+            children: const {
+              0: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4),
+                child: Text('Qty PR', style: TextStyle(fontSize: 13)),
+              ),
+              1: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4),
+                child: Text('Vendor PR', style: TextStyle(fontSize: 13)),
+              ),
+              2: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4),
+                child: Text('Invoice', style: TextStyle(fontSize: 13)),
+              ),
+              3: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4),
+                child: Text('Pay Req', style: TextStyle(fontSize: 13)),
+              ),
+              4: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4),
+                child: Text('PO', style: TextStyle(fontSize: 13)),
+              ),
+            },
+            onValueChanged: (value) {
+              if (value != null) {
+                setState(() {
+                  _selectedSegment = value;
+                });
+              }
+            },
+          ),
+        ),
+        Expanded(
+          child: _buildActiveList(isWide),
+        ),
+      ],
+    );
 
     return CupertinoPageScaffold(
       backgroundColor: bgColor,
@@ -75,75 +135,113 @@ class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen> {
         ),
       ),
       child: SafeArea(
-        child: Column(
-          children: [
-            const CompanySwitcher(),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: CupertinoColors.systemBackground.resolveFrom(context),
-              child: CupertinoSlidingSegmentedControl<int>(
-                groupValue: _selectedSegment,
-                children: const {
-                  0: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4),
-                    child: Text('Qty PR', style: TextStyle(fontSize: 13)),
+        child: isWide
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 380,
+                    child: mainContent,
                   ),
-                  1: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4),
-                    child: Text('Vendor PR', style: TextStyle(fontSize: 13)),
+                  Container(width: 0.5, color: separatorColor),
+                  Expanded(
+                    child: Container(
+                      color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
+                      child: _buildDetailPane(),
+                    ),
                   ),
-                  2: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4),
-                    child: Text('Invoice', style: TextStyle(fontSize: 13)),
-                  ),
-                  3: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4),
-                    child: Text('Pay Req', style: TextStyle(fontSize: 13)),
-                  ),
-                  4: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4),
-                    child: Text('PO', style: TextStyle(fontSize: 13)),
-                  ),
-                },
-                onValueChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      _selectedSegment = value;
-                    });
-                  }
-                },
-              ),
-            ),
-            Expanded(
-              child: _buildActiveList(),
-            ),
-          ],
-        ),
+                ],
+              )
+            : mainContent,
       ),
     );
   }
 
-  Widget _buildActiveList() {
+  Widget _buildActiveList(bool isWide) {
     switch (_selectedSegment) {
       case 0:
-        return const _PrQtyApprovalList();
+        return _PrQtyApprovalList(
+          isWide: isWide,
+          selectedId: _selectedPrQtyId,
+          onSelected: (id) => setState(() => _selectedPrQtyId = id),
+        );
       case 1:
-        return const _PrVendorApprovalList();
+        return _PrVendorApprovalList(
+          isWide: isWide,
+          selectedId: _selectedPrVendorId,
+          onSelected: (id) => setState(() => _selectedPrVendorId = id),
+        );
       case 2:
-        return const _InvoiceApprovalList();
+        return _InvoiceApprovalList(
+          isWide: isWide,
+          selectedId: _selectedInvoiceId,
+          onSelected: (id) => setState(() => _selectedInvoiceId = id),
+        );
       case 3:
-        return const _PaymentRequestApprovalList();
+        return _PaymentRequestApprovalList(
+          isWide: isWide,
+          selectedId: _selectedPaymentRequestId,
+          onSelected: (id) => setState(() => _selectedPaymentRequestId = id),
+        );
       case 4:
-        return const _POApprovalList();
+        return _POApprovalList(
+          isWide: isWide,
+          selectedId: _selectedPOId,
+          onSelected: (id) => setState(() => _selectedPOId = id),
+        );
       default:
         return const SizedBox();
+    }
+  }
+
+  Widget? _buildDetailPane() {
+    switch (_selectedSegment) {
+      case 0:
+        if (_selectedPrQtyId == null) return const Center(child: Text('Pilih PR untuk melihat detail'));
+        return KeyedSubtree(
+          key: ValueKey('qty_${_selectedPrQtyId}'),
+          child: PRApprovalScreen(prId: _selectedPrQtyId!, isEmbedded: true),
+        );
+      case 1:
+        if (_selectedPrVendorId == null) return const Center(child: Text('Pilih PR untuk melihat detail'));
+        return KeyedSubtree(
+          key: ValueKey('vendor_${_selectedPrVendorId}'),
+          child: PRVendorApprovalScreen(prId: _selectedPrVendorId!, isEmbedded: true),
+        );
+      case 2:
+        if (_selectedInvoiceId == null) return const Center(child: Text('Pilih Invoice untuk melihat detail'));
+        return KeyedSubtree(
+          key: ValueKey('invoice_${_selectedInvoiceId}'),
+          child: InvoiceApprovalScreen(invoiceId: _selectedInvoiceId!, isEmbedded: true),
+        );
+      case 3:
+        if (_selectedPaymentRequestId == null) return const Center(child: Text('Pilih Payment Request untuk melihat detail'));
+        return KeyedSubtree(
+          key: ValueKey('payreq_${_selectedPaymentRequestId}'),
+          child: PaymentRequestApprovalScreen(prId: _selectedPaymentRequestId!, isEmbedded: true),
+        );
+      case 4:
+        if (_selectedPOId == null) return const Center(child: Text('Pilih PO untuk melihat detail'));
+        return KeyedSubtree(
+          key: ValueKey('po_${_selectedPOId}'),
+          child: POApprovalScreen(poId: _selectedPOId!, isEmbedded: true),
+        );
+      default:
+        return null;
     }
   }
 }
 
 class _PrQtyApprovalList extends ConsumerStatefulWidget {
-  const _PrQtyApprovalList();
+  final bool isWide;
+  final int? selectedId;
+  final ValueChanged<int?> onSelected;
+
+  const _PrQtyApprovalList({
+    required this.isWide,
+    required this.selectedId,
+    required this.onSelected,
+  });
 
   @override
   ConsumerState<_PrQtyApprovalList> createState() => _PrQtyApprovalListState();
@@ -324,6 +422,16 @@ class _PrQtyApprovalListState extends ConsumerState<_PrQtyApprovalList> {
           }
         }).toList();
 
+        if (widget.isWide && filteredItems.isNotEmpty) {
+          if (widget.selectedId == null || !filteredItems.any((x) => x.prId == widget.selectedId)) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                widget.onSelected(filteredItems.first.prId);
+              }
+            });
+          }
+        }
+
         final hasMore = ref.watch(purchaseRequestsProvider(status: 'submitted').notifier).hasMore;
         final showLoader = listAsync.isLoading && hasMore;
 
@@ -379,21 +487,41 @@ class _PrQtyApprovalListState extends ConsumerState<_PrQtyApprovalList> {
                           }
                           final item = filteredItems[index];
                           final isSelected = _selectedItemIds.contains(item.id);
+                          final isRowSelected = widget.isWide && item.prId == widget.selectedId;
 
-                          return _ApprovalItemRow(
-                            item: item,
-                            isSelected: isSelected,
-                            onChanged: (val) {
-                              setState(() {
-                                if (val == true) {
-                                  _selectedItemIds.add(item.id);
-                                } else {
-                                  _selectedItemIds.remove(item.id);
-                                }
-                              });
+                          return GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () {
+                              if (widget.isWide && item.prId != null) {
+                                widget.onSelected(item.prId);
+                              }
                             },
-                            qtyController: _qtyControllers[item.id]!,
-                            isReadOnly: false,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: isRowSelected
+                                      ? const Color(0xFF6E56CF)
+                                      : Colors.transparent,
+                                  width: isRowSelected ? 1.5 : 0.0,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: _ApprovalItemRow(
+                                item: item,
+                                isSelected: isSelected,
+                                onChanged: (val) {
+                                  setState(() {
+                                    if (val == true) {
+                                      _selectedItemIds.add(item.id);
+                                    } else {
+                                      _selectedItemIds.remove(item.id);
+                                    }
+                                  });
+                                },
+                                qtyController: _qtyControllers[item.id]!,
+                                isReadOnly: false,
+                              ),
+                            ),
                           );
                         },
                       ),
@@ -619,8 +747,94 @@ class _ApprovalItemRow extends StatelessWidget {
   }
 }
 
+class _PrVendorItemCard extends StatelessWidget {
+  final PurchaseRequestItem item;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _PrVendorItemCard({
+    required this.item,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabelColor = CupertinoColors.secondaryLabel.resolveFrom(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isSelected 
+              ? const Color(0xFF6E56CF) 
+              : CupertinoColors.separator.resolveFrom(context), 
+          width: isSelected ? 1.5 : 0.5,
+        ),
+      ),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.itemName,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: labelColor,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'SKU: ${item.itemCode} | Qty: ${item.qtyRequested} ${item.uom}',
+                style: TextStyle(
+                  color: secondaryLabelColor,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(CupertinoIcons.doc_text, size: 12, color: CupertinoColors.secondaryLabel),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      '${item.prCode ?? "PR"} • ${item.companyName ?? "-"}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: CupertinoColors.activeBlue,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _PrVendorApprovalList extends ConsumerStatefulWidget {
-  const _PrVendorApprovalList();
+  final bool isWide;
+  final int? selectedId;
+  final ValueChanged<int?> onSelected;
+
+  const _PrVendorApprovalList({
+    required this.isWide,
+    required this.selectedId,
+    required this.onSelected,
+  });
 
   @override
   ConsumerState<_PrVendorApprovalList> createState() => _PrVendorApprovalListState();
@@ -656,14 +870,34 @@ class _PrVendorApprovalListState extends ConsumerState<_PrVendorApprovalList> {
 
     return listAsync.when(
       data: (items) {
-        if (items.isEmpty) {
+        final allItems = items
+            .expand((pr) => pr.details.map((item) => item.copyWith(
+                  prId: item.prId ?? pr.id,
+                  prCode: item.prCode ?? pr.code,
+                  companyName: item.companyName ?? pr.companyName,
+                )))
+            .where((item) => item.status?.toLowerCase() == 'waiting_bod_approval')
+            .toList();
+
+        if (allItems.isEmpty) {
           return const Center(
             child: Text(
-              'Tidak ada PR yang menunggu persetujuan Vendor',
+              'Tidak ada item PR yang menunggu persetujuan Vendor',
               style: TextStyle(color: CupertinoColors.secondaryLabel),
             ),
           );
         }
+
+        if (widget.isWide && allItems.isNotEmpty) {
+          if (widget.selectedId == null || !allItems.any((x) => x.prId == widget.selectedId)) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                widget.onSelected(allItems.first.prId);
+              }
+            });
+          }
+        }
+
         final hasMore = ref.watch(purchaseRequestsProvider(status: 'waiting_bod_approval').notifier).hasMore;
         final showLoader = listAsync.isLoading && hasMore;
 
@@ -671,19 +905,28 @@ class _PrVendorApprovalListState extends ConsumerState<_PrVendorApprovalList> {
           child: ListView.separated(
             controller: _scrollController,
             padding: const EdgeInsets.all(16),
-            itemCount: items.length + (showLoader ? 1 : 0),
+            itemCount: allItems.length + (showLoader ? 1 : 0),
             separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
-              if (index == items.length) {
+              if (index == allItems.length) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
                   child: Center(child: CupertinoActivityIndicator()),
                 );
               }
-              final item = items[index];
-              return PRCard(
-                pr: item,
-                onTap: () => context.push('/approvals/pr-vendor/${item.id}'),
+              final item = allItems[index];
+              final isSelected = item.prId == widget.selectedId;
+
+              return _PrVendorItemCard(
+                item: item,
+                isSelected: isSelected,
+                onTap: () {
+                  if (widget.isWide) {
+                    widget.onSelected(item.prId);
+                  } else {
+                    context.push('/approvals/pr-vendor/${item.prId}');
+                  }
+                },
               );
             },
           ),
@@ -696,7 +939,15 @@ class _PrVendorApprovalListState extends ConsumerState<_PrVendorApprovalList> {
 }
 
 class _InvoiceApprovalList extends ConsumerStatefulWidget {
-  const _InvoiceApprovalList();
+  final bool isWide;
+  final int? selectedId;
+  final ValueChanged<int?> onSelected;
+
+  const _InvoiceApprovalList({
+    required this.isWide,
+    required this.selectedId,
+    required this.onSelected,
+  });
 
   @override
   ConsumerState<_InvoiceApprovalList> createState() => _InvoiceApprovalListState();
@@ -741,6 +992,17 @@ class _InvoiceApprovalListState extends ConsumerState<_InvoiceApprovalList> {
             ),
           );
         }
+
+        if (widget.isWide && items.isNotEmpty) {
+          if (widget.selectedId == null || !items.any((x) => x.id == widget.selectedId)) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                widget.onSelected(items.first.id);
+              }
+            });
+          }
+        }
+
         final hasMore = ref.watch(invoicesProvider(status: 'draft').notifier).hasMore;
         final showLoader = listAsync.isLoading && hasMore;
 
@@ -758,14 +1020,27 @@ class _InvoiceApprovalListState extends ConsumerState<_InvoiceApprovalList> {
                 );
               }
               final item = items[index];
+              final isSelected = item.id == widget.selectedId;
+
               return Container(
                 decoration: BoxDecoration(
                   color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
+                  border: Border.all(
+                    color: isSelected 
+                        ? const Color(0xFF6E56CF) 
+                        : CupertinoColors.separator.resolveFrom(context), 
+                    width: isSelected ? 1.5 : 0.5,
+                  ),
                 ),
                 child: GestureDetector(
-                  onTap: () => context.push('/approvals/invoice/${item.id}'),
+                  onTap: () {
+                    if (widget.isWide) {
+                      widget.onSelected(item.id);
+                    } else {
+                      context.push('/approvals/invoice/${item.id}');
+                    }
+                  },
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -834,7 +1109,15 @@ class _InvoiceApprovalListState extends ConsumerState<_InvoiceApprovalList> {
 }
 
 class _PaymentRequestApprovalList extends ConsumerStatefulWidget {
-  const _PaymentRequestApprovalList();
+  final bool isWide;
+  final int? selectedId;
+  final ValueChanged<int?> onSelected;
+
+  const _PaymentRequestApprovalList({
+    required this.isWide,
+    required this.selectedId,
+    required this.onSelected,
+  });
 
   @override
   ConsumerState<_PaymentRequestApprovalList> createState() => _PaymentRequestApprovalListState();
@@ -879,6 +1162,17 @@ class _PaymentRequestApprovalListState extends ConsumerState<_PaymentRequestAppr
             ),
           );
         }
+
+        if (widget.isWide && items.isNotEmpty) {
+          if (widget.selectedId == null || !items.any((x) => x.id == widget.selectedId)) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                widget.onSelected(items.first.id);
+              }
+            });
+          }
+        }
+
         final hasMore = ref.watch(paymentRequestsProvider(status: 'pending').notifier).hasMore;
         final showLoader = listAsync.isLoading && hasMore;
 
@@ -896,14 +1190,27 @@ class _PaymentRequestApprovalListState extends ConsumerState<_PaymentRequestAppr
                 );
               }
               final item = items[index];
+              final isSelected = item.id == widget.selectedId;
+
               return Container(
                 decoration: BoxDecoration(
                   color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
+                  border: Border.all(
+                    color: isSelected 
+                        ? const Color(0xFF6E56CF) 
+                        : CupertinoColors.separator.resolveFrom(context), 
+                    width: isSelected ? 1.5 : 0.5,
+                  ),
                 ),
                 child: GestureDetector(
-                  onTap: () => context.push('/approvals/payment-request/${item.id}'),
+                  onTap: () {
+                    if (widget.isWide) {
+                      widget.onSelected(item.id);
+                    } else {
+                      context.push('/approvals/payment-request/${item.id}');
+                    }
+                  },
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -972,7 +1279,15 @@ class _PaymentRequestApprovalListState extends ConsumerState<_PaymentRequestAppr
 }
 
 class _POApprovalList extends ConsumerStatefulWidget {
-  const _POApprovalList();
+  final bool isWide;
+  final int? selectedId;
+  final ValueChanged<int?> onSelected;
+
+  const _POApprovalList({
+    required this.isWide,
+    required this.selectedId,
+    required this.onSelected,
+  });
 
   @override
   ConsumerState<_POApprovalList> createState() => _POApprovalListState();
@@ -1019,6 +1334,17 @@ class _POApprovalListState extends ConsumerState<_POApprovalList> {
             ),
           );
         }
+
+        if (widget.isWide && approvableItems.isNotEmpty) {
+          if (widget.selectedId == null || !approvableItems.any((x) => x.id == widget.selectedId)) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                widget.onSelected(approvableItems.first.id);
+              }
+            });
+          }
+        }
+
         final hasMore = ref.read(purchaseOrdersProvider(status: 'submitted').notifier).hasMore;
         final showLoader = listAsync.isLoading && hasMore;
 
@@ -1041,15 +1367,27 @@ class _POApprovalListState extends ConsumerState<_POApprovalList> {
                 (sum, item) => sum + (item.orderedQty * (item.unitPrice ?? 0.0)),
               );
               final displayTotal = item.totalAmount ?? calculatedTotal;
+              final isSelected = item.id == widget.selectedId;
 
               return Container(
                 decoration: BoxDecoration(
                   color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
+                  border: Border.all(
+                    color: isSelected 
+                        ? const Color(0xFF6E56CF) 
+                        : CupertinoColors.separator.resolveFrom(context), 
+                    width: isSelected ? 1.5 : 0.5,
+                  ),
                 ),
                 child: GestureDetector(
-                  onTap: () => context.push('/approvals/po/${item.id}'),
+                  onTap: () {
+                    if (widget.isWide) {
+                      widget.onSelected(item.id);
+                    } else {
+                      context.push('/approvals/po/${item.id}');
+                    }
+                  },
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(

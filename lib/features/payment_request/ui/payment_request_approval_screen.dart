@@ -7,7 +7,8 @@ import '../../../core/utils/currency_utils.dart';
 
 class PaymentRequestApprovalScreen extends ConsumerStatefulWidget {
   final int prId;
-  const PaymentRequestApprovalScreen({super.key, required this.prId});
+  final bool isEmbedded;
+  const PaymentRequestApprovalScreen({super.key, required this.prId, this.isEmbedded = false});
 
   @override
   ConsumerState<PaymentRequestApprovalScreen> createState() => _PaymentRequestApprovalScreenState();
@@ -42,7 +43,7 @@ class _PaymentRequestApprovalScreenState extends ConsumerState<PaymentRequestApp
                 child: const Text('OK'),
                 onPressed: () {
                   Navigator.pop(context); // dismiss dialog
-                  if (mounted) context.pop(); // pop screen
+                  if (!widget.isEmbedded && mounted) context.pop(); // pop screen
                 },
               ),
             ],
@@ -141,7 +142,7 @@ class _PaymentRequestApprovalScreenState extends ConsumerState<PaymentRequestApp
                   child: const Text('OK'),
                   onPressed: () {
                     Navigator.pop(context); // dismiss dialog
-                    if (mounted) context.pop(); // pop screen
+                    if (!widget.isEmbedded && mounted) context.pop(); // pop screen
                   },
                 ),
               ],
@@ -182,6 +183,7 @@ class _PaymentRequestApprovalScreenState extends ConsumerState<PaymentRequestApp
       backgroundColor: bgColor,
       navigationBar: CupertinoNavigationBar(
         backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
+        automaticallyImplyLeading: !widget.isEmbedded,
         middle: Text(
           'Persetujuan Payment Request',
           style: TextStyle(color: labelColor),

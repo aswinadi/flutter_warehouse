@@ -8,7 +8,8 @@ import '../../../core/utils/currency_utils.dart';
 
 class PRVendorApprovalScreen extends ConsumerStatefulWidget {
   final int prId;
-  const PRVendorApprovalScreen({super.key, required this.prId});
+  final bool isEmbedded;
+  const PRVendorApprovalScreen({super.key, required this.prId, this.isEmbedded = false});
 
   @override
   ConsumerState<PRVendorApprovalScreen> createState() => _PRVendorApprovalScreenState();
@@ -60,7 +61,7 @@ class _PRVendorApprovalScreenState extends ConsumerState<PRVendorApprovalScreen>
 
       ref.invalidate(purchaseRequestsProvider);
       _showNotification('Pilihan vendor berhasil disetujui');
-      if (mounted) {
+      if (!widget.isEmbedded && mounted) {
         context.pop();
       }
     } catch (e) {
@@ -165,6 +166,7 @@ class _PRVendorApprovalScreenState extends ConsumerState<PRVendorApprovalScreen>
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
       navigationBar: CupertinoNavigationBar(
+        automaticallyImplyLeading: !widget.isEmbedded,
         middle: Text(prAsync.valueOrNull != null &&
                     prAsync.valueOrNull!.details.any((d) => d.status?.toLowerCase() == 'waiting_bod_approval') &&
                     prAsync.valueOrNull!.canApprove

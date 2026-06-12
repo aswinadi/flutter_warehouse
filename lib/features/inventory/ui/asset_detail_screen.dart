@@ -7,15 +7,33 @@ import '../models/asset.dart';
 import '../providers/asset_repository.dart';
 import '../../../core/config/app_config.dart';
 
-class AssetDetailScreen extends ConsumerStatefulWidget {
+class AssetDetailScreen extends StatelessWidget {
   final int assetId;
   const AssetDetailScreen({super.key, required this.assetId});
 
   @override
-  ConsumerState<AssetDetailScreen> createState() => _AssetDetailScreenState();
+  Widget build(BuildContext context) {
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+      navigationBar: const CupertinoNavigationBar(
+        middle: Text('Detail Aset Hardware'),
+      ),
+      child: SafeArea(
+        child: AssetDetailContent(assetId: assetId),
+      ),
+    );
+  }
 }
 
-class _AssetDetailScreenState extends ConsumerState<AssetDetailScreen> {
+class AssetDetailContent extends ConsumerStatefulWidget {
+  final int assetId;
+  const AssetDetailContent({super.key, required this.assetId});
+
+  @override
+  ConsumerState<AssetDetailContent> createState() => _AssetDetailContentState();
+}
+
+class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'available':
@@ -90,72 +108,64 @@ class _AssetDetailScreenState extends ConsumerState<AssetDetailScreen> {
   Widget build(BuildContext context) {
     final assetAsync = ref.watch(assetDetailProvider(widget.assetId));
 
-    return CupertinoPageScaffold(
-      backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
-      navigationBar: const CupertinoNavigationBar(
-        middle: Text('Detail Aset Hardware'),
-      ),
-      child: SafeArea(
-        child: assetAsync.when(
-          data: (asset) {
-            final statusColor = _getStatusColor(asset.status);
+    return assetAsync.when(
+      data: (asset) {
+        final statusColor = _getStatusColor(asset.status);
 
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header Panel Card
-                  _buildHeaderCard(asset, statusColor),
-                  const SizedBox(height: 16),
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header Panel Card
+              _buildHeaderCard(asset, statusColor),
+              const SizedBox(height: 16),
 
-                  // Assignment & Location Card
-                  _buildAssignmentCard(asset),
-                  const SizedBox(height: 16),
+              // Assignment & Location Card
+              _buildAssignmentCard(asset),
+              const SizedBox(height: 16),
 
-                  // Acquisition & Commercial Card
-                  _buildAcquisitionCard(asset),
-                  const SizedBox(height: 16),
+              // Acquisition & Commercial Card
+              _buildAcquisitionCard(asset),
+              const SizedBox(height: 16),
 
-                  // Specs and Notes Card
-                  _buildDetailsCard(asset),
-                  const SizedBox(height: 16),
+              // Specs and Notes Card
+              _buildDetailsCard(asset),
+              const SizedBox(height: 16),
 
-                  // Photos Section
-                  if (asset.media.isNotEmpty) ...[
-                    _buildPhotosSection(asset),
-                    const SizedBox(height: 16),
-                  ],
+              // Photos Section
+              if (asset.media.isNotEmpty) ...[
+                _buildPhotosSection(asset),
+                const SizedBox(height: 16),
+              ],
 
-                  // Action Print Button
-                  _buildPrintActionCard(asset),
-                  const SizedBox(height: 32),
-                ],
+              // Action Print Button
+              _buildPrintActionCard(asset),
+              const SizedBox(height: 32),
+            ],
+          ),
+        );
+      },
+      loading: () => const Center(child: CupertinoActivityIndicator()),
+      error: (err, stack) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(CupertinoIcons.exclamationmark_triangle, color: CupertinoColors.destructiveRed, size: 48),
+              const SizedBox(height: 12),
+              Text(
+                'Gagal memuat detail aset: $err',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: CupertinoColors.destructiveRed),
               ),
-            );
-          },
-          loading: () => const Center(child: CupertinoActivityIndicator()),
-          error: (err, stack) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(CupertinoIcons.exclamationmark_triangle, color: CupertinoColors.destructiveRed, size: 48),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Gagal memuat detail aset: $err',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: CupertinoColors.destructiveRed),
-                  ),
-                  const SizedBox(height: 16),
-                  CupertinoButton.filled(
-                    onPressed: () => ref.refresh(assetDetailProvider(widget.assetId)),
-                    child: const Text('Coba Lagi'),
-                  ),
-                ],
+              const SizedBox(height: 16),
+              CupertinoButton.filled(
+                onPressed: () => ref.refresh(assetDetailProvider(widget.assetId)),
+                child: const Text('Coba Lagi'),
               ),
-            ),
+            ],
           ),
         ),
       ),

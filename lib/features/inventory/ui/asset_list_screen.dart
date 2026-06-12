@@ -6,6 +6,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../providers/asset_repository.dart';
 import '../../../core/widgets/company_switcher.dart';
 import '../../../core/providers/company_provider.dart';
+import 'asset_detail_screen.dart';
 
 class AssetListScreen extends ConsumerStatefulWidget {
   const AssetListScreen({super.key});
@@ -20,6 +21,7 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
   String _selectedCategory = 'all';
   String _selectedStatus = 'all';
   String _searchQuery = '';
+  int? _selectedAssetId;
 
   final List<String> _categories = [
     'all',
@@ -134,6 +136,7 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
+    final isWide = MediaQuery.of(context).size.width > 900;
 
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
@@ -217,12 +220,12 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
               ),
             ),
 
-            // Assets List with RefreshIndicator (via CustomScrollView & CupertinoSliverRefreshControl)
+            // Assets List or Dual Pane
             Expanded(
               child: assetsAsync.when(
                 data: (assets) {
                   if (assets.isEmpty) {
-                    return CustomScrollView(
+                    final emptyView = CustomScrollView(
                       controller: _scrollController,
                       physics: const AlwaysScrollableScrollPhysics(),
                       slivers: [
@@ -250,6 +253,41 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
                         ),
                       ],
                     );
+                    
+                    if (isWide) {
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: 380,
+                            child: emptyView,
+                          ),
+                          Container(width: 0.5, color: separatorColor),
+                          Expanded(
+                            child: Center(
+                              child: Text(
+                                'Tidak ada aset hardware ditemukan',
+                                style: TextStyle(color: secondaryLabel),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+                    return emptyView;
+                  }
+
+                  if (isWide) {
+                    if (assets.isNotEmpty &&
+                        (_selectedAssetId == null || !assets.any((x) => x.id == _selectedAssetId))) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          setState(() {
+                            _selectedAssetId = assets.first.id;
+                          });
+                        }
+                      });
+                    }
                   }
 
                   final hasMore = ref.watch(assetListProvider(
@@ -258,7 +296,7 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
                     status: _selectedStatus == 'all' ? null : _selectedStatus,
                   ).notifier).hasMore;
 
-                  return CustomScrollView(
+                  final mainList = CustomScrollView(
                     controller: _scrollController,
                     physics: const AlwaysScrollableScrollPhysics(),
                     slivers: [
@@ -283,17 +321,29 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
 
                               final asset = assets[index];
                               final statusColor = _getStatusColor(asset.status);
+                              final isSelected = _selectedAssetId == asset.id;
 
                               return Container(
                                 margin: const EdgeInsets.only(bottom: 12),
                                 decoration: BoxDecoration(
                                   color: cardBg,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: separatorColor, width: 0.5),
+                                  border: Border.all(
+                                    color: isSelected && isWide ? const Color(0xFF6E56CF) : separatorColor,
+                                    width: isSelected && isWide ? 2.0 : 0.5,
+                                  ),
                                 ),
                                 child: GestureDetector(
                                   behavior: HitTestBehavior.opaque,
-                                  onTap: () => context.push('/assets/${asset.id}'),
+                                  onTap: () {
+                                    if (isWide) {
+                                      setState(() {
+                                        _selectedAssetId = asset.id;
+                                      });
+                                    } else {
+                                      context.push('/assets/${asset.id}');
+                                    }
+                                  },
                                   child: Padding(
                                     padding: const EdgeInsets.all(16),
                                     child: Column(
@@ -418,6 +468,33 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
                       ),
                     ],
                   );
+
+                  if (isWide) {
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 380,
+                          child: mainList,
+                        ),
+                        Container(width: 0.5, color: separatorColor),
+                        Expanded(
+                          child: _selectedAssetId != null
+                              ? AssetDetailContent(
+                                  key: ValueKey(_selectedAssetId),
+                                  assetId: _selectedAssetId!,
+                                )
+                              : Center(
+                                  child: Text(
+                                    'Pilih aset untuk melihat detail',
+                                    style: TextStyle(color: secondaryLabel),
+                                  ),
+                                ),
+                        ),
+                      ],
+                    );
+                  }
+                  return mainList;
                 },
                 loading: () => const Center(child: CupertinoActivityIndicator()),
                 error: (err, stack) => Center(

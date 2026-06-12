@@ -419,12 +419,7 @@ class _MainShellState extends ConsumerState<MainShell> {
         onTap: (index) => context.go(displayItems[index].path!),
         items: displayItems.map((item) {
           final label = item.labelBuilder(l10n);
-          final shortLabel = (label == 'Purchase Request' || label == 'Permintaan Pembelian (PR)') ? 'PR' :
-                             (label == 'Vendor Comparison' || label == 'Perbandingan Vendor') ? 'Vendor' :
-                             (label == 'Packing list' || label == 'Packing List' || label == 'Daftar Packing') ? 'Packing' :
-                             (label == 'Penerimaan Barang' || label == 'Receiving') ? 'Terima' :
-                             (label == 'Kirim ke Cabang' || label == 'Send to Branch') ? 'Kirim' :
-                             (label == 'Terima dari Cabang' || label == 'Receive from Branch') ? 'Terima' : label;
+          final shortLabel = _getShortLabel(label);
 
           final isNotifications = item.path == '/notifications';
 
@@ -450,6 +445,82 @@ class _MainShellState extends ConsumerState<MainShell> {
       }
     }
     return selectedIndex;
+  }
+
+  String _getShortLabel(String label) {
+    switch (label) {
+      case 'Purchase Request':
+      case 'Permintaan Pembelian (PR)':
+        return 'PR';
+      case 'Vendor Comparison':
+      case 'Perbandingan Vendor':
+        return 'Vendor';
+      case 'Packing list':
+      case 'Packing List':
+      case 'Daftar Packing':
+        return 'Packing';
+      case 'Penerimaan Barang':
+        return 'Terima';
+      case 'Receiving':
+        return 'Receive';
+      case 'Kirim ke Cabang':
+        return 'Kirim';
+      case 'Send to Branch':
+        return 'Send';
+      case 'Terima dari Cabang':
+        return 'Terima';
+      case 'Receive from Branch':
+        return 'Receive';
+      case 'Workspace Persetujuan':
+        return 'Persetujuan';
+      case 'Approvals Workspace':
+      case 'Approvals':
+        return 'Approvals';
+      case 'Pesanan Pembelian (PO)':
+      case 'Purchase Orders':
+        return 'PO';
+      case 'Pemberitahuan':
+      case 'Notifications':
+        return 'Notif';
+      case 'Stok Barang':
+        return 'Stok';
+      case 'Inventory Stock':
+        return 'Inventory';
+      case 'Mutasi Stok':
+        return 'Mutasi';
+      case 'Stock Mutation':
+        return 'Mutation';
+      case 'Penyesuaian & Pemakaian':
+        return 'Penyesuaian';
+      case 'Stock Opname':
+        return 'Opname';
+      case 'Hardware Assets':
+        return 'Assets';
+      case 'Kalkulator Harga Jual Udang':
+        return 'Kalkulator';
+      case 'Kontrak Jual Udang':
+        return 'Kontrak';
+      case 'Feed Management':
+        return 'Feed';
+      case 'Saprotam Logs':
+        return 'Saprotam';
+      case 'Cost Centre':
+        return 'Cost Centre';
+      case 'Purchase Invoice (Faktur)':
+        return 'Faktur';
+      case 'Invoice Biaya':
+        return 'Inv Biaya';
+      case 'Permintaan Pembayaran':
+        return 'Bayar';
+      case 'Transaksi Pembayaran':
+        return 'Transaksi';
+      case 'Payment Transactions':
+        return 'Payments';
+      case 'Valuasi Inventaris':
+        return 'Valuasi';
+      default:
+        return label;
+    }
   }
 }
 

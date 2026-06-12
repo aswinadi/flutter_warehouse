@@ -70,8 +70,8 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
       final companies = await ref.read(companiesProvider.future);
       _selectedCompany = companies.firstWhere((c) => c.id == detail.companyId, orElse: () => companies.first);
 
-      // Load suppliers for that company
-      final suppliers = await ref.read(assetSuppliersProvider(companyId: detail.companyId).future);
+      // Load suppliers
+      final suppliers = await ref.read(assetSuppliersProvider(companyId: null).future);
       _selectedSupplier = suppliers.firstWhere((s) => s.id == detail.supplierId, orElse: () => suppliers.first);
 
       _vendorInvoiceNumberController.text = detail.vendorInvoiceNumber ?? '';
@@ -312,9 +312,7 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
   @override
   Widget build(BuildContext context) {
     final companiesAsync = ref.watch(companiesProvider);
-    final suppliersAsync = _selectedCompany != null
-        ? ref.watch(assetSuppliersProvider(companyId: _selectedCompany!.id))
-        : const AsyncValue<List<Supplier>>.data([]);
+    final suppliersAsync = ref.watch(assetSuppliersProvider(companyId: null));
 
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),

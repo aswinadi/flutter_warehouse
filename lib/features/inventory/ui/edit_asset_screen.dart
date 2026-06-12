@@ -542,9 +542,7 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
             final employeesAsync = _selectedCompany != null
                 ? ref.watch(assetEmployeesProvider(companyId: _selectedCompany!.id))
                 : const AsyncValue<List<AssetEmployee>>.data([]);
-            final suppliersAsync = _selectedCompany != null
-                ? ref.watch(assetSuppliersProvider(companyId: _selectedCompany!.id))
-                : const AsyncValue<List<Supplier>>.data([]);
+            final suppliersAsync = ref.watch(assetSuppliersProvider(companyId: null));
 
             return CupertinoPageScaffold(
               backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),

@@ -486,9 +486,7 @@ class _AddAssetScreenState extends ConsumerState<AddAssetScreen> {
     final employeesAsync = _selectedCompany != null
         ? ref.watch(assetEmployeesProvider(companyId: _selectedCompany!.id))
         : const AsyncValue<List<AssetEmployee>>.data([]);
-    final suppliersAsync = _selectedCompany != null
-        ? ref.watch(assetSuppliersProvider(companyId: _selectedCompany!.id))
-        : const AsyncValue<List<Supplier>>.data([]);
+    final suppliersAsync = ref.watch(assetSuppliersProvider(companyId: null));
 
     final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);

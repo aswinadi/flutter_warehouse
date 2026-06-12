@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show Divider, Colors, DateTimeRange, showDateRangePicker, Theme, MaterialScrollBehavior, ColorScheme;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/invoice_repository.dart';
@@ -95,6 +96,57 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> {
     }
   }
 
+  Future<void> _showPresetPicker() async {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Pilih Periode'),
+        actions: [
+          CupertinoActionSheetAction(
+            child: const Text('Semua Waktu'),
+            onPressed: () {
+              _updateDatePreset('all');
+              Navigator.pop(context);
+            },
+          ),
+          CupertinoActionSheetAction(
+            child: const Text('30 Hari Terakhir'),
+            onPressed: () {
+              _updateDatePreset('30days');
+              Navigator.pop(context);
+            },
+          ),
+          CupertinoActionSheetAction(
+            child: const Text('Bulan Ini'),
+            onPressed: () {
+              _updateDatePreset('thisMonth');
+              Navigator.pop(context);
+            },
+          ),
+          CupertinoActionSheetAction(
+            child: const Text('3 Bulan Terakhir'),
+            onPressed: () {
+              _updateDatePreset('90days');
+              Navigator.pop(context);
+            },
+          ),
+          CupertinoActionSheetAction(
+            child: const Text('Pilih Tanggal...'),
+            onPressed: () {
+              Navigator.pop(context);
+              _selectCustomDateRange();
+            },
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -122,15 +174,35 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> {
 
   Widget _buildFilterChip(String label, String? value) {
     final isSelected = _selectedStatus == value;
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (selected) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final activeColor = CupertinoColors.activeBlue.resolveFrom(context);
+    
+    return GestureDetector(
+      onTap: () {
         setState(() {
-          _selectedStatus = selected ? value : null;
+          _selectedStatus = isSelected ? null : value;
           _selectedInvoiceId = null;
         });
       },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected 
+              ? activeColor 
+              : CupertinoColors.tertiarySystemFill.resolveFrom(context),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            color: isSelected 
+                ? CupertinoColors.white 
+                : labelColor,
+          ),
+        ),
+      ),
     );
   }
 
@@ -142,145 +214,131 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> {
       endDate: _endDateStr,
     ));
     final isWide = MediaQuery.of(context).size.width > 900;
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabelColor = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final bgColor = CupertinoColors.systemGroupedBackground.resolveFrom(context);
+    final secondaryBgColor = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0F172A),
-        foregroundColor: Colors.white,
-        title: const Text('Purchase Invoice (Faktur)'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              setState(() {
-                _selectedInvoiceId = null;
-              });
-              ref.invalidate(invoicesProvider);
-            },
-          ),
-        ],
+    return CupertinoPageScaffold(
+      backgroundColor: bgColor,
+      navigationBar: CupertinoNavigationBar(
+        backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
+        middle: Text(
+          'Purchase Invoice (Faktur)',
+          style: TextStyle(color: labelColor),
+        ),
+        trailing: CupertinoButton(
+          padding: EdgeInsets.zero,
+          minSize: 32,
+          child: const Icon(CupertinoIcons.refresh, size: 22),
+          onPressed: () {
+            setState(() {
+              _selectedInvoiceId = null;
+            });
+            ref.invalidate(invoicesProvider);
+          },
+        ),
       ),
-      body: Column(
-        children: [
-          const CompanySwitcher(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.calendar_today, size: 16, color: Color(0xFF4F46E5)),
-                const SizedBox(width: 8),
-                const Text(
-                  'Periode:',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+      child: SafeArea(
+        child: Column(
+          children: [
+            const CompanySwitcher(),
+            GestureDetector(
+              onTap: _showPresetPicker,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: CupertinoColors.systemBackground.resolveFrom(context),
+                  border: Border(bottom: BorderSide(color: CupertinoColors.separator.resolveFrom(context), width: 0.5)),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _datePreset,
-                      dropdownColor: Colors.white,
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF1E293B), fontWeight: FontWeight.w600),
-                      onChanged: (val) {
-                        if (val != null) {
-                          _updateDatePreset(val);
-                          if (val == 'custom') {
-                            _selectCustomDateRange();
-                          }
-                        }
-                      },
-                      items: const [
-                        DropdownMenuItem(value: 'all', child: Text('Semua Waktu')),
-                        DropdownMenuItem(value: '30days', child: Text('30 Hari Terakhir')),
-                        DropdownMenuItem(value: 'thisMonth', child: Text('Bulan Ini')),
-                        DropdownMenuItem(value: '90days', child: Text('3 Bulan Terakhir')),
-                        DropdownMenuItem(value: 'custom', child: Text('Pilih Tanggal...')),
-                      ],
+                child: Row(
+                  children: [
+                    const Icon(CupertinoIcons.calendar, size: 16, color: CupertinoColors.activeBlue),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Periode:',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: labelColor),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _datePreset == 'all' ? 'Semua Waktu' :
+                        _datePreset == '30days' ? '30 Hari Terakhir' :
+                        _datePreset == 'thisMonth' ? 'Bulan Ini' :
+                        _datePreset == '90days' ? '3 Bulan Terakhir' : 'Kustom...',
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: CupertinoColors.activeBlue),
+                      ),
+                    ),
+                    if (_startDate != null && _endDate != null) ...[
+                      Text(
+                        '${_startDate!.day}/${_startDate!.month}/${_startDate!.year} - ${_endDate!.day}/${_endDate!.month}/${_endDate!.year}',
+                        style: TextStyle(fontSize: 12, color: secondaryLabelColor, fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    const Icon(CupertinoIcons.chevron_down, size: 14, color: CupertinoColors.inactiveGray),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(
+              height: 52,
+              child: Stack(
+                children: [
+                  ScrollConfiguration(
+                    behavior: _WebScrollBehavior(),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Row(
+                        children: [
+                          _buildFilterChip('Semua', null),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('Draft', 'draft'),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('Approved', 'approved'),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('Pending', 'pending'),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('Paid', 'paid'),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('Rejected', 'rejected'),
+                          const SizedBox(width: 24),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                if (_startDate != null && _endDate != null) ...[
-                  Text(
-                    '${_startDate!.day}/${_startDate!.month}/${_startDate!.year} - ${_endDate!.day}/${_endDate!.month}/${_endDate!.year}',
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                if (_datePreset == 'custom')
-                  IconButton(
-                    icon: const Icon(Icons.date_range, size: 18, color: Color(0xFF4F46E5)),
-                    onPressed: _selectCustomDateRange,
-                    constraints: const BoxConstraints(),
-                    padding: EdgeInsets.zero,
-                  ),
-              ],
-            ),
-          ),
-          SizedBox(
-            height: 52,
-            child: Stack(
-              children: [
-                ScrollConfiguration(
-                  behavior: _WebScrollBehavior(),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Row(
-                      children: [
-                        _buildFilterChip('Semua', null),
-                        const SizedBox(width: 8),
-                        _buildFilterChip('Draft', 'draft'),
-                        const SizedBox(width: 8),
-                        _buildFilterChip('Approved', 'approved'),
-                        const SizedBox(width: 8),
-                        _buildFilterChip('Pending', 'pending'),
-                        const SizedBox(width: 8),
-                        _buildFilterChip('Paid', 'paid'),
-                        const SizedBox(width: 8),
-                        _buildFilterChip('Rejected', 'rejected'),
-                        const SizedBox(width: 24),
-                      ],
-                    ),
-                  ),
-                ),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: 48,
-                  child: IgnorePointer(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                          colors: [
-                            Colors.white.withValues(alpha: 0.0),
-                            Colors.white,
-                          ],
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: 48,
+                    child: IgnorePointer(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            colors: [
+                              CupertinoColors.systemBackground.resolveFrom(context).withValues(alpha: 0.0),
+                              CupertinoColors.systemBackground.resolveFrom(context),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: () async {
-                ref.invalidate(invoicesProvider);
-              },
+            Expanded(
               child: invoicesAsync.when(
                 data: (invoices) {
                   if (invoices.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Text(
                         'Tidak ada invoice yang ditemukan',
-                        style: TextStyle(color: Color(0xFF64748B), fontSize: 15),
+                        style: TextStyle(color: secondaryLabelColor, fontSize: 15),
                       ),
                     );
                   }
@@ -304,35 +362,50 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> {
                   ).notifier).hasMore;
                   final showLoader = invoicesAsync.isLoading && hasMore;
 
-                  final mainList = ListView.separated(
+                  final mainList = CustomScrollView(
                     controller: _scrollController,
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
-                    itemCount: invoices.length + (showLoader ? 1 : 0),
-                    separatorBuilder: (context, index) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      if (index == invoices.length) {
-                        return const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Center(child: CircularProgressIndicator()),
-                        );
-                      }
-                      final invoice = invoices[index];
-                      final isSelected = invoice.id == _selectedInvoiceId;
-                      return _InvoiceCard(
-                        invoice: invoice,
-                        isSelected: isSelected,
-                        onTap: () {
-                          if (isWide) {
-                            setState(() {
-                              _selectedInvoiceId = invoice.id;
-                            });
-                          } else {
-                            context.push('/approvals/invoice/${invoice.id}');
-                          }
+                    slivers: [
+                      CupertinoSliverRefreshControl(
+                        onRefresh: () async {
+                          ref.invalidate(invoicesProvider);
                         },
-                      );
-                    },
+                      ),
+                      SliverPadding(
+                        padding: const EdgeInsets.all(16),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              if (index == invoices.length) {
+                                return const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 16),
+                                  child: Center(child: CupertinoActivityIndicator()),
+                                );
+                              }
+                              final invoice = invoices[index];
+                              final isSelected = invoice.id == _selectedInvoiceId;
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12.0),
+                                child: _InvoiceCard(
+                                  invoice: invoice,
+                                  isSelected: isSelected,
+                                  onTap: () {
+                                    if (isWide) {
+                                      setState(() {
+                                        _selectedInvoiceId = invoice.id;
+                                      });
+                                    } else {
+                                      context.push('/approvals/invoice/${invoice.id}');
+                                    }
+                                  },
+                                ),
+                              );
+                            },
+                            childCount: invoices.length + (showLoader ? 1 : 0),
+                          ),
+                        ),
+                      ),
+                    ],
                   );
 
                   if (isWide) {
@@ -343,20 +416,33 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> {
                           width: 360,
                           child: mainList,
                         ),
-                        const VerticalDivider(width: 1, thickness: 1, color: Color(0xFFE2E8F0)),
+                        Container(
+                          width: 1,
+                          color: CupertinoColors.separator.resolveFrom(context),
+                        ),
                         Expanded(
                           child: _selectedInvoiceId != null
                               ? KeyedSubtree(
                                   key: ValueKey(_selectedInvoiceId),
-                                  child: InvoiceApprovalScreen(
-                                    invoiceId: _selectedInvoiceId!,
-                                    isEmbedded: true,
+                                  child: Container(
+                                    color: secondaryBgColor,
+                                    child: InvoiceApprovalScreen(
+                                      invoiceId: _selectedInvoiceId!,
+                                      isEmbedded: true,
+                                    ),
                                   ),
                                 )
-                              : const Center(
-                                  child: Text(
-                                    'Pilih Invoice untuk melihat detail',
-                                    style: TextStyle(color: Color(0xFF64748B)),
+                              : Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(CupertinoIcons.doc_text, size: 48, color: secondaryLabelColor),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'Pilih Invoice untuk melihat detail',
+                                        style: TextStyle(color: secondaryLabelColor),
+                                      ),
+                                    ],
                                   ),
                                 ),
                         ),
@@ -366,12 +452,17 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> {
                     return mainList;
                   }
                 },
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, _) => Center(child: Text('Gagal memuat data: $err')),
+                loading: () => const Center(child: CupertinoActivityIndicator()),
+                error: (err, _) => Center(
+                  child: Text(
+                    'Gagal memuat data: $err',
+                    style: TextStyle(color: secondaryLabelColor),
+                  ),
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -403,113 +494,111 @@ class _InvoiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabelColor = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final cardColor = isSelected
+        ? CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.08)
+        : CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFFE2E8F0),
-          width: isSelected ? 2.0 : 1.0,
+          color: isSelected 
+              ? CupertinoColors.activeBlue.resolveFrom(context) 
+              : CupertinoColors.separator.resolveFrom(context),
+          width: isSelected ? 2.0 : 0.5,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0x0A0F0F0F),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      invoice.invoiceNumber,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Color(0xFF0F172A),
-                      ),
-                    ),
-                    _StatusBadge(status: invoice.status),
-                  ],
-                ),
-                if (invoice.receivingNumber != null && invoice.receivingNumber!.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
                   Text(
-                    'No. Penerimaan: ${invoice.receivingNumber}',
-                    style: const TextStyle(
+                    invoice.invoiceNumber,
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: Color(0xFF4F46E5),
+                      fontSize: 16,
+                      color: labelColor,
                     ),
                   ),
+                  _StatusBadge(status: invoice.status),
                 ],
-                const SizedBox(height: 8),
-                Text(
-                  invoice.supplierName ?? 'Internal',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: Color(0xFF1E293B),
-                  ),
-                ),
+              ),
+              if (invoice.receivingNumber != null && invoice.receivingNumber!.isNotEmpty) ...[
                 const SizedBox(height: 4),
-                if (invoice.vendorInvoiceNumber != null && invoice.vendorInvoiceNumber!.isNotEmpty) ...[
-                  Text(
-                    'No. Invoice Vendor: ${invoice.vendorInvoiceNumber}',
-                    style: const TextStyle(fontSize: 13, color: Color(0xFF475569)),
+                Text(
+                  'No. Penerimaan: ${invoice.receivingNumber}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: CupertinoColors.activeBlue,
                   ),
-                  const SizedBox(height: 4),
-                ],
-                Row(
-                  children: [
-                    const Icon(Icons.calendar_today, size: 14, color: Color(0xFF64748B)),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Tanggal: ${_formatDate(invoice.invoiceDate)}',
-                      style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
-                    ),
-                    if (invoice.dueDate != null) ...[
-                      const SizedBox(width: 12),
-                      const Icon(Icons.warning_amber, size: 14, color: Color(0xFF64748B)),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Tempo: ${_formatDate(invoice.dueDate)}',
-                        style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
-                      ),
-                    ],
-                  ],
-                ),
-                const Divider(height: 24, color: Color(0xFFE2E8F0)),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Total Tagihan',
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                    ),
-                    Text(
-                      formatWithCurrency(invoice.totalAmount, invoice.currency),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Color(0xFF0F172A),
-                      ),
-                    ),
-                  ],
                 ),
               ],
-            ),
+              const SizedBox(height: 8),
+              Text(
+                invoice.supplierName ?? 'Internal',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: labelColor,
+                ),
+              ),
+              const SizedBox(height: 4),
+              if (invoice.vendorInvoiceNumber != null && invoice.vendorInvoiceNumber!.isNotEmpty) ...[
+                Text(
+                  'No. Invoice Vendor: ${invoice.vendorInvoiceNumber}',
+                  style: TextStyle(fontSize: 13, color: secondaryLabelColor),
+                ),
+                const SizedBox(height: 4),
+              ],
+              Row(
+                children: [
+                  Icon(CupertinoIcons.calendar, size: 14, color: secondaryLabelColor),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Tanggal: ${_formatDate(invoice.invoiceDate)}',
+                    style: TextStyle(color: secondaryLabelColor, fontSize: 13),
+                  ),
+                  if (invoice.dueDate != null) ...[
+                    const SizedBox(width: 12),
+                    Icon(CupertinoIcons.exclamationmark_shield_fill, size: 14, color: secondaryLabelColor),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Tempo: ${_formatDate(invoice.dueDate)}',
+                      style: TextStyle(color: secondaryLabelColor, fontSize: 13),
+                    ),
+                  ],
+                ],
+              ),
+              const Divider(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Total Tagihan',
+                    style: TextStyle(fontSize: 12, color: secondaryLabelColor),
+                  ),
+                  Text(
+                    formatWithCurrency(invoice.totalAmount, invoice.currency),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: labelColor,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
@@ -523,24 +612,24 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color color;
+    CupertinoDynamicColor color;
     switch (status.toLowerCase()) {
       case 'approved':
       case 'paid':
-        color = Colors.green;
+        color = CupertinoColors.systemGreen;
         break;
       case 'pending':
-        color = Colors.orange;
+        color = CupertinoColors.systemOrange;
         break;
       case 'draft':
-        color = Colors.grey;
+        color = CupertinoColors.systemGrey;
         break;
       case 'cancelled':
       case 'rejected':
-        color = Colors.red;
+        color = CupertinoColors.systemRed;
         break;
       default:
-        color = Colors.blue;
+        color = CupertinoColors.systemBlue;
     }
 
     return Container(
@@ -548,12 +637,12 @@ class _StatusBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color),
+        border: Border.all(color: color, width: 0.5),
       ),
       child: Text(
         status.toUpperCase(),
         style: TextStyle(
-          color: color,
+          color: color.resolveFrom(context),
           fontSize: 10,
           fontWeight: FontWeight.bold,
         ),

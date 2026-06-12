@@ -1,7 +1,8 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show Colors; // kept for legacy reference
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
@@ -22,26 +23,25 @@ class PRApprovalScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final prAsync = ref.watch(purchaseRequestDetailProvider(prId));
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0F172A),
-        foregroundColor: Colors.white,
-        title: const Text('Detail PR'),
-        actions: [
-          prAsync.when(
-            data: (pr) => IconButton(
-              icon: const Icon(Icons.print),
-              onPressed: () {
-                context.push('/pdf-preview?title=Purchase Request ${pr.code}&url_path=pdf/purchase-request/${pr.id}');
-              },
-            ),
-            loading: () => const SizedBox(),
-            error: (_, __) => const SizedBox(),
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+      navigationBar: CupertinoNavigationBar(
+        middle: const Text('Detail PR'),
+        trailing: prAsync.when(
+          data: (pr) => CupertinoButton(
+            padding: EdgeInsets.zero,
+            child: const Icon(CupertinoIcons.printer, size: 22),
+            onPressed: () {
+              context.push('/pdf-preview?title=Purchase Request ${pr.code}&url_path=pdf/purchase-request/${pr.id}');
+            },
           ),
-        ],
+          loading: () => const SizedBox(),
+          error: (_, __) => const SizedBox(),
+        ),
       ),
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: PRDetailsView(prId: prId),
+      child: SafeArea(
+        child: PRDetailsView(prId: prId),
+      ),
     );
   }
 }
@@ -59,6 +59,7 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
   bool _isSubmittingToBod = false;
   final Set<int> _selectedComparisonIds = {};
   bool _isGeneratingPos = false;
+  int _currentTab = 0; // 0 for requested items, 1 for comparisons
 
   Future<void> _handleAutoAssign(String strategy) async {
     setState(() => _isAutoAssigning = true);
@@ -69,17 +70,9 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
       ref.invalidate(purchaseRequestDetailProvider(widget.prId));
       ref.invalidate(purchaseRequestsProvider);
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Penetapan otomatis berhasil.')),
-        );
-      }
+      _showNotification('Penetapan otomatis berhasil.');
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal menetapkan otomatis: $e')),
-        );
-      }
+      _showNotification('Gagal menetapkan otomatis: $e', isError: true);
     } finally {
       if (mounted) {
         setState(() => _isAutoAssigning = false);
@@ -96,17 +89,9 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
       ref.invalidate(purchaseRequestDetailProvider(widget.prId));
       ref.invalidate(purchaseRequestsProvider);
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Kuantitas berhasil diajukan ke BOD untuk pemilihan vendor.')),
-        );
-      }
+      _showNotification('Kuantitas berhasil diajukan ke BOD untuk pemilihan vendor.');
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal mengajukan: $e')),
-        );
-      }
+      _showNotification('Gagal mengajukan: $e', isError: true);
     } finally {
       if (mounted) {
         setState(() => _isSubmittingToBod = false);
@@ -114,78 +99,130 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
     }
   }
 
-  Future<void> _showStrategyDialog() async {
-    String selectedStrategy = 'lowest_price';
-
-    await showDialog(
+  void _showStrategyDialog() {
+    showCupertinoDialog(
       context: context,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Tetapkan Vendor Otomatis'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Pilih strategi untuk menemukan dan menetapkan vendor terbaik secara otomatis berdasarkan riwayat pembelian:',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-                  ),
-                  const SizedBox(height: 16),
-                  RadioListTile<String>(
-                    title: const Text('Harga Terendah'),
-                    subtitle: const Text('Mencari vendor dengan harga historis terendah untuk barang-barang ini.'),
-                    value: 'lowest_price',
-                    groupValue: selectedStrategy,
-                    activeColor: const Color(0xFF4F46E5),
-                    onChanged: (val) {
-                      if (val != null) {
-                        setDialogState(() => selectedStrategy = val);
-                      }
-                    },
-                  ),
-                  RadioListTile<String>(
-                    title: const Text('Pemasok Terakhir'),
-                    subtitle: const Text('Memilih pemasok dari pesanan pembelian terbaru.'),
-                    value: 'last_supplier',
-                    groupValue: selectedStrategy,
-                    activeColor: const Color(0xFF4F46E5),
-                    onChanged: (val) {
-                      if (val != null) {
-                        setDialogState(() => selectedStrategy = val);
-                      }
-                    },
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Batal', style: TextStyle(color: Color(0xFF64748B))),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _handleAutoAssign(selectedStrategy);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4F46E5),
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text('Jalankan Penetapan'),
-                ),
-              ],
-            );
-          },
+        return CupertinoAlertDialog(
+          title: const Text('Tetapkan Vendor Otomatis'),
+          content: const Padding(
+            padding: EdgeInsets.only(top: 8.0),
+            child: Text('Pilih strategi untuk menemukan dan menetapkan vendor terbaik secara otomatis berdasarkan riwayat pembelian:'),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () {
+                Navigator.pop(context);
+                _handleAutoAssign('lowest_price');
+              },
+              child: const Text('Harga Terendah'),
+            ),
+            CupertinoDialogAction(
+              onPressed: () {
+                Navigator.pop(context);
+                _handleAutoAssign('last_supplier');
+              },
+              child: const Text('Pemasok Terakhir'),
+            ),
+            CupertinoDialogAction(
+              isDestructiveAction: true,
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
+          ],
         );
       },
     );
   }
 
+  void _showNotification(String message, {bool isError = false}) {
+    if (!mounted) return;
+    
+    final overlay = Overlay.of(context);
+    late OverlayEntry entry;
+
+    entry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: MediaQuery.of(context).padding.top + 24,
+        left: 24,
+        right: 24,
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 450),
+            child: DefaultTextStyle(
+              style: const TextStyle(color: CupertinoColors.white, fontFamily: '.SF Pro Text'),
+              child: TweenAnimationBuilder<double>(
+                duration: const Duration(milliseconds: 250),
+                tween: Tween(begin: 0.0, end: 1.0),
+                builder: (context, value, child) {
+                  return Opacity(
+                    opacity: value,
+                    child: Transform.translate(
+                      offset: Offset(0, (1 - value) * -20),
+                      child: child,
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isError ? CupertinoColors.systemRed : CupertinoColors.activeGreen,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: CupertinoColors.black,
+                        blurRadius: 12,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isError ? CupertinoIcons.exclamationmark_triangle : CupertinoIcons.check_mark_circled,
+                        color: CupertinoColors.white,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          message,
+                          style: const TextStyle(
+                            color: CupertinoColors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          if (entry.mounted) entry.remove();
+                        },
+                        child: const Icon(CupertinoIcons.xmark, color: CupertinoColors.white, size: 18),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(entry);
+    Future.delayed(const Duration(milliseconds: 3000), () {
+      if (entry.mounted) entry.remove();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final prAsync = ref.watch(purchaseRequestDetailProvider(widget.prId));
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return prAsync.when(
       data: (pr) {
@@ -216,98 +253,95 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
           );
         }
 
-        return DefaultTabController(
-          length: 2,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildMetadataHeader(context, pr),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Container(
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: TabBar(
-                    indicatorSize: TabBarIndicatorSize.tab,
-                    indicator: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(6),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x0A0F0F0F),
-                          blurRadius: 4,
-                          offset: Offset(0, 1),
-                        ),
-                      ],
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildMetadataHeader(context, pr),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: CupertinoSlidingSegmentedControl<int>(
+                  groupValue: _currentTab,
+                  children: {
+                    0: const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 6),
+                      child: Text('Barang Diminta', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
                     ),
-                    labelColor: const Color(0xFF0F172A),
-                    unselectedLabelColor: const Color(0xFF64748B),
-                    labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                    tabs: [
-                      const Tab(text: 'Barang Diminta'),
-                      Tab(text: 'Perbandingan Vendor (${pr.comparisons.length})'),
-                    ],
-                  ),
+                    1: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Text('Perbandingan Vendor (${pr.comparisons.length})', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                    ),
+                  },
+                  onValueChanged: (val) {
+                    if (val != null) {
+                      setState(() {
+                        _currentTab = val;
+                      });
+                    }
+                  },
                 ),
               ),
-              const SizedBox(height: 8),
-              Expanded(
-                child: TabBarView(
-                  children: [
-                    ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      itemCount: pr.details.length,
-                      itemBuilder: (context, index) {
-                        final item = pr.details[index];
-                        return _DetailItemRow(item: item);
-                      },
-                    ),
-                    _buildComparisonsTab(pr, showPurchasingActions),
-                  ],
-                ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: IndexedStack(
+                index: _currentTab,
+                children: [
+                  ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    itemCount: pr.details.length,
+                    itemBuilder: (context, index) {
+                      final item = pr.details[index];
+                      return _DetailItemRow(item: item);
+                    },
+                  ),
+                  _buildComparisonsTab(pr, showPurchasingActions),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stack) => Center(child: Text('Error: $err')),
+      loading: () => const Center(child: CupertinoActivityIndicator()),
+      error: (err, stack) => Center(child: Text('Error: $err', style: const TextStyle(color: CupertinoColors.destructiveRed))),
     );
   }
 
   Widget _buildComparisonsTab(PurchaseRequest pr, bool showPurchasingActions) {
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+
     if (pr.comparisons.isEmpty) {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.auto_awesome_outlined, size: 64, color: Color(0xFF94A3B8)),
+          Icon(CupertinoIcons.sparkles, size: 64, color: secondaryLabel.withOpacity(0.5)),
           const SizedBox(height: 16),
           const Text(
             'Belum ada perbandingan vendor yang ditetapkan',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Jalankan penetapan otomatis untuk menemukan saran vendor.',
-            style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+            style: TextStyle(fontSize: 13, color: secondaryLabel),
           ),
           if (showPurchasingActions) ...[
             const SizedBox(height: 24),
-            ElevatedButton.icon(
+            CupertinoButton.filled(
               onPressed: _isAutoAssigning ? null : _showStrategyDialog,
-              icon: _isAutoAssigning
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Icon(Icons.auto_awesome, size: 18),
-              label: const Text('Tetapkan Vendor Otomatis'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4F46E5),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
+              child: _isAutoAssigning
+                  ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                  : const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(CupertinoIcons.sparkles, size: 18),
+                        SizedBox(width: 8),
+                        Text('Tetapkan Vendor Otomatis'),
+                      ],
+                    ),
             ),
           ],
         ],
@@ -322,18 +356,18 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFECFDF5),
+              color: CupertinoColors.activeGreen.withOpacity(0.12),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFA7F3D0)),
+              border: Border.all(color: CupertinoColors.activeGreen.withOpacity(0.3)),
             ),
             child: Row(
               children: [
-                const Icon(Icons.info_outline, color: Color(0xFF059669), size: 20),
+                const Icon(CupertinoIcons.info, color: CupertinoColors.activeGreen, size: 20),
                 const SizedBox(width: 10),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Vendor telah ditetapkan. Klik "Ajukan ke BOD" untuk meminta persetujuan.',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF065F46), fontWeight: FontWeight.w500),
+                    style: TextStyle(fontSize: 12, color: CupertinoColors.activeGreen.resolveFrom(context), fontWeight: FontWeight.w500),
                   ),
                 ),
               ],
@@ -352,41 +386,30 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
         if (showPurchasingActions)
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+            decoration: BoxDecoration(
+              color: cardBg,
+              border: Border(top: BorderSide(color: separatorColor, width: 0.5)),
             ),
             child: Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: CupertinoButton(
+                    color: CupertinoColors.tertiarySystemFill,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                     onPressed: _isAutoAssigning ? null : _showStrategyDialog,
-                    icon: _isAutoAssigning
-                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Icon(Icons.auto_awesome, size: 16),
-                    label: const Text('Tetapkan Ulang Vendor'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF4F46E5),
-                      side: const BorderSide(color: Color(0xFF4F46E5)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
+                    child: _isAutoAssigning
+                        ? const CupertinoActivityIndicator()
+                        : const Text('Tetapkan Ulang', style: TextStyle(color: CupertinoColors.activeBlue)),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: ElevatedButton.icon(
+                  child: CupertinoButton.filled(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                     onPressed: _isSubmittingToBod ? null : _handleSubmitToBod,
-                    icon: _isSubmittingToBod
-                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Icon(Icons.send_rounded, size: 16),
-                    label: const Text('Ajukan ke BOD'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4F46E5),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
+                    child: _isSubmittingToBod
+                        ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                        : const Text('Ajukan ke BOD', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -397,21 +420,19 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
   }
 
   Widget _buildMetadataHeader(BuildContext context, PurchaseRequest pr) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A0F0F0F),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: separatorColor, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -421,7 +442,7 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
             children: [
               Text(
                 pr.code,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: labelColor),
               ),
               _buildStatusChip(pr.status),
             ],
@@ -430,33 +451,34 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
             const SizedBox(height: 6),
             Text(
               pr.companyName!,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF4F46E5)),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF6E56CF)),
             ),
           ],
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFE2E8F0)),
-          const SizedBox(height: 12),
-          _buildMetaRow(Icons.calendar_today_outlined, 'Tanggal', pr.requestDate),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12.0),
+            child: Container(height: 0.5, color: separatorColor),
+          ),
+          _buildMetaRow(CupertinoIcons.calendar, 'Tanggal', pr.requestDate),
           const SizedBox(height: 6),
-          _buildMetaRow(Icons.person_outline, 'Diminta oleh', pr.requestByName ?? '-'),
+          _buildMetaRow(CupertinoIcons.person, 'Diminta oleh', pr.requestByName ?? '-'),
           if (pr.notes != null && pr.notes!.isNotEmpty) ...[
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: separatorColor, width: 0.5),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.sticky_note_2_outlined, size: 16, color: Color(0xFF64748B)),
+                  Icon(CupertinoIcons.doc_plaintext, size: 16, color: secondaryLabel),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       pr.notes!,
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF475569), fontStyle: FontStyle.italic),
+                      style: TextStyle(fontSize: 13, color: secondaryLabel, fontStyle: FontStyle.italic),
                     ),
                   ),
                 ],
@@ -469,49 +491,53 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
   }
 
   Widget _buildMetaRow(IconData icon, String label, String value) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     return Row(
       children: [
-        Icon(icon, size: 15, color: const Color(0xFF64748B)),
+        Icon(icon, size: 15, color: secondaryLabel),
         const SizedBox(width: 8),
-        Text('$label: ', style: const TextStyle(color: Color(0xFF64748B), fontSize: 13)),
-        Text(value, style: const TextStyle(color: Color(0xFF0F172A), fontSize: 13, fontWeight: FontWeight.w500)),
+        Text('$label: ', style: TextStyle(color: secondaryLabel, fontSize: 13)),
+        Text(value, style: TextStyle(color: labelColor, fontSize: 13, fontWeight: FontWeight.w500)),
       ],
     );
   }
 
   Widget _buildStatusChip(String status) {
-    Color color;
+    CupertinoDynamicColor color;
     switch (status.toLowerCase()) {
       case 'approved':
       case 'vendor_approved':
       case 'po_created':
-        color = const Color(0xFF10B981);
+        color = CupertinoColors.activeGreen;
         break;
       case 'pending':
       case 'submitted':
-        color = const Color(0xFFF59E0B);
+        color = CupertinoColors.systemOrange;
         break;
       case 'rejected':
-        color = const Color(0xFFEF4444);
+        color = CupertinoColors.destructiveRed;
         break;
       case 'waiting_bod_approval':
       case 'waiting_comparison':
-        color = const Color(0xFF6366F1);
+        color = CupertinoColors.systemPurple;
         break;
       default:
-        color = const Color(0xFF64748B);
+        color = CupertinoColors.systemGrey;
     }
+
+    final resolvedColor = color.resolveFrom(context);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
+        color: resolvedColor.withOpacity(0.12),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        border: Border.all(color: resolvedColor, width: 0.5),
       ),
       child: Text(
         status.toUpperCase(),
-        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+        style: TextStyle(color: resolvedColor, fontSize: 10, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -542,6 +568,11 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
       }
     }
 
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+
     return Column(
       children: [
         Expanded(
@@ -563,12 +594,9 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                 return Container(
                   margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cardBg,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                    boxShadow: const [
-                      BoxShadow(color: Color(0x06000000), blurRadius: 8, offset: Offset(0, 2)),
-                    ],
+                    border: Border.all(color: separatorColor, width: 0.5),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -578,9 +606,9 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                         child: Row(
                           children: [
                             if (!hasPo && pr.status.toLowerCase() == 'vendor_approved')
-                              Checkbox(
+                              CupertinoCheckbox(
                                 value: _selectedComparisonIds.contains(comp.id),
-                                activeColor: const Color(0xFF4F46E5),
+                                activeColor: const Color(0xFF6E56CF),
                                 onChanged: (val) {
                                   setState(() {
                                     if (val == true) {
@@ -598,16 +626,16 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                                 children: [
                                   Text(
                                     comp.supplierName,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF0F172A),
+                                      color: labelColor,
                                     ),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     'Waktu tunggu: ${comp.leadTimeDays} hari',
-                                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                    style: TextStyle(fontSize: 12, color: secondaryLabel),
                                   ),
                                 ],
                               ),
@@ -616,14 +644,14 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFECFDF5),
+                                  color: CupertinoColors.activeGreen.withOpacity(0.12),
                                   borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: const Color(0xFFA7F3D0)),
+                                  border: Border.all(color: CupertinoColors.activeGreen.withOpacity(0.3)),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(Icons.check_circle_outline, size: 12, color: Color(0xFF059669)),
+                                    const Icon(CupertinoIcons.check_mark_circled, size: 12, color: CupertinoColors.activeGreen),
                                     const SizedBox(width: 4),
                                     Text(
                                       matchedPoNumbers.length == 1
@@ -632,7 +660,7 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                                       style: const TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
-                                        color: Color(0xFF059669),
+                                        color: CupertinoColors.activeGreen,
                                       ),
                                     ),
                                   ],
@@ -641,12 +669,12 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                           ],
                         ),
                       ),
-                      const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                      Container(height: 0.5, color: separatorColor),
                       ListView.separated(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: items.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                        separatorBuilder: (_, __) => Container(height: 0.5, color: separatorColor),
                         itemBuilder: (ctx, idx) {
                           final item = items[idx];
                           final cd = comp.details.firstWhere(
@@ -666,19 +694,19 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                                     Expanded(
                                       child: Text(
                                         item.itemName,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w600,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
                                           fontSize: 13,
-                                          color: Color(0xFF1E293B),
+                                          color: labelColor,
                                         ),
                                       ),
                                     ),
                                     Text(
                                       formatWithCurrency(subtotal, 'IDR'),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 13,
-                                        color: Color(0xFF0F172A),
+                                        color: labelColor,
                                       ),
                                     ),
                                   ],
@@ -689,12 +717,12 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                                   children: [
                                     Text(
                                       'Jml: ${item.approvedQty ?? item.qtyRequested} ${item.uom} @ ${formatWithCurrency(cd.offeredUnitPrice, "IDR")}',
-                                      style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                      style: TextStyle(fontSize: 12, color: secondaryLabel),
                                     ),
                                     if (item.warehouseName != null)
                                       Text(
                                         'Gudang: ${item.warehouseName}',
-                                        style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                        style: TextStyle(fontSize: 12, color: secondaryLabel),
                                       ),
                                   ],
                                 ),
@@ -703,22 +731,22 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                           );
                         },
                       ),
-                      const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                      Container(height: 0.5, color: separatorColor),
                       Padding(
                         padding: const EdgeInsets.all(16),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
+                            Text(
                               'Total Pemasok:',
-                              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF64748B)),
+                              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: secondaryLabel),
                             ),
                             Text(
                               formatWithCurrency(comp.totalAmount, 'IDR'),
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF4F46E5),
+                                color: Color(0xFF6E56CF),
                               ),
                             ),
                           ],
@@ -731,14 +759,14 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
 
               // Generated POs
               if (pr.purchaseOrders.isNotEmpty) ...[
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
                   child: Text(
                     'Pesanan Pembelian (PO) Dibuat',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: labelColor,
                     ),
                   ),
                 ),
@@ -746,13 +774,13 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                   margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: cardBg,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: separatorColor, width: 0.5),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.receipt_long_outlined, color: Color(0xFF4F46E5), size: 20),
+                      const Icon(CupertinoIcons.doc_text, color: Color(0xFF6E56CF), size: 20),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -760,33 +788,35 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                           children: [
                             Text(
                               po.poNumber,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13,
-                                color: Color(0xFF0F172A),
+                                color: labelColor,
                               ),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               po.supplierName,
-                              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                              style: TextStyle(fontSize: 12, color: secondaryLabel),
                             ),
                           ],
                         ),
                       ),
-                      OutlinedButton.icon(
+                      CupertinoButton(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        color: CupertinoColors.tertiarySystemFill,
+                        borderRadius: BorderRadius.circular(8),
                         onPressed: () => _downloadAndPrintPdf(
                           context,
                           po.pdfUrl ?? '',
                           po.poNumber,
                         ),
-                        icon: const Icon(Icons.download_outlined, size: 14),
-                        label: const Text('PDF'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF4F46E5),
-                          side: const BorderSide(color: Color(0xFF4F46E5)),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                        child: const Row(
+                          children: [
+                            Icon(CupertinoIcons.cloud_download, size: 14, color: CupertinoColors.activeBlue),
+                            SizedBox(width: 4),
+                            Text('PDF', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: CupertinoColors.activeBlue)),
+                          ],
                         ),
                       ),
                     ],
@@ -803,7 +833,7 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFFEF4444),
+                      color: CupertinoColors.destructiveRed,
                     ),
                   ),
                 ),
@@ -818,32 +848,24 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
         if (pr.status.toLowerCase() == 'vendor_approved' && _selectedComparisonIds.isNotEmpty)
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+            decoration: BoxDecoration(
+              color: cardBg,
+              border: Border(top: BorderSide(color: separatorColor, width: 0.5)),
             ),
             child: SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
+              child: CupertinoButton.filled(
                 onPressed: _isGeneratingPos ? null : () => _handleProceedToPO(pr),
-                icon: _isGeneratingPos
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.playlist_add_check, size: 18),
-                label: Text('Proceed to PO for ${_selectedComparisonIds.length} Supplier(s)'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                ),
+                child: _isGeneratingPos
+                    ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(CupertinoIcons.checkmark_seal, size: 18),
+                          const SizedBox(width: 8),
+                          Text('Proceed to PO for ${_selectedComparisonIds.length} Supplier(s)'),
+                        ],
+                      ),
               ),
             ),
           ),
@@ -860,7 +882,6 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
         comparisonIds: _selectedComparisonIds.toList(),
       );
 
-      // Invalidate details provider to reload status
       ref.invalidate(purchaseRequestDetailProvider(pr.id));
       ref.invalidate(purchaseRequestsProvider);
 
@@ -869,27 +890,20 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
       });
 
       if (mounted) {
-        // Show success dialog with download buttons
-        await showDialog(
+        await showCupertinoDialog(
           context: context,
           builder: (dialogCtx) {
-            return AlertDialog(
-              title: const Row(
-                children: [
-                  Icon(Icons.check_circle_outline, color: Color(0xFF10B981)),
-                  SizedBox(width: 8),
-                  Text('POs Generated'),
-                ],
-              ),
-              content: SizedBox(
-                width: 400,
+            return CupertinoAlertDialog(
+              title: const Text('POs Generated'),
+              content: Padding(
+                padding: const EdgeInsets.only(top: 8.0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
                       'Successfully generated Purchase Orders from selected vendors. You can download the PDF documents below:',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF475569)),
+                      style: TextStyle(fontSize: 13),
                     ),
                     const SizedBox(height: 16),
                     ...createdPosRaw.map((poRaw) {
@@ -901,13 +915,13 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                         margin: const EdgeInsets.only(bottom: 8),
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.receipt_long_outlined, size: 18, color: Color(0xFF4F46E5)),
+                            const Icon(CupertinoIcons.doc_text, size: 18, color: Color(0xFF6E56CF)),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Column(
@@ -919,14 +933,15 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                                   ),
                                   Text(
                                     supplierName,
-                                    style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                    style: const TextStyle(fontSize: 11),
                                   ),
                                 ],
                               ),
                             ),
                             if (pdfUrl != null)
-                              IconButton(
-                                icon: const Icon(Icons.download_rounded, color: Color(0xFF4F46E5), size: 20),
+                              CupertinoButton(
+                                padding: EdgeInsets.zero,
+                                child: const Icon(CupertinoIcons.cloud_download, color: CupertinoColors.activeBlue, size: 20),
                                 onPressed: () {
                                   _downloadAndPrintPdf(context, pdfUrl, poNum);
                                 },
@@ -939,7 +954,7 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                 ),
               ),
               actions: [
-                TextButton(
+                CupertinoDialogAction(
                   onPressed: () => Navigator.pop(dialogCtx),
                   child: const Text('Close'),
                 ),
@@ -949,14 +964,7 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
         );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error generating POs: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      _showNotification('Error generating POs: $e', isError: true);
     } finally {
       if (mounted) {
         setState(() => _isGeneratingPos = false);
@@ -969,16 +977,15 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
     bool dialogOpen = false;
     BuildContext? dialogContext;
     try {
-      // Delay showing dialog to allow pending transitions/pops to complete
       await Future.delayed(Duration.zero);
       if (!context.mounted) return;
 
-      showDialog(
+      showCupertinoDialog(
         context: context,
         barrierDismissible: false,
         builder: (dCtx) {
           dialogContext = dCtx;
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: CupertinoActivityIndicator(radius: 14));
         },
       );
       dialogOpen = true;
@@ -1000,14 +1007,12 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
 
       if (response.data != null) {
         if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
-          // Direct file saving for desktop
           final dir = await getDownloadsDirectory();
           if (dir != null) {
             final filePath = p.join(dir.path, '$fileName.pdf');
             final file = File(filePath);
             await file.writeAsBytes(response.data!);
 
-            // Open the saved file using default platform app
             try {
               if (Platform.isWindows) {
                 await Process.run('explorer.exe', [filePath.replaceAll('/', '\\')]);
@@ -1017,23 +1022,14 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                 await Process.run('xdg-open', [filePath]);
               }
             } catch (e) {
-              // Ignore failure to open file
+              // Ignore explorer launch issues
             }
 
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Downloaded PDF to Downloads folder: $fileName.pdf'),
-                  backgroundColor: Colors.green,
-                  duration: const Duration(seconds: 4),
-                ),
-              );
-            }
+            _showNotification('Downloaded PDF to Downloads folder: $fileName.pdf');
           } else {
             throw Exception('Could not find Downloads folder');
           }
         } else {
-          // Fallback for Web/Mobile (layoutPdf shows save/preview UI)
           await Printing.layoutPdf(
             name: fileName,
             onLayout: (format) async => Uint8List.fromList(response.data!),
@@ -1051,14 +1047,7 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
           Navigator.pop(context);
         }
       }
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to download PDF: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      _showNotification('Failed to download PDF: $e', isError: true);
     }
   }
 }
@@ -1069,19 +1058,17 @@ class _DetailItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A0F0F0F),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: separatorColor, width: 0.5),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -1094,40 +1081,41 @@ class _DetailItemRow extends StatelessWidget {
                 Expanded(
                   child: Text(
                     item.itemName,
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A), fontSize: 14),
+                    style: TextStyle(fontWeight: FontWeight.bold, color: labelColor, fontSize: 14),
                   ),
                 ),
                 if (item.costCode != null)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
+                      color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: separatorColor, width: 0.5),
                     ),
                     child: Text(
                       item.costCode!,
-                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: secondaryLabel),
                     ),
                   ),
               ],
             ),
             const SizedBox(height: 2),
-            Text(item.itemCode, style: const TextStyle(color: Color(0xFF64748B), fontSize: 12)),
-            const SizedBox(height: 12),
-            const Divider(height: 1, color: Color(0xFFF1F5F9)),
-            const SizedBox(height: 12),
+            Text(item.itemCode, style: TextStyle(color: secondaryLabel, fontSize: 12)),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12.0),
+              child: Container(height: 0.5, color: separatorColor),
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Req Qty', style: TextStyle(color: Color(0xFF64748B), fontSize: 11)),
+                    Text('Req Qty', style: TextStyle(color: secondaryLabel, fontSize: 11)),
                     const SizedBox(height: 2),
                     Text(
                       '${item.qtyRequested} ${item.uom}',
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: labelColor),
                     ),
                   ],
                 ),
@@ -1135,11 +1123,11 @@ class _DetailItemRow extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      const Text('Approved Qty', style: TextStyle(color: Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.bold)),
+                      const Text('Approved Qty', style: TextStyle(color: CupertinoColors.activeGreen, fontSize: 11, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 2),
                       Text(
                         '${item.approvedQty} ${item.uom}',
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: CupertinoColors.activeGreen),
                       ),
                     ],
                   ),
@@ -1148,13 +1136,13 @@ class _DetailItemRow extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(Icons.inventory_2_outlined, size: 14, color: Color(0xFF64748B)),
+                Icon(CupertinoIcons.cube, size: 14, color: secondaryLabel),
                 const SizedBox(width: 4),
                 Text(
                   'Current Stock: ${item.currentStock} ${item.uom}',
                   style: TextStyle(
                     fontSize: 12,
-                    color: item.currentStock < item.qtyRequested ? const Color(0xFFF59E0B) : const Color(0xFF64748B),
+                    color: item.currentStock < item.qtyRequested ? CupertinoColors.systemOrange : secondaryLabel,
                     fontWeight: item.currentStock < item.qtyRequested ? FontWeight.w500 : FontWeight.normal,
                   ),
                 ),
@@ -1166,12 +1154,12 @@ class _DetailItemRow extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
+                  color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   'Spesifikasi: ${item.dtSpec}',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF475569), fontStyle: FontStyle.italic),
+                  style: TextStyle(fontSize: 12, color: labelColor, fontStyle: FontStyle.italic),
                 ),
               ),
             ],
@@ -1181,12 +1169,12 @@ class _DetailItemRow extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
+                  color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   'Keterangan: ${item.dtNotes}',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF475569)),
+                  style: TextStyle(fontSize: 12, color: labelColor),
                 ),
               ),
             ],
@@ -1205,19 +1193,17 @@ class _ComparisonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A0F0F0F),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: separatorColor, width: 0.5),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -1230,18 +1216,18 @@ class _ComparisonCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     comparison.supplierName,
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A), fontSize: 15),
+                    style: TextStyle(fontWeight: FontWeight.bold, color: labelColor, fontSize: 15),
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEEF2F6),
+                    color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     '${comparison.leadTimeDays} days lead time',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: secondaryLabel),
                   ),
                 ),
               ],
@@ -1252,20 +1238,23 @@ class _ComparisonCard extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF4F46E5),
+                color: Color(0xFF6E56CF),
               ),
             ),
             if (comparison.notes != null && comparison.notes!.trim().isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
                 'Notes: ${comparison.notes}',
-                style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Color(0xFF64748B)),
+                style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: secondaryLabel),
               ),
             ],
-            const Divider(height: 24, color: Color(0xFFF1F5F9)),
-            const Text(
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12.0),
+              child: Container(height: 0.5, color: separatorColor),
+            ),
+            Text(
               'Offered Items:',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: labelColor),
             ),
             const SizedBox(height: 6),
             ...comparison.details.map((compDetail) {
@@ -1282,12 +1271,12 @@ class _ComparisonCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         prDetail.itemName,
-                        style: const TextStyle(fontSize: 13, color: Color(0xFF1E293B)),
+                        style: TextStyle(fontSize: 13, color: labelColor),
                       ),
                     ),
                     Text(
                       formatWithCurrency(compDetail.offeredUnitPrice, 'IDR'),
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: labelColor),
                     ),
                   ],
                 ),

@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -18,7 +18,6 @@ class AddAssetScreen extends ConsumerStatefulWidget {
 }
 
 class _AddAssetScreenState extends ConsumerState<AddAssetScreen> {
-  final _formKey = GlobalKey<FormState>();
   bool _isSubmitting = false;
 
   // Form Fields
@@ -44,6 +43,11 @@ class _AddAssetScreenState extends ConsumerState<AddAssetScreen> {
 
   XFile? _photoFile;
   final ImagePicker _picker = ImagePicker();
+
+  // Field validation messages
+  String? _companyError;
+  String? _categoryError;
+  String? _nameError;
 
   final List<String> _categories = [
     'Laptop',
@@ -93,85 +97,262 @@ class _AddAssetScreenState extends ConsumerState<AddAssetScreen> {
         });
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal mengambil gambar: $e')),
-        );
-      }
+      _showNotification('Gagal mengambil gambar: $e', isError: true);
     }
   }
 
-  Future<void> _selectDate(BuildContext context, bool isPurchaseDate) async {
-    final initialDate = DateTime.now();
-    final picked = await showDatePicker(
+  void _showCupertinoDatePicker({
+    required DateTime initialDate,
+    required ValueChanged<DateTime> onDateSelected,
+  }) {
+    showCupertinoModalPopup(
       context: context,
-      initialDate: initialDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF6E56CF),
-              onPrimary: Colors.white,
-              onSurface: Color(0xFF1E293B),
-            ),
+      builder: (context) {
+        DateTime tempDate = initialDate;
+        return Container(
+          height: 300,
+          color: CupertinoColors.systemBackground.resolveFrom(context),
+          child: Column(
+            children: [
+              Container(
+                color: CupertinoColors.secondarySystemBackground.resolveFrom(context),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    CupertinoButton(
+                      child: const Text('Batal'),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    CupertinoButton(
+                      child: const Text('Selesai'),
+                      onPressed: () {
+                        onDateSelected(tempDate);
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: CupertinoDatePicker(
+                  initialDateTime: initialDate,
+                  mode: CupertinoDatePickerMode.date,
+                  onDateTimeChanged: (date) {
+                    tempDate = date;
+                  },
+                ),
+              ),
+            ],
           ),
-          child: child!,
         );
       },
     );
-
-    if (picked != null) {
-      setState(() {
-        if (isPurchaseDate) {
-          _purchaseDate = picked;
-        } else {
-          _warrantyExpiry = picked;
-        }
-      });
-    }
   }
 
-  Future<void> _selectAssignedDate(BuildContext context) async {
-    final picked = await showDatePicker(
+  void _showCompanyPicker(List<Company> companies) {
+    showCupertinoModalPopup(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF6E56CF),
-              onPrimary: Colors.white,
-              onSurface: Color(0xFF1E293B),
-            ),
-          ),
-          child: child!,
-        );
-      },
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Pilih Perusahaan'),
+        actions: companies.map((c) {
+          return CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() {
+                _selectedCompany = c;
+                _selectedOffice = null;
+                _selectedEmployee = null;
+                _selectedSupplier = null;
+                _companyError = null;
+              });
+              Navigator.pop(context);
+            },
+            child: Text(c.companyName),
+          );
+        }).toList(),
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+      ),
     );
+  }
 
-    if (picked != null) {
-      setState(() {
-        _assignedDate = picked;
-      });
-    }
+  void _showCategoryPicker() {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Pilih Kategori'),
+        actions: _categories.map((cat) {
+          return CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() {
+                _selectedCategory = cat;
+                _categoryError = null;
+              });
+              Navigator.pop(context);
+            },
+            child: Text(cat),
+          );
+        }).toList(),
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+      ),
+    );
+  }
+
+  void _showSupplierPicker(List<Supplier> suppliers) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Pilih Supplier'),
+        actions: suppliers.map((s) {
+          return CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() {
+                _selectedSupplier = s;
+              });
+              Navigator.pop(context);
+            },
+            child: Text(s.name),
+          );
+        }).toList(),
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+      ),
+    );
+  }
+
+  void _showStatusPicker() {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Pilih Status Aset'),
+        actions: _statuses.map((st) {
+          return CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() {
+                _status = st['value']!;
+              });
+              Navigator.pop(context);
+            },
+            child: Text(st['label']!),
+          );
+        }).toList(),
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+      ),
+    );
+  }
+
+  void _showOfficePicker(List<AssetOffice> offices) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Pilih Lokasi Kantor'),
+        actions: offices.map((o) {
+          return CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() {
+                _selectedOffice = o;
+              });
+              Navigator.pop(context);
+            },
+            child: Text(o.officeName),
+          );
+        }).toList(),
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+      ),
+    );
+  }
+
+  void _showEmployeePicker(List<AssetEmployee> employees) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Pilih Karyawan'),
+        actions: employees.map((e) {
+          return CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() {
+                _selectedEmployee = e;
+                _status = 'assigned';
+              });
+              Navigator.pop(context);
+            },
+            child: Text(e.fullName),
+          );
+        }).toList(),
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+      ),
+    );
+  }
+
+  void _showPhotoSourceSheet() {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Lampirkan Foto Aset'),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _pickImage(ImageSource.camera);
+            },
+            child: const Text('Ambil Foto dari Kamera'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _pickImage(ImageSource.gallery);
+            },
+            child: const Text('Pilih Foto dari Galeri'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+      ),
+    );
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    bool hasError = false;
+
     if (_selectedCompany == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Silakan pilih Perusahaan terlebih dahulu.')),
-      );
-      return;
+      setState(() => _companyError = 'Perusahaan wajib dipilih');
+      hasError = true;
     }
     if (_selectedCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Silakan pilih Kategori terlebih dahulu.')),
-      );
+      setState(() => _categoryError = 'Kategori wajib dipilih');
+      hasError = true;
+    }
+    if (_nameController.text.trim().isEmpty) {
+      setState(() => _nameError = 'Nama aset wajib diisi');
+      hasError = true;
+    }
+
+    if (hasError) {
+      _showNotification('Harap lengkapi semua kolom wajib.', isError: true);
       return;
     }
 
@@ -199,22 +380,101 @@ class _AddAssetScreenState extends ConsumerState<AddAssetScreen> {
 
       await ref.read(assetRepositoryProvider).createAsset(data, photoFile: _photoFile);
 
+      _showNotification('Aset hardware berhasil ditambahkan.');
+      ref.invalidate(assetListProvider); // Refresh list
+      
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Aset hardware berhasil ditambahkan.'), backgroundColor: Colors.green),
-        );
-        ref.invalidate(assetListProvider); // Refresh list
         context.pop();
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal menambahkan aset: $e'), backgroundColor: Colors.red),
-        );
-      }
+      _showNotification('Gagal menambahkan aset: $e', isError: true);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
+  }
+
+  void _showNotification(String message, {bool isError = false}) {
+    if (!mounted) return;
+    
+    final overlay = Overlay.of(context);
+    late OverlayEntry entry;
+
+    entry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: MediaQuery.of(context).padding.top + 24,
+        left: 24,
+        right: 24,
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 450),
+            child: DefaultTextStyle(
+              style: const TextStyle(color: CupertinoColors.white, fontFamily: '.SF Pro Text'),
+              child: TweenAnimationBuilder<double>(
+                duration: const Duration(milliseconds: 250),
+                tween: Tween(begin: 0.0, end: 1.0),
+                builder: (context, value, child) {
+                  return Opacity(
+                    opacity: value,
+                    child: Transform.translate(
+                      offset: Offset(0, (1 - value) * -20),
+                      child: child,
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isError ? CupertinoColors.systemRed : CupertinoColors.activeGreen,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: CupertinoColors.black,
+                        blurRadius: 12,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isError ? CupertinoIcons.exclamationmark_triangle : CupertinoIcons.check_mark_circled,
+                        color: CupertinoColors.white,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          message,
+                          style: const TextStyle(
+                            color: CupertinoColors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          if (entry.mounted) entry.remove();
+                        },
+                        child: const Icon(CupertinoIcons.xmark, color: CupertinoColors.white, size: 18),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(entry);
+    Future.delayed(const Duration(milliseconds: 3000), () {
+      if (entry.mounted) entry.remove();
+    });
   }
 
   @override
@@ -230,14 +490,16 @@ class _AddAssetScreenState extends ConsumerState<AddAssetScreen> {
         ? ref.watch(assetSuppliersProvider(companyId: _selectedCompany!.id))
         : const AsyncValue<List<Supplier>>.data([]);
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0F172A),
-        foregroundColor: Colors.white,
-        title: const Text('Tambah Aset Hardware'),
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+      navigationBar: const CupertinoNavigationBar(
+        middle: Text('Tambah Aset Hardware'),
       ),
-      body: Form(
-        key: _formKey,
+      child: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -245,404 +507,341 @@ class _AddAssetScreenState extends ConsumerState<AddAssetScreen> {
             children: [
               // 1. Identification Section
               _buildSectionTitle('Identifikasi Aset'),
-              Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
+              Container(
+                decoration: BoxDecoration(
+                  color: cardBg,
                   borderRadius: BorderRadius.circular(12),
-                  side: const BorderSide(color: Color(0xFFE2E8F0)),
+                  border: Border.all(color: separatorColor, width: 0.5),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      // Company Dropdown
-                      companiesAsync.when(
-                        data: (companies) => DropdownButtonFormField<Company>(
-                          decoration: const InputDecoration(
-                            labelText: 'Perusahaan *',
-                            border: OutlineInputBorder(),
-                          ),
-                          initialValue: _selectedCompany,
-                          items: companies.map((c) {
-                            return DropdownMenuItem<Company>(
-                              value: c,
-                              child: Text(c.companyName),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            setState(() {
-                              _selectedCompany = val;
-                              _selectedOffice = null;
-                              _selectedEmployee = null;
-                              _selectedSupplier = null;
-                            });
-                          },
-                          validator: (val) => val == null ? 'Perusahaan wajib dipilih' : null,
-                        ),
-                        loading: () => const Center(child: CircularProgressIndicator()),
-                        error: (err, _) => Text('Gagal memuat perusahaan: $err'),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Company Select Field
+                    companiesAsync.when(
+                      data: (companies) => _buildSelectField(
+                        label: 'Perusahaan *',
+                        value: _selectedCompany != null ? _selectedCompany!.companyName : 'Pilih Perusahaan',
+                        onTap: () => _showCompanyPicker(companies),
                       ),
-                      const SizedBox(height: 16),
-                      // Category Dropdown
-                      DropdownButtonFormField<String>(
-                        decoration: const InputDecoration(
-                          labelText: 'Kategori *',
-                          border: OutlineInputBorder(),
-                        ),
-                        initialValue: _selectedCategory,
-                        items: _categories.map((cat) {
-                          return DropdownMenuItem<String>(
-                            value: cat,
-                            child: Text(cat),
-                          );
-                        }).toList(),
-                        onChanged: (val) {
-                          setState(() {
-                            _selectedCategory = val;
-                          });
-                        },
-                        validator: (val) => val == null ? 'Kategori wajib dipilih' : null,
-                      ),
-                      const SizedBox(height: 16),
-                      // Asset Name
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Nama Aset *',
-                          hintText: 'Misal: MacBook Pro M3 Max 16"',
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (val) => (val == null || val.trim().isEmpty) ? 'Nama aset wajib diisi' : null,
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _brandController,
-                              decoration: const InputDecoration(
-                                labelText: 'Brand',
-                                hintText: 'Apple',
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: TextFormField(
-                              controller: _modelController,
-                              decoration: const InputDecoration(
-                                labelText: 'Model',
-                                hintText: 'A2991',
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      // Serial Number
-                      TextFormField(
-                        controller: _serialNumberController,
-                        decoration: const InputDecoration(
-                          labelText: 'Serial Number (S/N)',
-                          hintText: 'C02XG8...',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
+                      loading: () => const Center(child: CupertinoActivityIndicator()),
+                      error: (err, _) => Text('Gagal memuat perusahaan: $err', style: const TextStyle(color: CupertinoColors.destructiveRed)),
+                    ),
+                    if (_companyError != null) ...[
+                      const SizedBox(height: 4),
+                      Text(_companyError!, style: const TextStyle(color: CupertinoColors.destructiveRed, fontSize: 12)),
                     ],
-                  ),
+                    const SizedBox(height: 16),
+
+                    // Category Select Field
+                    _buildSelectField(
+                      label: 'Kategori *',
+                      value: _selectedCategory ?? 'Pilih Kategori',
+                      onTap: _showCategoryPicker,
+                    ),
+                    if (_categoryError != null) ...[
+                      const SizedBox(height: 4),
+                      Text(_categoryError!, style: const TextStyle(color: CupertinoColors.destructiveRed, fontSize: 12)),
+                    ],
+                    const SizedBox(height: 16),
+
+                    // Asset Name
+                    const Text('Nama Aset *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 6),
+                    CupertinoTextField(
+                      controller: _nameController,
+                      placeholder: 'Misal: MacBook Pro M3 Max 16"',
+                      onChanged: (val) {
+                        if (val.trim().isNotEmpty && _nameError != null) {
+                          setState(() => _nameError = null);
+                        }
+                      },
+                    ),
+                    if (_nameError != null) ...[
+                      const SizedBox(height: 4),
+                      Text(_nameError!, style: const TextStyle(color: CupertinoColors.destructiveRed, fontSize: 12)),
+                    ],
+                    const SizedBox(height: 16),
+
+                    // Brand & Model
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Brand', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                              const SizedBox(height: 6),
+                              CupertinoTextField(
+                                controller: _brandController,
+                                placeholder: 'Apple',
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Model', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                              const SizedBox(height: 6),
+                              CupertinoTextField(
+                                controller: _modelController,
+                                placeholder: 'A2991',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Serial Number
+                    const Text('Serial Number (S/N)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 6),
+                    CupertinoTextField(
+                      controller: _serialNumberController,
+                      placeholder: 'C02XG8...',
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 20),
 
               // 2. Acquisition Section
               _buildSectionTitle('Pembelian & Garansi'),
-              Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
+              Container(
+                decoration: BoxDecoration(
+                  color: cardBg,
                   borderRadius: BorderRadius.circular(12),
-                  side: const BorderSide(color: Color(0xFFE2E8F0)),
+                  border: Border.all(color: separatorColor, width: 0.5),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      // Purchase Date
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              _purchaseDate == null
-                                  ? 'Tanggal Beli: Belum Dipilih'
-                                  : 'Tanggal Beli: ${DateFormat('dd-MM-yyyy').format(_purchaseDate!)}',
-                              style: const TextStyle(fontWeight: FontWeight.w500),
-                            ),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Purchase Date
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _purchaseDate == null
+                                ? 'Tanggal Beli: Belum Dipilih'
+                                : 'Tanggal Beli: ${DateFormat('dd-MM-yyyy').format(_purchaseDate!)}',
+                            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
                           ),
-                          TextButton.icon(
-                            icon: const Icon(Icons.calendar_month, color: Color(0xFF6E56CF)),
-                            label: const Text('Pilih', style: TextStyle(color: Color(0xFF6E56CF))),
-                            onPressed: () => _selectDate(context, true),
-                          ),
-                        ],
-                      ),
-                      const Divider(),
-                      // Purchase Price
-                      TextFormField(
-                        controller: _purchasePriceController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Harga Beli (IDR)',
-                          prefixText: 'Rp ',
-                          border: OutlineInputBorder(),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      // Supplier Dropdown
-                      suppliersAsync.when(
-                        data: (suppliers) => DropdownButtonFormField<Supplier>(
-                          decoration: const InputDecoration(
-                            labelText: 'Supplier',
-                            border: OutlineInputBorder(),
+                        CupertinoButton(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: const Text('Pilih', style: TextStyle(color: Color(0xFF6E56CF))),
+                          onPressed: () => _showCupertinoDatePicker(
+                            initialDate: _purchaseDate ?? DateTime.now(),
+                            onDateSelected: (date) => setState(() => _purchaseDate = date),
                           ),
-                          initialValue: _selectedSupplier,
-                          disabledHint: const Text('Pilih perusahaan terlebih dahulu'),
-                          items: suppliers.map((s) {
-                            return DropdownMenuItem<Supplier>(
-                              value: s,
-                              child: Text(s.name),
-                            );
-                          }).toList(),
-                          onChanged: _selectedCompany == null
-                              ? null
-                              : (val) {
-                                  setState(() {
-                                    _selectedSupplier = val;
-                                  });
-                                },
                         ),
-                        loading: () => const Center(child: CircularProgressIndicator()),
-                        error: (err, _) => Text('Gagal memuat supplier: $err'),
+                      ],
+                    ),
+                    Container(height: 0.5, color: separatorColor, margin: const EdgeInsets.symmetric(vertical: 8)),
+                    
+                    // Purchase Price
+                    const Text('Harga Beli (IDR)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 6),
+                    CupertinoTextField(
+                      controller: _purchasePriceController,
+                      keyboardType: TextInputType.number,
+                      prefix: const Padding(
+                        padding: EdgeInsets.only(left: 12.0),
+                        child: Text('Rp ', style: TextStyle(color: CupertinoColors.secondaryLabel)),
                       ),
-                      const Divider(height: 32),
-                      // Warranty Expiry Date
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              _warrantyExpiry == null
-                                  ? 'Masa Garansi Habis: Belum Dipilih'
-                                  : 'Masa Garansi: ${DateFormat('dd-MM-yyyy').format(_warrantyExpiry!)}',
-                              style: const TextStyle(fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                          TextButton.icon(
-                            icon: const Icon(Icons.calendar_month, color: Color(0xFF6E56CF)),
-                            label: const Text('Pilih', style: TextStyle(color: Color(0xFF6E56CF))),
-                            onPressed: () => _selectDate(context, false),
-                          ),
-                        ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Supplier Select Field
+                    suppliersAsync.when(
+                      data: (suppliers) => _buildSelectField(
+                        label: 'Supplier',
+                        value: _selectedSupplier != null ? _selectedSupplier!.name : 'Pilih Supplier',
+                        onTap: () => _showSupplierPicker(suppliers),
+                        enabled: _selectedCompany != null,
                       ),
-                    ],
-                  ),
+                      loading: () => const Center(child: CupertinoActivityIndicator()),
+                      error: (err, _) => Text('Gagal memuat supplier: $err', style: const TextStyle(color: CupertinoColors.destructiveRed)),
+                    ),
+                    Container(height: 0.5, color: separatorColor, margin: const EdgeInsets.symmetric(vertical: 16)),
+
+                    // Warranty Expiry Date
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _warrantyExpiry == null
+                                ? 'Masa Garansi Habis: Belum Dipilih'
+                                : 'Masa Garansi: ${DateFormat('dd-MM-yyyy').format(_warrantyExpiry!)}',
+                            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                          ),
+                        ),
+                        CupertinoButton(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: const Text('Pilih', style: TextStyle(color: Color(0xFF6E56CF))),
+                          onPressed: () => _showCupertinoDatePicker(
+                            initialDate: _warrantyExpiry ?? DateTime.now(),
+                            onDateSelected: (date) => setState(() => _warrantyExpiry = date),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 20),
 
               // 3. Status & Assignment Section
               _buildSectionTitle('Penempatan & Status'),
-              Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
+              Container(
+                decoration: BoxDecoration(
+                  color: cardBg,
                   borderRadius: BorderRadius.circular(12),
-                  side: const BorderSide(color: Color(0xFFE2E8F0)),
+                  border: Border.all(color: separatorColor, width: 0.5),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      // Status Dropdown
-                      DropdownButtonFormField<String>(
-                        decoration: const InputDecoration(
-                          labelText: 'Status Aset *',
-                          border: OutlineInputBorder(),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Status Selector
+                    _buildSelectField(
+                      label: 'Status Aset *',
+                      value: _statuses.firstWhere((st) => st['value'] == _status)['label']!,
+                      onTap: _showStatusPicker,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Office Selector
+                    officesAsync.when(
+                      data: (offices) => _buildSelectField(
+                        label: 'Lokasi Kantor',
+                        value: _selectedOffice != null ? _selectedOffice!.officeName : 'Pilih Kantor',
+                        onTap: () => _showOfficePicker(offices),
+                        enabled: _selectedCompany != null,
+                      ),
+                      loading: () => const Center(child: CupertinoActivityIndicator()),
+                      error: (err, _) => Text('Gagal memuat kantor: $err', style: const TextStyle(color: CupertinoColors.destructiveRed)),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Employee Selector
+                    employeesAsync.when(
+                      data: (employees) => _buildSelectField(
+                        label: 'Ditugaskan Kepada',
+                        value: _selectedEmployee != null ? _selectedEmployee!.fullName : 'Pilih Karyawan',
+                        onTap: () => _showEmployeePicker(employees),
+                        enabled: _selectedCompany != null,
+                      ),
+                      loading: () => const Center(child: CupertinoActivityIndicator()),
+                      error: (err, _) => Text('Gagal memuat karyawan: $err', style: const TextStyle(color: CupertinoColors.destructiveRed)),
+                    ),
+                    Container(height: 0.5, color: separatorColor, margin: const EdgeInsets.symmetric(vertical: 16)),
+
+                    // Assigned Date
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _assignedDate == null
+                                ? 'Tanggal Penyerahan: Belum Dipilih'
+                                : 'Tanggal Penyerahan: ${DateFormat('dd-MM-yyyy').format(_assignedDate!)}',
+                            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                          ),
                         ),
-                        initialValue: _status,
-                        items: _statuses.map((st) {
-                          return DropdownMenuItem<String>(
-                            value: st['value'],
-                            child: Text(st['label']!),
-                          );
-                        }).toList(),
-                        onChanged: (val) {
-                          setState(() {
-                            _status = val ?? 'available';
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      // Office Dropdown
-                      officesAsync.when(
-                        data: (offices) => DropdownButtonFormField<AssetOffice>(
-                          decoration: const InputDecoration(
-                            labelText: 'Lokasi Kantor',
-                            border: OutlineInputBorder(),
+                        CupertinoButton(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: const Text('Pilih', style: TextStyle(color: Color(0xFF6E56CF))),
+                          onPressed: () => _showCupertinoDatePicker(
+                            initialDate: _assignedDate ?? DateTime.now(),
+                            onDateSelected: (date) => setState(() => _assignedDate = date),
                           ),
-                          initialValue: _selectedOffice,
-                          disabledHint: const Text('Pilih perusahaan terlebih dahulu'),
-                          items: offices.map((o) {
-                            return DropdownMenuItem<AssetOffice>(
-                              value: o,
-                              child: Text(o.officeName),
-                            );
-                          }).toList(),
-                          onChanged: _selectedCompany == null
-                              ? null
-                              : (val) {
-                                  setState(() {
-                                    _selectedOffice = val;
-                                  });
-                                },
                         ),
-                        loading: () => const Center(child: CircularProgressIndicator()),
-                        error: (err, _) => Text('Gagal memuat kantor: $err'),
-                      ),
-                      const SizedBox(height: 16),
-                      // Employee Dropdown
-                      employeesAsync.when(
-                        data: (employees) => DropdownButtonFormField<AssetEmployee>(
-                          decoration: const InputDecoration(
-                            labelText: 'Ditugaskan Kepada',
-                            border: OutlineInputBorder(),
-                          ),
-                          initialValue: _selectedEmployee,
-                          disabledHint: const Text('Pilih perusahaan terlebih dahulu'),
-                          items: employees.map((e) {
-                            return DropdownMenuItem<AssetEmployee>(
-                              value: e,
-                              child: Text(e.fullName),
-                            );
-                          }).toList(),
-                          onChanged: _selectedCompany == null
-                              ? null
-                              : (val) {
-                                  setState(() {
-                                    _selectedEmployee = val;
-                                    // Auto change status to assigned if user is assigned
-                                    if (val != null) {
-                                      _status = 'assigned';
-                                    }
-                                  });
-                                },
-                        ),
-                        loading: () => const Center(child: CircularProgressIndicator()),
-                        error: (err, _) => Text('Gagal memuat karyawan: $err'),
-                      ),
-                      const Divider(height: 32),
-                      // Assigned Date
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              _assignedDate == null
-                                  ? 'Tanggal Penyerahan: Belum Dipilih'
-                                  : 'Tanggal Penyerahan: ${DateFormat('dd-MM-yyyy').format(_assignedDate!)}',
-                              style: const TextStyle(fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                          TextButton.icon(
-                            icon: const Icon(Icons.calendar_month, color: Color(0xFF6E56CF)),
-                            label: const Text('Pilih', style: TextStyle(color: Color(0xFF6E56CF))),
-                            onPressed: () => _selectAssignedDate(context),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 20),
 
               // 4. Specifications & Notes
               _buildSectionTitle('Spesifikasi & Keterangan'),
-              Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
+              Container(
+                decoration: BoxDecoration(
+                  color: cardBg,
                   borderRadius: BorderRadius.circular(12),
-                  side: const BorderSide(color: Color(0xFFE2E8F0)),
+                  border: Border.all(color: separatorColor, width: 0.5),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      // Specifications
-                      TextFormField(
-                        controller: _specificationsController,
-                        maxLines: 3,
-                        decoration: const InputDecoration(
-                          labelText: 'Spesifikasi Teknis',
-                          hintText: 'Misal: 16GB RAM, 512GB SSD, macOS Sequoia',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      // Notes
-                      TextFormField(
-                        controller: _notesController,
-                        maxLines: 2,
-                        decoration: const InputDecoration(
-                          labelText: 'Catatan Tambahan',
-                          hintText: 'Kondisi fisik mulus, segel utuh...',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    ],
-                  ),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Specifications
+                    const Text('Spesifikasi Teknis', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 6),
+                    CupertinoTextField(
+                      controller: _specificationsController,
+                      maxLines: 3,
+                      placeholder: 'Misal: 16GB RAM, 512GB SSD, macOS Sequoia',
+                    ),
+                    const SizedBox(height: 16),
+                    // Notes
+                    const Text('Catatan Tambahan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 6),
+                    CupertinoTextField(
+                      controller: _notesController,
+                      maxLines: 2,
+                      placeholder: 'Kondisi fisik mulus, segel utuh...',
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 20),
 
               // 5. Photo Upload Section
               _buildSectionTitle('Foto Kondisi Aset'),
-              Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
+              Container(
+                decoration: BoxDecoration(
+                  color: cardBg,
                   borderRadius: BorderRadius.circular(12),
-                  side: const BorderSide(color: Color(0xFFE2E8F0)),
+                  border: Border.all(color: separatorColor, width: 0.5),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      if (_photoFile != null) ...[
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.file(
-                            File(_photoFile!.path),
-                            height: 200,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_photoFile != null) ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(
+                          File(_photoFile!.path),
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
                         ),
-                        const SizedBox(height: 12),
-                      ],
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    CupertinoButton(
+                      color: const Color(0xFF6E56CF).withOpacity(0.1),
+                      onPressed: _showPhotoSourceSheet,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          OutlinedButton.icon(
-                            icon: const Icon(Icons.camera_alt),
-                            label: const Text('Kamera'),
-                            onPressed: () => _pickImage(ImageSource.camera),
-                          ),
-                          OutlinedButton.icon(
-                            icon: const Icon(Icons.photo_library),
-                            label: const Text('Galeri'),
-                            onPressed: () => _pickImage(ImageSource.gallery),
+                          const Icon(CupertinoIcons.camera, color: Color(0xFF6E56CF), size: 18),
+                          const SizedBox(width: 8),
+                          Text(
+                            _photoFile == null ? 'Lampirkan Foto Aset' : 'Ganti Foto Terlampir',
+                            style: const TextStyle(color: Color(0xFF6E56CF), fontWeight: FontWeight.bold, fontSize: 14),
                           ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 32),
@@ -650,18 +849,11 @@ class _AddAssetScreenState extends ConsumerState<AddAssetScreen> {
               // Save Button
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6E56CF),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
+                child: CupertinoButton.filled(
                   onPressed: _isSubmitting ? null : _submit,
                   child: _isSubmitting
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('SIMPAN ASET'),
+                      ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                      : const Text('Simpan Aset', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
               const SizedBox(height: 48),
@@ -673,16 +865,56 @@ class _AddAssetScreenState extends ConsumerState<AddAssetScreen> {
   }
 
   Widget _buildSectionTitle(String title) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 8, top: 8),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.bold,
-          color: Color(0xFF0F172A),
+          color: labelColor,
         ),
       ),
+    );
+  }
+
+  Widget _buildSelectField({
+    required String label,
+    required String value,
+    required VoidCallback onTap,
+    bool enabled = true,
+  }) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+        const SizedBox(height: 6),
+        GestureDetector(
+          onTap: enabled ? onTap : null,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              color: enabled
+                  ? CupertinoColors.systemBackground.resolveFrom(context)
+                  : CupertinoColors.tertiarySystemFill.resolveFrom(context),
+              border: Border.all(color: separatorColor, width: 0.5),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(value, style: TextStyle(fontSize: 14, color: enabled ? labelColor : secondaryLabel)),
+                Icon(CupertinoIcons.chevron_down, size: 14, color: secondaryLabel),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

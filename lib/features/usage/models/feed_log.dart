@@ -26,6 +26,7 @@ class AquaculturePond with _$AquaculturePond {
     double? length,
     double? width,
     double? depth,
+    @JsonKey(name: 'modul_id') int? modulId,
   }) = _AquaculturePond;
 
   factory AquaculturePond.fromJson(Map<String, dynamic> json) =>
@@ -40,6 +41,9 @@ class FeedLog with _$FeedLog {
     @JsonKey(name: 'cycle_name') String? cycleName,
     @JsonKey(name: 'pond_id') required int pondId,
     @JsonKey(name: 'pond_name') String? pondName,
+    @JsonKey(name: 'tambak_name') String? tambakName,
+    @JsonKey(name: 'blok_name') String? blokName,
+    @JsonKey(name: 'modul_name') String? modulName,
     required String date,
     @JsonKey(name: 'feed_code') String? feedCode,
     @JsonKey(name: 'amount_kg') required double amountKg,

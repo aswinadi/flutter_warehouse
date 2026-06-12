@@ -261,6 +261,8 @@ mixin _$AquaculturePond {
   double? get length => throw _privateConstructorUsedError;
   double? get width => throw _privateConstructorUsedError;
   double? get depth => throw _privateConstructorUsedError;
+  @JsonKey(name: 'modul_id')
+  int? get modulId => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -280,7 +282,8 @@ abstract class $AquaculturePondCopyWith<$Res> {
       String? code,
       double? length,
       double? width,
-      double? depth});
+      double? depth,
+      @JsonKey(name: 'modul_id') int? modulId});
 }
 
 /// @nodoc
@@ -302,6 +305,7 @@ class _$AquaculturePondCopyWithImpl<$Res, $Val extends AquaculturePond>
     Object? length = freezed,
     Object? width = freezed,
     Object? depth = freezed,
+    Object? modulId = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -328,6 +332,10 @@ class _$AquaculturePondCopyWithImpl<$Res, $Val extends AquaculturePond>
           ? _value.depth
           : depth // ignore: cast_nullable_to_non_nullable
               as double?,
+      modulId: freezed == modulId
+          ? _value.modulId
+          : modulId // ignore: cast_nullable_to_non_nullable
+              as int?,
     ) as $Val);
   }
 }
@@ -346,7 +354,8 @@ abstract class _$$AquaculturePondImplCopyWith<$Res>
       String? code,
       double? length,
       double? width,
-      double? depth});
+      double? depth,
+      @JsonKey(name: 'modul_id') int? modulId});
 }
 
 /// @nodoc
@@ -366,6 +375,7 @@ class __$$AquaculturePondImplCopyWithImpl<$Res>
     Object? length = freezed,
     Object? width = freezed,
     Object? depth = freezed,
+    Object? modulId = freezed,
   }) {
     return _then(_$AquaculturePondImpl(
       id: null == id
@@ -392,6 +402,10 @@ class __$$AquaculturePondImplCopyWithImpl<$Res>
           ? _value.depth
           : depth // ignore: cast_nullable_to_non_nullable
               as double?,
+      modulId: freezed == modulId
+          ? _value.modulId
+          : modulId // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -405,7 +419,8 @@ class _$AquaculturePondImpl implements _AquaculturePond {
       this.code,
       this.length,
       this.width,
-      this.depth});
+      this.depth,
+      @JsonKey(name: 'modul_id') this.modulId});
 
   factory _$AquaculturePondImpl.fromJson(Map<String, dynamic> json) =>
       _$$AquaculturePondImplFromJson(json);
@@ -422,10 +437,13 @@ class _$AquaculturePondImpl implements _AquaculturePond {
   final double? width;
   @override
   final double? depth;
+  @override
+  @JsonKey(name: 'modul_id')
+  final int? modulId;
 
   @override
   String toString() {
-    return 'AquaculturePond(id: $id, name: $name, code: $code, length: $length, width: $width, depth: $depth)';
+    return 'AquaculturePond(id: $id, name: $name, code: $code, length: $length, width: $width, depth: $depth, modulId: $modulId)';
   }
 
   @override
@@ -438,13 +456,14 @@ class _$AquaculturePondImpl implements _AquaculturePond {
             (identical(other.code, code) || other.code == code) &&
             (identical(other.length, length) || other.length == length) &&
             (identical(other.width, width) || other.width == width) &&
-            (identical(other.depth, depth) || other.depth == depth));
+            (identical(other.depth, depth) || other.depth == depth) &&
+            (identical(other.modulId, modulId) || other.modulId == modulId));
   }
 
   @JsonKey(ignore: true)
   @override
   int get hashCode =>
-      Object.hash(runtimeType, id, name, code, length, width, depth);
+      Object.hash(runtimeType, id, name, code, length, width, depth, modulId);
 
   @JsonKey(ignore: true)
   @override
@@ -468,7 +487,8 @@ abstract class _AquaculturePond implements AquaculturePond {
       final String? code,
       final double? length,
       final double? width,
-      final double? depth}) = _$AquaculturePondImpl;
+      final double? depth,
+      @JsonKey(name: 'modul_id') final int? modulId}) = _$AquaculturePondImpl;
 
   factory _AquaculturePond.fromJson(Map<String, dynamic> json) =
       _$AquaculturePondImpl.fromJson;
@@ -485,6 +505,9 @@ abstract class _AquaculturePond implements AquaculturePond {
   double? get width;
   @override
   double? get depth;
+  @override
+  @JsonKey(name: 'modul_id')
+  int? get modulId;
   @override
   @JsonKey(ignore: true)
   _$$AquaculturePondImplCopyWith<_$AquaculturePondImpl> get copyWith =>
@@ -506,6 +529,12 @@ mixin _$FeedLog {
   int get pondId => throw _privateConstructorUsedError;
   @JsonKey(name: 'pond_name')
   String? get pondName => throw _privateConstructorUsedError;
+  @JsonKey(name: 'tambak_name')
+  String? get tambakName => throw _privateConstructorUsedError;
+  @JsonKey(name: 'blok_name')
+  String? get blokName => throw _privateConstructorUsedError;
+  @JsonKey(name: 'modul_name')
+  String? get modulName => throw _privateConstructorUsedError;
   String get date => throw _privateConstructorUsedError;
   @JsonKey(name: 'feed_code')
   String? get feedCode => throw _privateConstructorUsedError;
@@ -534,6 +563,9 @@ abstract class $FeedLogCopyWith<$Res> {
       @JsonKey(name: 'cycle_name') String? cycleName,
       @JsonKey(name: 'pond_id') int pondId,
       @JsonKey(name: 'pond_name') String? pondName,
+      @JsonKey(name: 'tambak_name') String? tambakName,
+      @JsonKey(name: 'blok_name') String? blokName,
+      @JsonKey(name: 'modul_name') String? modulName,
       String date,
       @JsonKey(name: 'feed_code') String? feedCode,
       @JsonKey(name: 'amount_kg') double amountKg,
@@ -561,6 +593,9 @@ class _$FeedLogCopyWithImpl<$Res, $Val extends FeedLog>
     Object? cycleName = freezed,
     Object? pondId = null,
     Object? pondName = freezed,
+    Object? tambakName = freezed,
+    Object? blokName = freezed,
+    Object? modulName = freezed,
     Object? date = null,
     Object? feedCode = freezed,
     Object? amountKg = null,
@@ -589,6 +624,18 @@ class _$FeedLogCopyWithImpl<$Res, $Val extends FeedLog>
       pondName: freezed == pondName
           ? _value.pondName
           : pondName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      tambakName: freezed == tambakName
+          ? _value.tambakName
+          : tambakName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      blokName: freezed == blokName
+          ? _value.blokName
+          : blokName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      modulName: freezed == modulName
+          ? _value.modulName
+          : modulName // ignore: cast_nullable_to_non_nullable
               as String?,
       date: null == date
           ? _value.date
@@ -635,6 +682,9 @@ abstract class _$$FeedLogImplCopyWith<$Res> implements $FeedLogCopyWith<$Res> {
       @JsonKey(name: 'cycle_name') String? cycleName,
       @JsonKey(name: 'pond_id') int pondId,
       @JsonKey(name: 'pond_name') String? pondName,
+      @JsonKey(name: 'tambak_name') String? tambakName,
+      @JsonKey(name: 'blok_name') String? blokName,
+      @JsonKey(name: 'modul_name') String? modulName,
       String date,
       @JsonKey(name: 'feed_code') String? feedCode,
       @JsonKey(name: 'amount_kg') double amountKg,
@@ -660,6 +710,9 @@ class __$$FeedLogImplCopyWithImpl<$Res>
     Object? cycleName = freezed,
     Object? pondId = null,
     Object? pondName = freezed,
+    Object? tambakName = freezed,
+    Object? blokName = freezed,
+    Object? modulName = freezed,
     Object? date = null,
     Object? feedCode = freezed,
     Object? amountKg = null,
@@ -688,6 +741,18 @@ class __$$FeedLogImplCopyWithImpl<$Res>
       pondName: freezed == pondName
           ? _value.pondName
           : pondName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      tambakName: freezed == tambakName
+          ? _value.tambakName
+          : tambakName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      blokName: freezed == blokName
+          ? _value.blokName
+          : blokName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      modulName: freezed == modulName
+          ? _value.modulName
+          : modulName // ignore: cast_nullable_to_non_nullable
               as String?,
       date: null == date
           ? _value.date
@@ -730,6 +795,9 @@ class _$FeedLogImpl implements _FeedLog {
       @JsonKey(name: 'cycle_name') this.cycleName,
       @JsonKey(name: 'pond_id') required this.pondId,
       @JsonKey(name: 'pond_name') this.pondName,
+      @JsonKey(name: 'tambak_name') this.tambakName,
+      @JsonKey(name: 'blok_name') this.blokName,
+      @JsonKey(name: 'modul_name') this.modulName,
       required this.date,
       @JsonKey(name: 'feed_code') this.feedCode,
       @JsonKey(name: 'amount_kg') required this.amountKg,
@@ -756,6 +824,15 @@ class _$FeedLogImpl implements _FeedLog {
   @JsonKey(name: 'pond_name')
   final String? pondName;
   @override
+  @JsonKey(name: 'tambak_name')
+  final String? tambakName;
+  @override
+  @JsonKey(name: 'blok_name')
+  final String? blokName;
+  @override
+  @JsonKey(name: 'modul_name')
+  final String? modulName;
+  @override
   final String date;
   @override
   @JsonKey(name: 'feed_code')
@@ -776,7 +853,7 @@ class _$FeedLogImpl implements _FeedLog {
 
   @override
   String toString() {
-    return 'FeedLog(id: $id, cycleId: $cycleId, cycleName: $cycleName, pondId: $pondId, pondName: $pondName, date: $date, feedCode: $feedCode, amountKg: $amountKg, doc: $doc, notes: $notes, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'FeedLog(id: $id, cycleId: $cycleId, cycleName: $cycleName, pondId: $pondId, pondName: $pondName, tambakName: $tambakName, blokName: $blokName, modulName: $modulName, date: $date, feedCode: $feedCode, amountKg: $amountKg, doc: $doc, notes: $notes, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -791,6 +868,12 @@ class _$FeedLogImpl implements _FeedLog {
             (identical(other.pondId, pondId) || other.pondId == pondId) &&
             (identical(other.pondName, pondName) ||
                 other.pondName == pondName) &&
+            (identical(other.tambakName, tambakName) ||
+                other.tambakName == tambakName) &&
+            (identical(other.blokName, blokName) ||
+                other.blokName == blokName) &&
+            (identical(other.modulName, modulName) ||
+                other.modulName == modulName) &&
             (identical(other.date, date) || other.date == date) &&
             (identical(other.feedCode, feedCode) ||
                 other.feedCode == feedCode) &&
@@ -806,8 +889,23 @@ class _$FeedLogImpl implements _FeedLog {
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, id, cycleId, cycleName, pondId,
-      pondName, date, feedCode, amountKg, doc, notes, createdAt, updatedAt);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      cycleId,
+      cycleName,
+      pondId,
+      pondName,
+      tambakName,
+      blokName,
+      modulName,
+      date,
+      feedCode,
+      amountKg,
+      doc,
+      notes,
+      createdAt,
+      updatedAt);
 
   @JsonKey(ignore: true)
   @override
@@ -830,6 +928,9 @@ abstract class _FeedLog implements FeedLog {
       @JsonKey(name: 'cycle_name') final String? cycleName,
       @JsonKey(name: 'pond_id') required final int pondId,
       @JsonKey(name: 'pond_name') final String? pondName,
+      @JsonKey(name: 'tambak_name') final String? tambakName,
+      @JsonKey(name: 'blok_name') final String? blokName,
+      @JsonKey(name: 'modul_name') final String? modulName,
       required final String date,
       @JsonKey(name: 'feed_code') final String? feedCode,
       @JsonKey(name: 'amount_kg') required final double amountKg,
@@ -854,6 +955,15 @@ abstract class _FeedLog implements FeedLog {
   @override
   @JsonKey(name: 'pond_name')
   String? get pondName;
+  @override
+  @JsonKey(name: 'tambak_name')
+  String? get tambakName;
+  @override
+  @JsonKey(name: 'blok_name')
+  String? get blokName;
+  @override
+  @JsonKey(name: 'modul_name')
+  String? get modulName;
   @override
   String get date;
   @override

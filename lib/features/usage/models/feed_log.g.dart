@@ -35,6 +35,7 @@ _$AquaculturePondImpl _$$AquaculturePondImplFromJson(
       length: (json['length'] as num?)?.toDouble(),
       width: (json['width'] as num?)?.toDouble(),
       depth: (json['depth'] as num?)?.toDouble(),
+      modulId: (json['modul_id'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$$AquaculturePondImplToJson(
@@ -46,6 +47,7 @@ Map<String, dynamic> _$$AquaculturePondImplToJson(
       'length': instance.length,
       'width': instance.width,
       'depth': instance.depth,
+      'modul_id': instance.modulId,
     };
 
 _$FeedLogImpl _$$FeedLogImplFromJson(Map<String, dynamic> json) =>
@@ -55,6 +57,9 @@ _$FeedLogImpl _$$FeedLogImplFromJson(Map<String, dynamic> json) =>
       cycleName: json['cycle_name'] as String?,
       pondId: (json['pond_id'] as num).toInt(),
       pondName: json['pond_name'] as String?,
+      tambakName: json['tambak_name'] as String?,
+      blokName: json['blok_name'] as String?,
+      modulName: json['modul_name'] as String?,
       date: json['date'] as String,
       feedCode: json['feed_code'] as String?,
       amountKg: (json['amount_kg'] as num).toDouble(),
@@ -71,6 +76,9 @@ Map<String, dynamic> _$$FeedLogImplToJson(_$FeedLogImpl instance) =>
       'cycle_name': instance.cycleName,
       'pond_id': instance.pondId,
       'pond_name': instance.pondName,
+      'tambak_name': instance.tambakName,
+      'blok_name': instance.blokName,
+      'modul_name': instance.modulName,
       'date': instance.date,
       'feed_code': instance.feedCode,
       'amount_kg': instance.amountKg,

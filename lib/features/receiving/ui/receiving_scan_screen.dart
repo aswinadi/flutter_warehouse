@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
@@ -24,8 +24,7 @@ class ReceivingScanScreen extends ConsumerStatefulWidget {
   ConsumerState<ReceivingScanScreen> createState() => _ReceivingScanScreenState();
 }
 
-class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> {
   final ScrollController _historyScrollController = ScrollController();
   final ScrollController _poScrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
@@ -35,18 +34,17 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> with 
   int? _selectedPoId;
   String _receivingMode = 'vendor'; // 'vendor' or 'container'
   String? _selectedContainerNumber;
+  int _selectedSegment = 0; // 0 for PO/Container, 1 for History
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
     _historyScrollController.addListener(_onHistoryScroll);
     _poScrollController.addListener(_onPoScroll);
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
     _historyScrollController.dispose();
     _poScrollController.dispose();
     _searchController.dispose();
@@ -81,15 +79,15 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> with 
     bool dialogOpen = true;
     BuildContext? dialogContext;
 
-    showDialog(
+    showCupertinoDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) {
         dialogContext = ctx;
-        return const AlertDialog(
+        return const CupertinoAlertDialog(
           content: Row(
             children: [
-              CircularProgressIndicator(),
+              CupertinoActivityIndicator(),
               SizedBox(width: 16),
               Text('Membuat PDF...'),
             ],
@@ -169,44 +167,86 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> with 
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width > 850;
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final bgColor = CupertinoColors.systemGroupedBackground.resolveFrom(context);
+    final navBarBg = CupertinoColors.systemBackground.resolveFrom(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Penerimaan Barang'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(icon: Icon(Icons.list_alt), text: 'PO Terbuka / Kontainer'),
-            Tab(icon: Icon(Icons.history), text: 'Riwayat'),
-          ],
+    return CupertinoPageScaffold(
+      backgroundColor: bgColor,
+      navigationBar: CupertinoNavigationBar(
+        backgroundColor: navBarBg,
+        middle: Text(
+          'Penerimaan Barang',
+          style: TextStyle(color: labelColor),
         ),
       ),
-      body: Column(
-        children: [
-          const CompanySwitcher(),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildOpenPOsTabContent(isWide),
-                _buildHistoryTabContent(isWide),
-              ],
+      child: SafeArea(
+        child: Column(
+          children: [
+            const CompanySwitcher(),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              color: navBarBg,
+              child: CupertinoSlidingSegmentedControl<int>(
+                groupValue: _selectedSegment,
+                children: const {
+                  0: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(CupertinoIcons.list_bullet, size: 16),
+                        SizedBox(width: 6),
+                        Text('PO Terbuka / Kontainer', style: TextStyle(fontSize: 13)),
+                      ],
+                    ),
+                  ),
+                  1: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(CupertinoIcons.time, size: 16),
+                        SizedBox(width: 6),
+                        Text('Riwayat', style: TextStyle(fontSize: 13)),
+                      ],
+                    ),
+                  ),
+                },
+                onValueChanged: (val) {
+                  if (val != null) {
+                    setState(() {
+                      _selectedSegment = val;
+                    });
+                  }
+                },
+              ),
             ),
-          ),
-        ],
+            Expanded(
+              child: _selectedSegment == 0
+                  ? _buildOpenPOsTabContent(isWide)
+                  : _buildHistoryTabContent(isWide),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildOpenPOsTabContent(bool isWide) {
     final leftPanel = _buildOpenPOsTab(isWide);
+    final labelColor = CupertinoColors.label.resolveFrom(context);
 
     if (isWide) {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(width: 380, child: leftPanel),
-          const VerticalDivider(width: 1, thickness: 1, color: Color(0xFFE2E8F0)),
+          Container(
+            width: 0.5,
+            color: CupertinoColors.separator.resolveFrom(context),
+          ),
           Expanded(
             child: _selectedPoId != null
                 ? ReceivingFormScreen(
@@ -230,15 +270,23 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> with 
                           });
                         },
                       )
-                    : const Center(
+                    : Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.receipt_long_outlined, size: 64, color: Color(0xFF94A3B8)),
-                            SizedBox(height: 16),
+                            Icon(
+                              CupertinoIcons.doc_text,
+                              size: 64,
+                              color: CupertinoColors.placeholderText.resolveFrom(context),
+                            ),
+                            const SizedBox(height: 16),
                             Text(
                               'Pilih Pesanan Pembelian (PO) atau Kontainer untuk mulai menerima barang',
-                              style: TextStyle(fontSize: 14, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ],
                         ),
@@ -266,154 +314,109 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> with 
   }
 
   Widget _buildOpenPOsTab(bool isWide) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final navBarBg = CupertinoColors.systemBackground.resolveFrom(context);
+
     return Column(
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Container(
             width: double.infinity,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(8),
-            ),
             padding: const EdgeInsets.all(4),
-            child: Row(
-              children: [
-                Expanded(
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        _receivingMode = 'vendor';
-                        _searchController.clear();
-                        _searchQuery = '';
-                        _selectedPoId = null;
-                        _selectedContainerNumber = null;
-                      });
-                    },
-                    borderRadius: BorderRadius.circular(6),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color: _receivingMode == 'vendor' ? Colors.white : Colors.transparent,
-                        borderRadius: BorderRadius.circular(6),
-                        boxShadow: _receivingMode == 'vendor'
-                            ? [
-                                const BoxShadow(
-                                  color: Color(0x0A0F0F0F),
-                                  blurRadius: 4,
-                                  offset: Offset(0, 1),
-                                ),
-                              ]
-                            : null,
+            child: CupertinoSlidingSegmentedControl<String>(
+              groupValue: _receivingMode,
+              children: {
+                'vendor': Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        CupertinoIcons.home,
+                        size: 14,
+                        color: _receivingMode == 'vendor'
+                            ? CupertinoColors.activeBlue.resolveFrom(context)
+                            : CupertinoColors.secondaryLabel.resolveFrom(context),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.storefront,
-                            size: 16,
-                            color: _receivingMode == 'vendor' ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'PO Vendor',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: _receivingMode == 'vendor' ? const Color(0xFF0F172A) : const Color(0xFF64748B),
-                            ),
-                          ),
-                        ],
+                      const SizedBox(width: 6),
+                      Text(
+                        'PO Vendor',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: _receivingMode == 'vendor'
+                              ? labelColor
+                              : CupertinoColors.secondaryLabel.resolveFrom(context),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
-                Expanded(
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        _receivingMode = 'container';
-                        _searchController.clear();
-                        _searchQuery = '';
-                        _selectedPoId = null;
-                        _selectedContainerNumber = null;
-                      });
-                    },
-                    borderRadius: BorderRadius.circular(6),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color: _receivingMode == 'container' ? Colors.white : Colors.transparent,
-                        borderRadius: BorderRadius.circular(6),
-                        boxShadow: _receivingMode == 'container'
-                            ? [
-                                const BoxShadow(
-                                  color: Color(0x0A0F0F0F),
-                                  blurRadius: 4,
-                                  offset: Offset(0, 1),
-                                ),
-                              ]
-                            : null,
+                'container': Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        CupertinoIcons.bus,
+                        size: 14,
+                        color: _receivingMode == 'container'
+                            ? CupertinoColors.activeBlue.resolveFrom(context)
+                            : CupertinoColors.secondaryLabel.resolveFrom(context),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.local_shipping_outlined,
-                            size: 16,
-                            color: _receivingMode == 'container' ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Kontainer',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: _receivingMode == 'container' ? const Color(0xFF0F172A) : const Color(0xFF64748B),
-                            ),
-                          ),
-                        ],
+                      const SizedBox(width: 6),
+                      Text(
+                        'Kontainer',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: _receivingMode == 'container'
+                              ? labelColor
+                              : CupertinoColors.secondaryLabel.resolveFrom(context),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
-              ],
+              },
+              onValueChanged: (val) {
+                if (val != null) {
+                  setState(() {
+                    _receivingMode = val;
+                    _searchController.clear();
+                    _searchQuery = '';
+                    _selectedPoId = null;
+                    _selectedContainerNumber = null;
+                  });
+                }
+              },
             ),
           ),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: TextField(
+          child: CupertinoSearchTextField(
             controller: _searchController,
-            decoration: InputDecoration(
-              hintText: _receivingMode == 'vendor'
-                  ? 'Cari nomor PO atau nama pemasok...'
-                  : 'Cari nomor kontainer atau nama pemasok...',
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: _searchQuery.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                        setState(() {
-                          _searchQuery = '';
-                        });
-                      },
-                    )
-                  : null,
-              contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            ),
+            placeholder: _receivingMode == 'vendor'
+                ? 'Cari nomor PO atau nama pemasok...'
+                : 'Cari nomor kontainer atau nama pemasok...',
             onChanged: (val) {
               setState(() {
                 _searchQuery = val.trim();
               });
             },
+            onSuffixTap: () {
+              _searchController.clear();
+              setState(() {
+                _searchQuery = '';
+              });
+            },
           ),
         ),
         Expanded(
-          child: _receivingMode == 'vendor' 
-              ? _buildVendorPOsList(isWide) 
+          child: _receivingMode == 'vendor'
+              ? _buildVendorPOsList(isWide)
               : _buildContainersList(isWide),
         ),
       ],
@@ -425,6 +428,9 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> with 
       status: 'approved,ordered,partial',
       search: _searchQuery,
     ));
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return poAsync.when(
       data: (orders) {
@@ -445,7 +451,7 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> with 
             if (index == orders.length) {
               return const Padding(
                 padding: EdgeInsets.symmetric(vertical: 16),
-                child: Center(child: CircularProgressIndicator()),
+                child: Center(child: CupertinoActivityIndicator()),
               );
             }
             final po = orders[index];
@@ -455,25 +461,27 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> with 
             Color statusColor;
             switch (po.status.toLowerCase()) {
               case 'approved':
-                statusColor = const Color(0xFF10B981);
+                statusColor = CupertinoColors.activeGreen;
                 break;
               case 'ordered':
-                statusColor = const Color(0xFF3B82F6);
+                statusColor = CupertinoColors.activeBlue;
                 break;
               case 'partial':
-                statusColor = const Color(0xFFF59E0B);
+                statusColor = CupertinoColors.systemOrange;
                 break;
               default:
-                statusColor = Colors.grey;
+                statusColor = CupertinoColors.inactiveGray;
             }
 
             return Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isSelected && isWide ? const Color(0xFF4F46E5) : const Color(0xFFE2E8F0),
-                  width: isSelected && isWide ? 2.0 : 1.0,
+                  color: isSelected && isWide
+                      ? CupertinoColors.activeBlue.resolveFrom(context)
+                      : separatorColor,
+                  width: isSelected && isWide ? 2.0 : 0.5,
                 ),
                 boxShadow: const [
                   BoxShadow(
@@ -483,91 +491,121 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> with 
                   ),
                 ],
               ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    if (isWide) {
-                      setState(() {
-                        _selectedPoId = po.id;
-                        _selectedContainerNumber = null;
-                      });
-                    } else {
-                      context.push('/receiving/form?po_id=${po.id}');
-                    }
-                  },
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              po.poNumber,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A)),
+              child: GestureDetector(
+                onTap: () {
+                  if (isWide) {
+                    setState(() {
+                      _selectedPoId = po.id;
+                      _selectedContainerNumber = null;
+                    });
+                  } else {
+                    context.push('/receiving/form?po_id=${po.id}');
+                  }
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            po.poNumber,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: labelColor,
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: statusColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: statusColor, width: 0.5),
+                            ),
+                            child: Text(
+                              po.status.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: statusColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        po.supplierName,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: labelColor,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(height: 0.5, color: separatorColor),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(
+                            CupertinoIcons.house,
+                            size: 14,
+                            color: CupertinoColors.activeBlue.resolveFrom(context),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              po.warehouseName ?? 'Gudang N/A',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              height: 6,
                               decoration: BoxDecoration(
-                                  color: statusColor.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: statusColor, width: 0.8),
+                                color: const CupertinoDynamicColor.withBrightness(
+                                  color: Color(0xFFE5E5EA),
+                                  darkColor: Color(0xFF2C2C2E),
+                                ).resolveFrom(context),
+                                borderRadius: BorderRadius.circular(3),
                               ),
-                              child: Text(
-                                po.status.toUpperCase(),
-                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: statusColor),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          po.supplierName,
-                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Color(0xFF1E293B)),
-                        ),
-                        const SizedBox(height: 8),
-                        const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(Icons.warehouse_outlined, size: 14, color: Color(0xFF4F46E5)),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                po.warehouseName ?? 'Gudang N/A',
-                                style: const TextStyle(fontSize: 12, color: Color(0xFF475569)),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: LinearProgressIndicator(
-                                  value: progress,
-                                  minHeight: 6,
-                                  backgroundColor: const Color(0xFFE2E8F0),
-                                  valueColor: const AlwaysStoppedAnimation(Color(0xFF4F46E5)),
+                              child: FractionallySizedBox(
+                                alignment: Alignment.centerLeft,
+                                widthFactor: progress.clamp(0.0, 1.0),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: CupertinoColors.activeBlue.resolveFrom(context),
+                                    borderRadius: BorderRadius.circular(3),
+                                  ),
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Text(
-                              '${po.receivedItems}/${po.totalItems} barang',
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            '${po.receivedItems}/${po.totalItems} barang',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: CupertinoColors.activeBlue.resolveFrom(context),
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -575,13 +613,16 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> with 
           },
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: CupertinoActivityIndicator()),
       error: (err, _) => Center(child: Text('Error: $err')),
     );
   }
 
   Widget _buildContainersList(bool isWide) {
     final containersAsync = ref.watch(receivingContainersProvider);
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return containersAsync.when(
       data: (containers) {
@@ -604,15 +645,17 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> with 
           itemBuilder: (context, index) {
             final container = filtered[index];
             final isSelected = container.containerNumber == _selectedContainerNumber;
-            final statusColor = const Color(0xFF3B82F6);
+            const statusColor = CupertinoColors.activeBlue;
 
             return Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isSelected && isWide ? const Color(0xFF4F46E5) : const Color(0xFFE2E8F0),
-                  width: isSelected && isWide ? 2.0 : 1.0,
+                  color: isSelected && isWide
+                      ? CupertinoColors.activeBlue.resolveFrom(context)
+                      : separatorColor,
+                  width: isSelected && isWide ? 2.0 : 0.5,
                 ),
                 boxShadow: const [
                   BoxShadow(
@@ -622,85 +665,107 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> with 
                   ),
                 ],
               ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    if (isWide) {
-                      setState(() {
-                        _selectedContainerNumber = container.containerNumber;
-                        _selectedPoId = null;
-                      });
-                    } else {
-                      context.push('/receiving/container-form?container_number=${container.containerNumber}');
-                    }
-                  },
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              container.containerNumber,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A)),
+              child: GestureDetector(
+                onTap: () {
+                  if (isWide) {
+                    setState(() {
+                      _selectedContainerNumber = container.containerNumber;
+                      _selectedPoId = null;
+                    });
+                  } else {
+                    context.push('/receiving/container-form?container_number=${container.containerNumber}');
+                  }
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            container.containerNumber,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: labelColor,
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: statusColor.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: statusColor, width: 0.8),
-                              ),
-                              child: Text(
-                                container.status.toUpperCase(),
-                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: statusColor),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: statusColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: statusColor, width: 0.5),
+                            ),
+                            child: Text(
+                              container.status.toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: statusColor,
                               ),
                             ),
-                          ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        container.supplierName,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: labelColor,
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          container.supplierName,
-                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Color(0xFF1E293B)),
-                        ),
-                        const SizedBox(height: 8),
-                        const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                        const SizedBox(height: 8),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(height: 0.5, color: separatorColor),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(
+                            CupertinoIcons.house,
+                            size: 14,
+                            color: CupertinoColors.activeBlue.resolveFrom(context),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'Tujuan: ${container.destinationWarehouseName ?? "N/A"}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (container.plateNumber?.isNotEmpty == true) ...[
+                        const SizedBox(height: 4),
                         Row(
                           children: [
-                            const Icon(Icons.warehouse_outlined, size: 14, color: Color(0xFF4F46E5)),
+                            Icon(
+                              CupertinoIcons.bus,
+                              size: 14,
+                              color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                            ),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
-                                'Tujuan: ${container.destinationWarehouseName ?? "N/A"}',
-                                style: const TextStyle(fontSize: 12, color: Color(0xFF475569)),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                                'Plat: ${container.plateNumber}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                                ),
                               ),
                             ),
                           ],
                         ),
-                        if (container.plateNumber?.isNotEmpty == true) ...[
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(Icons.local_shipping_outlined, size: 14, color: Color(0xFF64748B)),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  'Plat: ${container.plateNumber}',
-                                  style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
                       ],
-                    ),
+                    ],
                   ),
                 ),
               ),
@@ -708,32 +773,43 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> with 
           },
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: CupertinoActivityIndicator()),
       error: (err, _) => Center(child: Text('Error: $err')),
     );
   }
 
   void _showDetailDialog(BuildContext context, int receivingId, String receivingNumber) {
-    showModalBottomSheet(
+    showCupertinoModalPopup(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.85,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          builder: (context, scrollController) {
-            return Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.85,
+          decoration: BoxDecoration(
+            color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: CupertinoPageScaffold(
+            backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+            navigationBar: CupertinoNavigationBar(
+              backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
+              middle: Text(receivingNumber),
+              leading: CupertinoButton(
+                padding: EdgeInsets.zero,
+                child: const Icon(CupertinoIcons.printer, size: 22),
+                onPressed: () => _downloadAndPrintPdf(receivingId, receivingNumber),
               ),
+              trailing: CupertinoButton(
+                padding: EdgeInsets.zero,
+                child: const Text('Tutup'),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+            child: SafeArea(
               child: FutureBuilder<Map<String, dynamic>>(
                 future: ref.read(receivingRepositoryProvider).getReceivingDetail(receivingId),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const Center(child: CupertinoActivityIndicator());
                   }
 
                   if (snapshot.hasError) {
@@ -742,7 +818,7 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> with 
                         padding: const EdgeInsets.all(24.0),
                         child: Text(
                           'Gagal memuat detail: ${snapshot.error}',
-                          style: const TextStyle(color: Colors.red),
+                          style: const TextStyle(color: CupertinoColors.destructiveRed),
                         ),
                       ),
                     );
@@ -759,243 +835,239 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> with 
                   final truckNumber = data['truck_number'] ?? '';
                   final doNumber = data['delivery_order_number'] ?? '';
                   final items = data['items'] as List? ?? [];
+                  final labelColor = CupertinoColors.label.resolveFrom(context);
+                  final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+                  final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
-                  return Column(
+                  return ListView(
+                    padding: const EdgeInsets.all(20),
                     children: [
-                      Center(
-                        child: Container(
-                          margin: const EdgeInsets.only(top: 8, bottom: 8),
-                          width: 40,
-                          height: 4,
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: cardBg,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: separatorColor, width: 0.5),
+                        ),
+                        child: Column(
+                          children: [
+                            _buildDetailRow('Pemasok', supplier),
+                            const SizedBox(height: 8),
+                            _buildDetailRow('Surat Jalan (DO)', doNumber.isNotEmpty ? doNumber : '-'),
+                            const SizedBox(height: 8),
+                            _buildDetailRow('Nomor Plat Truk', truckNumber.isNotEmpty ? truckNumber : '-'),
+                            if (notes.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              _buildDetailRow('Catatan', notes),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Barang yang Diterima',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: labelColor,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      ...items.map((itemObj) {
+                        final item = itemObj as Map<String, dynamic>;
+                        final productName = item['product_name'] ?? 'Tidak Diketahui';
+                        final sku = item['sku'] ?? 'N/A';
+                        final qty = double.tryParse(item['quantity']?.toString() ?? '') ?? 0.0;
+                        final location = item['location_name'] ?? 'Lokasi Utama';
+                        final discrepancyType = item['discrepancy_type'] ?? 'none';
+                        final discrepancyQty = double.tryParse(item['discrepancy_qty']?.toString() ?? '') ?? 0.0;
+                        final discrepancyNote = item['discrepancy_note'] ?? '';
+                        final photoPath = item['photo_path'] as String?;
+
+                        String getDiscrepancyLabel(String type) {
+                          switch (type.toLowerCase()) {
+                            case 'damaged':
+                              return 'BARANG RUSAK';
+                            case 'missing':
+                              return 'BARANG KURANG';
+                            case 'wrong':
+                            case 'wrong_item':
+                              return 'BARANG SALAH';
+                            default:
+                              return type.toUpperCase();
+                          }
+                        }
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFCBD5E1),
-                            borderRadius: BorderRadius.circular(2),
+                            color: cardBg,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: separatorColor, width: 0.5),
                           ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                productName,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: labelColor,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'SKU: $sku  •  Lokasi: $location',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    receivingNumber,
+                                    'Jumlah Diterima:',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                                    ),
+                                  ),
+                                  Text(
+                                    '${qty.toStringAsFixed(0)} unit',
                                     style: const TextStyle(
-                                      fontSize: 18,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF0F172A),
+                                      color: CupertinoColors.activeGreen,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Tanggal: $date',
-                                    style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-                                  ),
                                 ],
                               ),
-                            ),
-                            IconButton.filledTonal(
-                              onPressed: () => _downloadAndPrintPdf(receivingId, receivingNumber),
-                              icon: const Icon(Icons.print_outlined),
-                              style: IconButton.styleFrom(
-                                foregroundColor: const Color(0xFF4F46E5),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Divider(height: 1, color: Color(0xFFE2E8F0)),
-                      Expanded(
-                        child: ListView(
-                          controller: scrollController,
-                          padding: const EdgeInsets.all(20),
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFFE2E8F0)),
-                              ),
-                              child: Column(
-                                children: [
-                                  _buildDetailRow('Pemasok', supplier),
-                                  const SizedBox(height: 8),
-                                  _buildDetailRow('Surat Jalan (DO)', doNumber.isNotEmpty ? doNumber : '-'),
-                                  const SizedBox(height: 8),
-                                  _buildDetailRow('Nomor Plat Truk', truckNumber.isNotEmpty ? truckNumber : '-'),
-                                  if (notes.isNotEmpty) ...[
-                                    const SizedBox(height: 8),
-                                    _buildDetailRow('Catatan', notes),
-                                  ],
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            const Text(
-                               'Barang yang Diterima',
-                               style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF0F172A),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            ...items.map((itemObj) {
-                              final item = itemObj as Map<String, dynamic>;
-                              final productName = item['product_name'] ?? 'Tidak Diketahui';
-                              final sku = item['sku'] ?? 'N/A';
-                              final qty = double.tryParse(item['quantity']?.toString() ?? '') ?? 0.0;
-                              final location = item['location_name'] ?? 'Lokasi Utama';
-                              final discrepancyType = item['discrepancy_type'] ?? 'none';
-                              final discrepancyQty = double.tryParse(item['discrepancy_qty']?.toString() ?? '') ?? 0.0;
-                              final discrepancyNote = item['discrepancy_note'] ?? '';
-                              final photoPath = item['photo_path'] as String?;
-
-                              String getDiscrepancyLabel(String type) {
-                                switch (type.toLowerCase()) {
-                                  case 'damaged':
-                                    return 'BARANG RUSAK';
-                                  case 'missing':
-                                    return 'BARANG KURANG';
-                                  case 'wrong':
-                                  case 'wrong_item':
-                                    return 'BARANG SALAH';
-                                  default:
-                                    return type.toUpperCase();
-                                }
-                              }
-
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                              if (discrepancyType != 'none') ...[
+                                const SizedBox(height: 12),
+                                Container(height: 0.5, color: separatorColor),
+                                const SizedBox(height: 12),
+                                Row(
                                   children: [
+                                    Icon(
+                                      CupertinoIcons.exclamationmark_triangle,
+                                      size: 16,
+                                      color: discrepancyType == 'missing'
+                                          ? CupertinoColors.systemOrange
+                                          : CupertinoColors.destructiveRed,
+                                    ),
+                                    const SizedBox(width: 6),
                                     Text(
-                                      productName,
-                                      style: const TextStyle(
+                                      'Ketidaksesuaian: ${getDiscrepancyLabel(discrepancyType)}',
+                                      style: TextStyle(
+                                        fontSize: 12,
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                        color: Color(0xFF0F172A),
+                                        color: discrepancyType == 'missing'
+                                            ? CupertinoColors.systemOrange
+                                            : CupertinoColors.destructiveRed,
                                       ),
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'SKU: $sku  •  Lokasi: $location',
-                                      style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        const Text('Jumlah Diterima:', style: TextStyle(fontSize: 13, color: Color(0xFF475569))),
-                                        Text(
-                                          '${qty.toStringAsFixed(0)} unit',
-                                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
-                                        ),
-                                      ],
-                                    ),
-                                    if (discrepancyType != 'none') ...[
-                                      const SizedBox(height: 12),
-                                      const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                                      const SizedBox(height: 12),
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            Icons.warning_amber_rounded,
-                                            size: 16,
-                                            color: discrepancyType == 'missing' ? Colors.orange : Colors.red,
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            'Ketidaksesuaian: ${getDiscrepancyLabel(discrepancyType)}',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                              color: discrepancyType == 'missing' ? Colors.orange : Colors.red,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      if (discrepancyQty > 0) ...[
-                                        const SizedBox(height: 6),
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            const Text('Jumlah Ketidaksesuaian:', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                                            Text(
-                                              '${discrepancyQty.toStringAsFixed(0)} unit',
-                                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                      if (discrepancyNote.isNotEmpty) ...[
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          'Catatan: $discrepancyNote',
-                                          style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: Color(0xFF475569)),
-                                        ),
-                                      ],
-                                      if (photoPath != null && photoPath.isNotEmpty) ...[
-                                        const SizedBox(height: 12),
-                                        const Text('Foto Pendukung:', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                                        const SizedBox(height: 8),
-                                        GestureDetector(
-                                          onTap: () {
-                                            _showImagePreviewDialog(context, photoPath);
-                                          },
-                                          child: ClipRRect(
-                                            borderRadius: BorderRadius.circular(8),
-                                            child: Image.network(
-                                              '${AppConfig.baseUrl.replaceAll('/api/v1/', '')}/storage/$photoPath',
-                                              height: 120,
-                                              width: double.infinity,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (context, error, stackTrace) {
-                                                return Container(
-                                                  height: 120,
-                                                  color: const Color(0xFFF1F5F9),
-                                                  child: const Center(
-                                                    child: Column(
-                                                      mainAxisAlignment: MainAxisAlignment.center,
-                                                      children: [
-                                                        Icon(Icons.broken_image_outlined, color: Colors.grey, size: 28),
-                                                        SizedBox(height: 4),
-                                                        Text('Gagal memuat gambar', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ],
                                   ],
                                 ),
-                              );
-                            }),
-                          ],
-                        ),
-                      ),
+                                if (discrepancyQty > 0) ...[
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Jumlah Ketidaksesuaian:',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                                        ),
+                                      ),
+                                      Text(
+                                        '${discrepancyQty.toStringAsFixed(0)} unit',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: labelColor,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                                if (discrepancyNote.isNotEmpty) ...[
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'Catatan: $discrepancyNote',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontStyle: FontStyle.italic,
+                                      color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                                    ),
+                                  ),
+                                ],
+                                if (photoPath != null && photoPath.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Foto Pendukung:',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  GestureDetector(
+                                    onTap: () {
+                                      _showImagePreviewDialog(context, photoPath);
+                                    },
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        '${AppConfig.baseUrl.replaceAll('/api/v1/', '')}/storage/$photoPath',
+                                        height: 120,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Container(
+                                            height: 120,
+                                            color: const CupertinoDynamicColor.withBrightness(
+                                              color: Color(0xFFF2F2F7),
+                                              darkColor: Color(0xFF1C1C1E),
+                                            ).resolveFrom(context),
+                                            child: Center(
+                                              child: Column(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    CupertinoIcons.photo,
+                                                    color: CupertinoColors.placeholderText.resolveFrom(context),
+                                                    size: 28,
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  const Text(
+                                                    'Gagal memuat gambar',
+                                                    style: TextStyle(fontSize: 11, color: CupertinoColors.inactiveGray),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ],
+                          ),
+                        );
+                      }),
                     ],
                   );
                 },
               ),
-            );
-          },
+            ),
+          ),
         );
       },
     );
@@ -1003,33 +1075,31 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> with 
 
   void _showImagePreviewDialog(BuildContext context, String photoPath) {
     final imageUrl = '${AppConfig.baseUrl.replaceAll('/api/v1/', '')}/storage/$photoPath';
-    showDialog(
+    showCupertinoDialog(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(10),
-        child: InteractiveViewer(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AppBar(
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                leading: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white),
-                  onPressed: () => Navigator.pop(context),
-                ),
+      barrierDismissible: true,
+      builder: (context) => CupertinoPageScaffold(
+        backgroundColor: CupertinoColors.black,
+        navigationBar: CupertinoNavigationBar(
+          backgroundColor: CupertinoColors.black.withOpacity(0.5),
+          leading: CupertinoButton(
+            padding: EdgeInsets.zero,
+            child: const Icon(CupertinoIcons.xmark, color: CupertinoColors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
+          middle: const Text('Pratinjau Foto', style: TextStyle(color: CupertinoColors.white)),
+        ),
+        child: SafeArea(
+          child: InteractiveViewer(
+            child: Center(
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(child: Icon(CupertinoIcons.photo, color: CupertinoColors.white, size: 48));
+                },
               ),
-              Expanded(
-                child: Image.network(
-                  imageUrl,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Center(child: Icon(Icons.broken_image, color: Colors.white, size: 48));
-                  },
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -1037,6 +1107,7 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> with 
   }
 
   Widget _buildDetailRow(String label, String value) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1044,13 +1115,21 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> with 
           width: 140,
           child: Text(
             label,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+            style: TextStyle(
+              fontSize: 13,
+              color: CupertinoColors.secondaryLabel.resolveFrom(context),
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF1E293B), fontWeight: FontWeight.w600),
+            style: TextStyle(
+              fontSize: 13,
+              color: labelColor,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ],
@@ -1059,6 +1138,9 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> with 
 
   Widget _buildHistoryTab() {
     final historyAsync = ref.watch(receivingsHistoryProvider);
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return historyAsync.when(
       data: (records) {
@@ -1076,77 +1158,101 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> with 
             if (index == records.length) {
               return const Padding(
                 padding: EdgeInsets.symmetric(vertical: 16),
-                child: Center(child: CircularProgressIndicator()),
+                child: Center(child: CupertinoActivityIndicator()),
               );
             }
             final record = records[index];
 
             return Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: separatorColor, width: 0.5),
               ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => _showDetailDialog(context, record.id, record.receivingNumber),
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              record.receivingNumber,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+              child: GestureDetector(
+                onTap: () => _showDetailDialog(context, record.id, record.receivingNumber),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            record.receivingNumber,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: labelColor,
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.print_outlined, size: 20, color: Color(0xFF4F46E5)),
-                              onPressed: () => _downloadAndPrintPdf(record.id, record.receivingNumber),
+                          ),
+                          CupertinoButton(
+                            padding: EdgeInsets.zero,
+                            minSize: 0,
+                            onPressed: () => _downloadAndPrintPdf(record.id, record.receivingNumber),
+                            child: const Icon(
+                              CupertinoIcons.printer,
+                              size: 20,
+                              color: CupertinoColors.activeBlue,
                             ),
-                          ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'PO: ${record.poNumber ?? "-"}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            record.receivedAt.split('T').first,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Container(height: 0.5, color: separatorColor),
+                      const SizedBox(height: 8),
+                      Text(
+                        record.supplierName,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: labelColor,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(height: 4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'PO: ${record.poNumber ?? "-"}',
-                              style: const TextStyle(fontSize: 13, color: Color(0xFF475569), fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Gudang: ${record.warehouseName ?? "-"}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: CupertinoColors.secondaryLabel.resolveFrom(context),
                             ),
-                            Text(
-                              record.receivedAt.split('T').first,
-                              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                          ),
+                          Text(
+                            '${record.detailsCount} barang',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: CupertinoColors.activeGreen,
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                        const SizedBox(height: 8),
-                        Text(
-                          record.supplierName,
-                          style: const TextStyle(fontSize: 13, color: Color(0xFF1E293B), fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Gudang: ${record.warehouseName ?? "-"}',
-                              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                            ),
-                            Text(
-                              '${record.detailsCount} barang',
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -1154,7 +1260,7 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> with 
           },
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: CupertinoActivityIndicator()),
       error: (err, _) => Center(child: Text('Gagal memuat riwayat: $err')),
     );
   }
@@ -1173,64 +1279,49 @@ void _showTopNotification(BuildContext context, String message, {bool isError = 
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 450),
-          child: Material(
-            color: Colors.transparent,
-            child: TweenAnimationBuilder<double>(
-              duration: const Duration(milliseconds: 250),
-              tween: Tween(begin: 0.0, end: 1.0),
-              builder: (context, value, child) {
-                return Opacity(
-                  opacity: value,
-                  child: Transform.translate(
-                    offset: Offset(0, (1 - value) * -20),
-                    child: child,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isError ? CupertinoColors.destructiveRed : CupertinoColors.activeGreen,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x42000000),
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isError ? CupertinoIcons.exclamationmark_circle : CupertinoIcons.check_mark_circled,
+                  color: CupertinoColors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: const TextStyle(
+                      color: CupertinoColors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.none,
+                    ),
                   ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: isError ? const Color(0xFFEF4444) : const Color(0xFF10B981),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 12,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isError ? Icons.error_outline : Icons.check_circle_outline,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        message,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      onTap: () {
-                        if (entry.mounted) {
-                          entry.remove();
-                        }
-                      },
-                      child: const Icon(Icons.close, color: Colors.white, size: 18),
-                    ),
-                  ],
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () {
+                    if (entry.mounted) {
+                      entry.remove();
+                    }
+                  },
+                  child: const Icon(CupertinoIcons.xmark, color: CupertinoColors.white, size: 18),
                 ),
-              ),
+              ],
             ),
           ),
         ),

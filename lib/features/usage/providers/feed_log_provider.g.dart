@@ -37,22 +37,7 @@ final feedCyclesProvider =
 );
 
 typedef FeedCyclesRef = AutoDisposeFutureProviderRef<List<AquacultureCycle>>;
-String _$feedPondsHash() => r'58a4e6728832e153a8a988df5013c627ef4f6829';
-
-/// See also [feedPonds].
-@ProviderFor(feedPonds)
-final feedPondsProvider =
-    AutoDisposeFutureProvider<List<AquaculturePond>>.internal(
-  feedPonds,
-  name: r'feedPondsProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$feedPondsHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef FeedPondsRef = AutoDisposeFutureProviderRef<List<AquaculturePond>>;
-String _$feedLogsListHash() => r'44a95840975b6d21f95b68160327af95415c600b';
+String _$feedPondsHash() => r'19bb6d898c6a2617c69831e75e5c2fc76baaa904';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -74,6 +59,135 @@ class _SystemHash {
     return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
   }
 }
+
+/// See also [feedPonds].
+@ProviderFor(feedPonds)
+const feedPondsProvider = FeedPondsFamily();
+
+/// See also [feedPonds].
+class FeedPondsFamily extends Family<AsyncValue<List<AquaculturePond>>> {
+  /// See also [feedPonds].
+  const FeedPondsFamily();
+
+  /// See also [feedPonds].
+  FeedPondsProvider call({
+    int? cycleId,
+  }) {
+    return FeedPondsProvider(
+      cycleId: cycleId,
+    );
+  }
+
+  @override
+  FeedPondsProvider getProviderOverride(
+    covariant FeedPondsProvider provider,
+  ) {
+    return call(
+      cycleId: provider.cycleId,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'feedPondsProvider';
+}
+
+/// See also [feedPonds].
+class FeedPondsProvider
+    extends AutoDisposeFutureProvider<List<AquaculturePond>> {
+  /// See also [feedPonds].
+  FeedPondsProvider({
+    int? cycleId,
+  }) : this._internal(
+          (ref) => feedPonds(
+            ref as FeedPondsRef,
+            cycleId: cycleId,
+          ),
+          from: feedPondsProvider,
+          name: r'feedPondsProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$feedPondsHash,
+          dependencies: FeedPondsFamily._dependencies,
+          allTransitiveDependencies: FeedPondsFamily._allTransitiveDependencies,
+          cycleId: cycleId,
+        );
+
+  FeedPondsProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.cycleId,
+  }) : super.internal();
+
+  final int? cycleId;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<AquaculturePond>> Function(FeedPondsRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: FeedPondsProvider._internal(
+        (ref) => create(ref as FeedPondsRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        cycleId: cycleId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<AquaculturePond>> createElement() {
+    return _FeedPondsProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is FeedPondsProvider && other.cycleId == cycleId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, cycleId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin FeedPondsRef on AutoDisposeFutureProviderRef<List<AquaculturePond>> {
+  /// The parameter `cycleId` of this provider.
+  int? get cycleId;
+}
+
+class _FeedPondsProviderElement
+    extends AutoDisposeFutureProviderElement<List<AquaculturePond>>
+    with FeedPondsRef {
+  _FeedPondsProviderElement(super.provider);
+
+  @override
+  int? get cycleId => (origin as FeedPondsProvider).cycleId;
+}
+
+String _$feedLogsListHash() => r'44a95840975b6d21f95b68160327af95415c600b';
 
 abstract class _$FeedLogsList
     extends BuildlessAutoDisposeAsyncNotifier<List<FeedLog>> {

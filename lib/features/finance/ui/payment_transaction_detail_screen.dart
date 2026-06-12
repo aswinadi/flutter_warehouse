@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show Divider, Colors;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/payment_transaction.dart';
@@ -14,12 +15,19 @@ class PaymentTransactionDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Detail Pembayaran'),
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+      navigationBar: CupertinoNavigationBar(
+        backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
+        middle: Text(
+          'Detail Pembayaran',
+          style: TextStyle(color: CupertinoColors.label.resolveFrom(context)),
+        ),
       ),
-      body: PaymentTransactionDetailWidget(
-        transactionId: transactionId,
+      child: SafeArea(
+        child: PaymentTransactionDetailWidget(
+          transactionId: transactionId,
+        ),
       ),
     );
   }
@@ -52,22 +60,38 @@ class _PaymentTransactionDetailWidgetState
   }
 
   Future<void> _pickAndUploadProof(int transactionId) async {
-    final source = await showModalBottomSheet<ImageSource>(
+    final source = await showCupertinoModalPopup<ImageSource>(
       context: context,
-      builder: (context) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Kamera'),
-              onTap: () => Navigator.pop(context, ImageSource.camera),
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Pilih Sumber Foto'),
+        actions: [
+          CupertinoActionSheetAction(
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.camera, color: CupertinoColors.activeBlue),
+                SizedBox(width: 8),
+                Text('Kamera'),
+              ],
             ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Galeri'),
-              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            onPressed: () => Navigator.pop(context, ImageSource.camera),
+          ),
+          CupertinoActionSheetAction(
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.photo, color: CupertinoColors.activeBlue),
+                SizedBox(width: 8),
+                Text('Galeri'),
+              ],
             ),
-          ],
+            onPressed: () => Navigator.pop(context, ImageSource.gallery),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
         ),
       ),
     );
@@ -94,10 +118,17 @@ class _PaymentTransactionDetailWidgetState
       await repository.uploadProof(transactionId, pickedFile.path);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Bukti transfer berhasil diunggah.'),
-            backgroundColor: Colors.green,
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text('Sukses'),
+            content: const Text('Bukti transfer berhasil diunggah.'),
+            actions: [
+              CupertinoDialogAction(
+                child: const Text('OK'),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
           ),
         );
         ref.invalidate(paymentTransactionDetailsProvider(transactionId));
@@ -108,10 +139,17 @@ class _PaymentTransactionDetailWidgetState
         setState(() {
           _uploadError = e.toString();
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text('Gagal'),
             content: Text('Gagal mengunggah: $e'),
-            backgroundColor: Colors.red,
+            actions: [
+              CupertinoDialogAction(
+                child: const Text('OK'),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
           ),
         );
       }
@@ -127,6 +165,7 @@ class _PaymentTransactionDetailWidgetState
   @override
   Widget build(BuildContext context) {
     final detailAsync = ref.watch(paymentTransactionDetailsProvider(widget.transactionId));
+    final secondaryLabelColor = CupertinoColors.secondaryLabel.resolveFrom(context);
 
     return detailAsync.when(
       data: (trx) {
@@ -144,22 +183,22 @@ class _PaymentTransactionDetailWidgetState
           ),
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: CupertinoActivityIndicator()),
       error: (err, stack) => Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, color: Colors.red, size: 48),
+              const Icon(CupertinoIcons.exclamationmark_triangle, color: CupertinoColors.systemRed, size: 48),
               const SizedBox(height: 12),
               Text(
                 'Gagal memuat detail transaksi: $err',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.red),
+                style: const TextStyle(color: CupertinoColors.systemRed),
               ),
               const SizedBox(height: 12),
-              ElevatedButton(
+              CupertinoButton.filled(
                 onPressed: () {
                   ref.invalidate(paymentTransactionDetailsProvider(widget.transactionId));
                 },
@@ -173,9 +212,15 @@ class _PaymentTransactionDetailWidgetState
   }
 
   Widget _buildMainDetailsCard(PaymentTransaction trx) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabelColor = CupertinoColors.secondaryLabel.resolveFrom(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -186,12 +231,12 @@ class _PaymentTransactionDetailWidgetState
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    color: CupertinoColors.activeBlue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    Icons.account_balance_wallet,
-                    color: Theme.of(context).colorScheme.primary,
+                  child: const Icon(
+                    CupertinoIcons.creditcard_fill,
+                    color: CupertinoColors.activeBlue,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -201,14 +246,15 @@ class _PaymentTransactionDetailWidgetState
                     children: [
                       Text(
                         trx.transactionNumber,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
+                          color: labelColor,
                         ),
                       ),
                       Text(
                         'Tanggal: ${trx.transactionDate}',
-                        style: const TextStyle(color: Colors.grey, fontSize: 13),
+                        style: TextStyle(color: secondaryLabelColor, fontSize: 13),
                       ),
                     ],
                   ),
@@ -216,10 +262,10 @@ class _PaymentTransactionDetailWidgetState
               ],
             ),
             const Divider(height: 32),
-            _buildDetailRow(Icons.business, 'Pemasok', trx.supplierName ?? '-'),
+            _buildDetailRow(CupertinoIcons.building_2_fill, 'Pemasok', trx.supplierName ?? '-'),
             const SizedBox(height: 12),
             _buildDetailRow(
-              Icons.account_balance,
+              CupertinoIcons.house_fill,
               'Bank Sumber',
               trx.bankName != null
                   ? '${trx.bankName} - ${trx.bankAccount}'
@@ -228,33 +274,33 @@ class _PaymentTransactionDetailWidgetState
             if (trx.transferReference != null && trx.transferReference!.isNotEmpty) ...[
               const SizedBox(height: 12),
               _buildDetailRow(
-                Icons.receipt,
+                CupertinoIcons.doc_text,
                 'Referensi Transfer',
                 trx.transferReference!,
               ),
             ],
             if (trx.notes != null && trx.notes!.isNotEmpty) ...[
               const SizedBox(height: 12),
-              _buildDetailRow(Icons.note, 'Catatan', trx.notes!),
+              _buildDetailRow(CupertinoIcons.doc, 'Catatan', trx.notes!),
             ],
             const Divider(height: 32),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Total Bayar',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey,
+                    color: secondaryLabelColor,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 Text(
                   _formatCurrency(trx.totalAmount),
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
-                    color: Theme.of(context).colorScheme.primary,
+                    color: CupertinoColors.activeBlue,
                   ),
                 ),
               ],
@@ -266,10 +312,12 @@ class _PaymentTransactionDetailWidgetState
   }
 
   Widget _buildDetailRow(IconData icon, String label, String value) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabelColor = CupertinoColors.secondaryLabel.resolveFrom(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: Colors.grey.shade600),
+        Icon(icon, size: 18, color: secondaryLabelColor),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
@@ -279,16 +327,16 @@ class _PaymentTransactionDetailWidgetState
                 label,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey.shade500,
+                  color: secondaryLabelColor,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: Colors.black87,
+                  color: labelColor,
                 ),
               ),
             ],
@@ -300,32 +348,38 @@ class _PaymentTransactionDetailWidgetState
 
   Widget _buildProofUploadSection(PaymentTransaction trx) {
     final hasProof = trx.receiptUrl != null && trx.receiptUrl!.isNotEmpty;
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabelColor = CupertinoColors.secondaryLabel.resolveFrom(context);
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return Container(
+      decoration: BoxDecoration(
+        color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Bukti Transfer',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
+                color: labelColor,
               ),
             ),
             const SizedBox(height: 16),
             if (_isUploading)
-              const Center(
+              Center(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24.0),
+                  padding: const EdgeInsets.symmetric(vertical: 24.0),
                   child: Column(
                     children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: 12),
-                      Text('Mengunggah bukti transfer...'),
+                      const CupertinoActivityIndicator(radius: 14),
+                      const SizedBox(height: 12),
+                      Text('Mengunggah bukti transfer...', style: TextStyle(color: secondaryLabelColor)),
                     ],
                   ),
                 ),
@@ -338,23 +392,21 @@ class _PaymentTransactionDetailWidgetState
                     height: 200,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade200),
+                      border: Border.all(color: CupertinoColors.separator.resolveFrom(context)),
                       borderRadius: BorderRadius.circular(12),
-                      color: Colors.grey.shade50,
+                      color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: trx.receiptUrl!.toLowerCase().endsWith('.pdf')
-                        ? const Center(
+                        ? Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.picture_as_pdf,
-                                    size: 64, color: Colors.red),
-                                SizedBox(height: 8),
+                                const Icon(CupertinoIcons.doc_text, size: 64, color: CupertinoColors.systemRed),
+                                const SizedBox(height: 8),
                                 Text(
                                   'Dokumen PDF Bukti Transfer',
-                                  style: TextStyle(
-                                      color: Colors.grey, fontSize: 13),
+                                  style: TextStyle(color: secondaryLabelColor, fontSize: 13),
                                 ),
                               ],
                             ),
@@ -363,17 +415,15 @@ class _PaymentTransactionDetailWidgetState
                             trx.receiptUrl!,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) =>
-                                const Center(
+                                Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.broken_image,
-                                      size: 48, color: Colors.grey),
-                                  SizedBox(height: 8),
+                                  Icon(CupertinoIcons.exclamationmark_triangle, size: 48, color: secondaryLabelColor),
+                                  const SizedBox(height: 8),
                                   Text(
                                     'Gagal menampilkan gambar bukti',
-                                    style: TextStyle(
-                                        color: Colors.grey, fontSize: 13),
+                                    style: TextStyle(color: secondaryLabelColor, fontSize: 13),
                                   ),
                                 ],
                               ),
@@ -384,14 +434,17 @@ class _PaymentTransactionDetailWidgetState
                   Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton.icon(
+                        child: CupertinoButton(
+                          padding: EdgeInsets.zero,
+                          color: CupertinoColors.activeBlue,
                           onPressed: () => _pickAndUploadProof(trx.id),
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Unggah Ulang Bukti'),
-                          style: OutlinedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(CupertinoIcons.arrow_clockwise),
+                              SizedBox(width: 8),
+                              Text('Unggah Ulang Bukti'),
+                            ],
                           ),
                         ),
                       ),
@@ -404,26 +457,26 @@ class _PaymentTransactionDetailWidgetState
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
+                  color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
                   border: Border.all(
-                    color: Colors.grey.shade300,
-                    style: BorderStyle.solid,
+                    color: CupertinoColors.separator.resolveFrom(context),
                   ),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
                   children: [
                     Icon(
-                      Icons.cloud_upload_outlined,
+                      CupertinoIcons.cloud_upload,
                       size: 48,
-                      color: Colors.grey.shade400,
+                      color: secondaryLabelColor,
                     ),
                     const SizedBox(height: 12),
-                    const Text(
+                    Text(
                       'Belum Ada Bukti Transfer',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
+                        color: labelColor,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -431,21 +484,20 @@ class _PaymentTransactionDetailWidgetState
                       'Harap unggah bukti transfer pembayaran ini',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey.shade500,
+                        color: secondaryLabelColor,
                       ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
-                    ElevatedButton.icon(
+                    CupertinoButton.filled(
                       onPressed: () => _pickAndUploadProof(trx.id),
-                      icon: const Icon(Icons.upload),
-                      label: const Text('Unggah Bukti'),
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 12),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(CupertinoIcons.cloud_upload),
+                          SizedBox(width: 8),
+                          Text('Unggah Bukti'),
+                        ],
                       ),
                     ),
                   ],
@@ -455,7 +507,7 @@ class _PaymentTransactionDetailWidgetState
               const SizedBox(height: 8),
               Text(
                 _uploadError!,
-                style: const TextStyle(color: Colors.red, fontSize: 12),
+                style: const TextStyle(color: CupertinoColors.destructiveRed, fontSize: 12),
               ),
             ],
           ],
@@ -466,20 +518,26 @@ class _PaymentTransactionDetailWidgetState
 
   Widget _buildInvoicesSection(PaymentTransaction trx) {
     if (trx.invoices.isEmpty) return const SizedBox.shrink();
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabelColor = CupertinoColors.secondaryLabel.resolveFrom(context);
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return Container(
+      decoration: BoxDecoration(
+        color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Invoice yang Dibayar',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
+                color: labelColor,
               ),
             ),
             const SizedBox(height: 12),
@@ -488,7 +546,7 @@ class _PaymentTransactionDetailWidgetState
               physics: const NeverScrollableScrollPhysics(),
               itemCount: trx.invoices.length,
               separatorBuilder: (context, index) =>
-                  Divider(color: Colors.grey.shade200),
+                  Divider(color: CupertinoColors.separator.resolveFrom(context)),
               itemBuilder: (context, index) {
                 final item = trx.invoices[index];
                 return Padding(
@@ -501,26 +559,28 @@ class _PaymentTransactionDetailWidgetState
                         children: [
                           Text(
                             item.invoiceNumber,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
+                              color: labelColor,
                             ),
                           ),
                           if (item.invoiceDate != null)
                             Text(
                               'Tanggal: ${item.invoiceDate}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.grey,
+                                color: secondaryLabelColor,
                               ),
                             ),
                         ],
                       ),
                       Text(
                         _formatCurrency(item.amountPaid),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
+                          color: labelColor,
                         ),
                       ),
                     ],

@@ -73,7 +73,7 @@ class PurchaseRequestItem with _$PurchaseRequestItem {
     @JsonKey(name: 'pr_code') String? prCode,
     @JsonKey(name: 'company_name') String? companyName,
     @JsonKey(name: 'pr_id') int? prId,
-    @JsonKey(name: 'approved_qty', fromJson: doubleFromJson) double? approvedQty,
+    @JsonKey(name: 'approved_qty', fromJson: doubleOrNullFromJson) double? approvedQty,
     @JsonKey(name: 'selected_comparison_id') int? selectedComparisonId,
     @JsonKey(name: 'warehouse_code') String? warehouseCode,
     @JsonKey(name: 'warehouse_name') String? warehouseName,

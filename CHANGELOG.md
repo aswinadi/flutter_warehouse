@@ -2,6 +2,33 @@
 
 All notable changes to the Maxmar Warehouse Flutter project will be documented in this file.
 
+## [1.6.0] - 2026-06-11
+
+### Added
+- **Stock Opname (Physical Count) Module**:
+  - Implemented `StockOpname` and `StockOpnameItem` models.
+  - Built `StockOpnameRepository` mapping to lifecycle backend API routes.
+  - Implemented `StockOpnameListScreen` to manage, create, and list sessions.
+  - Developed `StockOpnameSessionScreen` supporting a dual split-pane layout on wide screens and a floating scanner overlay on mobile.
+  - Integrated `MobileScanner` camera overlay for scanning SKU barcodes.
+  - Designed a custom, touch-friendly numeric keypad modal allowing quick count edits (`+1`, `-1`, `Clear`, `Backspace`).
+  - Added GoRouter routes mapping and a "Stock Opname" menu item config.
+- **Documentation**:
+  - Created [stock_opname.md](file:///c:/Projects/flutter_warehouse/.docs/stock_opname.md) detailing the Stock Opname lifecycle, API routes, and adaptive layout structure.
+
+### Fixed
+- **Valuasi Inventaris (Inventory Valuation) 404 Error**:
+  - Cleared route configuration cache on the backend, resolving the 404 bad response and allowing the client to access `/api/v1/wh/inventory-report/valuation` and `/api/v1/wh/inventory-report/valuation/{sku}` correctly.
+
+## [1.5.0] - 2026-06-11
+
+### Added
+- **Otomatis Buat Petak (Jumlah) Field**:
+  - Configured the `jumlah_petak` (Otomatis Buat Petak) field on the Modul CRUD configuration in [aquaculture_crud_config.dart](file:///c:/Projects/flutter_warehouse/lib/features/usage/providers/aquaculture_crud_config.dart).
+  - Added support for displaying `field.placeholder` as `hintText` in text and number fields in [aquaculture_crud_form_screen.dart](file:///c:/Projects/flutter_warehouse/lib/features/usage/ui/aquaculture_crud_form_screen.dart) to show inline help instructions.
+- **Documentation**:
+  - Created [aquaculture_crud.md](file:///c:/Projects/flutter_warehouse/.docs/aquaculture_crud.md) detailing the aquaculture CRUD layout system, company filtering, and auto-creation of Ponds and Cost Centres.
+
 ## [1.4.0] - 2026-06-10
 
 ### Added

@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show Divider, Colors;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/payment_request_repository.dart';
@@ -31,11 +32,39 @@ class _PaymentRequestApprovalScreenState extends ConsumerState<PaymentRequestApp
           );
       ref.invalidate(paymentRequestsProvider);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment Request Disetujui')));
-        context.pop();
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text('Sukses'),
+            content: const Text('Payment Request Disetujui'),
+            actions: [
+              CupertinoDialogAction(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.pop(context); // dismiss dialog
+                  if (mounted) context.pop(); // pop screen
+                },
+              ),
+            ],
+          ),
+        );
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal: $e')));
+      if (mounted) {
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text('Gagal'),
+            content: Text('Gagal menyetujui: $e'),
+            actions: [
+              CupertinoDialogAction(
+                child: const Text('OK'),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -43,31 +72,50 @@ class _PaymentRequestApprovalScreenState extends ConsumerState<PaymentRequestApp
 
   Future<void> _reject() async {
     final reasonController = TextEditingController();
-    final result = await showDialog<bool>(
+    final result = await showCupertinoDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => CupertinoAlertDialog(
         title: const Text('Tolak Payment Request'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Silakan berikan alasan penolakan:'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: reasonController,
-              decoration: const InputDecoration(
-                labelText: 'Alasan Penolakan',
-                border: OutlineInputBorder(),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 12.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Silakan berikan alasan penolakan:'),
+              const SizedBox(height: 12),
+              CupertinoTextField(
+                controller: reasonController,
+                placeholder: 'Alasan Penolakan',
+                maxLines: 3,
+                placeholderStyle: TextStyle(
+                  color: CupertinoColors.placeholderText.resolveFrom(context),
+                  fontSize: 13,
+                ),
+                style: TextStyle(
+                  color: CupertinoColors.label.resolveFrom(context),
+                  fontSize: 13,
+                ),
+                decoration: BoxDecoration(
+                  color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
+                  border: Border.all(
+                    color: CupertinoColors.separator.resolveFrom(context),
+                    width: 0.5,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
-              maxLines: 3,
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('BATAL')),
-          ElevatedButton(
+          CupertinoDialogAction(
+            child: const Text('Batal'),
+            onPressed: () => Navigator.pop(context, false),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-            child: const Text('TOLAK'),
+            child: const Text('Tolak'),
           ),
         ],
       ),
@@ -83,11 +131,39 @@ class _PaymentRequestApprovalScreenState extends ConsumerState<PaymentRequestApp
             );
         ref.invalidate(paymentRequestsProvider);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment Request Ditolak')));
-          context.pop();
+          showCupertinoDialog(
+            context: context,
+            builder: (context) => CupertinoAlertDialog(
+              title: const Text('Sukses'),
+              content: const Text('Payment Request Ditolak'),
+              actions: [
+                CupertinoDialogAction(
+                  child: const Text('OK'),
+                  onPressed: () {
+                    Navigator.pop(context); // dismiss dialog
+                    if (mounted) context.pop(); // pop screen
+                  },
+                ),
+              ],
+            ),
+          );
         }
       } catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal: $e')));
+        if (mounted) {
+          showCupertinoDialog(
+            context: context,
+            builder: (context) => CupertinoAlertDialog(
+              title: const Text('Gagal'),
+              content: Text('Gagal menolak: $e'),
+              actions: [
+                CupertinoDialogAction(
+                  child: const Text('OK'),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          );
+        }
       } finally {
         if (mounted) setState(() => _isSubmitting = false);
       }
@@ -97,223 +173,253 @@ class _PaymentRequestApprovalScreenState extends ConsumerState<PaymentRequestApp
   @override
   Widget build(BuildContext context) {
     final prAsync = ref.watch(paymentRequestDetailProvider(widget.prId));
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabelColor = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final bgColor = CupertinoColors.systemGroupedBackground.resolveFrom(context);
+    final secondaryBgColor = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0F172A),
-        foregroundColor: Colors.white,
-        title: const Text('Persetujuan Payment Request'),
-        actions: [
-          prAsync.when(
-            data: (pr) => IconButton(
-              icon: const Icon(Icons.print),
-              onPressed: () {
-                context.push('/pdf-preview?title=Payment Request ${pr.requestNumber}&url_path=pdf/payment-request/${pr.id}');
-              },
-            ),
-            loading: () => const SizedBox(),
-            error: (_, __) => const SizedBox(),
+    return CupertinoPageScaffold(
+      backgroundColor: bgColor,
+      navigationBar: CupertinoNavigationBar(
+        backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
+        middle: Text(
+          'Persetujuan Payment Request',
+          style: TextStyle(color: labelColor),
+        ),
+        trailing: prAsync.when(
+          data: (pr) => CupertinoButton(
+            padding: EdgeInsets.zero,
+            minSize: 32,
+            child: const Icon(CupertinoIcons.printer, size: 22),
+            onPressed: () {
+              context.push('/pdf-preview?title=Payment Request ${pr.requestNumber}&url_path=pdf/payment-request/${pr.id}');
+            },
           ),
-        ],
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+        ),
       ),
-      body: prAsync.when(
-        data: (pr) {
-          final canApproveNow = pr.status.toLowerCase() == 'pending' && pr.canApprove;
+      child: SafeArea(
+        child: prAsync.when(
+          data: (pr) {
+            final canApproveNow = pr.status.toLowerCase() == 'pending' && pr.canApprove;
 
-          return Column(
-            children: [
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0x140F0F0F),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              pr.requestNumber,
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                            ),
-                            const SizedBox(height: 8),
-                            _buildInfoRow('Pengaju', pr.requestorName),
-                            _buildInfoRow('Tanggal Pengajuan', pr.requestDate),
-                            _buildInfoRow('Status', pr.status.toUpperCase()),
-                            _buildInfoRow('Pemasok', pr.supplierNames ?? '-'),
-                            _buildInfoRow('Jatuh Tempo Terdekat', pr.dueDate ?? '-'),
-                            const Divider(color: Color(0xFFE2E8F0), height: 24),
-                            _buildInfoRow('Total Pengajuan', formatWithCurrency(pr.totalAmount, pr.currency), isBold: true),
-                            if (pr.description != null && pr.description!.isNotEmpty) ...[
-                              const SizedBox(height: 12),
-                              Text('Deskripsi: ${pr.description}', style: const TextStyle(fontStyle: FontStyle.italic, color: Color(0xFF64748B))),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text('Invoice Terkait', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    ...pr.invoices.map((inv) => Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0x140F0F0F),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(inv.invoiceNumber, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-                                    Text(
-                                      inv.paymentStatus.toUpperCase(),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: inv.paymentStatus == 'paid' ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                 const SizedBox(height: 4),
-                                 Text('Pemasok: ${inv.supplierName ?? "-"}', style: const TextStyle(fontSize: 13, color: Color(0xFF1E293B))),
-                                 Text('Tanggal: ${inv.invoiceDate} | Jatuh Tempo: ${inv.dueDate ?? "-"}', style: const TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                                 const Divider(color: Color(0xFFE2E8F0), height: 16),
-                                 Row(
-                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                   children: [
-                                     Text('Pajak: ${formatWithCurrency(inv.taxAmount, pr.currency)}', style: const TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                                     Text(
-                                       'Jumlah: ${formatWithCurrency(inv.amount, pr.currency)}',
-                                       style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                                     ),
-                                   ],
-                                 ),
-                              ],
-                            ),
-                          ),
-                        )),
-                  ],
-                ),
-              ),
-              if (canApproveNow)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: const Border(top: BorderSide(color: Color(0xFFE2E8F0), width: 1.0)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-                        blurRadius: 10,
-                        offset: const Offset(0, -4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+            return Column(
+              children: [
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.all(16),
                     children: [
-                      TextField(
-                        controller: _notesController,
-                        decoration: InputDecoration(
-                          labelText: 'Catatan Persetujuan/Penolakan (Opsional)',
-                          labelStyle: const TextStyle(color: Color(0xFF64748B)),
-                          fillColor: const Color(0xFFF8FAFC),
-                          filled: true,
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: Color(0xFF6E56CF), width: 2.0),
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: secondaryBgColor,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                pr.requestNumber,
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: labelColor),
+                              ),
+                              const SizedBox(height: 8),
+                              _buildInfoRow('Pengaju', pr.requestorName),
+                              _buildInfoRow('Tanggal Pengajuan', pr.requestDate),
+                              _buildInfoRow('Status', pr.status.toUpperCase()),
+                              _buildInfoRow('Pemasok', pr.supplierNames ?? '-'),
+                              _buildInfoRow('Jatuh Tempo Terdekat', pr.dueDate ?? '-'),
+                              const Divider(height: 24),
+                              _buildInfoRow('Total Pengajuan', formatWithCurrency(pr.totalAmount, pr.currency), isBold: true),
+                              if (pr.description != null && pr.description!.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Deskripsi: ${pr.description}',
+                                  style: TextStyle(fontStyle: FontStyle.italic, color: secondaryLabelColor),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
                       ),
                       const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: _isSubmitting ? null : _reject,
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFFEF4444),
-                                side: const BorderSide(color: Color(0xFFEF4444)),
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              child: const Text('TOLAK'),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            flex: 2,
-                            child: ElevatedButton(
-                              onPressed: _isSubmitting ? null : _approve,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF6E56CF), // Notion Purple
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              child: _isSubmitting
-                                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                  : const Text('SETUJUI'),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        'Invoice Terkait',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
                       ),
+                      const SizedBox(height: 8),
+                      ...pr.invoices.map((inv) => Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            decoration: BoxDecoration(
+                              color: secondaryBgColor,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        inv.invoiceNumber,
+                                        style: TextStyle(fontWeight: FontWeight.bold, color: labelColor),
+                                      ),
+                                      Text(
+                                        inv.paymentStatus.toUpperCase(),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: inv.paymentStatus == 'paid'
+                                              ? CupertinoColors.systemGreen.resolveFrom(context)
+                                              : CupertinoColors.systemOrange.resolveFrom(context),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Pemasok: ${inv.supplierName ?? "-"}',
+                                    style: TextStyle(fontSize: 13, color: labelColor),
+                                  ),
+                                  Text(
+                                    'Tanggal: ${inv.invoiceDate} | Jatuh Tempo: ${inv.dueDate ?? "-"}',
+                                    style: TextStyle(fontSize: 13, color: secondaryLabelColor),
+                                  ),
+                                  const Divider(height: 16),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Pajak: ${formatWithCurrency(inv.taxAmount, pr.currency)}',
+                                        style: TextStyle(fontSize: 13, color: secondaryLabelColor),
+                                      ),
+                                      Text(
+                                        'Jumlah: ${formatWithCurrency(inv.amount, pr.currency)}',
+                                        style: TextStyle(fontWeight: FontWeight.bold, color: labelColor),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )),
                     ],
                   ),
                 ),
-            ],
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Gagal: $err')),
+                if (canApproveNow)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.systemBackground.resolveFrom(context),
+                      border: Border(
+                        top: BorderSide(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CupertinoTextField(
+                          controller: _notesController,
+                          placeholder: 'Catatan Persetujuan/Penolakan (Opsional)',
+                          placeholderStyle: TextStyle(
+                            color: CupertinoColors.placeholderText.resolveFrom(context),
+                            fontSize: 14,
+                          ),
+                          style: TextStyle(
+                            color: labelColor,
+                            fontSize: 14,
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
+                            border: Border.all(
+                              color: CupertinoColors.separator.resolveFrom(context),
+                              width: 0.5,
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: CupertinoButton(
+                                padding: EdgeInsets.zero,
+                                onPressed: _isSubmitting ? null : _reject,
+                                child: Container(
+                                  height: 48,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: CupertinoColors.destructiveRed),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Text(
+                                    'TOLAK',
+                                    style: TextStyle(
+                                      color: CupertinoColors.destructiveRed,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              flex: 2,
+                              child: CupertinoButton(
+                                color: const Color(0xFF6E56CF),
+                                padding: EdgeInsets.zero,
+                                onPressed: _isSubmitting ? null : _approve,
+                                child: Container(
+                                  height: 48,
+                                  alignment: Alignment.center,
+                                  child: _isSubmitting
+                                      ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                                      : const Text(
+                                          'SETUJUI',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: CupertinoColors.white,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            );
+          },
+          loading: () => const Center(child: CupertinoActivityIndicator()),
+          error: (err, _) => Center(
+            child: Text(
+              'Gagal: $err',
+              style: TextStyle(color: secondaryLabelColor),
+            ),
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildInfoRow(String label, String value, {bool isBold = false}) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabelColor = CupertinoColors.secondaryLabel.resolveFrom(context);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Color(0xFF64748B), fontSize: 14)),
+          Text(label, style: TextStyle(color: secondaryLabelColor, fontSize: 14)),
           Expanded(
             child: Text(
               value,
@@ -323,6 +429,7 @@ class _PaymentRequestApprovalScreenState extends ConsumerState<PaymentRequestApp
               style: TextStyle(
                 fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
                 fontSize: 14,
+                color: labelColor,
               ),
             ),
           ),

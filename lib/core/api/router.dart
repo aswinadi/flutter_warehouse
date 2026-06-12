@@ -15,6 +15,9 @@ import '../../features/inventory/ui/inventory_screen.dart';
 import '../../features/inventory/ui/stock_mutation_screen.dart';
 import '../../features/usage/ui/usage_screen.dart';
 import '../../features/usage/ui/feed_log_screen.dart';
+import '../../features/usage/ui/aquaculture_crud_list_screen.dart';
+import '../../features/usage/ui/aquaculture_crud_form_screen.dart';
+import '../../features/usage/ui/shrimp_price_calculator_screen.dart';
 import '../../features/dashboard/ui/dashboard_screen.dart';
 import '../../features/approvals/ui/approvals_screen.dart';
 import '../../features/purchase_request/ui/pr_vendor_approval_screen.dart';
@@ -38,6 +41,8 @@ import '../../features/inventory/ui/asset_list_screen.dart';
 import '../../features/inventory/ui/asset_detail_screen.dart';
 import '../../features/inventory/ui/add_asset_screen.dart';
 import '../../features/inventory/ui/inventory_adjustment_screen.dart';
+import '../../features/inventory/ui/stock_opname_list_screen.dart';
+import '../../features/inventory/ui/stock_opname_session_screen.dart';
 import '../../features/inventory/models/inventory.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -192,6 +197,33 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const FeedLogScreen(),
           ),
           GoRoute(
+            path: '/aquaculture/calculator',
+            builder: (context, state) => const ShrimpPriceCalculatorScreen(),
+          ),
+          GoRoute(
+            path: '/cost-centers',
+            builder: (context, state) => const AquacultureCrudListScreen(resource: 'cost-centres'),
+          ),
+          GoRoute(
+            path: '/aquaculture/:resource',
+            builder: (context, state) => AquacultureCrudListScreen(
+              resource: state.pathParameters['resource']!,
+            ),
+          ),
+          GoRoute(
+            path: '/aquaculture/:resource/create',
+            builder: (context, state) => AquacultureCrudFormScreen(
+              resource: state.pathParameters['resource']!,
+            ),
+          ),
+          GoRoute(
+            path: '/aquaculture/:resource/edit/:id',
+            builder: (context, state) => AquacultureCrudFormScreen(
+              resource: state.pathParameters['resource']!,
+              recordId: int.tryParse(state.pathParameters['id'] ?? ''),
+            ),
+          ),
+          GoRoute(
             path: '/inventory-adjustments',
             builder: (context, state) {
               final item = state.extra as Inventory?;
@@ -259,6 +291,19 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/inventory-valuation',
             builder: (context, state) => const InventoryValuationScreen(),
+          ),
+          GoRoute(
+            path: '/stock-opname',
+            builder: (context, state) => const StockOpnameListScreen(),
+            routes: [
+              GoRoute(
+                path: ':id',
+                builder: (context, state) {
+                  final id = int.parse(state.pathParameters['id']!);
+                  return StockOpnameSessionScreen(sessionId: id);
+                },
+              ),
+            ],
           ),
           GoRoute(
             path: '/assets',

@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show showDateRangePicker, DateTimeRange, Theme, ColorScheme, Colors;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/providers/company_provider.dart';
@@ -16,13 +17,12 @@ class StockMutationScreen extends ConsumerStatefulWidget {
   ConsumerState<StockMutationScreen> createState() => _StockMutationScreenState();
 }
 
-class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
   final ScrollController _summaryScrollController = ScrollController();
   final ScrollController _detailScrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
 
+  int _selectedSegment = 0; // 0 for Summary, 1 for Detail (used in mobile view)
   String _searchQuery = '';
   String? _selectedSku;
   String? _selectedProductName;
@@ -31,14 +31,12 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
     _summaryScrollController.addListener(_onSummaryScroll);
     _detailScrollController.addListener(_onDetailScroll);
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
     _summaryScrollController.dispose();
     _detailScrollController.dispose();
     _searchController.dispose();
@@ -70,9 +68,18 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
       initialDateRange: currentRange,
       firstDate: DateTime(2020),
       lastDate: DateTime.now().add(const Duration(days: 1)),
-      helpText: 'Pilih Rentang Tanggal Mutasi',
-      confirmText: 'PILIH',
-      cancelText: 'BATAL',
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF6E56CF),
+              onPrimary: Colors.white,
+              onSurface: Color(0xFF1E293B),
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (pickedRange != null) {
@@ -104,6 +111,29 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
     return DateFormat('dd/MM/yyyy').format(dt);
   }
 
+  void _showWarehousePicker(BuildContext context, List<dynamic> warehouses) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Pilih Gudang'),
+        actions: warehouses.map((w) {
+          return CupertinoActionSheetAction(
+            onPressed: () {
+              ref.read(selectedWarehouseProvider.notifier).selectWarehouse(w);
+              Navigator.pop(context);
+            },
+            child: Text(w.name),
+          );
+        }).toList(),
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen<Company?>(selectedCompanyProvider, (prev, next) {
@@ -131,6 +161,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
     final warehouse = ref.watch(selectedWarehouseProvider);
     final dateRange = ref.watch(stockMutationDateRangeProvider);
     final warehousesAsync = ref.watch(warehousesProvider);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     // Get warehouses list filtered by active company
     final filteredWarehouses = warehousesAsync.maybeWhen(
@@ -140,65 +171,117 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
       orElse: () => [],
     );
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mutasi Stok & Kartu Stok'),
-        bottom: isWide
-            ? null
-            : TabBar(
-                controller: _tabController,
-                indicatorColor: Theme.of(context).colorScheme.primary,
-                labelColor: Theme.of(context).colorScheme.primary,
-                unselectedLabelColor: Colors.grey,
-                tabs: const [
-                  Tab(icon: Icon(Icons.list_alt), text: 'Ringkasan Mutasi'),
-                  Tab(icon: Icon(Icons.history), text: 'Detail Kartu Stok'),
-                ],
-              ),
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+      navigationBar: const CupertinoNavigationBar(
+        middle: Text('Mutasi & Kartu Stok'),
       ),
-      body: Column(
-        children: [
-          const CompanySwitcher(),
-          _buildFilterPanel(filteredWarehouses, warehouse, dateRange),
-          Expanded(
-            child: isWide
-                ? Row(
-                    children: [
-                      SizedBox(
-                        width: 480,
-                        child: _buildSummaryTabContent(isWide: true),
+      child: SafeArea(
+        child: Column(
+          children: [
+            const CompanySwitcher(),
+            _buildFilterPanel(filteredWarehouses, warehouse, dateRange),
+            if (!isWide)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: CupertinoSlidingSegmentedControl<int>(
+                    groupValue: _selectedSegment,
+                    children: const {
+                      0: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 6),
+                        child: Text('Ringkasan Mutasi', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
                       ),
-                      const VerticalDivider(width: 1, thickness: 1, color: Color(0xFFE2E8F0)),
-                      Expanded(
-                        child: _selectedSku != null
-                            ? _buildDetailCardView(isWide: true)
-                            : const Center(
-                                child: Text(
-                                  'Pilih produk dari ringkasan mutasi di panel kiri untuk melihat Kartu Stok',
-                                  style: TextStyle(color: Colors.grey, fontSize: 16),
-                                  textAlign: TextAlign.center,
+                      1: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 6),
+                        child: Text('Detail Kartu Stok', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                      ),
+                    },
+                    onValueChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          _selectedSegment = val;
+                        });
+                      }
+                    },
+                  ),
+                ),
+              ),
+            Expanded(
+              child: isWide
+                  ? Row(
+                      children: [
+                        SizedBox(
+                          width: 480,
+                          child: _buildSummaryTabContent(isWide: true),
+                        ),
+                        Container(
+                          width: 0.5,
+                          color: separatorColor,
+                        ),
+                        Expanded(
+                          child: _selectedSku != null
+                              ? _buildDetailCardView(isWide: true)
+                              : Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        CupertinoIcons.square_stack_3d_down_right,
+                                        size: 48,
+                                        color: CupertinoColors.secondaryLabel.resolveFrom(context).withOpacity(0.5),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'Pilih produk dari ringkasan mutasi di panel kiri untuk melihat Kartu Stok',
+                                        style: TextStyle(
+                                          color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                                          fontSize: 15,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                        ),
+                      ],
+                    )
+                  : IndexedStack(
+                      index: _selectedSegment,
+                      children: [
+                        _buildSummaryTabContent(isWide: false),
+                        _selectedSku != null
+                            ? _buildDetailCardView(isWide: false)
+                            : Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(24.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        CupertinoIcons.list_bullet,
+                                        size: 48,
+                                        color: CupertinoColors.secondaryLabel.resolveFrom(context).withOpacity(0.5),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'Harap pilih produk dari tab Ringkasan Mutasi terlebih dahulu',
+                                        style: TextStyle(
+                                          color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                                          fontSize: 15,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                      ),
-                    ],
-                  )
-                : TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildSummaryTabContent(isWide: false),
-                      _selectedSku != null
-                          ? _buildDetailCardView(isWide: false)
-                          : const Center(
-                              child: Text(
-                                'Harap pilih produk dari tab Ringkasan Mutasi terlebih dahulu',
-                                style: TextStyle(color: Colors.grey, fontSize: 15),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                    ],
-                  ),
-          ),
-        ],
+                      ],
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -219,50 +302,62 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
             range.start.isAfter(now.subtract(const Duration(days: 31))) &&
             range.end.day == now.day;
 
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-      color: Colors.grey.shade50,
+      padding: const EdgeInsets.all(16.0),
+      color: cardBg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Expanded(
-                child: DropdownButtonFormField<dynamic>(
-                  value: company == null ? null : selectedWarehouse,
-                  decoration: InputDecoration(
-                    labelText: company == null ? 'Pilih Perusahaan Terlebih Dahulu' : 'Pilih Gudang',
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    border: OutlineInputBorder(
+                child: GestureDetector(
+                  onTap: company == null ? null : () => _showWarehousePicker(context, warehouses),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: company == null
+                          ? CupertinoColors.tertiarySystemFill.resolveFrom(context)
+                          : CupertinoColors.systemBackground.resolveFrom(context),
+                      border: Border.all(color: separatorColor, width: 0.5),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    filled: true,
-                    fillColor: company == null ? Colors.grey.shade100 : Colors.white,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            company == null
+                                ? 'Pilih Perusahaan Terlebih Dahulu'
+                                : (selectedWarehouse != null ? selectedWarehouse.name : 'Pilih Gudang'),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: company == null ? secondaryLabel : labelColor,
+                              fontWeight: selectedWarehouse != null ? FontWeight.w500 : FontWeight.normal,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Icon(CupertinoIcons.chevron_down, size: 14, color: secondaryLabel),
+                      ],
+                    ),
                   ),
-                  items: company == null
-                      ? null
-                      : warehouses.map((w) {
-                          return DropdownMenuItem<dynamic>(
-                            value: w,
-                            child: Text(w.name),
-                          );
-                        }).toList(),
-                  onChanged: company == null
-                      ? null
-                      : (val) {
-                          ref.read(selectedWarehouseProvider.notifier).selectWarehouse(val);
-                        },
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: InkWell(
+                child: GestureDetector(
                   onTap: _selectDateRange,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: Colors.grey.shade400),
+                      color: CupertinoColors.systemBackground.resolveFrom(context),
+                      border: Border.all(color: separatorColor, width: 0.5),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -271,11 +366,11 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
                         Expanded(
                           child: Text(
                             'Periode: ${_formatDate(range.start)} - ${_formatDate(range.end)}',
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                            style: TextStyle(fontSize: 12, color: labelColor, fontWeight: FontWeight.w500),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const Icon(Icons.date_range, size: 16, color: Colors.grey),
+                        Icon(CupertinoIcons.calendar, size: 16, color: secondaryLabel),
                       ],
                     ),
                   ),
@@ -283,7 +378,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -294,11 +389,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
                 const SizedBox(width: 8),
                 _buildPresetChip('30 Hari Terakhir', isLast30Days, () => _selectPresetRange('30days')),
                 const SizedBox(width: 8),
-                ChoiceChip(
-                  label: const Text('Rentang Kustom...'),
-                  selected: !isToday && !isThisMonth && !isLast30Days,
-                  onSelected: (_) => _selectDateRange(),
-                ),
+                _buildPresetChip('Rentang Kustom...', !isToday && !isThisMonth && !isLast30Days, _selectDateRange),
               ],
             ),
           ),
@@ -308,10 +399,30 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
   }
 
   Widget _buildPresetChip(String label, bool isSelected, VoidCallback onTap) {
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (_) => onTap(),
+    final contextResolvedBg = isSelected
+        ? const Color(0xFF6E56CF)
+        : CupertinoColors.tertiarySystemFill.resolveFrom(context);
+    final labelColor = isSelected
+        ? CupertinoColors.white
+        : CupertinoColors.label.resolveFrom(context);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: contextResolvedBg,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: labelColor,
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ),
     );
   }
 
@@ -319,33 +430,18 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
     final listAsync = ref.watch(stockMutationSummaryListProvider);
     final company = ref.watch(selectedCompanyProvider);
     final warehouse = ref.watch(selectedWarehouseProvider);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: TextField(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: CupertinoSearchTextField(
             controller: _searchController,
-            decoration: InputDecoration(
-              hintText: 'Cari SKU atau nama produk...',
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: _searchQuery.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        setState(() {
-                          _searchController.clear();
-                          _searchQuery = '';
-                        });
-                        ref.read(stockMutationSearchQueryProvider.notifier).setQuery('');
-                      },
-                    )
-                  : null,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              contentPadding: const EdgeInsets.symmetric(vertical: 0),
-            ),
+            placeholder: 'Cari SKU atau nama produk...',
             onChanged: (val) {
               setState(() {
                 _searchQuery = val;
@@ -365,9 +461,9 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.business_center_outlined,
+                          CupertinoIcons.building_2_fill,
                           size: 64,
-                          color: Colors.grey.shade400,
+                          color: secondaryLabel.withOpacity(0.5),
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -375,7 +471,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.grey.shade700,
+                            color: labelColor,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -384,7 +480,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
                           'Untuk melihat laporan mutasi dan kartu stok, silakan pilih perusahaan dan gudang pada filter di atas.',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.grey.shade500,
+                            color: secondaryLabel,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -395,10 +491,10 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
               }
 
               if (items.isEmpty) {
-                return const Center(
+                return Center(
                   child: Text(
                     'Tidak ada data mutasi untuk periode/kriteria ini',
-                    style: TextStyle(color: Colors.grey),
+                    style: TextStyle(color: secondaryLabel),
                   ),
                 );
               }
@@ -407,15 +503,15 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
 
               return ListView.separated(
                 controller: _summaryScrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 itemCount: items.length + (hasMore ? 1 : 0),
-                separatorBuilder: (context, index) => const SizedBox(height: 8),
+                separatorBuilder: (context, index) => const SizedBox(height: 10),
                 itemBuilder: (context, index) {
                   if (index == items.length) {
                     return const Center(
                       child: Padding(
                         padding: EdgeInsets.symmetric(vertical: 16),
-                        child: CircularProgressIndicator(),
+                        child: CupertinoActivityIndicator(),
                       ),
                     );
                   }
@@ -423,53 +519,55 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
                   final item = items[index];
                   final isSelected = item.sku == _selectedSku;
 
-                  return Card(
-                    elevation: isSelected ? 3 : 1,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      side: BorderSide(
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
                         color: isSelected
-                            ? Theme.of(context).colorScheme.primary
-                            : Colors.transparent,
-                        width: 1.5,
+                            ? const Color(0xFF6E56CF)
+                            : separatorColor,
+                        width: isSelected ? 1.5 : 0.5,
                       ),
                     ),
-                    child: InkWell(
+                    child: GestureDetector(
                       onTap: () {
                         setState(() {
                           _selectedSku = item.sku;
                           _selectedProductName = item.productName;
                           _selectedProductUnit = item.unit;
+                          if (!isWide) {
+                            _selectedSegment = 1;
+                          }
                         });
-                        if (!isWide) {
-                          _tabController.animateTo(1);
-                        }
                       },
-                      borderRadius: BorderRadius.circular(10),
                       child: Padding(
-                        padding: const EdgeInsets.all(12.0),
+                        padding: const EdgeInsets.all(16.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               item.productName,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: labelColor),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 4),
                             Text(
                               'SKU: ${item.sku}',
-                              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                              style: TextStyle(color: secondaryLabel, fontSize: 12),
                             ),
-                            const Divider(height: 16),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8.0),
+                              child: Container(height: 0.5, color: separatorColor),
+                            ),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 _buildMiniStatCol('Awal', item.initialBalance, item.unit),
-                                _buildMiniStatCol('Masuk', item.periodIn, item.unit, color: Colors.green),
-                                _buildMiniStatCol('Keluar', item.periodOut, item.unit, color: Colors.red),
-                                _buildMiniStatCol('Akhir', item.endingBalance, item.unit, color: Colors.blue, bold: true),
+                                _buildMiniStatCol('Masuk', item.periodIn, item.unit, color: CupertinoColors.activeGreen),
+                                _buildMiniStatCol('Keluar', item.periodOut, item.unit, color: CupertinoColors.destructiveRed),
+                                _buildMiniStatCol('Akhir', item.endingBalance, item.unit, color: CupertinoColors.activeBlue, bold: true),
                               ],
                             ),
                           ],
@@ -480,12 +578,15 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
                 },
               );
             },
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const Center(child: CupertinoActivityIndicator()),
             error: (err, stack) => Center(
-              child: Text(
-                'Gagal memuat ringkasan mutasi: $err',
-                style: const TextStyle(color: Colors.red),
-                textAlign: TextAlign.center,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'Gagal memuat ringkasan mutasi: $err',
+                  style: const TextStyle(color: CupertinoColors.destructiveRed),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ),
           ),
@@ -495,20 +596,22 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
   }
 
   Widget _buildMiniStatCol(String label, int value, String unit, {Color? color, bool bold = false}) {
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final labelColor = CupertinoColors.label.resolveFrom(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
           label,
-          style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+          style: TextStyle(fontSize: 10, color: secondaryLabel),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 4),
         Text(
           '$value $unit',
           style: TextStyle(
             fontSize: 12,
             fontWeight: bold ? FontWeight.bold : FontWeight.w600,
-            color: color,
+            color: color ?? labelColor,
           ),
         ),
       ],
@@ -521,6 +624,8 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
     final detailsAsync = ref.watch(stockCardDetailListProvider(_selectedSku!));
     final detailsNotifier = ref.watch(stockCardDetailListProvider(_selectedSku!).notifier);
     final summaryHeader = detailsNotifier.summaryHeader;
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return detailsAsync.when(
       data: (logs) {
@@ -529,24 +634,24 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
             _buildDetailHeaderWidget(summaryHeader),
             Expanded(
               child: logs.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text(
                         'Tidak ada riwayat transaksi mutasi untuk produk ini dalam periode terpilih',
-                        style: TextStyle(color: Colors.grey),
+                        style: TextStyle(color: secondaryLabel),
                         textAlign: TextAlign.center,
                       ),
                     )
                   : ListView.separated(
                       controller: _detailScrollController,
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       itemCount: logs.length + (detailsNotifier.hasMore ? 1 : 0),
-                      separatorBuilder: (context, index) => const Divider(height: 16),
+                      separatorBuilder: (context, index) => Container(height: 0.5, color: separatorColor),
                       itemBuilder: (context, index) {
                         if (index == logs.length) {
                           return const Center(
                             child: Padding(
                               padding: EdgeInsets.symmetric(vertical: 16),
-                              child: CircularProgressIndicator(),
+                              child: CupertinoActivityIndicator(),
                             ),
                           );
                         }
@@ -555,7 +660,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
                         final isIncoming = log.inQty > 0;
 
                         return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          padding: const EdgeInsets.symmetric(vertical: 12.0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -569,7 +674,9 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                     decoration: BoxDecoration(
-                                      color: isIncoming ? Colors.green.shade50 : Colors.red.shade50,
+                                      color: isIncoming
+                                          ? CupertinoColors.activeGreen.withOpacity(0.1)
+                                          : CupertinoColors.destructiveRed.withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Text(
@@ -577,7 +684,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
                                       style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
-                                        color: isIncoming ? Colors.green.shade700 : Colors.red.shade700,
+                                        color: isIncoming ? CupertinoColors.activeGreen : CupertinoColors.destructiveRed,
                                       ),
                                     ),
                                   ),
@@ -601,7 +708,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
                                             'Ref: ${log.refNumber}',
                                             style: TextStyle(
                                               fontSize: 11,
-                                              color: Colors.grey.shade500,
+                                              color: secondaryLabel,
                                             ),
                                           ),
                                         ],
@@ -615,7 +722,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
                                         : '-${log.outQty.toStringAsFixed(0)} ${_selectedProductUnit ?? ""}',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      color: isIncoming ? Colors.green.shade700 : Colors.red.shade700,
+                                      color: isIncoming ? CupertinoColors.activeGreen : CupertinoColors.destructiveRed,
                                     ),
                                   ),
                                 ],
@@ -629,13 +736,13 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
           ],
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: CupertinoActivityIndicator()),
       error: (err, stack) => Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Text(
             'Gagal memuat detail kartu stok: $err',
-            style: const TextStyle(color: Colors.red),
+            style: const TextStyle(color: CupertinoColors.destructiveRed),
             textAlign: TextAlign.center,
           ),
         ),
@@ -644,52 +751,53 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
   }
 
   Widget _buildDetailHeaderWidget(StockMutationHeader? header) {
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.all(12),
+      margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        border: Border.all(color: separatorColor, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             _selectedProductName ?? 'Detail Kartu Stok',
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: labelColor),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             'SKU: $_selectedSku',
-            style: const TextStyle(color: Colors.grey, fontSize: 13),
+            style: TextStyle(color: secondaryLabel, fontSize: 13),
           ),
-          const Divider(height: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12.0),
+            child: Container(height: 0.5, color: separatorColor),
+          ),
           if (header != null)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildHeaderStatCol('Awal', header.initialBalance),
-                _buildHeaderStatCol('Masuk', header.totalIn, color: Colors.green),
-                _buildHeaderStatCol('Keluar', header.totalOut, color: Colors.red),
-                _buildHeaderStatCol('Akhir', header.endingBalance, color: Colors.blue, bold: true),
+                _buildHeaderStatCol('Masuk', header.totalIn, color: CupertinoColors.activeGreen),
+                _buildHeaderStatCol('Keluar', header.totalOut, color: CupertinoColors.destructiveRed),
+                _buildHeaderStatCol('Akhir', header.endingBalance, color: CupertinoColors.activeBlue, bold: true),
               ],
             )
           else
             const Center(
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.0),
+                child: CupertinoActivityIndicator(),
               ),
             ),
         ],
@@ -698,11 +806,13 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
   }
 
   Widget _buildHeaderStatCol(String label, int value, {Color? color, bool bold = false}) {
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final labelColor = CupertinoColors.label.resolveFrom(context);
     return Column(
       children: [
         Text(
           label,
-          style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+          style: TextStyle(fontSize: 12, color: secondaryLabel),
         ),
         const SizedBox(height: 4),
         Text(
@@ -710,14 +820,14 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen>
           style: TextStyle(
             fontSize: 16,
             fontWeight: bold ? FontWeight.bold : FontWeight.w600,
-            color: color,
+            color: color ?? labelColor,
           ),
         ),
         if (_selectedProductUnit != null) ...[
           const SizedBox(height: 2),
           Text(
             _selectedProductUnit!,
-            style: TextStyle(fontSize: 10, color: Colors.grey.shade400),
+            style: TextStyle(fontSize: 10, color: secondaryLabel.withOpacity(0.6)),
           ),
         ],
       ],

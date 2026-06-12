@@ -21,8 +21,10 @@ class FeedLogRepository {
         .toList();
   }
 
-  Future<List<AquaculturePond>> getPonds() async {
-    final response = await dio.get('wh/aquaculture/ponds');
+  Future<List<AquaculturePond>> getPonds({int? cycleId}) async {
+    final response = await dio.get('wh/aquaculture/ponds', queryParameters: {
+      if (cycleId != null) 'cycle_id': cycleId,
+    });
     return (response.data['data'] as List)
         .map((e) => AquaculturePond.fromJson(e as Map<String, dynamic>))
         .toList();
@@ -80,9 +82,9 @@ Future<List<AquacultureCycle>> feedCycles(FeedCyclesRef ref) async {
 }
 
 @riverpod
-Future<List<AquaculturePond>> feedPonds(FeedPondsRef ref) async {
+Future<List<AquaculturePond>> feedPonds(FeedPondsRef ref, {int? cycleId}) async {
   final repository = ref.watch(feedLogRepositoryProvider);
-  return repository.getPonds();
+  return repository.getPonds(cycleId: cycleId);
 }
 
 @riverpod

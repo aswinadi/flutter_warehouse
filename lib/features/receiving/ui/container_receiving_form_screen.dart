@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/receiving.dart';
 import '../providers/receiving_provider.dart';
@@ -22,7 +22,6 @@ class ContainerReceivingFormScreen extends ConsumerStatefulWidget {
 }
 
 class _ContainerReceivingFormScreenState extends ConsumerState<ContainerReceivingFormScreen> {
-  final _formKey = GlobalKey<FormState>();
   final _driverController = TextEditingController();
   final _truckController = TextEditingController();
   final _notesController = TextEditingController();
@@ -49,8 +48,6 @@ class _ContainerReceivingFormScreenState extends ConsumerState<ContainerReceivin
   }
 
   Future<void> _submit(ReceivingContainerManifest manifest) async {
-    if (!_formKey.currentState!.validate()) return;
-
     // Check if at least one item has received qty > 0
     final hasQty = _receivedQuantities.values.any((qty) => qty > 0);
     if (!hasQty) {
@@ -125,61 +122,57 @@ class _ContainerReceivingFormScreenState extends ConsumerState<ContainerReceivin
   Widget build(BuildContext context) {
     final manifestAsync = ref.watch(containerManifestProvider(widget.containerNumber));
     final isWide = MediaQuery.of(context).size.width > 900;
+    final bgColor = CupertinoColors.systemGroupedBackground.resolveFrom(context);
+    final labelColor = CupertinoColors.label.resolveFrom(context);
 
     final content = manifestAsync.when(
       data: (manifest) {
         _initializeValues(manifest);
 
-        return Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    _buildContainerDetailsCard(manifest),
-                    const SizedBox(height: 16),
-                    _buildReceiptFormFields(isWide),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'Barang yang Diterima dari Kontainer',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                    ),
-                    const SizedBox(height: 8),
-                    ...manifest.items.map((item) => _buildItemRow(item)),
-                  ],
-                ),
-              ),
-              Container(
+        return Column(
+          children: [
+            Expanded(
+              child: ListView(
                 padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
-                ),
-                child: ElevatedButton(
-                  onPressed: _isSubmitting ? null : () => _submit(manifest),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4F46E5),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    minimumSize: const Size.fromHeight(50),
+                children: [
+                  _buildContainerDetailsCard(manifest),
+                  const SizedBox(height: 16),
+                  _buildReceiptFormFields(isWide),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Barang yang Diterima dari Kontainer',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
                   ),
+                  const SizedBox(height: 8),
+                  ...manifest.items.map((item) => _buildItemRow(item)),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
+                border: Border(top: BorderSide(color: CupertinoColors.separator.resolveFrom(context), width: 0.5)),
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                child: CupertinoButton.filled(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  borderRadius: BorderRadius.circular(10),
+                  onPressed: _isSubmitting ? null : () => _submit(manifest),
                   child: _isSubmitting
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                        )
-                      : const Text('KIRIM PENERIMAAN KONTAINER', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                      ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                      : const Text(
+                          'KIRIM PENERIMAAN KONTAINER',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: CupertinoColors.white),
+                        ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: CupertinoActivityIndicator()),
       error: (err, _) => Center(child: Text('Gagal memuat manifest kontainer: $err')),
     );
 
@@ -187,21 +180,28 @@ class _ContainerReceivingFormScreenState extends ConsumerState<ContainerReceivin
       return content;
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Penerimaan Barang Kontainer'),
+    return CupertinoPageScaffold(
+      backgroundColor: bgColor,
+      navigationBar: CupertinoNavigationBar(
+        middle: const Text('Penerimaan Barang Kontainer'),
+        backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
       ),
-      body: content,
+      child: SafeArea(child: content),
     );
   }
 
   Widget _buildContainerDetailsCard(ReceivingContainerManifest manifest) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+    const statusColor = CupertinoColors.activeBlue;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: separatorColor, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,24 +211,24 @@ class _ContainerReceivingFormScreenState extends ConsumerState<ContainerReceivin
             children: [
               Text(
                 manifest.containerNumber,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF4F46E5)),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: CupertinoColors.activeBlue),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
+                  color: statusColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF3B82F6), width: 0.8),
+                  border: Border.all(color: statusColor, width: 0.5),
                 ),
                 child: Text(
                   manifest.status.toUpperCase(),
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF3B82F6)),
+                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: statusColor),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          Container(height: 0.5, color: separatorColor),
           const SizedBox(height: 8),
           _buildDetailRow('Pemasok', manifest.supplierName),
           const SizedBox(height: 4),
@@ -241,6 +241,7 @@ class _ContainerReceivingFormScreenState extends ConsumerState<ContainerReceivin
   }
 
   Widget _buildDetailRow(String label, String value) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -248,13 +249,13 @@ class _ContainerReceivingFormScreenState extends ConsumerState<ContainerReceivin
           width: 90,
           child: Text(
             label,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+            style: TextStyle(fontSize: 13, color: CupertinoColors.secondaryLabel.resolveFrom(context), fontWeight: FontWeight.w500),
           ),
         ),
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF1E293B), fontWeight: FontWeight.w600),
+            style: TextStyle(fontSize: 13, color: labelColor, fontWeight: FontWeight.w600),
           ),
         ),
       ],
@@ -262,75 +263,84 @@ class _ContainerReceivingFormScreenState extends ConsumerState<ContainerReceivin
   }
 
   Widget _buildReceiptFormFields(bool isWide) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: separatorColor, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Referensi Penerimaan',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
           ),
           const SizedBox(height: 12),
           if (isWide)
             Row(
               children: [
                 Expanded(
-                  child: TextFormField(
-                    controller: _driverController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nama Sopir',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Nama Sopir', style: TextStyle(fontSize: 12, color: labelColor)),
+                      const SizedBox(height: 6),
+                      CupertinoTextField(
+                        controller: _driverController,
+                        placeholder: 'Nama Sopir Kontainer',
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: TextFormField(
-                    controller: _truckController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nomor Plat Truk / Armada',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Nomor Plat Truk / Armada', style: TextStyle(fontSize: 12, color: labelColor)),
+                      const SizedBox(height: 6),
+                      CupertinoTextField(
+                        controller: _truckController,
+                        placeholder: 'L 1234 AB',
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      ),
+                    ],
                   ),
                 ),
               ],
             )
           else ...[
-            TextFormField(
+            Text('Nama Sopir', style: TextStyle(fontSize: 12, color: labelColor)),
+            const SizedBox(height: 6),
+            CupertinoTextField(
               controller: _driverController,
-              decoration: const InputDecoration(
-                labelText: 'Nama Sopir',
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
+              placeholder: 'Nama Sopir Kontainer',
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),
             const SizedBox(height: 12),
-            TextFormField(
+            Text('Nomor Plat Truk / Armada', style: TextStyle(fontSize: 12, color: labelColor)),
+            const SizedBox(height: 6),
+            CupertinoTextField(
               controller: _truckController,
-              decoration: const InputDecoration(
-                labelText: 'Nomor Plat Truk / Armada',
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
+              placeholder: 'L 1234 AB',
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),
           ],
           const SizedBox(height: 12),
-          TextFormField(
+          Text('Catatan Umum', style: TextStyle(fontSize: 12, color: labelColor)),
+          const SizedBox(height: 6),
+          CupertinoTextField(
             controller: _notesController,
             maxLines: 2,
-            decoration: const InputDecoration(
-              labelText: 'Catatan Umum',
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.all(16),
-            ),
+            placeholder: 'Tambahkan catatan jika ada...',
+            padding: const EdgeInsets.all(12),
           ),
         ],
       ),
@@ -340,39 +350,42 @@ class _ContainerReceivingFormScreenState extends ConsumerState<ContainerReceivin
   Widget _buildItemRow(ReceivingContainerManifestItem item) {
     final remaining = item.plannedQty;
     final currentQty = _receivedQuantities[item.poDetailId] ?? 0.0;
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: separatorColor, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             item.productName,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: labelColor),
           ),
           const SizedBox(height: 4),
           Text(
             'SKU: ${item.sku} • Unit: ${item.unit} • PO: ${item.poNumber}',
-            style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+            style: TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
           ),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildInfoPill('Jml Rencana', remaining, const Color(0xFF64748B)),
-                _buildInfoPill('Penerimaan Saat Ini', currentQty, const Color(0xFF4F46E5)),
+                _buildInfoPill('Jml Rencana', remaining, CupertinoColors.secondaryLabel.resolveFrom(context)),
+                _buildInfoPill('Penerimaan Saat Ini', currentQty, CupertinoColors.activeBlue),
               ],
             ),
           ),
@@ -382,19 +395,19 @@ class _ContainerReceivingFormScreenState extends ConsumerState<ContainerReceivin
               Expanded(
                 child: Row(
                   children: [
-                    IconButton.filledTonal(
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      minSize: 36,
+                      color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
+                      borderRadius: BorderRadius.circular(18),
                       onPressed: currentQty > 0
                           ? () {
                               setState(() {
-                                _receivedQuantities[item.poDetailId] = (currentQty - 1).clamp(0, remaining);
+                                _receivedQuantities[item.poDetailId] = (currentQty - 1).clamp(0.0, remaining);
                               });
                             }
                           : null,
-                      icon: const Icon(Icons.remove, size: 16),
-                      style: IconButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: const Size(36, 36),
-                      ),
+                      child: const Icon(CupertinoIcons.minus, size: 16),
                     ),
                     Expanded(
                       child: Padding(
@@ -402,40 +415,39 @@ class _ContainerReceivingFormScreenState extends ConsumerState<ContainerReceivin
                         child: Text(
                           currentQty.toStringAsFixed(0),
                           textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
                         ),
                       ),
                     ),
-                    IconButton.filledTonal(
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      minSize: 36,
+                      color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
+                      borderRadius: BorderRadius.circular(18),
                       onPressed: currentQty < remaining
                           ? () {
                               setState(() {
-                                _receivedQuantities[item.poDetailId] = (currentQty + 1).clamp(0, remaining);
+                                _receivedQuantities[item.poDetailId] = (currentQty + 1).clamp(0.0, remaining);
                               });
                             }
                           : null,
-                      icon: const Icon(Icons.add, size: 16),
-                      style: IconButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: const Size(36, 36),
-                      ),
+                      child: const Icon(CupertinoIcons.plus, size: 16),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 16),
-              OutlinedButton(
+              CupertinoButton(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                minSize: 0,
+                color: CupertinoColors.activeBlue.resolveFrom(context),
+                borderRadius: BorderRadius.circular(8),
                 onPressed: () {
                   setState(() {
                     _receivedQuantities[item.poDetailId] = remaining;
                   });
                 },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF4F46E5),
-                  side: const BorderSide(color: Color(0xFF4F46E5)),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                ),
-                child: const Text('Terima Semua'),
+                child: const Text('Terima Semua', style: TextStyle(fontSize: 12, color: CupertinoColors.white)),
               ),
             ],
           ),
@@ -449,7 +461,7 @@ class _ContainerReceivingFormScreenState extends ConsumerState<ContainerReceivin
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 10, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+          style: TextStyle(fontSize: 10, color: CupertinoColors.secondaryLabel.resolveFrom(context), fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 2),
         Text(
@@ -474,64 +486,49 @@ void _showTopNotification(BuildContext context, String message, {bool isError = 
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 450),
-          child: Material(
-            color: Colors.transparent,
-            child: TweenAnimationBuilder<double>(
-              duration: const Duration(milliseconds: 250),
-              tween: Tween(begin: 0.0, end: 1.0),
-              builder: (context, value, child) {
-                return Opacity(
-                  opacity: value,
-                  child: Transform.translate(
-                    offset: Offset(0, (1 - value) * -20),
-                    child: child,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isError ? CupertinoColors.destructiveRed : CupertinoColors.activeGreen,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x42000000),
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isError ? CupertinoIcons.exclamationmark_circle : CupertinoIcons.check_mark_circled,
+                  color: CupertinoColors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: const TextStyle(
+                      color: CupertinoColors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.none,
+                    ),
                   ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: isError ? const Color(0xFFEF4444) : const Color(0xFF10B981),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 12,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isError ? Icons.error_outline : Icons.check_circle_outline,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        message,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      onTap: () {
-                        if (entry.mounted) {
-                          entry.remove();
-                        }
-                      },
-                      child: const Icon(Icons.close, color: Colors.white, size: 18),
-                    ),
-                  ],
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () {
+                    if (entry.mounted) {
+                      entry.remove();
+                    }
+                  },
+                  child: const Icon(CupertinoIcons.xmark, color: CupertinoColors.white, size: 18),
                 ),
-              ),
+              ],
             ),
           ),
         ),

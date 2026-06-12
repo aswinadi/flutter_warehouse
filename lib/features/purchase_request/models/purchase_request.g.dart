@@ -120,7 +120,7 @@ _$PurchaseRequestItemImpl _$$PurchaseRequestItemImplFromJson(
       prCode: json['pr_code'] as String?,
       companyName: json['company_name'] as String?,
       prId: (json['pr_id'] as num?)?.toInt(),
-      approvedQty: doubleFromJson(json['approved_qty']),
+      approvedQty: doubleOrNullFromJson(json['approved_qty']),
       selectedComparisonId: (json['selected_comparison_id'] as num?)?.toInt(),
       warehouseCode: json['warehouse_code'] as String?,
       warehouseName: json['warehouse_name'] as String?,

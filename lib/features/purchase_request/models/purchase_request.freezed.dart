@@ -1039,7 +1039,7 @@ mixin _$PurchaseRequestItem {
   String? get companyName => throw _privateConstructorUsedError;
   @JsonKey(name: 'pr_id')
   int? get prId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'approved_qty', fromJson: doubleFromJson)
+  @JsonKey(name: 'approved_qty', fromJson: doubleOrNullFromJson)
   double? get approvedQty => throw _privateConstructorUsedError;
   @JsonKey(name: 'selected_comparison_id')
   int? get selectedComparisonId => throw _privateConstructorUsedError;
@@ -1079,7 +1079,7 @@ abstract class $PurchaseRequestItemCopyWith<$Res> {
       @JsonKey(name: 'pr_code') String? prCode,
       @JsonKey(name: 'company_name') String? companyName,
       @JsonKey(name: 'pr_id') int? prId,
-      @JsonKey(name: 'approved_qty', fromJson: doubleFromJson)
+      @JsonKey(name: 'approved_qty', fromJson: doubleOrNullFromJson)
       double? approvedQty,
       @JsonKey(name: 'selected_comparison_id') int? selectedComparisonId,
       @JsonKey(name: 'warehouse_code') String? warehouseCode,
@@ -1226,7 +1226,7 @@ abstract class _$$PurchaseRequestItemImplCopyWith<$Res>
       @JsonKey(name: 'pr_code') String? prCode,
       @JsonKey(name: 'company_name') String? companyName,
       @JsonKey(name: 'pr_id') int? prId,
-      @JsonKey(name: 'approved_qty', fromJson: doubleFromJson)
+      @JsonKey(name: 'approved_qty', fromJson: doubleOrNullFromJson)
       double? approvedQty,
       @JsonKey(name: 'selected_comparison_id') int? selectedComparisonId,
       @JsonKey(name: 'warehouse_code') String? warehouseCode,
@@ -1366,7 +1366,8 @@ class _$PurchaseRequestItemImpl implements _PurchaseRequestItem {
       @JsonKey(name: 'pr_code') this.prCode,
       @JsonKey(name: 'company_name') this.companyName,
       @JsonKey(name: 'pr_id') this.prId,
-      @JsonKey(name: 'approved_qty', fromJson: doubleFromJson) this.approvedQty,
+      @JsonKey(name: 'approved_qty', fromJson: doubleOrNullFromJson)
+      this.approvedQty,
       @JsonKey(name: 'selected_comparison_id') this.selectedComparisonId,
       @JsonKey(name: 'warehouse_code') this.warehouseCode,
       @JsonKey(name: 'warehouse_name') this.warehouseName,
@@ -1416,7 +1417,7 @@ class _$PurchaseRequestItemImpl implements _PurchaseRequestItem {
   @JsonKey(name: 'pr_id')
   final int? prId;
   @override
-  @JsonKey(name: 'approved_qty', fromJson: doubleFromJson)
+  @JsonKey(name: 'approved_qty', fromJson: doubleOrNullFromJson)
   final double? approvedQty;
   @override
   @JsonKey(name: 'selected_comparison_id')
@@ -1532,7 +1533,7 @@ abstract class _PurchaseRequestItem implements PurchaseRequestItem {
       @JsonKey(name: 'pr_code') final String? prCode,
       @JsonKey(name: 'company_name') final String? companyName,
       @JsonKey(name: 'pr_id') final int? prId,
-      @JsonKey(name: 'approved_qty', fromJson: doubleFromJson)
+      @JsonKey(name: 'approved_qty', fromJson: doubleOrNullFromJson)
       final double? approvedQty,
       @JsonKey(name: 'selected_comparison_id') final int? selectedComparisonId,
       @JsonKey(name: 'warehouse_code') final String? warehouseCode,
@@ -1584,7 +1585,7 @@ abstract class _PurchaseRequestItem implements PurchaseRequestItem {
   @JsonKey(name: 'pr_id')
   int? get prId;
   @override
-  @JsonKey(name: 'approved_qty', fromJson: doubleFromJson)
+  @JsonKey(name: 'approved_qty', fromJson: doubleOrNullFromJson)
   double? get approvedQty;
   @override
   @JsonKey(name: 'selected_comparison_id')

@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
@@ -17,8 +17,7 @@ import '../../../core/models/warehouse.dart';
 import '../../../core/providers/company_provider.dart';
 import '../../../core/config/app_config.dart';
 
-// Enables drag scrolling for web
-class _WebScrollBehavior extends MaterialScrollBehavior {
+class _WebScrollBehavior extends CupertinoScrollBehavior {
   @override
   Set<PointerDeviceKind> get dragDevices => {
         PointerDeviceKind.touch,
@@ -75,15 +74,15 @@ class _PackingListScreenState extends ConsumerState<PackingListScreen> {
     bool dialogOpen = true;
     BuildContext? dialogContext;
 
-    showDialog(
+    showCupertinoDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) {
         dialogContext = ctx;
-        return const AlertDialog(
+        return const CupertinoAlertDialog(
           content: Row(
             children: [
-              CircularProgressIndicator(),
+              CupertinoActivityIndicator(),
               SizedBox(width: 16),
               Text('Membuat PDF...'),
             ],
@@ -161,10 +160,16 @@ class _PackingListScreenState extends ConsumerState<PackingListScreen> {
   }
 
   void _showCreateContainerDialog(BuildContext context, bool isWide) async {
-    final newId = await showDialog<int>(
+    final newId = await showCupertinoModalPopup<int>(
       context: context,
-      barrierDismissible: false,
-      builder: (_) => const _CreateContainerDialog(),
+      builder: (_) => Container(
+        height: MediaQuery.of(context).size.height * 0.85,
+        decoration: BoxDecoration(
+          color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: const _CreateContainerDialog(),
+      ),
     );
 
     if (newId != null && mounted) {
@@ -182,54 +187,29 @@ class _PackingListScreenState extends ConsumerState<PackingListScreen> {
       search: _searchQuery,
     ));
     final isWide = MediaQuery.of(context).size.width > 900;
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final bgColor = CupertinoColors.systemGroupedBackground.resolveFrom(context);
+    final navBarBg = CupertinoColors.systemBackground.resolveFrom(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Daftar Packing / Kontainer'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showCreateContainerDialog(context, isWide),
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              setState(() {
-                _selectedId = null;
-              });
-              ref.invalidate(packingListsProvider);
-            },
-          ),
-        ],
-      ),
-      body: Column(
+    Widget buildBody() {
+      return Column(
         children: [
           const CompanySwitcher(),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: TextField(
+            child: CupertinoSearchTextField(
               controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Cari kontainer atau nomor plat...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {
-                            _searchQuery = '';
-                            _selectedId = null;
-                          });
-                        },
-                      )
-                    : null,
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              ),
+              placeholder: 'Cari kontainer atau nomor plat...',
               onChanged: (val) {
                 setState(() {
                   _searchQuery = val.trim();
+                  _selectedId = null;
+                });
+              },
+              onSuffixTap: () {
+                _searchController.clear();
+                setState(() {
+                  _searchQuery = '';
                   _selectedId = null;
                 });
               },
@@ -279,13 +259,18 @@ class _PackingListScreenState extends ConsumerState<PackingListScreen> {
                 final mainList = ListView.separated(
                   controller: _scrollController,
                   padding: const EdgeInsets.all(16),
-                  itemCount: containers.length + (ref.watch(packingListsProvider(status: _selectedStatus, search: _searchQuery).notifier).hasMore ? 1 : 0),
+                  itemCount: containers.length +
+                      (ref
+                              .watch(packingListsProvider(status: _selectedStatus, search: _searchQuery).notifier)
+                              .hasMore
+                          ? 1
+                          : 0),
                   separatorBuilder: (ctx, i) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     if (index == containers.length) {
                       return const Padding(
                         padding: EdgeInsets.symmetric(vertical: 16),
-                        child: Center(child: CircularProgressIndicator()),
+                        child: Center(child: CupertinoActivityIndicator()),
                       );
                     }
                     final container = containers[index];
@@ -300,12 +285,17 @@ class _PackingListScreenState extends ConsumerState<PackingListScreen> {
                         } else {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(
-                              builder: (_) => Scaffold(
-                                appBar: AppBar(title: Text('Kontainer ${container.containerNumber}')),
-                                body: _ContainerDetailView(
-                                  containerId: container.id,
-                                  onDownloadPdf: (id, number) => _downloadAndPrintPdf(id, number),
+                            CupertinoPageRoute(
+                              builder: (_) => CupertinoPageScaffold(
+                                navigationBar: CupertinoNavigationBar(
+                                  middle: Text('Kontainer ${container.containerNumber}'),
+                                  backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
+                                ),
+                                child: SafeArea(
+                                  child: _ContainerDetailView(
+                                    containerId: container.id,
+                                    onDownloadPdf: (id, number) => _downloadAndPrintPdf(id, number),
+                                  ),
                                 ),
                               ),
                             ),
@@ -321,7 +311,10 @@ class _PackingListScreenState extends ConsumerState<PackingListScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(width: 360, child: mainList),
-                      const VerticalDivider(width: 1, thickness: 1, color: Color(0xFFE2E8F0)),
+                      Container(
+                        width: 0.5,
+                        color: CupertinoColors.separator.resolveFrom(context),
+                      ),
                       Expanded(
                         child: _selectedId != null
                             ? _ContainerDetailView(
@@ -336,26 +329,75 @@ class _PackingListScreenState extends ConsumerState<PackingListScreen> {
                   return mainList;
                 }
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(child: CupertinoActivityIndicator()),
               error: (err, _) => Center(child: Text('Error: $err')),
             ),
           ),
         ],
+      );
+    }
+
+    return CupertinoPageScaffold(
+      backgroundColor: bgColor,
+      navigationBar: CupertinoNavigationBar(
+        backgroundColor: navBarBg,
+        middle: Text(
+          'Daftar Packing / Kontainer',
+          style: TextStyle(color: labelColor),
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: const Icon(CupertinoIcons.add),
+              onPressed: () => _showCreateContainerDialog(context, isWide),
+            ),
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: const Icon(CupertinoIcons.refresh),
+              onPressed: () {
+                setState(() {
+                  _selectedId = null;
+                });
+                ref.invalidate(packingListsProvider);
+              },
+            ),
+          ],
+        ),
       ),
+      child: SafeArea(child: buildBody()),
     );
   }
 
   Widget _buildFilterChip(String label, String? value) {
     final isSelected = _selectedStatus == value;
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (selected) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+
+    return GestureDetector(
+      onTap: () {
         setState(() {
-          _selectedStatus = selected ? value : null;
+          _selectedStatus = value;
           _selectedId = null;
         });
       },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? CupertinoColors.activeBlue
+              : CupertinoColors.tertiarySystemFill.resolveFrom(context),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? CupertinoColors.white : labelColor,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -373,33 +415,37 @@ class _ContainerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+
     Color statusColor;
     switch (container.status.toLowerCase()) {
       case 'draft':
       case 'planned':
       case 'loading':
-        statusColor = const Color(0xFF64748B);
+        statusColor = CupertinoColors.inactiveGray;
         break;
       case 'shipped':
-        statusColor = const Color(0xFFF59E0B);
+        statusColor = CupertinoColors.systemOrange;
         break;
       case 'arrived':
-        statusColor = const Color(0xFF10B981);
+        statusColor = CupertinoColors.activeGreen;
         break;
       case 'closed':
-        statusColor = const Color(0xFF8B5CF6);
+        statusColor = CupertinoColors.systemPurple;
         break;
       default:
-        statusColor = Colors.grey;
+        statusColor = CupertinoColors.inactiveGray;
     }
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFFE2E8F0),
-          width: isSelected ? 2.0 : 1.0,
+          color: isSelected ? CupertinoColors.activeBlue.resolveFrom(context) : separatorColor,
+          width: isSelected ? 2.0 : 0.5,
         ),
         boxShadow: const [
           BoxShadow(
@@ -409,97 +455,91 @@ class _ContainerCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      container.containerNumber,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A)),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    container.containerNumber,
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: labelColor),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: statusColor, width: 0.5),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: statusColor, width: 0.8),
-                      ),
-                      child: Text(
-                        container.status.toUpperCase(),
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: statusColor),
-                      ),
+                    child: Text(
+                      container.status.toUpperCase(),
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: statusColor),
                     ),
-                  ],
-                ),
-                Builder(
-                  builder: (context) {
-                    final carrier = (container.carrierName != null && container.carrierName!.trim().isNotEmpty)
-                        ? container.carrierName!.trim()
-                        : '-';
-                    final plate = (container.plateNumber != null && container.plateNumber!.trim().isNotEmpty)
-                        ? container.plateNumber!.trim()
-                        : '-';
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        'Carrier: $carrier • Plat: $plate',
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                      ),
-                    );
-                  }
-                ),
-                const SizedBox(height: 8),
-                const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.warehouse_outlined, size: 14, color: Color(0xFF4F46E5)),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        '${container.sourceWarehouseName ?? "N/A"} ➔ ${container.destinationWarehouseName ?? "N/A"}',
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF475569), fontWeight: FontWeight.w500),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                  ),
+                ],
+              ),
+              Builder(builder: (context) {
+                final carrier = (container.carrierName != null && container.carrierName!.trim().isNotEmpty)
+                    ? container.carrierName!.trim()
+                    : '-';
+                final plate = (container.plateNumber != null && container.plateNumber!.trim().isNotEmpty)
+                    ? container.plateNumber!.trim()
+                    : '-';
+                return Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    'Carrier: $carrier • Plat: $plate',
+                    style: TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                  ),
+                );
+              }),
+              const SizedBox(height: 8),
+              Container(height: 0.5, color: separatorColor),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(CupertinoIcons.house, size: 14, color: CupertinoColors.activeBlue),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      '${container.sourceWarehouseName ?? "N/A"} ➔ ${container.destinationWarehouseName ?? "N/A"}',
+                      style: TextStyle(fontSize: 12, color: labelColor, fontWeight: FontWeight.w500),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'ETD: ${container.estimatedDeparture != null ? "${container.estimatedDeparture!.day.toString().padLeft(2, '0')}/${container.estimatedDeparture!.month.toString().padLeft(2, '0')}/${container.estimatedDeparture!.year}" : "-"}',
-                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-                    ),
-                    Text(
-                      'Close: ${container.closingDate != null ? "${container.closingDate!.day.toString().padLeft(2, '0')}/${container.closingDate!.month.toString().padLeft(2, '0')}/${container.closingDate!.year}" : "-"}',
-                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '${container.itemCount} item',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'ETD: ${container.estimatedDeparture != null ? "${container.estimatedDeparture!.day.toString().padLeft(2, '0')}/${container.estimatedDeparture!.month.toString().padLeft(2, '0')}/${container.estimatedDeparture!.year}" : "-"}',
+                    style: TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                  ),
+                  Text(
+                    'Close: ${container.closingDate != null ? "${container.closingDate!.day.toString().padLeft(2, '0')}/${container.closingDate!.month.toString().padLeft(2, '0')}/${container.closingDate!.year}" : "-"}',
+                    style: TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '${container.itemCount} item',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: CupertinoColors.activeBlue),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
@@ -517,26 +557,22 @@ class _ContainerDetailView extends ConsumerWidget {
   });
 
   Future<void> _updateContainerStatus(BuildContext context, WidgetRef ref, int id, String status) async {
-    final result = await showDialog<bool>(
+    final result = await showCupertinoDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => CupertinoAlertDialog(
         title: Text(status == 'shipped' ? 'Kirim Kontainer' : 'Tutup Kontainer'),
         content: Text(status == 'shipped'
             ? 'Apakah Anda yakin ingin menandai kontainer ini sebagai dikirim?'
             : 'Apakah Anda yakin ingin menutup daftar packing ini?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: status == 'shipped' 
-                ? const Color(0xFF4F46E5) 
-                : status == 'arrived' 
-                  ? const Color(0xFF10B981)
-                  : const Color(0xFF0F172A),
-              foregroundColor: Colors.white,
-            ),
+          CupertinoDialogAction(
+            child: const Text('Batal'),
+            onPressed: () => Navigator.pop(ctx, false),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: status == 'cancelled',
             child: const Text('Konfirmasi'),
+            onPressed: () => Navigator.pop(ctx, true),
           ),
         ],
       ),
@@ -547,7 +583,7 @@ class _ContainerDetailView extends ConsumerWidget {
     try {
       final repo = ref.read(packingListRepositoryProvider);
       await repo.updateStatus(id, status);
-      
+
       ref.invalidate(packingListDetailProvider(id));
       ref.invalidate(packingListsProvider);
 
@@ -564,6 +600,9 @@ class _ContainerDetailView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final detailAsync = ref.watch(packingListDetailProvider(containerId));
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return detailAsync.when(
       data: (container) {
@@ -579,9 +618,9 @@ class _ContainerDetailView extends ConsumerWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: cardBg,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: separatorColor, width: 0.5),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -591,16 +630,24 @@ class _ContainerDetailView extends ConsumerWidget {
                           children: [
                             Text(
                               'Kontainer: ${container.containerNumber}',
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
                             ),
-                            OutlinedButton.icon(
-                              onPressed: () => onDownloadPdf(container.id, container.containerNumber),
-                              icon: const Icon(Icons.print_outlined, size: 16),
-                              label: const Text('Unduh PDF'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF4F46E5),
-                                side: const BorderSide(color: Color(0xFF4F46E5)),
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(color: CupertinoColors.activeBlue.resolveFrom(context), width: 0.5),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: CupertinoButton(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                minSize: 0,
+                                onPressed: () => onDownloadPdf(container.id, container.containerNumber),
+                                child: const Row(
+                                  children: [
+                                    Icon(CupertinoIcons.printer, size: 14),
+                                    SizedBox(width: 4),
+                                    Text('Unduh PDF', style: TextStyle(fontSize: 12)),
+                                  ],
+                                ),
                               ),
                             ),
                           ],
@@ -609,15 +656,18 @@ class _ContainerDetailView extends ConsumerWidget {
                           padding: const EdgeInsets.only(top: 6),
                           child: Text(
                             'Carrier: ${container.carrierName ?? "-"} • Plat Nomor: ${container.plateNumber ?? "-"}',
-                            style: const TextStyle(fontSize: 13, color: Color(0xFF475569)),
+                            style: TextStyle(fontSize: 13, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                           ),
                         ),
-                        const Divider(height: 24, color: Color(0xFFE2E8F0)),
-                        _buildDetailRow('Gudang Sumber', container.sourceWarehouseName ?? 'N/A'),
+                        const SizedBox(height: 12),
+                        Container(height: 0.5, color: separatorColor),
+                        const SizedBox(height: 12),
+                        _buildDetailRow(context, 'Gudang Sumber', container.sourceWarehouseName ?? 'N/A'),
                         const SizedBox(height: 6),
-                        _buildDetailRow('Gudang Tujuan', container.destinationWarehouseName ?? 'N/A'),
+                        _buildDetailRow(context, 'Gudang Tujuan', container.destinationWarehouseName ?? 'N/A'),
                         const SizedBox(height: 6),
                         _buildDetailRow(
+                          context,
                           'Estimasi Keberangkatan',
                           container.estimatedDeparture != null
                               ? "${container.estimatedDeparture!.day.toString().padLeft(2, '0')}/${container.estimatedDeparture!.month.toString().padLeft(2, '0')}/${container.estimatedDeparture!.year} ${container.estimatedDeparture!.hour.toString().padLeft(2, '0')}:${container.estimatedDeparture!.minute.toString().padLeft(2, '0')}"
@@ -625,6 +675,7 @@ class _ContainerDetailView extends ConsumerWidget {
                         ),
                         const SizedBox(height: 6),
                         _buildDetailRow(
+                          context,
                           'Tanggal Penutupan',
                           container.closingDate != null
                               ? "${container.closingDate!.day.toString().padLeft(2, '0')}/${container.closingDate!.month.toString().padLeft(2, '0')}/${container.closingDate!.year} ${container.closingDate!.hour.toString().padLeft(2, '0')}:${container.closingDate!.minute.toString().padLeft(2, '0')}"
@@ -636,34 +687,42 @@ class _ContainerDetailView extends ConsumerWidget {
                   const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE2E8F0))),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: separatorColor, width: 0.5),
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (isEditable) ...[
-                          const Text('Detail Segel & Tindakan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF475569))),
+                          Text(
+                            'Detail Segel & Tindakan',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                          ),
                           const SizedBox(height: 8),
-                          if (container.status.toLowerCase() == 'loading' || 
-                              container.status.toLowerCase() == 'planned' || 
+                          if (container.status.toLowerCase() == 'loading' ||
+                              container.status.toLowerCase() == 'planned' ||
                               container.status.toLowerCase() == 'closed') ...[
                             Row(
                               children: [
-                                if (container.status.toLowerCase() == 'loading' || container.status.toLowerCase() == 'planned')
+                                if (container.status.toLowerCase() == 'loading' ||
+                                    container.status.toLowerCase() == 'planned')
                                   Expanded(
-                                    child: ElevatedButton.icon(
-                                      onPressed: () => _updateContainerStatus(context, ref, container.id, 'closed'),
-                                      icon: const Icon(Icons.lock_outline, size: 16),
-                                      label: const Text('Tutup Daftar Packing'),
-                                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0F172A), foregroundColor: Colors.white),
+                                    child: CupertinoButton.filled(
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      onPressed: () =>
+                                          _updateContainerStatus(context, ref, container.id, 'closed'),
+                                      child: const Text('Tutup Daftar Packing', style: TextStyle(fontSize: 14)),
                                     ),
                                   ),
                                 if (container.status.toLowerCase() == 'closed')
                                   Expanded(
-                                    child: ElevatedButton.icon(
-                                      onPressed: () => _updateContainerStatus(context, ref, container.id, 'shipped'),
-                                      icon: const Icon(Icons.local_shipping_outlined, size: 16),
-                                      label: const Text('Kirim / Keberangkatan'),
-                                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4F46E5), foregroundColor: Colors.white),
+                                    child: CupertinoButton.filled(
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      onPressed: () =>
+                                          _updateContainerStatus(context, ref, container.id, 'shipped'),
+                                      child: const Text('Kirim / Keberangkatan', style: TextStyle(fontSize: 14)),
                                     ),
                                   ),
                               ],
@@ -671,15 +730,19 @@ class _ContainerDetailView extends ConsumerWidget {
                             const SizedBox(height: 16),
                           ],
                         ],
-                        const Text('Barang Manifest', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF475569))),
+                        Text(
+                          'Barang Manifest',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                        ),
                         const SizedBox(height: 8),
                         if (isEditable)
                           SizedBox(
                             width: double.infinity,
-                            child: OutlinedButton.icon(
+                            child: CupertinoButton(
+                              color: CupertinoColors.activeBlue,
+                              padding: const EdgeInsets.symmetric(vertical: 10),
                               onPressed: () => _showEditManifestDialog(context, ref, container),
-                              icon: const Icon(Icons.edit_note, size: 18),
-                              label: const Text('Edit Manifest'),
+                              child: const Text('Edit Manifest', style: TextStyle(fontSize: 14, color: CupertinoColors.white)),
                             ),
                           ),
                       ],
@@ -691,14 +754,14 @@ class _ContainerDetailView extends ConsumerWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: separatorColor, width: 0.5),
                       ),
                       child: const Center(
                         child: Text(
                           'Belum ada barang di manifest daftar packing ini.',
-                          style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                          style: TextStyle(color: CupertinoColors.inactiveGray, fontSize: 13),
                         ),
                       ),
                     )
@@ -710,12 +773,12 @@ class _ContainerDetailView extends ConsumerWidget {
           ],
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: CupertinoActivityIndicator()),
       error: (err, _) => Center(child: Text('Gagal memuat detail: $err')),
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _buildDetailRow(BuildContext context, String label, String value) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -723,13 +786,13 @@ class _ContainerDetailView extends ConsumerWidget {
           width: 150,
           child: Text(
             label,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+            style: TextStyle(fontSize: 13, color: CupertinoColors.secondaryLabel.resolveFrom(context), fontWeight: FontWeight.w500),
           ),
         ),
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A), fontWeight: FontWeight.w600),
+            style: TextStyle(fontSize: 13, color: CupertinoColors.label.resolveFrom(context), fontWeight: FontWeight.w600),
           ),
         ),
       ],
@@ -737,11 +800,16 @@ class _ContainerDetailView extends ConsumerWidget {
   }
 
   void _showEditManifestDialog(BuildContext context, WidgetRef ref, PackingList container) {
-    showModalBottomSheet(
+    showCupertinoModalPopup(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _EditManifestSheet(container: container),
+      builder: (_) => Container(
+        height: MediaQuery.of(context).size.height * 0.85,
+        decoration: BoxDecoration(
+          color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: _EditManifestSheet(container: container),
+      ),
     );
   }
 }
@@ -754,14 +822,17 @@ class _ManifestItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPo = item.type == 'po';
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: separatorColor, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -772,12 +843,12 @@ class _ManifestItemCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   item.productName,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A)),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: labelColor),
                 ),
               ),
               Text(
                 '${item.plannedQty} ${item.unit}',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF4F46E5)),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: CupertinoColors.activeBlue),
               ),
             ],
           ),
@@ -787,13 +858,13 @@ class _ManifestItemCard extends StatelessWidget {
             children: [
               Text(
                 'SKU: ${item.sku}',
-                style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                style: TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
               ),
               Text(
                 isPo ? 'Ref: ${item.poNumber}' : 'Ref: Stok Internal',
                 style: TextStyle(
                   fontSize: 11,
-                  color: isPo ? const Color(0xFF059669) : const Color(0xFF64748B),
+                  color: isPo ? CupertinoColors.activeGreen : CupertinoColors.secondaryLabel.resolveFrom(context),
                   fontWeight: isPo ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
@@ -817,12 +888,11 @@ class _EditManifestSheet extends ConsumerStatefulWidget {
 class _EditManifestSheetState extends ConsumerState<_EditManifestSheet> {
   late List<Map<String, dynamic>> _manifestItems;
   bool _isSaving = false;
+  int _activeSegment = 0; // 0: Saat Ini, 1: Item PO, 2: Stok Gudang
 
   @override
   void initState() {
     super.initState();
-
-    // Initialize state with current manifest items from container
     _manifestItems = widget.container.items.map((item) {
       return {
         'type': item.type,
@@ -850,7 +920,6 @@ class _EditManifestSheetState extends ConsumerState<_EditManifestSheet> {
   }
 
   void _addItem(Map<String, dynamic> item) {
-    // Check if item already exists in local list to avoid duplicates
     final exists = _manifestItems.any((x) =>
         x['type'] == item['type'] &&
         (item['type'] == 'po'
@@ -873,8 +942,6 @@ class _EditManifestSheetState extends ConsumerState<_EditManifestSheet> {
     setState(() => _isSaving = true);
     try {
       final repo = ref.read(packingListRepositoryProvider);
-
-      // Clean payload for API backend
       final payload = _manifestItems.map((item) {
         return {
           'type': item['type'],
@@ -902,12 +969,16 @@ class _EditManifestSheetState extends ConsumerState<_EditManifestSheet> {
   }
 
   Widget _buildManifestItemEditorRow(int index, Map<String, dynamic> item) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: separatorColor, width: 0.5),
       ),
       child: Row(
         children: [
@@ -917,12 +988,12 @@ class _EditManifestSheetState extends ConsumerState<_EditManifestSheet> {
               children: [
                 Text(
                   item['product_name'] ?? '',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A)),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: labelColor),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'SKU: ${item['sku'] ?? "-"} • Ref: ${item['po_number'] ?? "Internal"}',
-                  style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                  style: TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                 ),
               ],
             ),
@@ -930,26 +1001,28 @@ class _EditManifestSheetState extends ConsumerState<_EditManifestSheet> {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(
-                icon: const Icon(Icons.remove_circle_outline, size: 20, color: Color(0xFF64748B)),
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minSize: 32,
                 onPressed: () {
                   if (item['planned_qty'] > 1) {
                     _updateQuantity(index, item['planned_qty'] - 1);
                   }
                 },
+                child: const Icon(CupertinoIcons.minus_circle, size: 20, color: CupertinoColors.secondaryLabel),
               ),
               SizedBox(
                 width: 50,
-                child: TextFormField(
+                child: CupertinoTextField(
                   key: ValueKey('qty_${item['po_detail_id'] ?? item['inventory_id']}_${item['planned_qty']}'),
-                  initialValue: item['planned_qty'].toString(),
+                  controller: TextEditingController(text: item['planned_qty'].toString())
+                    ..selection = TextSelection.fromPosition(
+                      TextPosition(offset: item['planned_qty'].toString().length),
+                    ),
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                  decoration: const InputDecoration(
-                    contentPadding: EdgeInsets.zero,
-                    isDense: true,
-                  ),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: labelColor),
+                  decoration: null,
                   onChanged: (val) {
                     final parsed = double.tryParse(val);
                     if (parsed != null && parsed > 0) {
@@ -958,20 +1031,24 @@ class _EditManifestSheetState extends ConsumerState<_EditManifestSheet> {
                   },
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.add_circle_outline, size: 20, color: Color(0xFF64748B)),
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minSize: 32,
                 onPressed: () {
                   _updateQuantity(index, item['planned_qty'] + 1);
                 },
+                child: const Icon(CupertinoIcons.plus_circle, size: 20, color: CupertinoColors.secondaryLabel),
               ),
               Text(
                 item['unit'] ?? '',
-                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                style: TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
               ),
               const SizedBox(width: 8),
-              IconButton(
-                icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minSize: 32,
                 onPressed: () => _removeItem(index),
+                child: const Icon(CupertinoIcons.trash, color: CupertinoColors.destructiveRed, size: 20),
               ),
             ],
           ),
@@ -982,154 +1059,94 @@ class _EditManifestSheetState extends ConsumerState<_EditManifestSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.of(context).size.width > 750;
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.9,
-      minChildSize: 0.6,
-      maxChildSize: 0.95,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            children: [
-              const SizedBox(height: 12),
-              Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFFCBD5E1), borderRadius: BorderRadius.circular(2))),
-              const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Edit Manifest', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-                  ],
-                ),
-              ),
-              const Divider(),
-              Expanded(
-                child: isWide
-                    ? DefaultTabController(
-                        length: 2,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Left Panel: Current manifest items to edit
-                            Expanded(
-                              flex: 4,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Padding(
-                                    padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
-                                    child: Text('Barang Saat Ini di Daftar Packing', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF475569))),
-                                  ),
-                                  Expanded(
-                                    child: _manifestItems.isEmpty
-                                        ? const Center(child: Text('Belum ada barang di manifest. Tambahkan dari panel kanan!'))
-                                        : ListView.separated(
-                                            controller: scrollController,
-                                            padding: const EdgeInsets.all(16),
-                                            itemCount: _manifestItems.length,
-                                            separatorBuilder: (ctx, i) => const SizedBox(height: 10),
-                                            itemBuilder: (context, index) {
-                                              return _buildManifestItemEditorRow(index, _manifestItems[index]);
-                                            },
-                                          ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const VerticalDivider(width: 1),
-                            // Right Panel: Available items to select and add
-                            Expanded(
-                              flex: 3,
-                              child: Column(
-                                children: [
-                                  const TabBar(
-                                    tabs: [
-                                      Tab(text: 'Item PO'),
-                                      Tab(text: 'Stok Gudang'),
-                                    ],
-                                  ),
-                                  Expanded(
-                                    child: TabBarView(
-                                      children: [
-                                        _AvailablePoItemsView(containerId: widget.container.id, onAdd: _addItem),
-                                        _AvailableInventoryView(containerId: widget.container.id, onAdd: _addItem),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : DefaultTabController(
-                        length: 3,
-                        child: Column(
-                          children: [
-                            TabBar(
-                              tabs: [
-                                Tab(text: 'Saat Ini (${_manifestItems.length})'),
-                                const Tab(text: 'Item PO'),
-                                const Tab(text: 'Stok Gudang'),
-                              ],
-                            ),
-                            Expanded(
-                              child: TabBarView(
-                                children: [
-                                  // Tab 0: Current manifest items
-                                  _manifestItems.isEmpty
-                                      ? const Center(child: Text('Belum ada barang di manifest. Tambahkan dari tab lain!'))
-                                      : ListView.separated(
-                                          controller: scrollController,
-                                          padding: const EdgeInsets.all(16),
-                                          itemCount: _manifestItems.length,
-                                          separatorBuilder: (ctx, i) => const SizedBox(height: 10),
-                                          itemBuilder: (context, index) {
-                                            return _buildManifestItemEditorRow(index, _manifestItems[index]);
-                                          },
-                                        ),
-                                  // Tab 1: PO items
-                                  _AvailablePoItemsView(containerId: widget.container.id, onAdd: _addItem),
-                                  // Tab 2: Warehouse Stock
-                                  _AvailableInventoryView(containerId: widget.container.id, onAdd: _addItem),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-              ),
-              const Divider(height: 1),
-              Container(
-                padding: const EdgeInsets.all(16),
-                color: Colors.white,
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isSaving ? null : _saveChanges,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF10B981),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: _isSaving
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('Simpan Perubahan', style: TextStyle(fontWeight: FontWeight.bold)),
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+      navigationBar: CupertinoNavigationBar(
+        middle: const Text('Edit Manifest'),
+        trailing: CupertinoButton(
+          padding: EdgeInsets.zero,
+          child: const Text('Batal'),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      child: SafeArea(
+        child: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              color: CupertinoColors.systemBackground.resolveFrom(context),
+              child: CupertinoSlidingSegmentedControl<int>(
+                groupValue: _activeSegment,
+                children: {
+                  0: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    child: Text('Saat Ini (${_manifestItems.length})', style: const TextStyle(fontSize: 12)),
                   ),
+                  1: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    child: Text('Item PO', style: TextStyle(fontSize: 12)),
+                  ),
+                  2: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    child: Text('Stok Gudang', style: TextStyle(fontSize: 12)),
+                  ),
+                },
+                onValueChanged: (val) {
+                  if (val != null) {
+                    setState(() {
+                      _activeSegment = val;
+                    });
+                  }
+                },
+              ),
+            ),
+            Expanded(
+              child: IndexedStack(
+                index: _activeSegment,
+                children: [
+                  // Tab 0: Current manifest items
+                  _manifestItems.isEmpty
+                      ? const Center(child: Text('Belum ada barang di manifest.'))
+                      : ListView.separated(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: _manifestItems.length,
+                          separatorBuilder: (ctx, i) => const SizedBox(height: 10),
+                          itemBuilder: (context, index) {
+                            return _buildManifestItemEditorRow(index, _manifestItems[index]);
+                          },
+                        ),
+                  // Tab 1: PO items
+                  _AvailablePoItemsView(containerId: widget.container.id, onAdd: _addItem),
+                  // Tab 2: Warehouse stock
+                  _AvailableInventoryView(containerId: widget.container.id, onAdd: _addItem),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cardBg,
+                border: Border(top: BorderSide(color: separatorColor, width: 0.5)),
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                child: CupertinoButton.filled(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  onPressed: _isSaving ? null : _saveChanges,
+                  child: _isSaving
+                      ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                      : const Text('Simpan Perubahan', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
-            ],
-          ),
-        );
-      },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -1143,11 +1160,14 @@ class _AvailablePoItemsView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncItems = ref.watch(availablePoItemsProvider(containerId));
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return asyncItems.when(
       data: (items) {
         if (items.isEmpty) {
-          return const Center(child: Text('Tidak ada item PO yang tersedia', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))));
+          return const Center(child: Text('Tidak ada item PO yang tersedia', style: TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel)));
         }
         return ListView.separated(
           padding: const EdgeInsets.all(12),
@@ -1156,24 +1176,28 @@ class _AvailablePoItemsView extends ConsumerWidget {
           itemBuilder: (context, index) {
             final item = items[index];
             return Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFF1F5F9)),
+                border: Border.all(color: separatorColor, width: 0.5),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(item['product_name'] ?? 'Item', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  Text(item['product_name'] ?? 'Item', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: labelColor)),
                   const SizedBox(height: 2),
-                  Text('SKU: ${item['sku']} • Ref: ${item['po_number']}', style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
-                  const SizedBox(height: 4),
+                  Text('SKU: ${item['sku']} • Ref: ${item['po_number']}', style: TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel.resolveFrom(context))),
+                  const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Sisa: ${item['remaining_qty']} ${item['unit']}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF475569))),
-                      ElevatedButton(
+                      Text('Sisa: ${item['remaining_qty']} ${item['unit']}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: labelColor)),
+                      CupertinoButton(
+                        color: CupertinoColors.activeBlue,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                        minSize: 0,
+                        borderRadius: BorderRadius.circular(6),
                         onPressed: () {
                           onAdd({
                             'type': 'po',
@@ -1182,19 +1206,11 @@ class _AvailablePoItemsView extends ConsumerWidget {
                             'po_number': item['po_number'],
                             'sku': item['sku'],
                             'product_name': item['product_name'],
-                            'planned_qty': 1.0, // Default start qty
+                            'planned_qty': 1.0,
                             'unit': item['unit'] ?? 'PCS',
                           });
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF4F46E5),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: const Text('Tambah'),
+                        child: const Text('Tambah', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: CupertinoColors.white)),
                       ),
                     ],
                   ),
@@ -1204,7 +1220,7 @@ class _AvailablePoItemsView extends ConsumerWidget {
           },
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: CupertinoActivityIndicator()),
       error: (err, _) => Center(child: Text('Error: $err', style: const TextStyle(fontSize: 12))),
     );
   }
@@ -1219,11 +1235,14 @@ class _AvailableInventoryView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncItems = ref.watch(availableInventoryItemsProvider(containerId));
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return asyncItems.when(
       data: (items) {
         if (items.isEmpty) {
-          return const Center(child: Text('Tidak ada stok gudang yang tersedia', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))));
+          return const Center(child: Text('Tidak ada stok gudang yang tersedia', style: TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel)));
         }
         return ListView.separated(
           padding: const EdgeInsets.all(12),
@@ -1232,24 +1251,28 @@ class _AvailableInventoryView extends ConsumerWidget {
           itemBuilder: (context, index) {
             final item = items[index];
             return Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFF1F5F9)),
+                border: Border.all(color: separatorColor, width: 0.5),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(item['product_name'] ?? 'Item', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  Text(item['product_name'] ?? 'Item', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: labelColor)),
                   const SizedBox(height: 2),
-                  Text('SKU: ${item['sku']}', style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
-                  const SizedBox(height: 4),
+                  Text('SKU: ${item['sku']}', style: TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel.resolveFrom(context))),
+                  const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Stok: ${item['balance_qty']} ${item['unit']}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF475569))),
-                      ElevatedButton(
+                      Text('Stok: ${item['balance_qty']} ${item['unit']}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: labelColor)),
+                      CupertinoButton(
+                        color: CupertinoColors.activeBlue,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                        minSize: 0,
+                        borderRadius: BorderRadius.circular(6),
                         onPressed: () {
                           onAdd({
                             'type': 'inventory',
@@ -1258,19 +1281,11 @@ class _AvailableInventoryView extends ConsumerWidget {
                             'po_number': 'STOK GUDANG',
                             'sku': item['sku'],
                             'product_name': item['product_name'],
-                            'planned_qty': 1.0, // Default start qty
+                            'planned_qty': 1.0,
                             'unit': item['unit'] ?? 'PCS',
                           });
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF4F46E5),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: const Text('Tambah'),
+                        child: const Text('Tambah', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: CupertinoColors.white)),
                       ),
                     ],
                   ),
@@ -1280,7 +1295,7 @@ class _AvailableInventoryView extends ConsumerWidget {
           },
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: CupertinoActivityIndicator()),
       error: (err, _) => Center(child: Text('Error: $err', style: const TextStyle(fontSize: 12))),
     );
   }
@@ -1294,11 +1309,10 @@ class _CreateContainerDialog extends ConsumerStatefulWidget {
 }
 
 class _CreateContainerDialogState extends ConsumerState<_CreateContainerDialog> {
-  final _formKey = GlobalKey<FormState>();
   final _containerNumberController = TextEditingController();
   final _carrierNameController = TextEditingController();
   final _plateNumberController = TextEditingController();
-  
+
   int? _selectedCompanyId;
   int? _sourceWarehouseId;
   int? _destinationWarehouseId;
@@ -1315,39 +1329,75 @@ class _CreateContainerDialogState extends ConsumerState<_CreateContainerDialog> 
   }
 
   Future<void> _selectDateTime(BuildContext context, bool isDeparture) async {
-    final pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
-    );
-    if (pickedDate == null) return;
+    DateTime tempDateTime = isDeparture
+        ? (_estimatedDeparture ?? DateTime.now())
+        : (_closingDate ?? DateTime.now());
 
-    if (!context.mounted) return;
-    final pickedTime = await showTimePicker(
+    await showCupertinoModalPopup<void>(
       context: context,
-      initialTime: TimeOfDay.now(),
+      builder: (ctx) => Container(
+        height: 250,
+        color: CupertinoColors.systemBackground.resolveFrom(context),
+        child: Column(
+          children: [
+            Container(
+              color: CupertinoColors.secondarySystemBackground.resolveFrom(context),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  CupertinoButton(
+                    child: const Text('Batal'),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                  CupertinoButton(
+                    child: const Text('Pilih'),
+                    onPressed: () {
+                      setState(() {
+                        if (isDeparture) {
+                          _estimatedDeparture = tempDateTime;
+                        } else {
+                          _closingDate = tempDateTime;
+                        }
+                      });
+                      Navigator.pop(ctx);
+                    },
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: CupertinoDatePicker(
+                initialDateTime: tempDateTime,
+                mode: CupertinoDatePickerMode.dateAndTime,
+                use24hFormat: true,
+                onDateTimeChanged: (dateTime) {
+                  tempDateTime = dateTime;
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
-    if (pickedTime == null) return;
-
-    setState(() {
-      final combined = DateTime(
-        pickedDate.year,
-        pickedDate.month,
-        pickedDate.day,
-        pickedTime.hour,
-        pickedTime.minute,
-      );
-      if (isDeparture) {
-        _estimatedDeparture = combined;
-      } else {
-        _closingDate = combined;
-      }
-    });
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (_containerNumberController.text.trim().isEmpty) {
+      _showTopNotification(context, 'Nomor kontainer wajib diisi', isError: true);
+      return;
+    }
+    if (_carrierNameController.text.trim().isEmpty) {
+      _showTopNotification(context, 'Nama pelayaran wajib diisi', isError: true);
+      return;
+    }
+    if (_plateNumberController.text.trim().isEmpty) {
+      _showTopNotification(context, 'Nomor plat wajib diisi', isError: true);
+      return;
+    }
+    if (_selectedCompanyId == null) {
+      _showTopNotification(context, 'Harap pilih perusahaan', isError: true);
+      return;
+    }
     if (_sourceWarehouseId == null || _destinationWarehouseId == null) {
       _showTopNotification(context, 'Harap pilih gudang sumber dan tujuan', isError: true);
       return;
@@ -1371,7 +1421,6 @@ class _CreateContainerDialogState extends ConsumerState<_CreateContainerDialog> 
         closingDate: _closingDate,
       );
 
-      // Invalidate list provider to trigger fresh fetch
       ref.invalidate(packingListsProvider);
 
       if (mounted) {
@@ -1393,160 +1442,336 @@ class _CreateContainerDialogState extends ConsumerState<_CreateContainerDialog> 
   Widget build(BuildContext context) {
     final companiesAsync = ref.watch(companiesProvider);
     final warehousesAsync = ref.watch(warehousesProvider);
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
-    return AlertDialog(
-      title: const Text('Buat Daftar Packing / Kontainer'),
-      content: SizedBox(
-        width: 500,
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: _containerNumberController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nomor Kontainer',
-                    hintText: 'mis. TAKU-002',
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+      navigationBar: CupertinoNavigationBar(
+        middle: const Text('Buat Daftar Packing / Kontainer'),
+        leading: CupertinoButton(
+          padding: EdgeInsets.zero,
+          child: const Text('Batal'),
+          onPressed: () => Navigator.pop(context),
+        ),
+        trailing: _isSaving
+            ? const CupertinoActivityIndicator()
+            : CupertinoButton(
+                padding: EdgeInsets.zero,
+                child: const Text('Buat'),
+                onPressed: _submit,
+              ),
+      ),
+      child: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(16.0),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: separatorColor, width: 0.5),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Nomor Kontainer *', style: TextStyle(fontSize: 12, color: labelColor)),
+                  const SizedBox(height: 6),
+                  CupertinoTextField(
+                    controller: _containerNumberController,
+                    placeholder: 'mis. TAKU-002',
                   ),
-                  validator: (val) => val == null || val.trim().isEmpty ? 'Wajib diisi' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _carrierNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Pelayaran (Carrier)',
-                    hintText: 'mis. TANTO, SPIL',
+                  const SizedBox(height: 12),
+                  Text('Pelayaran (Carrier) *', style: TextStyle(fontSize: 12, color: labelColor)),
+                  const SizedBox(height: 6),
+                  CupertinoTextField(
+                    controller: _carrierNameController,
+                    placeholder: 'mis. TANTO, SPIL',
                   ),
-                  validator: (val) => val == null || val.trim().isEmpty ? 'Wajib diisi' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _plateNumberController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nomor Plat',
-                    hintText: 'mis. L 1234 AB',
+                  const SizedBox(height: 12),
+                  Text('Nomor Plat *', style: TextStyle(fontSize: 12, color: labelColor)),
+                  const SizedBox(height: 6),
+                  CupertinoTextField(
+                    controller: _plateNumberController,
+                    placeholder: 'mis. L 1234 AB',
                   ),
-                  validator: (val) => val == null || val.trim().isEmpty ? 'Wajib diisi' : null,
-                ),
-                const SizedBox(height: 16),
-                companiesAsync.when(
-                  data: (companiesList) {
-                    return DropdownButtonFormField<int>(
-                      value: _selectedCompanyId,
-                      decoration: const InputDecoration(labelText: 'Perusahaan'),
-                      items: companiesList.map((c) {
-                        return DropdownMenuItem<int>(
-                          value: c.id,
-                          child: Text(c.companyName),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        setState(() {
-                          _selectedCompanyId = val;
-                          _sourceWarehouseId = null;
-                          _destinationWarehouseId = null;
-                        });
-                      },
-                      validator: (val) => val == null ? 'Wajib diisi' : null,
-                    );
-                  },
-                  loading: () => const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: CircularProgressIndicator(),
-                  ),
-                  error: (err, _) => Text('Gagal memuat perusahaan: $err', style: const TextStyle(color: Colors.red)),
-                ),
-                const SizedBox(height: 12),
-                warehousesAsync.when(
-                  data: (list) {
-                    final filteredList = _selectedCompanyId == null
-                        ? <Warehouse>[]
-                        : list.where((w) => w.companyId == _selectedCompanyId).toList();
-
-                    return Column(
-                      children: [
-                        DropdownButtonFormField<int>(
-                          initialValue: _sourceWarehouseId,
-                          key: ValueKey('source_$_selectedCompanyId'),
-                          decoration: InputDecoration(
-                            labelText: 'Gudang Sumber',
-                            hintText: _selectedCompanyId == null ? 'Pilih Perusahaan terlebih dahulu' : 'Pilih Gudang Sumber',
-                          ),
-                          items: filteredList.map((w) {
-                            return DropdownMenuItem<int>(
-                              value: w.id,
-                              child: Text(w.name),
-                            );
-                          }).toList(),
-                          onChanged: _selectedCompanyId == null ? null : (val) => setState(() => _sourceWarehouseId = val),
-                          validator: (val) => val == null ? 'Wajib diisi' : null,
-                        ),
-                        const SizedBox(height: 12),
-                        DropdownButtonFormField<int>(
-                          initialValue: _destinationWarehouseId,
-                          key: ValueKey('dest_$_selectedCompanyId'),
-                          decoration: InputDecoration(
-                            labelText: 'Gudang Tujuan',
-                            hintText: _selectedCompanyId == null ? 'Pilih Perusahaan terlebih dahulu' : 'Pilih Gudang Tujuan',
-                          ),
-                          items: filteredList.map((w) {
-                            return DropdownMenuItem<int>(
-                              value: w.id,
-                              child: Text(w.name),
-                            );
-                          }).toList(),
-                          onChanged: _selectedCompanyId == null ? null : (val) => setState(() => _destinationWarehouseId = val),
-                          validator: (val) => val == null ? 'Wajib diisi' : null,
-                        ),
-                      ],
-                    );
-                  },
-                  loading: () => const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: CircularProgressIndicator(),
-                  ),
-                  error: (err, _) => Text('Gagal memuat gudang: $err', style: const TextStyle(color: Colors.red)),
-                ),
-                const SizedBox(height: 16),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(_estimatedDeparture == null 
-                    ? 'Estimasi Keberangkatan: Belum Diatur' 
-                    : 'Estimasi Keberangkatan: ${_estimatedDeparture!.toLocal().toString().substring(0, 16)}'),
-                  trailing: const Icon(Icons.calendar_today),
-                  onTap: () => _selectDateTime(context, true),
-                ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(_closingDate == null 
-                    ? 'Tanggal Penutupan: Belum Diatur' 
-                    : 'Tanggal Penutupan: ${_closingDate!.toLocal().toString().substring(0, 16)}'),
-                  trailing: const Icon(Icons.calendar_today),
-                  onTap: () => _selectDateTime(context, false),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: separatorColor, width: 0.5),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Perusahaan *', style: TextStyle(fontSize: 12, color: labelColor)),
+                  const SizedBox(height: 6),
+                  companiesAsync.when(
+                    data: (companiesList) {
+                      return GestureDetector(
+                        onTap: () {
+                          showCupertinoModalPopup<int>(
+                            context: context,
+                            builder: (context) => CupertinoActionSheet(
+                              title: const Text('Pilih Perusahaan'),
+                              actions: companiesList.map((c) {
+                                return CupertinoActionSheetAction(
+                                  onPressed: () => Navigator.pop(context, c.id),
+                                  child: Text(c.companyName),
+                                );
+                              }).toList(),
+                              cancelButton: CupertinoActionSheetAction(
+                                isDefaultAction: true,
+                                  onPressed: () => Navigator.pop(context),
+                                child: const Text('Batal'),
+                              ),
+                            ),
+                          ).then((val) {
+                            if (val != null) {
+                              setState(() {
+                                _selectedCompanyId = val;
+                                _sourceWarehouseId = null;
+                                _destinationWarehouseId = null;
+                              });
+                            }
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: separatorColor, width: 0.5),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                _selectedCompanyId != null
+                                    ? companiesList.firstWhere((c) => c.id == _selectedCompanyId).companyName
+                                    : 'Pilih Perusahaan',
+                                style: TextStyle(
+                                  color: _selectedCompanyId != null ? labelColor : CupertinoColors.placeholderText.resolveFrom(context),
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const Icon(CupertinoIcons.chevron_down, size: 14, color: CupertinoColors.inactiveGray),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                    loading: () => const Center(child: CupertinoActivityIndicator()),
+                    error: (err, _) => Text('Error: $err', style: const TextStyle(color: CupertinoColors.destructiveRed)),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('Gudang Sumber *', style: TextStyle(fontSize: 12, color: labelColor)),
+                  const SizedBox(height: 6),
+                  warehousesAsync.when(
+                    data: (list) {
+                      final filteredList = _selectedCompanyId == null
+                          ? <Warehouse>[]
+                          : list.where((w) => w.companyId == _selectedCompanyId).toList();
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          GestureDetector(
+                            onTap: _selectedCompanyId == null
+                                ? null
+                                : () {
+                                    showCupertinoModalPopup<int>(
+                                      context: context,
+                                      builder: (context) => CupertinoActionSheet(
+                                        title: const Text('Pilih Gudang Sumber'),
+                                        actions: filteredList.map((w) {
+                                          return CupertinoActionSheetAction(
+                                            onPressed: () => Navigator.pop(context, w.id),
+                                            child: Text(w.name),
+                                          );
+                                        }).toList(),
+                                        cancelButton: CupertinoActionSheetAction(
+                                          isDefaultAction: true,
+                                          onPressed: () => Navigator.pop(context),
+                                          child: const Text('Batal'),
+                                        ),
+                                      ),
+                                    ).then((val) {
+                                      if (val != null) {
+                                        setState(() {
+                                          _sourceWarehouseId = val;
+                                        });
+                                      }
+                                    });
+                                  },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: _selectedCompanyId == null
+                                    ? const CupertinoDynamicColor.withBrightness(
+                                          color: Color(0xFFF2F2F7),
+                                          darkColor: Color(0xFF1C1C1E),
+                                        ).resolveFrom(context)
+                                    : CupertinoColors.tertiarySystemFill.resolveFrom(context),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: separatorColor, width: 0.5),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    _sourceWarehouseId != null
+                                        ? filteredList.firstWhere((w) => w.id == _sourceWarehouseId).name
+                                        : _selectedCompanyId == null
+                                            ? 'Pilih perusahaan dahulu'
+                                            : 'Pilih Gudang Sumber',
+                                    style: TextStyle(
+                                      color: _sourceWarehouseId != null ? labelColor : CupertinoColors.placeholderText.resolveFrom(context),
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  const Icon(CupertinoIcons.chevron_down, size: 14, color: CupertinoColors.inactiveGray),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text('Gudang Tujuan *', style: TextStyle(fontSize: 12, color: labelColor)),
+                          const SizedBox(height: 6),
+                          GestureDetector(
+                            onTap: _selectedCompanyId == null
+                                ? null
+                                : () {
+                                    showCupertinoModalPopup<int>(
+                                      context: context,
+                                      builder: (context) => CupertinoActionSheet(
+                                        title: const Text('Pilih Gudang Tujuan'),
+                                        actions: filteredList
+                                            .where((w) => w.id != _sourceWarehouseId)
+                                            .map((w) {
+                                          return CupertinoActionSheetAction(
+                                            onPressed: () => Navigator.pop(context, w.id),
+                                            child: Text(w.name),
+                                          );
+                                        }).toList(),
+                                        cancelButton: CupertinoActionSheetAction(
+                                          isDefaultAction: true,
+                                          onPressed: () => Navigator.pop(context),
+                                          child: const Text('Batal'),
+                                        ),
+                                      ),
+                                    ).then((val) {
+                                      if (val != null) {
+                                        setState(() {
+                                          _destinationWarehouseId = val;
+                                        });
+                                      }
+                                    });
+                                  },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: _selectedCompanyId == null
+                                    ? const CupertinoDynamicColor.withBrightness(
+                                          color: Color(0xFFF2F2F7),
+                                          darkColor: Color(0xFF1C1C1E),
+                                        ).resolveFrom(context)
+                                    : CupertinoColors.tertiarySystemFill.resolveFrom(context),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: separatorColor, width: 0.5),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    _destinationWarehouseId != null
+                                        ? filteredList.firstWhere((w) => w.id == _destinationWarehouseId).name
+                                        : _selectedCompanyId == null
+                                            ? 'Pilih perusahaan dahulu'
+                                            : 'Pilih Gudang Tujuan',
+                                    style: TextStyle(
+                                      color: _destinationWarehouseId != null ? labelColor : CupertinoColors.placeholderText.resolveFrom(context),
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  const Icon(CupertinoIcons.chevron_down, size: 14, color: CupertinoColors.inactiveGray),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                    loading: () => const Center(child: CupertinoActivityIndicator()),
+                    error: (err, _) => Text('Error: $err', style: const TextStyle(color: CupertinoColors.destructiveRed)),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: separatorColor, width: 0.5),
+              ),
+              child: Column(
+                children: [
+                  GestureDetector(
+                    onTap: () => _selectDateTime(context, true),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _estimatedDeparture == null
+                                  ? 'Estimasi Keberangkatan: Belum Diatur'
+                                  : 'Estimasi Keberangkatan: ${_estimatedDeparture!.toLocal().toString().substring(0, 16)}',
+                              style: TextStyle(fontSize: 14, color: labelColor),
+                            ),
+                          ),
+                          const Icon(CupertinoIcons.calendar, color: CupertinoColors.inactiveGray),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Container(height: 0.5, color: separatorColor),
+                  GestureDetector(
+                    onTap: () => _selectDateTime(context, false),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _closingDate == null
+                                  ? 'Tanggal Penutupan: Belum Diatur'
+                                  : 'Tanggal Penutupan: ${_closingDate!.toLocal().toString().substring(0, 16)}',
+                              style: TextStyle(fontSize: 14, color: labelColor),
+                            ),
+                          ),
+                          const Icon(CupertinoIcons.calendar, color: CupertinoColors.inactiveGray),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: _isSaving ? null : () => Navigator.pop(context),
-          child: const Text('Batal'),
-        ),
-        ElevatedButton(
-          onPressed: _isSaving ? null : _submit,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF4F46E5),
-            foregroundColor: Colors.white,
-          ),
-          child: _isSaving 
-            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-            : const Text('Buat'),
-        ),
-      ],
     );
   }
 }
@@ -1554,7 +1779,7 @@ class _CreateContainerDialogState extends ConsumerState<_CreateContainerDialog> 
 void _showTopNotification(BuildContext context, String message, {bool isError = false}) {
   final overlay = Overlay.of(context);
   late OverlayEntry entry;
-  
+
   entry = OverlayEntry(
     builder: (context) => Positioned(
       top: MediaQuery.of(context).padding.top + 24,
@@ -1564,64 +1789,49 @@ void _showTopNotification(BuildContext context, String message, {bool isError = 
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 450),
-          child: Material(
-            color: Colors.transparent,
-            child: TweenAnimationBuilder<double>(
-              duration: const Duration(milliseconds: 250),
-              tween: Tween(begin: 0.0, end: 1.0),
-              builder: (context, value, child) {
-                return Opacity(
-                  opacity: value,
-                  child: Transform.translate(
-                    offset: Offset(0, (1 - value) * -20),
-                    child: child,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isError ? CupertinoColors.destructiveRed : CupertinoColors.activeGreen,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x42000000),
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isError ? CupertinoIcons.exclamationmark_circle : CupertinoIcons.check_mark_circled,
+                  color: CupertinoColors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: const TextStyle(
+                      color: CupertinoColors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.none,
+                    ),
                   ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: isError ? const Color(0xFFEF4444) : const Color(0xFF10B981),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 12,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isError ? Icons.error_outline : Icons.check_circle_outline,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        message,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      onTap: () {
-                        if (entry.mounted) {
-                          entry.remove();
-                        }
-                      },
-                      child: const Icon(Icons.close, color: Colors.white, size: 18),
-                    ),
-                  ],
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () {
+                    if (entry.mounted) {
+                      entry.remove();
+                    }
+                  },
+                  child: const Icon(CupertinoIcons.xmark, color: CupertinoColors.white, size: 18),
                 ),
-              ),
+              ],
             ),
           ),
         ),
@@ -1631,7 +1841,6 @@ void _showTopNotification(BuildContext context, String message, {bool isError = 
 
   overlay.insert(entry);
 
-  // Automatically remove after 2.5 seconds
   Future.delayed(const Duration(milliseconds: 2500), () {
     if (entry.mounted) {
       entry.remove();

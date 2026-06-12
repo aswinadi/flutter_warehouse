@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show Divider, Scrollbar, Colors;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../purchase_request/providers/purchase_request_provider.dart';
@@ -11,50 +12,133 @@ import '../../purchase_request/models/purchase_request.dart';
 import '../../purchase_request/models/pr_approval.dart';
 import '../../purchase_order/providers/purchase_order_provider.dart';
 
-class ApprovalsScreen extends ConsumerWidget {
+class CupertinoCheckbox extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool?> onChanged;
+
+  const CupertinoCheckbox({
+    super.key,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: Container(
+        margin: const EdgeInsets.only(right: 12),
+        width: 22,
+        height: 22,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: value ? CupertinoColors.activeBlue : Colors.transparent,
+          border: Border.all(
+            color: value ? CupertinoColors.activeBlue : CupertinoColors.separator.resolveFrom(context),
+            width: 1.5,
+          ),
+        ),
+        child: value
+            ? const Icon(
+                CupertinoIcons.checkmark,
+                size: 14,
+                color: CupertinoColors.white,
+              )
+            : null,
+      ),
+    );
+  }
+}
+
+class ApprovalsScreen extends ConsumerStatefulWidget {
   const ApprovalsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return DefaultTabController(
-      length: 5,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Workspace Persetujuan'),
-          backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
-          foregroundColor: CupertinoColors.label.resolveFrom(context),
-          bottom: TabBar(
-            isScrollable: true,
-            labelColor: const Color(0xFF6E56CF),
-            unselectedLabelColor: CupertinoColors.secondaryLabel.resolveFrom(context),
-            indicatorColor: const Color(0xFF6E56CF),
-            tabs: const [
-              Tab(text: 'Qty PR'),
-              Tab(text: 'Vendor PR'),
-              Tab(text: 'Invoice'),
-              Tab(text: 'Payment Request'),
-              Tab(text: 'PO'),
-            ],
-          ),
+  ConsumerState<ApprovalsScreen> createState() => _ApprovalsScreenState();
+}
+
+class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen> {
+  int _selectedSegment = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final bgColor = CupertinoColors.systemGroupedBackground.resolveFrom(context);
+
+    return CupertinoPageScaffold(
+      backgroundColor: bgColor,
+      navigationBar: CupertinoNavigationBar(
+        backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
+        middle: Text(
+          'Workspace Persetujuan',
+          style: TextStyle(color: labelColor),
         ),
-        body: Column(
+      ),
+      child: SafeArea(
+        child: Column(
           children: [
             const CompanySwitcher(),
-            const Expanded(
-              child: TabBarView(
-                children: [
-                  _PrQtyApprovalList(),
-                  _PrVendorApprovalList(),
-                  _InvoiceApprovalList(),
-                  _PaymentRequestApprovalList(),
-                  _POApprovalList(),
-                ],
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              color: CupertinoColors.systemBackground.resolveFrom(context),
+              child: CupertinoSlidingSegmentedControl<int>(
+                groupValue: _selectedSegment,
+                children: const {
+                  0: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    child: Text('Qty PR', style: TextStyle(fontSize: 13)),
+                  ),
+                  1: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    child: Text('Vendor PR', style: TextStyle(fontSize: 13)),
+                  ),
+                  2: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    child: Text('Invoice', style: TextStyle(fontSize: 13)),
+                  ),
+                  3: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    child: Text('Pay Req', style: TextStyle(fontSize: 13)),
+                  ),
+                  4: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    child: Text('PO', style: TextStyle(fontSize: 13)),
+                  ),
+                },
+                onValueChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _selectedSegment = value;
+                    });
+                  }
+                },
               ),
+            ),
+            Expanded(
+              child: _buildActiveList(),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildActiveList() {
+    switch (_selectedSegment) {
+      case 0:
+        return const _PrQtyApprovalList();
+      case 1:
+        return const _PrVendorApprovalList();
+      case 2:
+        return const _InvoiceApprovalList();
+      case 3:
+        return const _PaymentRequestApprovalList();
+      case 4:
+        return const _POApprovalList();
+      default:
+        return const SizedBox();
+    }
   }
 }
 
@@ -111,25 +195,42 @@ class _PrQtyApprovalListState extends ConsumerState<_PrQtyApprovalList> {
   Future<void> _submitBatchApproval(List<PurchaseRequestItem> allItems) async {
     if (_selectedItemIds.isEmpty) return;
 
+    final selectedItems = allItems.where((item) => _selectedItemIds.contains(item.id)).toList();
+    final groupedByPr = <int, List<PurchaseRequestItem>>{};
+    for (var item in selectedItems) {
+      if (item.prId != null) {
+        groupedByPr.putIfAbsent(item.prId!, () => []).add(item);
+      }
+    }
+
+    if (groupedByPr.isEmpty) {
+      if (mounted) {
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text('Peringatan'),
+            content: const Text('Tidak ada item valid yang dipilih untuk disetujui.'),
+            actions: [
+              CupertinoDialogAction(
+                child: const Text('OK'),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() => _isSubmitting = true);
 
     try {
-      // Group selected items by prId
-      final selectedItems = allItems.where((item) => _selectedItemIds.contains(item.id)).toList();
-      final groupedByPr = <int, List<PurchaseRequestItem>>{};
-      for (var item in selectedItems) {
-        if (item.prId != null) {
-          groupedByPr.putIfAbsent(item.prId!, () => []).add(item);
-        }
-      }
-
       final repository = ref.read(purchaseRequestRepositoryProvider);
 
       for (var entry in groupedByPr.entries) {
         final prId = entry.key;
         final prSelectedItems = entry.value;
 
-        // Find all items in this PR that the user can approve (authorized)
         final prAllAuthorizedItems = allItems.where((item) => item.prId == prId && item.canApprove).toList();
 
         final detailsList = prAllAuthorizedItems.map((item) {
@@ -150,21 +251,41 @@ class _PrQtyApprovalListState extends ConsumerState<_PrQtyApprovalList> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Persetujuan item PR berhasil diajukan')),
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text('Sukses'),
+            content: const Text('Persetujuan item PR berhasil diajukan.'),
+            actions: [
+              CupertinoDialogAction(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.pop(context);
+                  setState(() {
+                    _selectedItemIds.clear();
+                    _notesController.clear();
+                  });
+                  ref.invalidate(purchaseRequestsProvider(status: 'submitted'));
+                },
+              ),
+            ],
+          ),
         );
-        // Clear selection & reset notes
-        setState(() {
-          _selectedItemIds.clear();
-          _notesController.clear();
-        });
-        // Invalidate provider to reload data
-        ref.invalidate(purchaseRequestsProvider(status: 'submitted'));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal mengajukan persetujuan: $e'), backgroundColor: Colors.red),
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text('Gagal'),
+            content: Text('Gagal mengajukan persetujuan: $e'),
+            actions: [
+              CupertinoDialogAction(
+                child: const Text('OK'),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
         );
       }
     } finally {
@@ -178,19 +299,22 @@ class _PrQtyApprovalListState extends ConsumerState<_PrQtyApprovalList> {
 
     return listAsync.when(
       data: (prs) {
-        // Flatten and extract all items that are pending approval for the current user
         final allItems = prs
-            .expand((pr) => pr.details)
+            .expand((pr) => pr.details.map((item) => item.copyWith(prId: item.prId ?? pr.id)))
             .where((item) => item.canApprove)
             .toList();
 
         if (allItems.isEmpty) {
-          return const Center(child: Text('Tidak ada item PR yang menunggu persetujuan Qty'));
+          return const Center(
+            child: Text(
+              'Tidak ada item PR yang menunggu persetujuan Qty',
+              style: TextStyle(color: CupertinoColors.secondaryLabel),
+            ),
+          );
         }
 
         _initializeQtyControllers(allItems);
 
-        // Filter items based on active tab
         final filteredItems = allItems.where((item) {
           final isBudidaya = item.costCode != null && item.costCode!.startsWith('9.');
           if (_activeTab == CategoryTab.budidaya) {
@@ -205,13 +329,9 @@ class _PrQtyApprovalListState extends ConsumerState<_PrQtyApprovalList> {
 
         return Column(
           children: [
-            // Pill tabs selector
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              decoration: const BoxDecoration(
-                color: Color(0xFFF8FAFC),
-                border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
-              ),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              color: CupertinoColors.systemBackground.resolveFrom(context),
               child: Row(
                 children: [
                   _buildPillTab(
@@ -234,55 +354,56 @@ class _PrQtyApprovalListState extends ConsumerState<_PrQtyApprovalList> {
                 ],
               ),
             ),
-            // Items List
             Expanded(
               child: filteredItems.isEmpty
                   ? Center(
                       child: Text(
                         _activeTab == CategoryTab.budidaya
-                            ? 'Tidak ada item Budidaya yang menunggu persetujuan'
-                            : 'Tidak ada item Non-Budidaya yang menunggu persetujuan',
+                            ? 'Tidak ada item Budidaya yang menunggu'
+                            : 'Tidak ada item Non-Budidaya yang menunggu',
+                        style: const TextStyle(color: CupertinoColors.secondaryLabel),
                       ),
                     )
-                  : ListView.separated(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.all(16),
-                      itemCount: filteredItems.length + (showLoader ? 1 : 0),
-                      separatorBuilder: (context, index) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        if (index == filteredItems.length) {
-                          return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 16),
-                            child: Center(child: CircularProgressIndicator()),
-                          );
-                        }
-                        final item = filteredItems[index];
-                        final isSelected = _selectedItemIds.contains(item.id);
+                  : Scrollbar(
+                      child: ListView.separated(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.all(16),
+                        itemCount: filteredItems.length + (showLoader ? 1 : 0),
+                        separatorBuilder: (context, index) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          if (index == filteredItems.length) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              child: Center(child: CupertinoActivityIndicator()),
+                            );
+                          }
+                          final item = filteredItems[index];
+                          final isSelected = _selectedItemIds.contains(item.id);
 
-                        return _ApprovalItemRow(
-                          item: item,
-                          isSelected: isSelected,
-                          onChanged: (val) {
-                            setState(() {
-                              if (val == true) {
-                                _selectedItemIds.add(item.id);
-                              } else {
-                                _selectedItemIds.remove(item.id);
-                              }
-                            });
-                          },
-                          qtyController: _qtyControllers[item.id]!,
-                          isReadOnly: false,
-                        );
-                      },
+                          return _ApprovalItemRow(
+                            item: item,
+                            isSelected: isSelected,
+                            onChanged: (val) {
+                              setState(() {
+                                if (val == true) {
+                                  _selectedItemIds.add(item.id);
+                                } else {
+                                  _selectedItemIds.remove(item.id);
+                                }
+                              });
+                            },
+                            qtyController: _qtyControllers[item.id]!,
+                            isReadOnly: false,
+                          );
+                        },
+                      ),
                     ),
             ),
-            // Bottom Action Sheet if any items are selected
             if (_selectedItemIds.isNotEmpty) _buildBottomActionSheet(allItems),
           ],
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: CupertinoActivityIndicator()),
       error: (err, _) => Center(child: Text('Error: $err')),
     );
   }
@@ -295,20 +416,18 @@ class _PrQtyApprovalListState extends ConsumerState<_PrQtyApprovalList> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF0F172A) : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isActive ? const Color(0xFF0F172A) : const Color(0xFFE2E8F0),
-            width: 1.0,
-          ),
+          color: isActive 
+              ? CupertinoColors.activeBlue 
+              : CupertinoColors.tertiarySystemFill.resolveFrom(context),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isActive ? Colors.white : const Color(0xFF64748B),
-            fontSize: 13,
+            color: isActive ? CupertinoColors.white : CupertinoColors.label.resolveFrom(context),
+            fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -317,64 +436,180 @@ class _PrQtyApprovalListState extends ConsumerState<_PrQtyApprovalList> {
   }
 
   Widget _buildBottomActionSheet(List<PurchaseRequestItem> allItems) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+
     return SafeArea(
       top: false,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
-          border: const Border(top: BorderSide(color: Color(0xFFE2E8F0), width: 1.0)),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-              blurRadius: 10,
-              offset: const Offset(0, -4),
-            ),
-          ],
+          color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
+          border: Border(
+            top: BorderSide(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
+            CupertinoTextField(
               controller: _notesController,
-              decoration: InputDecoration(
-                labelText: 'Catatan Persetujuan (Opsional)',
-                labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
-                fillColor: const Color(0xFFF8FAFC),
-                filled: true,
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFF6E56CF), width: 2.0),
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+              placeholder: 'Catatan Persetujuan (Opsional)',
+              placeholderStyle: const TextStyle(color: CupertinoColors.placeholderText),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: CupertinoColors.systemBackground.resolveFrom(context),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
               ),
+              style: TextStyle(color: labelColor),
             ),
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
+              child: CupertinoButton.filled(
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 onPressed: _isSubmitting ? null : () => _submitBatchApproval(allItems),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6E56CF),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
                 child: _isSubmitting
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                    : Text('SETUJUI SELEKSI (${_selectedItemIds.length} BARANG)'),
+                    ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                    : Text(
+                        'Setujui Seleksi (${_selectedItemIds.length} Barang)',
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                      ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ApprovalItemRow extends StatelessWidget {
+  final PurchaseRequestItem item;
+  final bool isSelected;
+  final ValueChanged<bool?>? onChanged;
+  final TextEditingController qtyController;
+  final bool isReadOnly;
+
+  const _ApprovalItemRow({
+    required this.item,
+    required this.isSelected,
+    required this.onChanged,
+    required this.qtyController,
+    this.isReadOnly = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      decoration: BoxDecoration(
+        color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            CupertinoCheckbox(
+              value: isSelected, 
+              onChanged: (val) => onChanged?.call(val),
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.itemName, 
+                          style: TextStyle(fontWeight: FontWeight.bold, color: labelColor, fontSize: 14),
+                        ),
+                      ),
+                      if (item.costCode != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            item.costCode!,
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(item.itemCode, style: const TextStyle(color: CupertinoColors.secondaryLabel, fontSize: 12)),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(CupertinoIcons.doc_text, size: 12, color: CupertinoColors.secondaryLabel),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${item.prCode ?? "PR"} • ${item.companyName ?? "Unknown"}',
+                        style: const TextStyle(fontSize: 12, color: CupertinoColors.activeBlue, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text('Jml Diminta: ${item.qtyRequested} ${item.uom}', style: TextStyle(fontSize: 12, color: labelColor)),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Stok Saat Ini: ${item.currentStock} ${item.uom}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: item.currentStock < item.qtyRequested ? CupertinoColors.activeOrange : CupertinoColors.secondaryLabel,
+                      fontWeight: item.currentStock < item.qtyRequested ? FontWeight.w500 : FontWeight.normal,
+                    ),
+                  ),
+                  if (item.dtSpec != null && item.dtSpec!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'Spesifikasi: ${item.dtSpec}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: CupertinoColors.secondaryLabel,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                  if (item.dtNotes != null && item.dtNotes!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'Keterangan: ${item.dtNotes}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: CupertinoColors.secondaryLabel,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            SizedBox(
+              width: 80,
+              child: CupertinoTextField(
+                controller: qtyController,
+                enabled: !isReadOnly && isSelected,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: labelColor),
+                placeholder: 'Jml',
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected 
+                      ? CupertinoColors.systemBackground.resolveFrom(context)
+                      : CupertinoColors.tertiarySystemFill.resolveFrom(context),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
+                ),
               ),
             ),
           ],
@@ -422,32 +657,39 @@ class _PrVendorApprovalListState extends ConsumerState<_PrVendorApprovalList> {
     return listAsync.when(
       data: (items) {
         if (items.isEmpty) {
-          return const Center(child: Text('Tidak ada PR yang menunggu persetujuan Vendor'));
+          return const Center(
+            child: Text(
+              'Tidak ada PR yang menunggu persetujuan Vendor',
+              style: TextStyle(color: CupertinoColors.secondaryLabel),
+            ),
+          );
         }
         final hasMore = ref.watch(purchaseRequestsProvider(status: 'waiting_bod_approval').notifier).hasMore;
         final showLoader = listAsync.isLoading && hasMore;
 
-        return ListView.separated(
-          controller: _scrollController,
-          padding: const EdgeInsets.all(16),
-          itemCount: items.length + (showLoader ? 1 : 0),
-          separatorBuilder: (context, index) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            if (index == items.length) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                child: Center(child: CircularProgressIndicator()),
+        return Scrollbar(
+          child: ListView.separated(
+            controller: _scrollController,
+            padding: const EdgeInsets.all(16),
+            itemCount: items.length + (showLoader ? 1 : 0),
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              if (index == items.length) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: CupertinoActivityIndicator()),
+                );
+              }
+              final item = items[index];
+              return PRCard(
+                pr: item,
+                onTap: () => context.push('/approvals/pr-vendor/${item.id}'),
               );
-            }
-            final item = items[index];
-            return PRCard(
-              pr: item,
-              onTap: () => context.push('/approvals/pr-vendor/${item.id}'),
-            );
-          },
+            },
+          ),
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: CupertinoActivityIndicator()),
       error: (err, _) => Center(child: Text('Error: $err')),
     );
   }
@@ -487,46 +729,43 @@ class _InvoiceApprovalListState extends ConsumerState<_InvoiceApprovalList> {
   @override
   Widget build(BuildContext context) {
     final listAsync = ref.watch(invoicesProvider(status: 'draft'));
+    final labelColor = CupertinoColors.label.resolveFrom(context);
 
     return listAsync.when(
       data: (items) {
         if (items.isEmpty) {
-          return const Center(child: Text('Tidak ada Invoice yang menunggu persetujuan'));
+          return const Center(
+            child: Text(
+              'Tidak ada Invoice yang menunggu persetujuan',
+              style: TextStyle(color: CupertinoColors.secondaryLabel),
+            ),
+          );
         }
         final hasMore = ref.watch(invoicesProvider(status: 'draft').notifier).hasMore;
         final showLoader = listAsync.isLoading && hasMore;
 
-        return ListView.separated(
-          controller: _scrollController,
-          padding: const EdgeInsets.all(16),
-          itemCount: items.length + (showLoader ? 1 : 0),
-          separatorBuilder: (context, index) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            if (index == items.length) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                child: Center(child: CircularProgressIndicator()),
-              );
-            }
-            final item = items[index];
-            return Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0x140F0F0F),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => context.push('/approvals/invoice/${item.id}'),
+        return Scrollbar(
+          child: ListView.separated(
+            controller: _scrollController,
+            padding: const EdgeInsets.all(16),
+            itemCount: items.length + (showLoader ? 1 : 0),
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              if (index == items.length) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: CupertinoActivityIndicator()),
+                );
+              }
+              final item = items[index];
+              return Container(
+                decoration: BoxDecoration(
+                  color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
+                ),
+                child: GestureDetector(
+                  onTap: () => context.push('/approvals/invoice/${item.id}'),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -537,37 +776,36 @@ class _InvoiceApprovalListState extends ConsumerState<_InvoiceApprovalList> {
                           children: [
                             Text(
                               item.invoiceNumber,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Color(0xFF0F172A),
+                                fontSize: 15,
+                                color: labelColor,
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF59E0B).withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.2)),
+                                color: CupertinoColors.activeOrange.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: CupertinoColors.activeOrange, width: 0.5),
                               ),
                               child: const Text(
                                 'DRAFT',
                                 style: TextStyle(
-                                  color: Color(0xFFF59E0B),
+                                  color: CupertinoColors.activeOrange,
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.5,
                                 ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 8),
                         Text(
                           'Vendor: ${item.supplierName ?? "-"}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF0F172A),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: labelColor,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -577,19 +815,19 @@ class _InvoiceApprovalListState extends ConsumerState<_InvoiceApprovalList> {
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF4F46E5),
+                            color: CupertinoColors.activeBlue,
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: CupertinoActivityIndicator()),
       error: (err, _) => Center(child: Text('Error: $err')),
     );
   }
@@ -629,46 +867,43 @@ class _PaymentRequestApprovalListState extends ConsumerState<_PaymentRequestAppr
   @override
   Widget build(BuildContext context) {
     final listAsync = ref.watch(paymentRequestsProvider(status: 'pending'));
+    final labelColor = CupertinoColors.label.resolveFrom(context);
 
     return listAsync.when(
       data: (items) {
         if (items.isEmpty) {
-          return const Center(child: Text('Tidak ada Payment Request yang menunggu persetujuan'));
+          return const Center(
+            child: Text(
+              'Tidak ada Payment Request yang menunggu persetujuan',
+              style: TextStyle(color: CupertinoColors.secondaryLabel),
+            ),
+          );
         }
         final hasMore = ref.watch(paymentRequestsProvider(status: 'pending').notifier).hasMore;
         final showLoader = listAsync.isLoading && hasMore;
 
-        return ListView.separated(
-          controller: _scrollController,
-          padding: const EdgeInsets.all(16),
-          itemCount: items.length + (showLoader ? 1 : 0),
-          separatorBuilder: (context, index) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            if (index == items.length) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                child: Center(child: CircularProgressIndicator()),
-              );
-            }
-            final item = items[index];
-            return Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0x140F0F0F),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => context.push('/approvals/payment-request/${item.id}'),
+        return Scrollbar(
+          child: ListView.separated(
+            controller: _scrollController,
+            padding: const EdgeInsets.all(16),
+            itemCount: items.length + (showLoader ? 1 : 0),
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              if (index == items.length) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: CupertinoActivityIndicator()),
+                );
+              }
+              final item = items[index];
+              return Container(
+                decoration: BoxDecoration(
+                  color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
+                ),
+                child: GestureDetector(
+                  onTap: () => context.push('/approvals/payment-request/${item.id}'),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -679,37 +914,36 @@ class _PaymentRequestApprovalListState extends ConsumerState<_PaymentRequestAppr
                           children: [
                             Text(
                               item.requestNumber,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Color(0xFF0F172A),
+                                fontSize: 15,
+                                color: labelColor,
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF59E0B).withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.2)),
+                                color: CupertinoColors.activeOrange.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: CupertinoColors.activeOrange, width: 0.5),
                               ),
                               child: const Text(
                                 'PENDING',
                                 style: TextStyle(
-                                  color: Color(0xFFF59E0B),
+                                  color: CupertinoColors.activeOrange,
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.5,
                                 ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 8),
                         Text(
                           'Diajukan oleh: ${item.requestorName}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF0F172A),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: labelColor,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -719,171 +953,20 @@ class _PaymentRequestApprovalListState extends ConsumerState<_PaymentRequestAppr
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF4F46E5),
+                            color: CupertinoColors.activeBlue,
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: CupertinoActivityIndicator()),
       error: (err, _) => Center(child: Text('Error: $err')),
-    );
-  }
-}
-
-class _ApprovalItemRow extends StatelessWidget {
-  final PurchaseRequestItem item;
-  final bool isSelected;
-  final ValueChanged<bool?>? onChanged;
-  final TextEditingController qtyController;
-  final bool isReadOnly;
-
-  const _ApprovalItemRow({
-    required this.item,
-    required this.isSelected,
-    required this.onChanged,
-    required this.qtyController,
-    this.isReadOnly = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0x140F0F0F),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            Checkbox(
-              value: isSelected, 
-              onChanged: onChanged,
-              activeColor: const Color(0xFF6E56CF), // Notion Purple
-            ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          item.itemName, 
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A), fontSize: 14),
-                        ),
-                      ),
-                      if (item.costCode != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE2E8F0),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            item.costCode!,
-                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(item.itemCode, style: const TextStyle(color: Color(0xFF64748B), fontSize: 12)),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.description_outlined, size: 12, color: Color(0xFF64748B)),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${item.prCode ?? "PR"} • ${item.companyName ?? "Unknown"}',
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF4F46E5), fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text('Jml Diminta: ${item.qtyRequested} ${item.uom}', style: const TextStyle(fontSize: 12, color: Color(0xFF0F172A))),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Stok Saat Ini: ${item.currentStock} ${item.uom}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: item.currentStock < item.qtyRequested ? const Color(0xFFF59E0B) : const Color(0xFF64748B),
-                      fontWeight: item.currentStock < item.qtyRequested ? FontWeight.w500 : FontWeight.normal,
-                    ),
-                  ),
-                  if (item.dtSpec != null && item.dtSpec!.trim().isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      'Spesifikasi: ${item.dtSpec}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ],
-                  if (item.dtNotes != null && item.dtNotes!.trim().isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      'Keterangan: ${item.dtNotes}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            SizedBox(
-              width: 90,
-              child: TextField(
-                controller: qtyController,
-                enabled: !isReadOnly && isSelected,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 13),
-                decoration: InputDecoration(
-                  labelText: 'Jml Setuju',
-                  labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 11),
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-                  fillColor: const Color(0xFFF8FAFC),
-                  filled: true,
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFF6E56CF), width: 2.0),
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -922,54 +1005,51 @@ class _POApprovalListState extends ConsumerState<_POApprovalList> {
   @override
   Widget build(BuildContext context) {
     final listAsync = ref.watch(purchaseOrdersProvider(status: 'submitted'));
+    final labelColor = CupertinoColors.label.resolveFrom(context);
 
     return listAsync.when(
       data: (items) {
         final approvableItems = items.where((po) => po.canApprove).toList();
 
         if (approvableItems.isEmpty) {
-          return const Center(child: Text('Tidak ada PO yang menunggu persetujuan Anda'));
+          return const Center(
+            child: Text(
+              'Tidak ada PO yang menunggu persetujuan Anda',
+              style: TextStyle(color: CupertinoColors.secondaryLabel),
+            ),
+          );
         }
         final hasMore = ref.read(purchaseOrdersProvider(status: 'submitted').notifier).hasMore;
         final showLoader = listAsync.isLoading && hasMore;
 
-        return ListView.separated(
-          controller: _scrollController,
-          padding: const EdgeInsets.all(16),
-          itemCount: approvableItems.length + (showLoader ? 1 : 0),
-          separatorBuilder: (context, index) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            if (index == approvableItems.length) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                child: Center(child: CircularProgressIndicator()),
+        return Scrollbar(
+          child: ListView.separated(
+            controller: _scrollController,
+            padding: const EdgeInsets.all(16),
+            itemCount: approvableItems.length + (showLoader ? 1 : 0),
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              if (index == approvableItems.length) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: CupertinoActivityIndicator()),
+                );
+              }
+              final item = approvableItems[index];
+              final double calculatedTotal = item.items.fold(
+                0.0,
+                (sum, item) => sum + (item.orderedQty * (item.unitPrice ?? 0.0)),
               );
-            }
-            final item = approvableItems[index];
-            final double calculatedTotal = item.items.fold(
-              0.0,
-              (sum, item) => sum + (item.orderedQty * (item.unitPrice ?? 0.0)),
-            );
-            final displayTotal = item.totalAmount ?? calculatedTotal;
+              final displayTotal = item.totalAmount ?? calculatedTotal;
 
-            return Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x140F0F0F),
-                    blurRadius: 12,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => context.push('/approvals/po/${item.id}'),
+              return Container(
+                decoration: BoxDecoration(
+                  color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
+                ),
+                child: GestureDetector(
+                  onTap: () => context.push('/approvals/po/${item.id}'),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -980,37 +1060,36 @@ class _POApprovalListState extends ConsumerState<_POApprovalList> {
                           children: [
                             Text(
                               item.poNumber,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Color(0xFF0F172A),
+                                fontSize: 15,
+                                color: labelColor,
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF59E0B).withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.2)),
+                                color: CupertinoColors.activeOrange.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: CupertinoColors.activeOrange, width: 0.5),
                               ),
                               child: const Text(
                                 'SUBMITTED',
                                 style: TextStyle(
-                                  color: Color(0xFFF59E0B),
+                                  color: CupertinoColors.activeOrange,
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.5,
                                 ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 8),
                         Text(
                           'Pemasok: ${item.supplierName}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF0F172A),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: labelColor,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -1020,29 +1099,28 @@ class _POApprovalListState extends ConsumerState<_POApprovalList> {
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF4F46E5),
+                            color: CupertinoColors.activeBlue,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'Tanggal: ${item.transactionDate}',
                           style: const TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF64748B),
+                            fontSize: 12,
+                            color: CupertinoColors.secondaryLabel,
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: CupertinoActivityIndicator()),
       error: (err, _) => Center(child: Text('Error: $err')),
     );
   }
 }
-

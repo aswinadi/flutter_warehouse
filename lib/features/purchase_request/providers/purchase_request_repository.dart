@@ -100,6 +100,10 @@ class PurchaseRequestRepository {
     });
   }
 
+  Future<void> removeVendorComparison(int prId, int comparisonId) async {
+    await dio.delete('wh/purchase-requests/$prId/comparisons/$comparisonId');
+  }
+
   /// Generates POs from BOD acknowledged vendor selections.
   /// Optionally filter by [comparisonIds] to generate POs only for those selections.
   Future<List<dynamic>> generatePOs(int prId, {List<int>? comparisonIds}) async {

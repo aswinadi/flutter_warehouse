@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 import 'package:dio/dio.dart';
@@ -38,6 +38,90 @@ class _PdfPreviewScreenState extends ConsumerState<PdfPreviewScreen> {
         path.contains('pdf/warehouse-transfer/') ||
         (path.contains('pdf/containers/') && path.contains('/packing-list')) ||
         path.contains('pdf/inventory-valuation');
+  }
+
+  void _showNotification(String message, {bool isError = false}) {
+    if (!mounted) return;
+    
+    final overlay = Overlay.of(context);
+    late OverlayEntry entry;
+
+    entry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: MediaQuery.of(context).padding.top + 24,
+        left: 24,
+        right: 24,
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 450),
+            child: DefaultTextStyle(
+              style: const TextStyle(color: CupertinoColors.white, fontFamily: '.SF Pro Text'),
+              child: TweenAnimationBuilder<double>(
+                duration: const Duration(milliseconds: 250),
+                tween: Tween(begin: 0.0, end: 1.0),
+                builder: (context, value, child) {
+                  return Opacity(
+                    opacity: value,
+                    child: Transform.translate(
+                      offset: Offset(0, (1 - value) * -20),
+                      child: child,
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isError ? CupertinoColors.systemRed : CupertinoColors.activeGreen,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x33000000),
+                        blurRadius: 12,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isError ? CupertinoIcons.exclamationmark_triangle : CupertinoIcons.check_mark_circled,
+                        color: CupertinoColors.white,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          message,
+                          style: const TextStyle(
+                            color: CupertinoColors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          if (entry.mounted) entry.remove();
+                        },
+                        child: const Icon(CupertinoIcons.xmark, color: CupertinoColors.white, size: 18),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(entry);
+    Future.delayed(const Duration(milliseconds: 3000), () {
+      if (entry.mounted) entry.remove();
+    });
   }
 
   Future<void> _exportExcel() async {
@@ -289,14 +373,7 @@ class _PdfPreviewScreenState extends ConsumerState<PdfPreviewScreen> {
         );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal mengekspor Excel: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      _showNotification('Gagal mengekspor Excel: $e', isError: true);
     } finally {
       if (mounted) {
         setState(() => _isExporting = false);
@@ -307,82 +384,71 @@ class _PdfPreviewScreenState extends ConsumerState<PdfPreviewScreen> {
   @override
   Widget build(BuildContext context) {
     final selectedCompany = ref.watch(selectedCompanyProvider);
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0F172A), // Navy Slate
-        foregroundColor: Colors.white,
-        title: Text(widget.title),
-        actions: [
-          if (_shouldShowExcel)
-            _isExporting
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0),
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    ),
-                  )
-                : IconButton(
-                    icon: const Icon(Icons.table_view_outlined),
-                    tooltip: 'Unduh Excel',
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+      navigationBar: CupertinoNavigationBar(
+        middle: Text(widget.title),
+        trailing: _shouldShowExcel
+            ? (_isExporting
+                ? const CupertinoActivityIndicator()
+                : CupertinoButton(
+                    padding: EdgeInsets.zero,
                     onPressed: _exportExcel,
-                  ),
-        ],
+                    child: const Icon(CupertinoIcons.table),
+                  ))
+            : null,
       ),
-      body: PdfPreview(
-        build: (format) async {
-          final dio = ref.read(dioProvider);
-          String targetUrl;
+      child: SafeArea(
+        child: PdfPreview(
+          build: (format) async {
+            final dio = ref.read(dioProvider);
+            String targetUrl;
 
-          if (widget.pdfUrl != null && widget.pdfUrl!.isNotEmpty) {
-            targetUrl = widget.pdfUrl!;
-          } else if (widget.urlPath != null && widget.urlPath!.isNotEmpty) {
-            targetUrl = '${AppConfig.baseUrl.replaceAll('/api/v1/', '')}/${widget.urlPath}';
-          } else {
-            throw Exception('PDF URL or path not specified');
-          }
+            if (widget.pdfUrl != null && widget.pdfUrl!.isNotEmpty) {
+              targetUrl = widget.pdfUrl!;
+            } else if (widget.urlPath != null && widget.urlPath!.isNotEmpty) {
+              targetUrl = '${AppConfig.baseUrl.replaceAll('/api/v1/', '')}/${widget.urlPath}';
+            } else {
+              throw Exception('PDF URL or path not specified');
+            }
 
-          if (selectedCompany != null && !targetUrl.contains('company_id=')) {
-            final separator = targetUrl.contains('?') ? '&' : '?';
-            targetUrl = '$targetUrl${separator}company_id=${selectedCompany.id}';
-          }
+            if (selectedCompany != null && !targetUrl.contains('company_id=')) {
+              final separator = targetUrl.contains('?') ? '&' : '?';
+              targetUrl = '$targetUrl${separator}company_id=${selectedCompany.id}';
+            }
 
-          debugPrint('Fetching PDF from: $targetUrl');
-          final response = await dio.get<List<int>>(
-            targetUrl,
-            options: Options(
-              responseType: ResponseType.bytes,
-              receiveTimeout: const Duration(seconds: 120),
+            debugPrint('Fetching PDF from: $targetUrl');
+            final response = await dio.get<List<int>>(
+              targetUrl,
+              options: Options(
+                responseType: ResponseType.bytes,
+                receiveTimeout: const Duration(seconds: 120),
+              ),
+            );
+
+            if (response.data == null || response.data!.isEmpty) {
+              throw Exception('Empty PDF response from server');
+            }
+
+            return Uint8List.fromList(response.data!);
+          },
+          allowSharing: true,
+          allowPrinting: true,
+          canChangePageFormat: false,
+          canChangeOrientation: false,
+          pdfFileName: '${widget.title.replaceAll(' ', '_')}.pdf',
+          loadingWidget: const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CupertinoActivityIndicator(),
+                SizedBox(height: 16),
+                Text('Memuat dokumen PDF...', style: TextStyle(decoration: TextDecoration.none, fontSize: 14)),
+              ],
             ),
-          );
-
-          if (response.data == null || response.data!.isEmpty) {
-            throw Exception('Empty PDF response from server');
-          }
-
-          return Uint8List.fromList(response.data!);
-        },
-        allowSharing: true,
-        allowPrinting: true,
-        canChangePageFormat: false,
-        canChangeOrientation: false,
-        pdfFileName: '${widget.title.replaceAll(' ', '_')}.pdf',
-        loadingWidget: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(color: Color(0xFF6E56CF)),
-              SizedBox(height: 16),
-              Text('Memuat dokumen PDF...'),
-            ],
           ),
         ),
       ),
     );
   }
 }
-

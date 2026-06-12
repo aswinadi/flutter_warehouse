@@ -1,9 +1,10 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:dio/dio.dart';
 import '../models/inventory.dart';
 import '../providers/inventory_provider.dart';
 import '../providers/inventory_adjustment_repository.dart';
@@ -19,7 +20,6 @@ class InventoryAdjustmentScreen extends ConsumerStatefulWidget {
 }
 
 class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentScreen> {
-  final _formKey = GlobalKey<FormState>();
   final _qtyController = TextEditingController();
   final _notesController = TextEditingController();
   final _searchController = TextEditingController();
@@ -30,6 +30,14 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
   bool _isLoadingItem = false;
   bool _isSubmitting = false;
   String? _itemErrorMessage;
+  String? _qtyErrorMessage;
+
+  final Map<String, String> _reasons = {
+    'usage': 'Pemakaian Umum (General Usage)',
+    'lost': 'Kehilangan (Lost)',
+    'breakage': 'Kerusakan (Breakage)',
+    'dispose': 'Pembuangan (Dispose)',
+  };
 
   @override
   void initState() {
@@ -60,10 +68,21 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
       setState(() {
         _selectedItem = item;
         _qtyController.clear();
+        _qtyErrorMessage = null;
       });
     } catch (e) {
+      String message = e.toString();
+      if (e is DioException) {
+        final response = e.response;
+        if (response != null && response.data is Map) {
+          final errorData = response.data['error'];
+          if (errorData != null && errorData['message'] != null) {
+            message = errorData['message'].toString();
+          }
+        }
+      }
       setState(() {
-        _itemErrorMessage = 'Barang tidak ditemukan: $e';
+        _itemErrorMessage = 'Barang tidak ditemukan: $message';
       });
     } finally {
       setState(() {
@@ -73,15 +92,12 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
   }
 
   Future<void> _scanBarcode() async {
-    final barcode = await showModalBottomSheet<String>(
+    final barcode = await showCupertinoModalPopup<String>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => const BarcodeScannerBottomSheet(),
     );
 
     if (barcode != null && barcode.isNotEmpty) {
-      // Clean up URL prefix if present in the scanned code
       final cleanCode = _extractAssetCode(barcode);
       _lookupItem(cleanCode);
     }
@@ -107,22 +123,24 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
   }
 
   Future<void> _pickImage() async {
-    final source = await showModalBottomSheet<ImageSource>(
+    final source = await showCupertinoModalPopup<ImageSource>(
       context: context,
-      builder: (context) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Ambil Foto dari Kamera'),
-              onTap: () => Navigator.pop(context, ImageSource.camera),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Pilih Foto dari Galeri'),
-              onTap: () => Navigator.pop(context, ImageSource.gallery),
-            ),
-          ],
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Pilih Sumber Foto'),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.pop(context, ImageSource.camera),
+            child: const Text('Ambil Foto dari Kamera'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.pop(context, ImageSource.gallery),
+            child: const Text('Pilih Foto dari Galeri'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
         ),
       ),
     );
@@ -144,46 +162,96 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
     }
   }
 
+  void _showReasonPicker() {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Pilih Tipe Penyesuaian'),
+        actions: _reasons.entries.map((entry) {
+          return CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() {
+                _reasonType = entry.key;
+              });
+              Navigator.pop(context);
+            },
+            child: Text(entry.value),
+          );
+        }).toList(),
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+      ),
+    );
+  }
+
   Future<void> _submit() async {
     if (_selectedItem == null) {
       _showNotification('Silakan pilih atau pindai barang terlebih dahulu.', isError: true);
       return;
     }
 
-    if (!_formKey.currentState!.validate()) return;
+    final qtyText = _qtyController.text.trim();
+    if (qtyText.isEmpty) {
+      setState(() {
+        _qtyErrorMessage = 'Jumlah wajib diisi';
+      });
+      return;
+    }
+
+    final parsedQty = double.tryParse(qtyText);
+    if (parsedQty == null) {
+      setState(() {
+        _qtyErrorMessage = 'Masukkan angka desimal yang valid';
+      });
+      return;
+    }
+
+    if (parsedQty <= 0) {
+      setState(() {
+        _qtyErrorMessage = 'Jumlah harus lebih besar dari 0';
+      });
+      return;
+    }
+
+    if (parsedQty > _selectedItem!.quantity) {
+      setState(() {
+        _qtyErrorMessage = 'Jumlah melebihi stok yang tersedia (${_selectedItem!.quantity.toStringAsFixed(1)})';
+      });
+      return;
+    }
 
     setState(() {
+      _qtyErrorMessage = null;
       _isSubmitting = true;
     });
 
     try {
       final repository = ref.read(inventoryAdjustmentRepositoryProvider);
-      final qty = double.parse(_qtyController.text);
 
       await repository.adjustStock(
         inventoryId: _selectedItem!.id,
-        quantity: qty,
+        quantity: parsedQty,
         reasonType: _reasonType,
         notes: _notesController.text.trim(),
         photoFile: _photoFile,
       );
 
       _showNotification('Penyesuaian stok berhasil dikirim!');
-      
-      // Refresh inventory lists
       ref.invalidate(inventoryRepositoryProvider);
       
       if (mounted) {
         if (widget.prefilledItem != null) {
-          // If came from detail list, pop back
           context.pop();
         } else {
-          // Reset form for next entry
           setState(() {
             _selectedItem = null;
             _qtyController.clear();
             _notesController.clear();
             _photoFile = null;
+            _qtyErrorMessage = null;
           });
         }
       }
@@ -213,8 +281,8 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 450),
-            child: Material(
-              color: Colors.transparent,
+            child: DefaultTextStyle(
+              style: const TextStyle(color: CupertinoColors.white, fontFamily: '.SF Pro Text'),
               child: TweenAnimationBuilder<double>(
                 duration: const Duration(milliseconds: 250),
                 tween: Tween(begin: 0.0, end: 1.0),
@@ -230,11 +298,11 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: isError ? const Color(0xFFEF4444) : const Color(0xFF10B981),
-                    borderRadius: BorderRadius.circular(8),
+                    color: isError ? CupertinoColors.systemRed : CupertinoColors.activeGreen,
+                    borderRadius: BorderRadius.circular(10),
                     boxShadow: const [
                       BoxShadow(
-                        color: Colors.black26,
+                        color: CupertinoColors.black,
                         blurRadius: 12,
                         offset: Offset(0, 4),
                       ),
@@ -243,8 +311,8 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
                   child: Row(
                     children: [
                       Icon(
-                        isError ? Icons.error_outline : Icons.check_circle_outline,
-                        color: Colors.white,
+                        isError ? CupertinoIcons.exclamationmark_triangle : CupertinoIcons.check_mark_circled,
+                        color: CupertinoColors.white,
                         size: 20,
                       ),
                       const SizedBox(width: 12),
@@ -252,18 +320,19 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
                         child: Text(
                           message,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: CupertinoColors.white,
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.none,
                           ),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      InkWell(
+                      GestureDetector(
                         onTap: () {
                           if (entry.mounted) entry.remove();
                         },
-                        child: const Icon(Icons.close, color: Colors.white, size: 18),
+                        child: const Icon(CupertinoIcons.xmark, color: CupertinoColors.white, size: 18),
                       ),
                     ],
                   ),
@@ -284,248 +353,224 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-
-    // Fluid responsive constraints for various screen size classes
     final double maxLayoutWidth;
     if (screenWidth > 1200) {
-      maxLayoutWidth = 650; // Ultra-wide / 4K / Large Desktop
+      maxLayoutWidth = 650;
     } else if (screenWidth > 800) {
-      maxLayoutWidth = 600; // Standard Desktop / Laptop / Landscape Tablet
+      maxLayoutWidth = 600;
     } else if (screenWidth > 600) {
-      maxLayoutWidth = 500; // Portrait Tablet
+      maxLayoutWidth = 500;
     } else {
-      maxLayoutWidth = double.infinity; // Mobile (expands fully with margins)
+      maxLayoutWidth = double.infinity;
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Penyesuaian & Pemakaian'),
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+      navigationBar: const CupertinoNavigationBar(
+        middle: Text('Penyesuaian & Pemakaian'),
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: maxLayoutWidth),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const CompanySwitcher(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _buildItemSelectionCard(),
-                      const SizedBox(height: 16),
-                      if (_selectedItem != null) _buildAdjustmentFormCard(),
-                    ],
-                  ),
-                ),
-              ),
-              if (_selectedItem != null)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
-                  ),
-                  child: ElevatedButton(
-                    onPressed: _isSubmitting ? null : _submit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6E56CF),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      minimumSize: const Size.fromHeight(50),
+      child: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxLayoutWidth),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const CompanySwitcher(),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildItemSelectionCard(),
+                        const SizedBox(height: 16),
+                        if (_selectedItem != null) _buildAdjustmentFormCard(),
+                      ],
                     ),
-                    child: _isSubmitting
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                          )
-                        : const Text(
-                            'KIRIM PENYESUAIAN STOK',
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                          ),
                   ),
                 ),
-            ],
+                if (_selectedItem != null)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      border: Border(top: BorderSide(color: separatorColor, width: 0.5)),
+                    ),
+                    child: CupertinoButton.filled(
+                      onPressed: _isSubmitting ? null : _submit,
+                      child: _isSubmitting
+                          ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                          : const Text(
+                              'Kirim Penyesuaian Stok',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-
   Widget _buildItemSelectionCard() {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobileNarrow = screenWidth < 400;
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    const primaryAccent = Color(0xFF6E56CF);
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Informasi Barang',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-            ),
-            const SizedBox(height: 16),
-            if (_selectedItem == null) ...[
-              OutlinedButton.icon(
-                onPressed: _scanBarcode,
-                icon: const Icon(Icons.qr_code_scanner, color: Color(0xFF6E56CF)),
-                label: const Text('PINDAI BARCODE BARANG'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF6E56CF),
-                  side: const BorderSide(color: Color(0xFF6E56CF)),
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Row(
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: separatorColor, width: 0.5),
+      ),
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Informasi Barang',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
+          ),
+          const SizedBox(height: 16),
+          if (_selectedItem == null) ...[
+            CupertinoButton(
+              color: primaryAccent.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              onPressed: _scanBarcode,
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Expanded(child: Divider()),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
-                    child: Text('ATAU CARI MANUAL', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                  ),
-                  Expanded(child: Divider()),
+                  Icon(CupertinoIcons.qrcode_viewfinder, color: primaryAccent, size: 20),
+                  SizedBox(width: 8),
+                  Text('PINDAI BARCODE BARANG', style: TextStyle(color: primaryAccent, fontWeight: FontWeight.bold)),
                 ],
               ),
-              const SizedBox(height: 16),
-              if (isMobileNarrow) ...[
-                TextField(
-                  controller: _searchController,
-                  decoration: const InputDecoration(
-                    hintText: 'Masukkan Barcode atau SKU...',
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  ),
-                  onSubmitted: (val) => _lookupItem(val),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(child: Container(height: 0.5, color: separatorColor)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text('ATAU CARI MANUAL', style: TextStyle(fontSize: 11, color: secondaryLabel)),
                 ),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: _isLoadingItem ? null : () => _lookupItem(_searchController.text),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0F172A),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    minimumSize: const Size.fromHeight(48),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: _isLoadingItem
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Text('Cari'),
-                ),
-              ] else ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        decoration: const InputDecoration(
-                          hintText: 'Masukkan Barcode atau SKU...',
-                          border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        ),
-                        onSubmitted: (val) => _lookupItem(val),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    ElevatedButton(
-                      onPressed: _isLoadingItem ? null : () => _lookupItem(_searchController.text),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0F172A),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      child: _isLoadingItem
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Text('Cari'),
-                    ),
-                  ],
-                ),
+                Expanded(child: Container(height: 0.5, color: separatorColor)),
               ],
-              if (_itemErrorMessage != null) ...[
-                const SizedBox(height: 12),
-                Text(
-                  _itemErrorMessage!,
-                  style: const TextStyle(color: Colors.red, fontSize: 13),
-                ),
-              ],
+            ),
+            const SizedBox(height: 16),
+            if (isMobileNarrow) ...[
+              CupertinoTextField(
+                controller: _searchController,
+                placeholder: 'Masukkan Barcode atau SKU...',
+                onSubmitted: (val) => _lookupItem(val),
+              ),
+              const SizedBox(height: 12),
+              CupertinoButton(
+                color: CupertinoColors.activeBlue,
+                onPressed: _isLoadingItem ? null : () => _lookupItem(_searchController.text),
+                child: _isLoadingItem
+                    ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                    : const Text('Cari'),
+              ),
             ] else ...[
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            _selectedItem!.productName ?? 'Unknown Product',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A)),
-                          ),
-                        ),
-                        if (widget.prefilledItem == null)
-                          TextButton(
-                            onPressed: () => setState(() => _selectedItem = null),
-                            child: const Text('Ganti', style: TextStyle(color: Color(0xFF6E56CF))),
-                          ),
-                      ],
+              Row(
+                children: [
+                  Expanded(
+                    child: CupertinoTextField(
+                      controller: _searchController,
+                      placeholder: 'Masukkan Barcode atau SKU...',
+                      onSubmitted: (val) => _lookupItem(val),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'SKU: ${_selectedItem!.sku}',
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Gudang: ${_selectedItem!.warehouseName ?? "-"} • Lokasi: ${_selectedItem!.locationCode ?? "-"}',
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-                    ),
-                    const SizedBox(height: 12),
-                    const Divider(height: 1, color: Color(0xFFE2E8F0)),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Stok Tersedia Saat Ini:',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF475569)),
-                        ),
-                        Text(
-                          '${_selectedItem!.quantity.toStringAsFixed(1)} ${_selectedItem!.unit ?? "PCS"}',
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF6E56CF)),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 12),
+                  CupertinoButton(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    color: CupertinoColors.activeBlue,
+                    onPressed: _isLoadingItem ? null : () => _lookupItem(_searchController.text),
+                    child: _isLoadingItem
+                        ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                        : const Text('Cari'),
+                  ),
+                ],
               ),
             ],
+            if (_itemErrorMessage != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                _itemErrorMessage!,
+                style: const TextStyle(color: CupertinoColors.destructiveRed, fontSize: 13),
+              ),
+            ],
+          ] else ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: separatorColor, width: 0.5),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _selectedItem!.productName ?? 'Unknown Product',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: labelColor),
+                        ),
+                      ),
+                      if (widget.prefilledItem == null)
+                        GestureDetector(
+                          onTap: () => setState(() => _selectedItem = null),
+                          child: const Text('Ganti', style: TextStyle(color: primaryAccent, fontWeight: FontWeight.bold)),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'SKU: ${_selectedItem!.sku}',
+                    style: TextStyle(fontSize: 13, color: secondaryLabel),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Gudang: ${_selectedItem!.warehouseName ?? "-"} • Lokasi: ${_selectedItem!.locationCode ?? "-"}',
+                    style: TextStyle(fontSize: 13, color: secondaryLabel),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12.0),
+                    child: Container(height: 0.5, color: separatorColor),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Stok Tersedia Saat Ini:',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: secondaryLabel),
+                      ),
+                      Text(
+                        '${_selectedItem!.quantity.toStringAsFixed(1)} ${_selectedItem!.unit ?? "PCS"}',
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: primaryAccent),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -533,101 +578,98 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
   Widget _buildAdjustmentFormCard() {
     final currentItem = _selectedItem!;
     final unit = currentItem.unit ?? 'PCS';
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+    final labelColor = CupertinoColors.label.resolveFrom(context);
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Detail Transaksi',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-              ),
-              const SizedBox(height: 16),
-              
-              // Reason Type Dropdown
-              DropdownButtonFormField<String>(
-                value: _reasonType,
-                decoration: const InputDecoration(
-                  labelText: 'Tipe Penyesuaian / Pemakaian *',
-                  border: OutlineInputBorder(),
-                ),
-                style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A)),
-                items: const [
-                  DropdownMenuItem(value: 'usage', child: Text('Pemakaian Umum (General Usage)')),
-                  DropdownMenuItem(value: 'lost', child: Text('Kehilangan (Lost)')),
-                  DropdownMenuItem(value: 'breakage', child: Text('Kerusakan (Breakage)')),
-                  DropdownMenuItem(value: 'dispose', child: Text('Pembuangan (Dispose)')),
-                ],
-                onChanged: (val) {
-                  if (val != null) {
-                    setState(() => _reasonType = val);
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Quantity Input
-              TextFormField(
-                controller: _qtyController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  labelText: 'Jumlah yang Disesuaikan *',
-                  border: const OutlineInputBorder(),
-                  suffixText: unit,
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Jumlah wajib diisi';
-                  }
-                  final parsed = double.tryParse(value);
-                  if (parsed == null) {
-                    return 'Masukkan angka desimal yang valid';
-                  }
-                  if (parsed <= 0) {
-                    return 'Jumlah harus lebih besar dari 0';
-                  }
-                  if (parsed > currentItem.quantity) {
-                    return 'Jumlah melebihi stok yang tersedia (${currentItem.quantity.toStringAsFixed(1)})';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Notes Input
-              TextFormField(
-                controller: _notesController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Keterangan / Notes',
-                  border: OutlineInputBorder(),
-                  hintText: 'Tuliskan alasan penyesuaian...',
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Photo Picker Widget
-              _buildPhotoPickerSection(),
-            ],
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: separatorColor, width: 0.5),
+      ),
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Detail Transaksi',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
           ),
-        ),
+          const SizedBox(height: 16),
+          
+          // Reason Type Selector
+          const Text('Tipe Penyesuaian / Pemakaian *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 6),
+          GestureDetector(
+            onTap: _showReasonPicker,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              decoration: BoxDecoration(
+                color: CupertinoColors.systemBackground.resolveFrom(context),
+                border: Border.all(color: separatorColor, width: 0.5),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(_reasons[_reasonType] ?? '', style: TextStyle(fontSize: 14, color: labelColor)),
+                  Icon(CupertinoIcons.chevron_down, size: 14, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Quantity Input
+          const Text('Jumlah yang Disesuaikan *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 6),
+          CupertinoTextField(
+            controller: _qtyController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            placeholder: 'Contoh: 10',
+            suffix: Padding(
+              padding: const EdgeInsets.only(right: 12.0),
+              child: Text(unit, style: TextStyle(color: CupertinoColors.secondaryLabel.resolveFrom(context))),
+            ),
+          ),
+          if (_qtyErrorMessage != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              _qtyErrorMessage!,
+              style: const TextStyle(color: CupertinoColors.destructiveRed, fontSize: 12),
+            ),
+          ],
+          const SizedBox(height: 16),
+
+          // Notes Input
+          const Text('Keterangan / Notes', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 6),
+          CupertinoTextField(
+            controller: _notesController,
+            maxLines: 3,
+            placeholder: 'Tuliskan alasan penyesuaian...',
+          ),
+          const SizedBox(height: 16),
+
+          // Photo Picker Section
+          _buildPhotoPickerSection(),
+        ],
       ),
     );
   }
 
   Widget _buildPhotoPickerSection() {
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    const primaryAccent = Color(0xFF6E56CF);
+
     if (_photoFile != null) {
       return Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: separatorColor, width: 0.5),
         ),
         child: Row(
           children: [
@@ -652,32 +694,34 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
                   SizedBox(height: 2),
                   Text(
                     'Siap diunggah',
-                    style: TextStyle(color: Colors.green, fontSize: 12),
+                    style: TextStyle(color: CupertinoColors.activeGreen, fontSize: 12),
                   ),
                 ],
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () {
+            GestureDetector(
+              onTap: () {
                 setState(() {
                   _photoFile = null;
                 });
               },
+              child: const Icon(CupertinoIcons.trash, color: CupertinoColors.destructiveRed, size: 20),
             ),
           ],
         ),
       );
     }
 
-    return OutlinedButton.icon(
+    return CupertinoButton(
+      color: primaryAccent.withOpacity(0.1),
       onPressed: _pickImage,
-      icon: const Icon(Icons.camera_alt, color: Color(0xFF6E56CF)),
-      label: const Text('LAMPIRKAN FOTO BUKTI (OPSIONAL)'),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: const Color(0xFF6E56CF),
-        side: const BorderSide(color: Color(0xFFE2E8F0)),
-        padding: const EdgeInsets.symmetric(vertical: 16),
+      child: const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(CupertinoIcons.camera, color: primaryAccent, size: 18),
+          SizedBox(width: 8),
+          Text('LAMPIRKAN FOTO BUKTI (OPSIONAL)', style: TextStyle(color: primaryAccent, fontWeight: FontWeight.bold, fontSize: 13)),
+        ],
       ),
     );
   }
@@ -708,7 +752,7 @@ class _BarcodeScannerBottomSheetState extends State<BarcodeScannerBottomSheet> {
     return Container(
       height: 480,
       decoration: const BoxDecoration(
-        color: Colors.black,
+        color: CupertinoColors.black,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Stack(
@@ -733,11 +777,15 @@ class _BarcodeScannerBottomSheetState extends State<BarcodeScannerBottomSheet> {
           Positioned(
             top: 20,
             right: 20,
-            child: CircleAvatar(
-              backgroundColor: Colors.black54,
-              child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
-                onPressed: () => Navigator.pop(context),
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: CupertinoColors.black,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(CupertinoIcons.xmark, color: CupertinoColors.white, size: 20),
               ),
             ),
           ),
@@ -758,7 +806,7 @@ class _BarcodeScannerBottomSheetState extends State<BarcodeScannerBottomSheet> {
             child: Center(
               child: Text(
                 'Posisikan Barcode / QR Code di dalam kotak',
-                style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.bold),
+                style: TextStyle(color: CupertinoColors.systemGrey3, fontSize: 13, fontWeight: FontWeight.bold, decoration: TextDecoration.none),
               ),
             ),
           ),

@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show Colors; // kept for legacy Color references if needed
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/inventory_provider.dart';
@@ -47,6 +48,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   Widget build(BuildContext context) {
     final isLargeScreen = MediaQuery.of(context).size.width >= 900;
     final inventoryAsync = ref.watch(inventoryListProvider(search: _searchText));
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    const primaryAccent = Color(0xFF6E56CF);
 
     Widget buildLeftPane() {
       return Column(
@@ -54,29 +60,16 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           const CompanySwitcher(),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: TextField(
+            child: CupertinoSearchTextField(
               controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Cari SKU atau Produk...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          setState(() {
-                            _searchController.clear();
-                            _searchText = null;
-                          });
-                        },
-                      )
-                    : null,
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
+              placeholder: 'Cari SKU atau Produk...',
+              onChanged: (val) {
+                if (val.trim().isEmpty) {
+                  setState(() {
+                    _searchText = null;
+                  });
+                }
+              },
               onSubmitted: (val) {
                 setState(() {
                   _searchText = val.trim().isEmpty ? null : val.trim();
@@ -112,71 +105,91 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                     if (index == items.length) {
                       return const Padding(
                         padding: EdgeInsets.symmetric(vertical: 16),
-                        child: Center(child: CircularProgressIndicator()),
+                        child: Center(child: CupertinoActivityIndicator()),
                       );
                     }
                     final item = items[index];
                     final isSelected = isLargeScreen && item.sku == _selectedSku;
 
-                    return Card(
-                      margin: EdgeInsets.zero,
-                      shape: isSelected
-                          ? RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              side: const BorderSide(color: Color(0xFF6E56CF), width: 2),
-                            )
-                          : RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                      color: isSelected ? const Color(0xFF1E293B) : null,
-                      child: ListTile(
-                        onTap: () {
-                          if (isLargeScreen) {
-                            setState(() {
-                              _selectedSku = item.sku;
-                            });
-                          } else {
-                            _showStockDetailBottomSheet(context, item.sku);
-                          }
-                        },
-                        title: Text(
-                          item.productName ?? 'Produk Tidak Dikenal',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: isSelected ? Colors.white : null,
-                          ),
+                    final tileBg = isSelected
+                        ? primaryAccent.withOpacity(0.08)
+                        : cardBg;
+                    final tileBorder = Border.all(
+                      color: isSelected ? primaryAccent : separatorColor,
+                      width: isSelected ? 1.5 : 0.5,
+                    );
+
+                    return GestureDetector(
+                      onTap: () {
+                        if (isLargeScreen) {
+                          setState(() {
+                            _selectedSku = item.sku;
+                          });
+                        } else {
+                          _showStockDetailBottomSheet(context, item.sku);
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: tileBg,
+                          borderRadius: BorderRadius.circular(12),
+                          border: tileBorder,
                         ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Row(
                           children: [
-                            Text(
-                              'SKU: ${item.sku}',
-                              style: TextStyle(color: isSelected ? Colors.white70 : null),
-                            ),
-                            Text(
-                              'Lokasi: ${item.locationCode ?? "Belum Ditentukan"}',
-                              style: TextStyle(color: isSelected ? Colors.white54 : null),
-                            ),
-                          ],
-                        ),
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              '${item.quantity}',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: isSelected ? const Color(0xFF38BDF8) : Colors.blue,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.productName ?? 'Produk Tidak Dikenal',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                      color: labelColor,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'SKU: ${item.sku}',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: secondaryLabel,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Lokasi: ${item.locationCode ?? "Belum Ditentukan"}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: secondaryLabel,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            Text(
-                              item.unit ?? 'pcs',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isSelected ? Colors.white30 : null,
-                              ),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  '${item.quantity}',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: isSelected ? primaryAccent : CupertinoColors.activeBlue,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  item.unit ?? 'pcs',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: secondaryLabel,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -185,7 +198,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   },
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(child: CupertinoActivityIndicator()),
               error: (err, stack) => Center(child: Text('Error: $err')),
             ),
           ),
@@ -193,321 +206,310 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Stok Barang'),
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+      navigationBar: const CupertinoNavigationBar(
+        middle: Text('Stok Barang'),
       ),
-      body: isLargeScreen
-          ? Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: buildLeftPane(),
-                ),
-                const VerticalDivider(
-                  width: 1,
-                  color: Colors.white10,
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Container(
-                    color: const Color(0xFF0F172A),
-                    child: _selectedSku != null
-                        ? StockDetailPane(sku: _selectedSku!)
-                        : const Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.inventory_2_outlined, size: 48, color: Colors.white24),
-                                SizedBox(height: 16),
-                                Text(
-                                  'Pilih barang untuk melihat detail rincian stok',
-                                  style: TextStyle(color: Colors.white38, fontSize: 14),
-                                ),
-                              ],
-                            ),
-                          ),
+      child: SafeArea(
+        child: isLargeScreen
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: buildLeftPane(),
                   ),
-                ),
-              ],
-            )
-          : buildLeftPane(),
+                  Container(
+                    width: 0.5,
+                    color: separatorColor,
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Container(
+                      color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+                      child: _selectedSku != null
+                          ? StockDetailPane(sku: _selectedSku!)
+                          : Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    CupertinoIcons.square_stack_3d_up,
+                                    size: 48,
+                                    color: secondaryLabel.withOpacity(0.5),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Pilih barang untuk melihat detail rincian stok',
+                                    style: TextStyle(color: secondaryLabel, fontSize: 14),
+                                  ),
+                                ],
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              )
+            : buildLeftPane(),
+      ),
     );
   }
 
   void _showStockDetailBottomSheet(BuildContext context, String sku) {
-    showModalBottomSheet(
+    showCupertinoModalPopup(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF0F172A),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       builder: (context) {
         final double sheetHeight = MediaQuery.of(context).size.height * 0.85;
         return Container(
           height: sheetHeight,
-          padding: const EdgeInsets.only(top: 12),
-          child: Column(
-            children: [
-              // Handle Bar
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
+          decoration: BoxDecoration(
+            color: CupertinoColors.systemBackground.resolveFrom(context),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: CupertinoPageScaffold(
+            navigationBar: CupertinoNavigationBar(
+              middle: const Text('Detail Rincian Stok'),
+              trailing: CupertinoButton(
+                padding: EdgeInsets.zero,
+                child: const Text('Tutup'),
+                onPressed: () => Navigator.pop(context),
               ),
-              // Header
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Detail Rincian Stok',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white70),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(color: Colors.white10),
-              Expanded(
-                child: Consumer(
-                  builder: (context, ref, child) {
-                    final breakdownAsync = ref.watch(inventoryBreakdownBySkuProvider(sku));
-                    return breakdownAsync.when(
-                      data: (breakdown) {
-                        final totalOnHand = breakdown.onHand.fold<double>(0, (sum, wh) => sum + wh.quantity);
-                        final totalInTransit = breakdown.inTransit.fold<double>(0, (sum, transit) => sum + transit.quantity);
-                        final totalOrdered = breakdown.ordered.fold<double>(0, (sum, order) => sum + order.quantity);
+            ),
+            child: SafeArea(
+              child: Consumer(
+                builder: (context, ref, child) {
+                  final breakdownAsync = ref.watch(inventoryBreakdownBySkuProvider(sku));
+                  return breakdownAsync.when(
+                    data: (breakdown) {
+                      final totalOnHand = breakdown.onHand.fold<double>(0, (sum, wh) => sum + wh.quantity);
+                      final totalInTransit = breakdown.inTransit.fold<double>(0, (sum, transit) => sum + transit.quantity);
+                      final totalOrdered = breakdown.ordered.fold<double>(0, (sum, order) => sum + order.quantity);
+                      final labelColor = CupertinoColors.label.resolveFrom(context);
+                      final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+                      final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+                      final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
-                        return SingleChildScrollView(
-                          padding: const EdgeInsets.all(20.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Product Name & SKU Card
-                              Container(
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF1E293B),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: Colors.white.withOpacity(0.05)),
-                                ),
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      breakdown.productName,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      'SKU: ${breakdown.sku}',
-                                      style: const TextStyle(color: Colors.white54, fontSize: 13),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    ElevatedButton.icon(
-                                      onPressed: () {
-                                        Navigator.pop(context); // Close bottom sheet
-                                        final firstWh = breakdown.onHand.isNotEmpty ? breakdown.onHand.first : null;
-                                        final firstLoc = (firstWh != null && firstWh.locations.isNotEmpty) ? firstWh.locations.first : null;
-                                        final item = Inventory(
-                                          id: firstLoc?.inventoryId ?? 0,
-                                          sku: breakdown.sku,
-                                          productName: breakdown.productName,
-                                          quantity: totalOnHand,
-                                          status: 'available',
-                                          warehouseName: firstWh?.warehouseName,
-                                          locationCode: firstLoc?.locationCode,
-                                          unit: breakdown.unit,
-                                        );
-                                        context.push('/inventory-adjustments', extra: item);
-                                      },
-                                      icon: const Icon(Icons.settings_backup_restore, size: 16),
-                                      label: const Text('Sesuaikan / Pakai Stok'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFF6E56CF),
-                                        foregroundColor: Colors.white,
-                                        minimumSize: const Size.fromHeight(40),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                      return SingleChildScrollView(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Product Name & SKU Card
+                            Container(
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: cardBg,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: separatorColor, width: 0.5),
                               ),
-                              const SizedBox(height: 16),
-
-                              // Summary Grid
-                              Row(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(
-                                    child: _buildSummaryGridItem(
-                                      'Tersedia',
-                                      totalOnHand,
-                                      const Color(0xFF38BDF8),
-                                      Icons.inventory_2_outlined,
-                                      breakdown.unit,
+                                  Text(
+                                    breakdown.productName,
+                                    style: TextStyle(
+                                      color: labelColor,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: _buildSummaryGridItem(
-                                      'Transit',
-                                      totalInTransit,
-                                      Colors.amber,
-                                      Icons.local_shipping_outlined,
-                                      breakdown.unit,
-                                    ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'SKU: ${breakdown.sku}',
+                                    style: TextStyle(color: secondaryLabel, fontSize: 13),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: _buildSummaryGridItem(
-                                      'Dipesan',
-                                      totalOrdered,
-                                      const Color(0xFFa78bfa),
-                                      Icons.assignment_outlined,
-                                      breakdown.unit,
+                                  const SizedBox(height: 12),
+                                  CupertinoButton.filled(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    onPressed: () {
+                                      Navigator.pop(context); // Close bottom sheet
+                                      final firstWh = breakdown.onHand.isNotEmpty ? breakdown.onHand.first : null;
+                                      final firstLoc = (firstWh != null && firstWh.locations.isNotEmpty) ? firstWh.locations.first : null;
+                                      final item = Inventory(
+                                        id: firstLoc?.inventoryId ?? 0,
+                                        sku: breakdown.sku,
+                                        productName: breakdown.productName,
+                                        quantity: totalOnHand,
+                                        status: 'available',
+                                        warehouseName: firstWh?.warehouseName,
+                                        locationCode: firstLoc?.locationCode,
+                                        unit: breakdown.unit,
+                                      );
+                                      context.push('/inventory-adjustments', extra: item);
+                                    },
+                                    child: const Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(CupertinoIcons.arrow_2_circlepath, size: 16),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Sesuaikan / Pakai Stok',
+                                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 24),
-
-                              // On Hand Breakdown
-                              const Text(
-                                'Rincian Stok Tersedia (On Hand)',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              if (breakdown.onHand.isEmpty)
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF1E293B).withOpacity(0.5),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Text(
-                                    'Tidak ada stok tersedia di gudang mana pun.',
-                                    style: TextStyle(color: Colors.white38, fontSize: 12),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                )
-                              else
-                                ...breakdown.onHand.map((wh) => WarehouseStockTile(warehouse: wh, unit: breakdown.unit)),
-
-                              const SizedBox(height: 20),
-
-                              // In Transit Breakdown
-                              const Text(
-                                'Rincian Dalam Perjalanan (In Transit)',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              if (breakdown.inTransit.isEmpty)
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF1E293B).withOpacity(0.5),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Text(
-                                    'Tidak ada transfer barang aktif saat ini.',
-                                    style: TextStyle(color: Colors.white38, fontSize: 12),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                )
-                              else
-                                ...breakdown.inTransit.map((transit) => InTransitStockTile(transit: transit, unit: breakdown.unit)),
-
-                              const SizedBox(height: 20),
-
-                              // Ordered Breakdown
-                              const Text(
-                                'Rincian Pesanan (On Order)',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              if (breakdown.ordered.isEmpty)
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF1E293B).withOpacity(0.5),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Text(
-                                    'Tidak ada pesanan pembelian (PO) aktif untuk produk ini.',
-                                    style: TextStyle(color: Colors.white38, fontSize: 12),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                )
-                              else
-                                ...breakdown.ordered.map((order) => OrderedStockTile(order: order, unit: breakdown.unit)),
-                            ],
-                          ),
-                        );
-                      },
-                      loading: () => const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            CircularProgressIndicator(color: Color(0xFF6E56CF)),
-                            SizedBox(height: 16),
-                            Text(
-                              'Memuat detail stok...',
-                              style: TextStyle(color: Colors.white70, fontSize: 14),
                             ),
+                            const SizedBox(height: 16),
+
+                            // Summary Grid
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildSummaryGridItem(
+                                    context,
+                                    'Tersedia',
+                                    totalOnHand,
+                                    CupertinoColors.activeBlue.resolveFrom(context),
+                                    CupertinoIcons.cube_box,
+                                    breakdown.unit,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _buildSummaryGridItem(
+                                    context,
+                                    'Transit',
+                                    totalInTransit,
+                                    CupertinoColors.systemOrange.resolveFrom(context),
+                                    CupertinoIcons.paperplane,
+                                    breakdown.unit,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _buildSummaryGridItem(
+                                    context,
+                                    'Dipesan',
+                                    totalOrdered,
+                                    CupertinoColors.systemPurple.resolveFrom(context),
+                                    CupertinoIcons.doc_text,
+                                    breakdown.unit,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+
+                            // On Hand Breakdown
+                            Text(
+                              'Rincian Stok Tersedia (On Hand)',
+                              style: TextStyle(
+                                color: secondaryLabel,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            if (breakdown.onHand.isEmpty)
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: cardBg.withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  'Tidak ada stok tersedia di gudang mana pun.',
+                                  style: TextStyle(color: secondaryLabel, fontSize: 12),
+                                  textAlign: TextAlign.center,
+                                ),
+                              )
+                            else
+                              ...breakdown.onHand.map((wh) => WarehouseStockTile(warehouse: wh, unit: breakdown.unit)),
+
+                            const SizedBox(height: 20),
+
+                            // In Transit Breakdown
+                            Text(
+                              'Rincian Dalam Perjalanan (In Transit)',
+                              style: TextStyle(
+                                color: secondaryLabel,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            if (breakdown.inTransit.isEmpty)
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: cardBg.withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  'Tidak ada transfer barang aktif saat ini.',
+                                  style: TextStyle(color: secondaryLabel, fontSize: 12),
+                                  textAlign: TextAlign.center,
+                                ),
+                              )
+                            else
+                              ...breakdown.inTransit.map((transit) => InTransitStockTile(transit: transit, unit: breakdown.unit)),
+
+                            const SizedBox(height: 20),
+
+                            // Ordered Breakdown
+                            Text(
+                              'Rincian Pesanan (On Order)',
+                              style: TextStyle(
+                                color: secondaryLabel,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            if (breakdown.ordered.isEmpty)
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: cardBg.withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  'Tidak ada pesanan pembelian (PO) aktif untuk produk ini.',
+                                  style: TextStyle(color: secondaryLabel, fontSize: 12),
+                                  textAlign: TextAlign.center,
+                                ),
+                              )
+                            else
+                              ...breakdown.ordered.map((order) => OrderedStockTile(order: order, unit: breakdown.unit)),
                           ],
                         ),
-                      ),
-                      error: (err, stack) => Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24.0),
-                          child: Text(
-                            'Gagal mengambil rincian stok: $err',
-                            style: const TextStyle(color: Colors.redAccent, fontSize: 14),
-                            textAlign: TextAlign.center,
+                      );
+                    },
+                    loading: () => const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CupertinoActivityIndicator(),
+                          SizedBox(height: 16),
+                          Text(
+                            'Memuat detail stok...',
+                            style: TextStyle(fontSize: 14),
                           ),
+                        ],
+                      ),
+                    ),
+                    error: (err, stack) => Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Text(
+                          'Gagal mengambil rincian stok: $err',
+                          style: const TextStyle(color: CupertinoColors.destructiveRed, fontSize: 14),
+                          textAlign: TextAlign.center,
                         ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
               ),
-            ],
+            ),
           ),
         );
       },
@@ -515,16 +517,19 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   }
 
   Widget _buildSummaryGridItem(
+    BuildContext context,
     String title,
     double qty,
     Color accentColor,
     IconData icon,
     String unit,
   ) {
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: cardBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: accentColor.withOpacity(0.15)),
       ),
@@ -537,7 +542,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               Icon(icon, size: 16, color: accentColor),
               Text(
                 title,
-                style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w500),
+                style: TextStyle(color: secondaryLabel, fontSize: 11, fontWeight: FontWeight.w500),
               ),
             ],
           ),
@@ -558,7 +563,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               Expanded(
                 child: Text(
                   unit,
-                  style: const TextStyle(color: Colors.white30, fontSize: 10),
+                  style: TextStyle(color: secondaryLabel.withOpacity(0.6), fontSize: 10),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -578,6 +583,11 @@ class StockDetailPane extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final breakdownAsync = ref.watch(inventoryBreakdownBySkuProvider(sku));
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+
     return breakdownAsync.when(
       data: (breakdown) {
         final totalOnHand = breakdown.onHand.fold<double>(0, (sum, wh) => sum + wh.quantity);
@@ -593,9 +603,9 @@ class StockDetailPane extends ConsumerWidget {
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withOpacity(0.05)),
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: separatorColor, width: 0.5),
                 ),
                 padding: const EdgeInsets.all(20),
                 child: Column(
@@ -603,8 +613,8 @@ class StockDetailPane extends ConsumerWidget {
                   children: [
                     Text(
                       breakdown.productName,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: labelColor,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -612,10 +622,11 @@ class StockDetailPane extends ConsumerWidget {
                     const SizedBox(height: 8),
                     Text(
                       'SKU: ${breakdown.sku}',
-                      style: const TextStyle(color: Colors.white54, fontSize: 14),
+                      style: TextStyle(color: secondaryLabel, fontSize: 14),
                     ),
                     const SizedBox(height: 12),
-                    ElevatedButton.icon(
+                    CupertinoButton.filled(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       onPressed: () {
                         final firstWh = breakdown.onHand.isNotEmpty ? breakdown.onHand.first : null;
                         final firstLoc = (firstWh != null && firstWh.locations.isNotEmpty) ? firstWh.locations.first : null;
@@ -631,13 +642,16 @@ class StockDetailPane extends ConsumerWidget {
                         );
                         context.push('/inventory-adjustments', extra: item);
                       },
-                      icon: const Icon(Icons.settings_backup_restore, size: 16),
-                      label: const Text('Sesuaikan / Pakai Stok'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6E56CF),
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size.fromHeight(40),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(CupertinoIcons.arrow_2_circlepath, size: 16),
+                          SizedBox(width: 8),
+                          Text(
+                            'Sesuaikan / Pakai Stok',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -650,30 +664,33 @@ class StockDetailPane extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: _buildSummaryGridItem(
+                      context,
                       'Tersedia',
                       totalOnHand,
-                      const Color(0xFF38BDF8),
-                      Icons.inventory_2_outlined,
+                      CupertinoColors.activeBlue.resolveFrom(context),
+                      CupertinoIcons.cube_box,
                       breakdown.unit,
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildSummaryGridItem(
+                      context,
                       'Transit',
                       totalInTransit,
-                      Colors.amber,
-                      Icons.local_shipping_outlined,
+                      CupertinoColors.systemOrange.resolveFrom(context),
+                      CupertinoIcons.paperplane,
                       breakdown.unit,
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildSummaryGridItem(
+                      context,
                       'Dipesan',
                       totalOrdered,
-                      const Color(0xFFa78bfa),
-                      Icons.assignment_outlined,
+                      CupertinoColors.systemPurple.resolveFrom(context),
+                      CupertinoIcons.doc_text,
                       breakdown.unit,
                     ),
                   ),
@@ -682,39 +699,39 @@ class StockDetailPane extends ConsumerWidget {
               const SizedBox(height: 28),
 
               // Rincian On Hand
-              const Text(
+              Text(
                 'Rincian Stok Tersedia (On Hand)',
-                style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.bold),
+                style: TextStyle(color: labelColor, fontSize: 14, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
               if (breakdown.onHand.isEmpty)
-                _buildEmptyCard('Tidak ada stok tersedia di gudang mana pun.')
+                _buildEmptyCard(context, 'Tidak ada stok tersedia di gudang mana pun.')
               else
                 ...breakdown.onHand.map((wh) => WarehouseStockTile(warehouse: wh, unit: breakdown.unit)),
 
               const SizedBox(height: 24),
 
               // Rincian In Transit
-              const Text(
+              Text(
                 'Rincian Dalam Perjalanan (In Transit)',
-                style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.bold),
+                style: TextStyle(color: labelColor, fontSize: 14, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
               if (breakdown.inTransit.isEmpty)
-                _buildEmptyCard('Tidak ada transfer barang aktif.')
+                _buildEmptyCard(context, 'Tidak ada transfer barang aktif.')
               else
                 ...breakdown.inTransit.map((transit) => InTransitStockTile(transit: transit, unit: breakdown.unit)),
 
               const SizedBox(height: 24),
 
               // Rincian Ordered
-              const Text(
+              Text(
                 'Rincian Pesanan (On Order)',
-                style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.bold),
+                style: TextStyle(color: labelColor, fontSize: 14, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
               if (breakdown.ordered.isEmpty)
-                _buildEmptyCard('Tidak ada pesanan pembelian aktif.')
+                _buildEmptyCard(context, 'Tidak ada pesanan pembelian aktif.')
               else
                 ...breakdown.ordered.map((order) => OrderedStockTile(order: order, unit: breakdown.unit)),
             ],
@@ -724,7 +741,7 @@ class StockDetailPane extends ConsumerWidget {
       loading: () => const Center(
         child: Padding(
           padding: EdgeInsets.only(top: 100.0),
-          child: CircularProgressIndicator(color: Color(0xFF6E56CF)),
+          child: CupertinoActivityIndicator(),
         ),
       ),
       error: (err, stack) => Center(
@@ -732,7 +749,7 @@ class StockDetailPane extends ConsumerWidget {
           padding: const EdgeInsets.all(24.0),
           child: Text(
             'Gagal memuat detail stok: $err',
-            style: const TextStyle(color: Colors.redAccent),
+            style: const TextStyle(color: CupertinoColors.destructiveRed),
             textAlign: TextAlign.center,
           ),
         ),
@@ -740,11 +757,20 @@ class StockDetailPane extends ConsumerWidget {
     );
   }
 
-  Widget _buildSummaryGridItem(String title, double qty, Color accentColor, IconData icon, String unit) {
+  Widget _buildSummaryGridItem(
+    BuildContext context,
+    String title,
+    double qty,
+    Color accentColor,
+    IconData icon,
+    String unit,
+  ) {
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: cardBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: accentColor.withOpacity(0.15)),
       ),
@@ -757,7 +783,7 @@ class StockDetailPane extends ConsumerWidget {
               Icon(icon, size: 18, color: accentColor),
               Text(
                 title,
-                style: const TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.w500),
+                style: TextStyle(color: secondaryLabel, fontSize: 12, fontWeight: FontWeight.w500),
               ),
             ],
           ),
@@ -778,7 +804,7 @@ class StockDetailPane extends ConsumerWidget {
               Expanded(
                 child: Text(
                   unit,
-                  style: const TextStyle(color: Colors.white30, fontSize: 12),
+                  style: TextStyle(color: secondaryLabel.withOpacity(0.6), fontSize: 12),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -790,20 +816,21 @@ class StockDetailPane extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyCard(String text) {
+  Widget _buildEmptyCard(BuildContext context, String text) {
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B).withOpacity(0.5),
+        color: cardBg.withOpacity(0.5),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
         text,
-        style: const TextStyle(color: Colors.white38, fontSize: 13),
+        style: TextStyle(color: secondaryLabel, fontSize: 13),
         textAlign: TextAlign.center,
       ),
     );
   }
 }
-

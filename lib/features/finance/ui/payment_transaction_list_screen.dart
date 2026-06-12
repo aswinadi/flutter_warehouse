@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show Divider, Colors;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/widgets/company_switcher.dart';
@@ -14,27 +15,24 @@ class PaymentTransactionListScreen extends ConsumerStatefulWidget {
       _PaymentTransactionListScreenState();
 }
 
-class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactionListScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactionListScreen> {
   final ScrollController _noProofScrollController = ScrollController();
   final ScrollController _allScrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
 
   String _searchQuery = '';
   int? _selectedTransactionId;
+  int _selectedSegment = 0;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
     _noProofScrollController.addListener(_onNoProofScroll);
     _allScrollController.addListener(_onAllScroll);
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
     _noProofScrollController.dispose();
     _allScrollController.dispose();
     _searchController.dispose();
@@ -74,73 +72,72 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width > 900;
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final bgColor = CupertinoColors.systemGroupedBackground.resolveFrom(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Transaksi Pembayaran Supplier'),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Theme.of(context).colorScheme.primary,
-          labelColor: Theme.of(context).colorScheme.primary,
-          unselectedLabelColor: Colors.grey,
-          tabs: const [
-            Tab(
-              icon: Icon(Icons.receipt_long),
-              text: 'Belum Unggah Bukti',
+    return CupertinoPageScaffold(
+      backgroundColor: bgColor,
+      navigationBar: CupertinoNavigationBar(
+        backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
+        middle: Text(
+          'Transaksi Pembayaran Supplier',
+          style: TextStyle(color: labelColor),
+        ),
+      ),
+      child: SafeArea(
+        child: Column(
+          children: [
+            const CompanySwitcher(),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              color: CupertinoColors.systemBackground.resolveFrom(context),
+              child: CupertinoSlidingSegmentedControl<int>(
+                groupValue: _selectedSegment,
+                children: const {
+                  0: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    child: Text('Belum Unggah Bukti', style: TextStyle(fontSize: 13)),
+                  ),
+                  1: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    child: Text('Semua Transaksi', style: TextStyle(fontSize: 13)),
+                  ),
+                },
+                onValueChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _selectedSegment = value;
+                    });
+                  }
+                },
+              ),
             ),
-            Tab(
-              icon: Icon(Icons.history),
-              text: 'Semua Transaksi',
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: CupertinoSearchTextField(
+                controller: _searchController,
+                placeholder: 'Cari nomor transaksi atau supplier...',
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
+                },
+                onSuffixTap: () {
+                  setState(() {
+                    _searchController.clear();
+                    _searchQuery = '';
+                  });
+                },
+              ),
+            ),
+            Expanded(
+              child: _selectedSegment == 0
+                  ? _buildTabContent(isWide, hasProofFilter: false, controller: _noProofScrollController)
+                  : _buildTabContent(isWide, hasProofFilter: null, controller: _allScrollController),
             ),
           ],
         ),
-      ),
-      body: Column(
-        children: [
-          const CompanySwitcher(),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Cari nomor transaksi atau supplier...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          setState(() {
-                            _searchController.clear();
-                            _searchQuery = '';
-                          });
-                        },
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: Colors.grey.shade300,
-                  ),
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
-            ),
-          ),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildTabContent(isWide, hasProofFilter: false, controller: _noProofScrollController),
-                _buildTabContent(isWide, hasProofFilter: null, controller: _allScrollController),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -150,6 +147,8 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
       hasProof: hasProofFilter,
       search: _searchQuery,
     ));
+    final secondaryBgColor = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final secondaryLabelColor = CupertinoColors.secondaryLabel.resolveFrom(context);
 
     if (isWide) {
       return Row(
@@ -158,24 +157,37 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
             width: 380,
             child: _buildListPanel(transactionsAsync, controller, isWide, hasProofFilter),
           ),
-          const VerticalDivider(width: 1, thickness: 1, color: Color(0xFFE2E8F0)),
+          Container(
+            width: 1,
+            color: CupertinoColors.separator.resolveFrom(context),
+          ),
           Expanded(
-            child: _selectedTransactionId != null
-                ? PaymentTransactionDetailWidget(
-                    transactionId: _selectedTransactionId!,
-                    onUploadSuccess: () {
-                      ref.invalidate(paymentTransactionsListProvider(
-                        hasProof: hasProofFilter,
-                        search: _searchQuery,
-                      ));
-                    },
-                  )
-                : const Center(
-                    child: Text(
-                      'Pilih transaksi pembayaran untuk melihat detail',
-                      style: TextStyle(color: Colors.grey, fontSize: 16),
+            child: Container(
+              color: secondaryBgColor,
+              child: _selectedTransactionId != null
+                  ? PaymentTransactionDetailWidget(
+                      transactionId: _selectedTransactionId!,
+                      onUploadSuccess: () {
+                        ref.invalidate(paymentTransactionsListProvider(
+                          hasProof: hasProofFilter,
+                          search: _searchQuery,
+                        ));
+                      },
+                    )
+                  : Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(CupertinoIcons.creditcard, size: 48, color: secondaryLabelColor),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Pilih transaksi pembayaran untuk melihat detail',
+                            style: TextStyle(color: secondaryLabelColor, fontSize: 16),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+            ),
           ),
         ],
       );
@@ -190,35 +202,40 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
     bool isWide,
     bool? hasProofFilter,
   ) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabelColor = CupertinoColors.secondaryLabel.resolveFrom(context);
+
     return transactionsAsync.when(
       data: (transactions) {
         if (transactions.isEmpty) {
-          return const Center(
+          return Center(
             child: Padding(
-              padding: EdgeInsets.all(24.0),
+              padding: const EdgeInsets.all(24.0),
               child: Text(
                 'Tidak ada transaksi pembayaran',
-                style: TextStyle(color: Colors.grey, fontSize: 16),
+                style: TextStyle(color: secondaryLabelColor, fontSize: 16),
                 textAlign: TextAlign.center,
               ),
             ),
           );
         }
 
+        final hasMore = ref.watch(paymentTransactionsListProvider(
+          hasProof: hasProofFilter,
+          search: _searchQuery,
+        ).notifier).hasMore;
+
         return ListView.separated(
           controller: controller,
           padding: const EdgeInsets.all(16),
-          itemCount: transactions.length + (ref.read(paymentTransactionsListProvider(
-            hasProof: hasProofFilter,
-            search: _searchQuery,
-          ).notifier).hasMore ? 1 : 0),
+          itemCount: transactions.length + (hasMore ? 1 : 0),
           separatorBuilder: (context, index) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             if (index == transactions.length) {
               return const Center(
                 child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
-                  child: CircularProgressIndicator(),
+                  child: CupertinoActivityIndicator(),
                 ),
               );
             }
@@ -226,18 +243,21 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
             final trx = transactions[index];
             final isSelected = trx.id == _selectedTransactionId;
 
-            return Card(
-              elevation: isSelected ? 4 : 1,
-              shape: RoundedRectangleBorder(
+            return Container(
+              decoration: BoxDecoration(
+                color: isSelected 
+                    ? CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.08)
+                    : CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
                 borderRadius: BorderRadius.circular(12),
-                side: BorderSide(
+                border: Border.all(
                   color: isSelected
-                      ? Theme.of(context).colorScheme.primary
-                      : Colors.transparent,
-                  width: 2,
+                      ? CupertinoColors.activeBlue.resolveFrom(context)
+                      : CupertinoColors.separator.resolveFrom(context),
+                  width: isSelected ? 2.0 : 0.5,
                 ),
               ),
-              child: InkWell(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: () {
                   if (isWide) {
                     setState(() {
@@ -247,7 +267,6 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
                     context.go('/payment-transactions/${trx.id}');
                   }
                 },
-                borderRadius: BorderRadius.circular(12),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -259,9 +278,10 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
                           Expanded(
                             child: Text(
                               trx.transactionNumber,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 15,
+                                color: labelColor,
                               ),
                             ),
                           ),
@@ -270,9 +290,15 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
                                 horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
                               color: trx.receiptPath != null
-                                  ? Colors.green.shade50
-                                  : Colors.orange.shade50,
+                                  ? CupertinoColors.systemGreen.withValues(alpha: 0.1)
+                                  : CupertinoColors.systemOrange.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: trx.receiptPath != null
+                                    ? CupertinoColors.systemGreen
+                                    : CupertinoColors.systemOrange,
+                                width: 0.5,
+                              ),
                             ),
                             child: Text(
                               trx.receiptPath != null
@@ -282,8 +308,8 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: trx.receiptPath != null
-                                    ? Colors.green.shade700
-                                    : Colors.orange.shade700,
+                                    ? CupertinoColors.systemGreen.resolveFrom(context)
+                                    : CupertinoColors.systemOrange.resolveFrom(context),
                               ),
                             ),
                           ),
@@ -292,14 +318,14 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          const Icon(Icons.business, size: 16, color: Colors.grey),
+                          Icon(CupertinoIcons.building_2_fill, size: 16, color: secondaryLabelColor),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               trx.supplierName ?? 'Pemasok Tidak Diketahui',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.black87,
+                                color: labelColor,
                               ),
                             ),
                           ),
@@ -308,14 +334,13 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.calendar_today,
-                              size: 16, color: Colors.grey),
+                          Icon(CupertinoIcons.calendar, size: 16, color: secondaryLabelColor),
                           const SizedBox(width: 8),
                           Text(
                             trx.transactionDate,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
-                              color: Colors.grey,
+                              color: secondaryLabelColor,
                             ),
                           ),
                         ],
@@ -324,11 +349,11 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
+                          Text(
                             'Total Pembayaran',
                             style: TextStyle(
                               fontSize: 13,
-                              color: Colors.grey,
+                              color: secondaryLabelColor,
                             ),
                           ),
                           Text(
@@ -336,7 +361,7 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
-                              color: Theme.of(context).colorScheme.primary,
+                              color: CupertinoColors.activeBlue.resolveFrom(context),
                             ),
                           ),
                         ],
@@ -349,22 +374,22 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
           },
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: CupertinoActivityIndicator()),
       error: (error, stack) => Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, color: Colors.red, size: 48),
+              const Icon(CupertinoIcons.exclamationmark_triangle, color: CupertinoColors.systemRed, size: 48),
               const SizedBox(height: 12),
               Text(
                 'Gagal memuat transaksi: ${error.toString()}',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.red),
+                style: TextStyle(color: CupertinoColors.systemRed.resolveFrom(context)),
               ),
               const SizedBox(height: 12),
-              ElevatedButton(
+              CupertinoButton.filled(
                 onPressed: () {
                   ref.invalidate(paymentTransactionsListProvider(
                     hasProof: hasProofFilter,

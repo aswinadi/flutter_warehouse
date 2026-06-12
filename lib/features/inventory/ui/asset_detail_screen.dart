@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show Colors; // kept for legacy Color references if needed
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -18,18 +19,18 @@ class _AssetDetailScreenState extends ConsumerState<AssetDetailScreen> {
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'available':
-        return Colors.green;
+        return CupertinoColors.activeGreen;
       case 'assigned':
-        return Colors.blue;
+        return CupertinoColors.activeBlue;
       case 'maintenance':
-        return Colors.orange;
+        return CupertinoColors.systemOrange;
       case 'broken':
       case 'lost':
-        return Colors.red;
+        return CupertinoColors.destructiveRed;
       case 'retired':
-        return Colors.grey;
+        return CupertinoColors.systemGrey;
       default:
-        return Colors.blueGrey;
+        return CupertinoColors.systemGrey;
     }
   }
 
@@ -89,70 +90,71 @@ class _AssetDetailScreenState extends ConsumerState<AssetDetailScreen> {
   Widget build(BuildContext context) {
     final assetAsync = ref.watch(assetDetailProvider(widget.assetId));
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0F172A),
-        foregroundColor: Colors.white,
-        title: const Text('Detail Aset Hardware'),
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+      navigationBar: const CupertinoNavigationBar(
+        middle: Text('Detail Aset Hardware'),
       ),
-      body: assetAsync.when(
-        data: (asset) {
-          final statusColor = _getStatusColor(asset.status);
+      child: SafeArea(
+        child: assetAsync.when(
+          data: (asset) {
+            final statusColor = _getStatusColor(asset.status);
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header Panel Card
-                _buildHeaderCard(asset, statusColor),
-                const SizedBox(height: 16),
-
-                // Assignment & Location Card
-                _buildAssignmentCard(asset),
-                const SizedBox(height: 16),
-
-                // Acquisition & Commercial Card
-                _buildAcquisitionCard(asset),
-                const SizedBox(height: 16),
-
-                // Specs and Notes Card
-                _buildDetailsCard(asset),
-                const SizedBox(height: 16),
-
-                // Photos Section
-                if (asset.media.isNotEmpty) ...[
-                  _buildPhotosSection(asset),
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header Panel Card
+                  _buildHeaderCard(asset, statusColor),
                   const SizedBox(height: 16),
-                ],
 
-                // Action Print Button
-                _buildPrintActionCard(asset),
-                const SizedBox(height: 32),
-              ],
-            ),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline, color: Colors.red, size: 48),
-                const SizedBox(height: 12),
-                Text(
-                  'Gagal memuat detail aset: $err',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.red),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => ref.refresh(assetDetailProvider(widget.assetId)),
-                  child: const Text('Coba Lagi'),
-                ),
-              ],
+                  // Assignment & Location Card
+                  _buildAssignmentCard(asset),
+                  const SizedBox(height: 16),
+
+                  // Acquisition & Commercial Card
+                  _buildAcquisitionCard(asset),
+                  const SizedBox(height: 16),
+
+                  // Specs and Notes Card
+                  _buildDetailsCard(asset),
+                  const SizedBox(height: 16),
+
+                  // Photos Section
+                  if (asset.media.isNotEmpty) ...[
+                    _buildPhotosSection(asset),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Action Print Button
+                  _buildPrintActionCard(asset),
+                  const SizedBox(height: 32),
+                ],
+              ),
+            );
+          },
+          loading: () => const Center(child: CupertinoActivityIndicator()),
+          error: (err, stack) => Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(CupertinoIcons.exclamationmark_triangle, color: CupertinoColors.destructiveRed, size: 48),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Gagal memuat detail aset: $err',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: CupertinoColors.destructiveRed),
+                  ),
+                  const SizedBox(height: 16),
+                  CupertinoButton.filled(
+                    onPressed: () => ref.refresh(assetDetailProvider(widget.assetId)),
+                    child: const Text('Coba Lagi'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -161,259 +163,289 @@ class _AssetDetailScreenState extends ConsumerState<AssetDetailScreen> {
   }
 
   Widget _buildHeaderCard(Asset asset, Color statusColor) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Color(0xFFE2E8F0)),
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: separatorColor, width: 0.5),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Category
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: Text(
-                    asset.category,
-                    style: const TextStyle(
-                      color: Color(0xFF475569),
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Category
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: separatorColor, width: 0.5),
+                ),
+                child: Text(
+                  asset.category,
+                  style: TextStyle(
+                    color: labelColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                // Status Badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    _getStatusLabel(asset.status),
-                    style: TextStyle(
-                      color: statusColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              asset.name,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
               ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '${asset.brand ?? ''} ${asset.model ?? ''}'.trim(),
-              style: const TextStyle(
-                fontSize: 15,
-                color: Color(0xFF64748B),
+              // Status Badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  _getStatusLabel(asset.status),
+                  style: TextStyle(
+                    color: statusColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
               ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            asset.name,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: labelColor,
             ),
-            const Divider(height: 32, color: Color(0xFFE2E8F0)),
-            // Asset Tag & S/N info
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'ASSET TAG',
-                        style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        asset.assetTag,
-                        style: const TextStyle(
-                          color: Color(0xFF0F172A),
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'monospace',
-                          fontSize: 15,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  height: 32,
-                  width: 1,
-                  color: const Color(0xFFE2E8F0),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'SERIAL NUMBER (S/N)',
-                        style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        asset.serialNumber ?? '—',
-                        style: const TextStyle(
-                          color: Color(0xFF0F172A),
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'monospace',
-                          fontSize: 15,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '${asset.brand ?? ''} ${asset.model ?? ''}'.trim(),
+            style: TextStyle(
+              fontSize: 15,
+              color: secondaryLabel,
             ),
-          ],
-        ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: Container(height: 0.5, color: separatorColor),
+          ),
+          // Asset Tag & S/N info
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'ASSET TAG',
+                      style: TextStyle(color: secondaryLabel, fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      asset.assetTag,
+                      style: TextStyle(
+                        color: labelColor,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'monospace',
+                        fontSize: 15,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                height: 32,
+                width: 0.5,
+                color: separatorColor,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'SERIAL NUMBER (S/N)',
+                      style: TextStyle(color: secondaryLabel, fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      asset.serialNumber ?? '—',
+                      style: TextStyle(
+                        color: labelColor,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'monospace',
+                        fontSize: 15,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildAssignmentCard(Asset asset) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Color(0xFFE2E8F0)),
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    const primaryAccent = Color(0xFF6E56CF);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: separatorColor, width: 0.5),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.assignment_ind_outlined, color: Color(0xFF6E56CF)),
-                SizedBox(width: 8),
-                Text(
-                  'Status Penempatan & Pengguna',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                ),
-              ],
-            ),
-            const Divider(height: 24, color: Color(0xFFF1F5F9)),
-            _buildDetailRow('Perusahaan', asset.companyName ?? '—'),
-            _buildDetailRow('Lokasi / Kantor', asset.officeName ?? '—'),
-            _buildDetailRow('Pengguna / Karyawan', asset.employeeName ?? 'Belum Ditugaskan', valueStyle: asset.employeeName == null ? const TextStyle(fontStyle: FontStyle.italic, color: Colors.grey) : null),
-            _buildDetailRow('Tanggal Penyerahan', _formatDate(asset.assignedDate)),
-          ],
-        ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(CupertinoIcons.person_crop_square, color: primaryAccent, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Status Penempatan & Pengguna',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12.0),
+            child: Container(height: 0.5, color: separatorColor),
+          ),
+          _buildDetailRow('Perusahaan', asset.companyName ?? '—'),
+          _buildDetailRow('Lokasi / Kantor', asset.officeName ?? '—'),
+          _buildDetailRow('Pengguna / Karyawan', asset.employeeName ?? 'Belum Ditugaskan', valueStyle: asset.employeeName == null ? const TextStyle(fontStyle: FontStyle.italic, color: CupertinoColors.placeholderText) : null),
+          _buildDetailRow('Tanggal Penyerahan', _formatDate(asset.assignedDate)),
+        ],
       ),
     );
   }
 
   Widget _buildAcquisitionCard(Asset asset) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Color(0xFFE2E8F0)),
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    const primaryAccent = Color(0xFF6E56CF);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: separatorColor, width: 0.5),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.shopping_bag_outlined, color: Color(0xFF6E56CF)),
-                SizedBox(width: 8),
-                Text(
-                  'Informasi Pembelian & Garansi',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                ),
-              ],
-            ),
-            const Divider(height: 24, color: Color(0xFFF1F5F9)),
-            _buildDetailRow('Tanggal Pembelian', _formatDate(asset.purchaseDate)),
-            _buildDetailRow('Harga Pembelian', _formatCurrency(asset.purchasePrice)),
-            _buildDetailRow('Supplier', asset.supplierName ?? '—'),
-            _buildDetailRow('Masa Garansi Habis', _formatDate(asset.warrantyExpiry)),
-          ],
-        ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(CupertinoIcons.shopping_cart, color: primaryAccent, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Informasi Pembelian & Garansi',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12.0),
+            child: Container(height: 0.5, color: separatorColor),
+          ),
+          _buildDetailRow('Tanggal Pembelian', _formatDate(asset.purchaseDate)),
+          _buildDetailRow('Harga Pembelian', _formatCurrency(asset.purchasePrice)),
+          _buildDetailRow('Supplier', asset.supplierName ?? '—'),
+          _buildDetailRow('Masa Garansi Habis', _formatDate(asset.warrantyExpiry)),
+        ],
       ),
     );
   }
 
   Widget _buildDetailsCard(Asset asset) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Color(0xFFE2E8F0)),
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    const primaryAccent = Color(0xFF6E56CF);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: separatorColor, width: 0.5),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.description_outlined, color: Color(0xFF6E56CF)),
-                SizedBox(width: 8),
-                Text(
-                  'Spesifikasi Teknis & Catatan',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                ),
-              ],
-            ),
-            const Divider(height: 24, color: Color(0xFFF1F5F9)),
-            const Text(
-              'Spesifikasi',
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 13, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              (asset.specifications != null && asset.specifications!.isNotEmpty)
-                  ? asset.specifications!
-                  : 'Tidak ada spesifikasi khusus.',
-              style: const TextStyle(color: Color(0xFF1E293B), fontSize: 14),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Catatan Tambahan',
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 13, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              (asset.notes != null && asset.notes!.isNotEmpty)
-                  ? asset.notes!
-                  : 'Tidak ada catatan tambahan.',
-              style: const TextStyle(color: Color(0xFF1E293B), fontSize: 14),
-            ),
-          ],
-        ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(CupertinoIcons.doc_text, color: primaryAccent, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Spesifikasi Teknis & Catatan',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12.0),
+            child: Container(height: 0.5, color: separatorColor),
+          ),
+          Text(
+            'Spesifikasi',
+            style: TextStyle(color: secondaryLabel, fontSize: 13, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            (asset.specifications != null && asset.specifications!.isNotEmpty)
+                ? asset.specifications!
+                : 'Tidak ada spesifikasi khusus.',
+            style: TextStyle(color: labelColor, fontSize: 14),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Catatan Tambahan',
+            style: TextStyle(color: secondaryLabel, fontSize: 13, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            (asset.notes != null && asset.notes!.isNotEmpty)
+                ? asset.notes!
+                : 'Tidak ada catatan tambahan.',
+            style: TextStyle(color: labelColor, fontSize: 14),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildPhotosSection(Asset asset) {
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
           child: Text(
             'Dokumentasi Kondisi Aset',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
           ),
         ),
         SizedBox(
@@ -431,26 +463,23 @@ class _AssetDetailScreenState extends ConsumerState<AssetDetailScreen> {
                   if (med.mimeType == 'application/pdf') {
                     context.push('/pdf-preview?title=${Uri.encodeComponent(med.fileName)}&pdf_url=${Uri.encodeComponent(mediaUrl)}');
                   } else {
-                    showDialog(
+                    showCupertinoModalPopup(
                       context: context,
-                      builder: (context) => Dialog(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            AppBar(
-                              title: Text(med.fileName),
-                              leading: IconButton(
-                                icon: const Icon(Icons.close),
-                                onPressed: () => Navigator.pop(context),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: InteractiveViewer(
-                                child: Image.network(mediaUrl),
-                              ),
-                            ),
-                          ],
+                      builder: (context) => CupertinoPageScaffold(
+                        backgroundColor: CupertinoColors.black,
+                        navigationBar: CupertinoNavigationBar(
+                          backgroundColor: CupertinoColors.black.withOpacity(0.5),
+                          middle: Text(med.fileName, style: const TextStyle(color: CupertinoColors.white)),
+                          leading: CupertinoButton(
+                            padding: EdgeInsets.zero,
+                            child: const Icon(CupertinoIcons.xmark, color: CupertinoColors.white),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ),
+                        child: Center(
+                          child: InteractiveViewer(
+                            child: Image.network(mediaUrl),
+                          ),
                         ),
                       ),
                     );
@@ -460,22 +489,22 @@ class _AssetDetailScreenState extends ConsumerState<AssetDetailScreen> {
                   margin: const EdgeInsets.only(right: 12),
                   width: 120,
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    color: cardBg,
+                    border: Border.all(color: separatorColor, width: 0.5),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: isImage
                       ? Image.network(mediaUrl, fit: BoxFit.cover)
-                      : const Center(
+                      : Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.picture_as_pdf, color: Colors.red, size: 36),
-                              SizedBox(height: 4),
+                              const Icon(CupertinoIcons.doc_text_fill, color: CupertinoColors.systemRed, size: 36),
+                              const SizedBox(height: 4),
                               Text(
                                 'PDF Dokumen',
-                                style: TextStyle(fontSize: 9, color: Colors.grey),
+                                style: TextStyle(fontSize: 9, color: secondaryLabel),
                                 textAlign: TextAlign.center,
                               ),
                             ],
@@ -493,25 +522,25 @@ class _AssetDetailScreenState extends ConsumerState<AssetDetailScreen> {
   Widget _buildPrintActionCard(Asset asset) {
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton.icon(
-        icon: const Icon(Icons.qr_code, color: Colors.white),
-        label: const Text('PRINT QR BARCODE LABEL'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF6E56CF),
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 2,
-          textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
+      child: CupertinoButton.filled(
         onPressed: () {
           context.push('/pdf-preview?title=Barcode Aset ${Uri.encodeComponent(asset.assetTag)}&url_path=pdf/assets/single/${asset.id}');
         },
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(CupertinoIcons.qrcode, size: 20),
+            SizedBox(width: 8),
+            Text('Print QR Barcode Label', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildDetailRow(String label, String value, {TextStyle? valueStyle}) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -521,8 +550,8 @@ class _AssetDetailScreenState extends ConsumerState<AssetDetailScreen> {
             width: 140,
             child: Text(
               label,
-              style: const TextStyle(
-                color: Color(0xFF64748B),
+              style: TextStyle(
+                color: secondaryLabel,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -533,8 +562,8 @@ class _AssetDetailScreenState extends ConsumerState<AssetDetailScreen> {
             child: Text(
               value,
               style: valueStyle ??
-                  const TextStyle(
-                    color: Color(0xFF1E293B),
+                  TextStyle(
+                    color: labelColor,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),

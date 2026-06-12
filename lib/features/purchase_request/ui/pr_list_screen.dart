@@ -2,9 +2,10 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show showDateRangePicker, Theme, ThemeData, ColorScheme, DateTimeRange, Colors;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
@@ -28,7 +29,7 @@ const _kApprovedItemsFilter = '_approved_items';
 const _kWaitingComparisonFilter = 'waiting_comparison';
 
 // Enables mouse + trackpad drag scrolling on Flutter Web.
-class _WebScrollBehavior extends MaterialScrollBehavior {
+class _WebScrollBehavior extends CupertinoScrollBehavior {
   @override
   Set<PointerDeviceKind> get dragDevices => {
         PointerDeviceKind.touch,
@@ -36,6 +37,90 @@ class _WebScrollBehavior extends MaterialScrollBehavior {
         PointerDeviceKind.trackpad,
         PointerDeviceKind.stylus,
       };
+}
+
+// ─── Global Toast Helper ──────────────────────────────────────────────────────
+
+void _showNotification(BuildContext context, String message, {bool isError = false}) {
+  final overlay = Overlay.of(context);
+  late OverlayEntry entry;
+
+  entry = OverlayEntry(
+    builder: (context) => Positioned(
+      top: MediaQuery.of(context).padding.top + 24,
+      left: 24,
+      right: 24,
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 450),
+          child: DefaultTextStyle(
+            style: const TextStyle(color: CupertinoColors.white, fontFamily: '.SF Pro Text'),
+            child: TweenAnimationBuilder<double>(
+              duration: const Duration(milliseconds: 250),
+              tween: Tween(begin: 0.0, end: 1.0),
+              builder: (context, value, child) {
+                return Opacity(
+                  opacity: value,
+                  child: Transform.translate(
+                    offset: Offset(0, (1 - value) * -20),
+                    child: child,
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isError ? CupertinoColors.systemRed : CupertinoColors.activeGreen,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: CupertinoColors.black,
+                      blurRadius: 12,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      isError ? CupertinoIcons.exclamationmark_triangle : CupertinoIcons.check_mark_circled,
+                      color: CupertinoColors.white,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        message,
+                        style: const TextStyle(
+                          color: CupertinoColors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () {
+                        if (entry.mounted) entry.remove();
+                      },
+                      child: const Icon(CupertinoIcons.xmark, color: CupertinoColors.white, size: 18),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  overlay.insert(entry);
+  Future.delayed(const Duration(milliseconds: 3000), () {
+    if (entry.mounted) entry.remove();
+  });
 }
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -99,9 +184,9 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
           : null,
       builder: (context, child) {
         return Theme(
-          data: Theme.of(context).copyWith(
+          data: ThemeData.light().copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF4F46E5),
+              primary: Color(0xFF6E56CF),
               onPrimary: Colors.white,
               onSurface: Color(0xFF1E293B),
             ),
@@ -118,6 +203,75 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
         _selectedPrId = null;
         _selectedItem = null;
       });
+    }
+  }
+
+  void _showDatePresetPicker(BuildContext context) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Pilih Periode'),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _updateDatePreset('all');
+            },
+            child: const Text('Semua Waktu'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _updateDatePreset('30days');
+            },
+            child: const Text('30 Hari Terakhir'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _updateDatePreset('thisMonth');
+            },
+            child: const Text('Bulan Ini'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _updateDatePreset('90days');
+            },
+            child: const Text('3 Bulan Terakhir'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _updateDatePreset('custom');
+              _selectCustomDateRange();
+            },
+            child: const Text('Pilih Tanggal...'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+      ),
+    );
+  }
+
+  String _getDatePresetLabel(String preset) {
+    switch (preset) {
+      case 'all':
+        return 'Semua Waktu';
+      case '30days':
+        return '30 Hari Terakhir';
+      case 'thisMonth':
+        return 'Bulan Ini';
+      case '90days':
+        return '3 Bulan Terakhir';
+      case 'custom':
+        return 'Pilih Tanggal...';
+      default:
+        return preset;
     }
   }
 
@@ -170,212 +324,302 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
       endDate: _endDateStr,
     ));
     final isWide = MediaQuery.of(context).size.width > 900;
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabelColor = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final systemGroupedBgColor = CupertinoColors.systemGroupedBackground.resolveFrom(context);
+    final secondarySystemGroupedBgColor = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Purchase Requests'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              setState(() {
-                _selectedPrId = null;
-                _selectedItem = null;
-              });
-              ref.invalidate(purchaseRequestsProvider);
-            },
-          ),
-        ],
+    return CupertinoPageScaffold(
+      backgroundColor: systemGroupedBgColor,
+      navigationBar: CupertinoNavigationBar(
+        middle: const Text('Purchase Requests'),
+        trailing: CupertinoButton(
+          padding: EdgeInsets.zero,
+          child: const Icon(CupertinoIcons.refresh, size: 24),
+          onPressed: () {
+            setState(() {
+              _selectedPrId = null;
+              _selectedItem = null;
+            });
+            ref.invalidate(purchaseRequestsProvider);
+          },
+        ),
       ),
-      body: Column(
-        children: [
-          const CompanySwitcher(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.calendar_today, size: 16, color: Color(0xFF4F46E5)),
-                const SizedBox(width: 8),
-                const Text(
-                  'Periode:',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _datePreset,
-                      dropdownColor: Colors.white,
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF1E293B), fontWeight: FontWeight.w600),
-                      onChanged: (val) {
-                        if (val != null) {
-                          _updateDatePreset(val);
-                          if (val == 'custom') {
-                            _selectCustomDateRange();
-                          }
-                        }
-                      },
-                      items: const [
-                        DropdownMenuItem(value: 'all', child: Text('Semua Waktu')),
-                        DropdownMenuItem(value: '30days', child: Text('30 Hari Terakhir')),
-                        DropdownMenuItem(value: 'thisMonth', child: Text('Bulan Ini')),
-                        DropdownMenuItem(value: '90days', child: Text('3 Bulan Terakhir')),
-                        DropdownMenuItem(value: 'custom', child: Text('Pilih Tanggal...')),
-                      ],
-                    ),
-                  ),
-                ),
-                if (_startDate != null && _endDate != null) ...[
-                  Text(
-                    '${_startDate!.day}/${_startDate!.month}/${_startDate!.year} - ${_endDate!.day}/${_endDate!.month}/${_endDate!.year}',
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
-                  ),
+      child: SafeArea(
+        child: Column(
+          children: [
+            const CompanySwitcher(),
+            
+            // Date Filter Panel
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: secondarySystemGroupedBgColor,
+                border: Border(bottom: BorderSide(color: separatorColor, width: 0.5)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(CupertinoIcons.calendar, size: 16, color: Color(0xFF6E56CF)),
                   const SizedBox(width: 8),
-                ],
-                if (_datePreset == 'custom')
-                  IconButton(
-                    icon: const Icon(Icons.date_range, size: 18, color: Color(0xFF4F46E5)),
-                    onPressed: _selectCustomDateRange,
-                    constraints: const BoxConstraints(),
-                    padding: EdgeInsets.zero,
+                  Text(
+                    'Periode:',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: secondaryLabelColor),
                   ),
-              ],
-            ),
-          ),
-          SizedBox(
-            height: 52,
-            child: Stack(
-              children: [
-                ScrollConfiguration(
-                  behavior: _WebScrollBehavior(),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Row(
-                      children: [
-                        _buildFilterChip('Menunggu', 'submitted'),
-                        const SizedBox(width: 8),
-                        _buildFilterChip('PR Disetujui', _kApprovedItemsFilter),
-                        const SizedBox(width: 8),
-                        _buildFilterChip('Menunggu Perbandingan', _kWaitingComparisonFilter),
-                        const SizedBox(width: 8),
-                        _buildFilterChip('Menunggu BOD', 'waiting_bod_approval'),
-                        const SizedBox(width: 8),
-                        _buildFilterChip('Vendor Disetujui', 'vendor_approved'),
-                        const SizedBox(width: 8),
-                        _buildFilterChip('PO Dibuat', 'po_created'),
-                        const SizedBox(width: 8),
-                        _buildFilterChip('Ditolak', 'rejected'),
-                        const SizedBox(width: 8),
-                        _buildFilterChip('Semua', null),
-                        const SizedBox(width: 24),
-                      ],
-                    ),
-                  ),
-                ),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: 48,
-                  child: IgnorePointer(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                          colors: [
-                            Colors.white.withValues(alpha: 0.0),
-                            Colors.white,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => _showDatePresetPicker(context),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: CupertinoColors.systemBackground.resolveFrom(context),
+                          border: Border.all(color: separatorColor, width: 0.5),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _getDatePresetLabel(_datePreset),
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: labelColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Icon(CupertinoIcons.chevron_down, size: 14, color: secondaryLabelColor),
                           ],
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                  if (_startDate != null && _endDate != null) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      '${_startDate!.day}/${_startDate!.month}/${_startDate!.year} - ${_endDate!.day}/${_endDate!.month}/${_endDate!.year}',
+                      style: TextStyle(fontSize: 12, color: secondaryLabelColor, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                  if (_datePreset == 'custom') ...[
+                    const SizedBox(width: 8),
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      minSize: 0,
+                      onPressed: _selectCustomDateRange,
+                      child: const Icon(CupertinoIcons.calendar_badge_plus, size: 20, color: Color(0xFF6E56CF)),
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: prAsync.when(
-              data: (requests) {
-                if (requests.isEmpty) {
-                  return const Center(child: Text('No Purchase Requests found'));
-                }
-                final hasMore =
-                    ref.watch(purchaseRequestsProvider(status: _apiStatus).notifier).hasMore;
-                final showLoader = prAsync.isLoading && hasMore;
+            
+            // Filter list in premium horizontal pills
+            SizedBox(
+              height: 52,
+              child: Stack(
+                children: [
+                  ScrollConfiguration(
+                    behavior: _WebScrollBehavior(),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      child: Row(
+                        children: [
+                          _buildFilterChip('Menunggu', 'submitted'),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('PR Disetujui', _kApprovedItemsFilter),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('Menunggu Perbandingan', _kWaitingComparisonFilter),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('Menunggu BOD', 'waiting_bod_approval'),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('Vendor Disetujui', 'vendor_approved'),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('PO Dibuat', 'po_created'),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('Ditolak', 'rejected'),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('Semua', null),
+                          const SizedBox(width: 24),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: 48,
+                    child: IgnorePointer(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            colors: [
+                              systemGroupedBgColor.withOpacity(0.0),
+                              systemGroupedBgColor,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            Expanded(
+              child: prAsync.when(
+                data: (requests) {
+                  if (requests.isEmpty) {
+                    return const Center(child: Text('No Purchase Requests found'));
+                  }
+                  final hasMore =
+                      ref.watch(purchaseRequestsProvider(status: _apiStatus).notifier).hasMore;
+                  final showLoader = prAsync.isLoading && hasMore;
 
-                // ── WAITING COMPARISON — item-based view ──────────────────
-                if (_isWaitingComparisonView) {
-                  return _buildWaitingComparisonView(
-                    context,
-                    requests: requests,
-                    isWide: isWide,
-                    showLoader: showLoader,
-                  );
-                }
-
-                // ── VENDOR APPROVED / PO CREATED — vendor-warehouse grouped view ──
-                if (_isVendorApprovedOrPoCreatedView) {
-                  return _buildGroupedVendorWarehouseView(
-                    context,
-                    requests: requests,
-                    isWide: isWide,
-                    showLoader: showLoader,
-                  );
-                }
-
-                // ── APPROVED PR — item-based view ─────────────────────────
-                if (_isApprovedItemsView) {
-                  final allItems = requests
-                      .expand((pr) => pr.details.map((item) => _ItemWithPr(item: item, pr: pr)))
-                      .toList();
-                  if (allItems.isNotEmpty &&
-                      (_selectedItem == null ||
-                          !allItems.any((x) => x.item.id == _selectedItem!.item.id))) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (mounted) {
-                        setState(() {
-                          _selectedItem = allItems.first;
-                        });
-                      }
-                    });
+                  // ── WAITING COMPARISON — item-based view ──────────────────
+                  if (_isWaitingComparisonView) {
+                    return _buildWaitingComparisonView(
+                      context,
+                      requests: requests,
+                      isWide: isWide,
+                      showLoader: showLoader,
+                    );
                   }
 
-                  if (allItems.isEmpty) {
-                    return const Center(child: Text('No approved items found'));
+                  // ── VENDOR APPROVED / PO CREATED — vendor-warehouse grouped view ──
+                  if (_isVendorApprovedOrPoCreatedView) {
+                    return _buildGroupedVendorWarehouseView(
+                      context,
+                      requests: requests,
+                      isWide: isWide,
+                      showLoader: showLoader,
+                    );
+                  }
+
+                  // ── APPROVED PR — item-based view ─────────────────────────
+                  if (_isApprovedItemsView) {
+                    final allItems = requests
+                        .expand((pr) => pr.details.map((item) => _ItemWithPr(item: item, pr: pr)))
+                        .where((entry) => entry.item.approvedQty != null && entry.item.approvedQty! > 0)
+                        .toList();
+                    if (allItems.isNotEmpty &&
+                        (_selectedItem == null ||
+                            !allItems.any((x) => x.item.id == _selectedItem!.item.id))) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          setState(() {
+                            _selectedItem = allItems.first;
+                          });
+                        }
+                      });
+                    }
+
+                    if (allItems.isEmpty) {
+                      return const Center(child: Text('No approved items found'));
+                    }
+
+                    final mainList = ListView.separated(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(16),
+                      itemCount: allItems.length + (showLoader ? 1 : 0),
+                      separatorBuilder: (ctx, i) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        if (index == allItems.length) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: Center(child: CupertinoActivityIndicator()),
+                          );
+                        }
+                        final entry = allItems[index];
+                        final isSelected = _selectedItem?.item.id == entry.item.id;
+                        return _ApprovedItemCard(
+                          item: entry.item,
+                          pr: entry.pr,
+                          isSelected: isSelected,
+                          onTap: () {
+                            if (isWide) {
+                              setState(() {
+                                _selectedItem = entry;
+                              });
+                            } else {
+                              context.push('/pr/${entry.pr.id}/approve');
+                            }
+                          },
+                        );
+                      },
+                    );
+
+                    if (isWide) {
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: 360,
+                            child: mainList,
+                          ),
+                          Container(width: 0.5, color: separatorColor),
+                          Expanded(
+                            child: _selectedItem != null
+                                ? _ApprovedItemDetailsView(entry: _selectedItem!)
+                                : Center(
+                                    child: Text(
+                                      'Select an item to view details',
+                                      style: TextStyle(color: secondaryLabelColor),
+                                    ),
+                                  ),
+                          ),
+                        ],
+                      );
+                    } else {
+                      return mainList;
+                    }
+                  }
+
+                  // ── STANDARD PR-BASED VIEW ────────────────────────────────
+                  if (isWide) {
+                    if (requests.isNotEmpty &&
+                        (_selectedPrId == null || !requests.any((x) => x.id == _selectedPrId))) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          setState(() {
+                            _selectedPrId = requests.first.id;
+                          });
+                        }
+                      });
+                    }
                   }
 
                   final mainList = ListView.separated(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(16),
-                    itemCount: allItems.length + (showLoader ? 1 : 0),
+                    itemCount: requests.length + (showLoader ? 1 : 0),
                     separatorBuilder: (ctx, i) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
-                      if (index == allItems.length) {
+                      if (index == requests.length) {
                         return const Padding(
                           padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Center(child: CircularProgressIndicator()),
+                          child: Center(child: CupertinoActivityIndicator()),
                         );
                       }
-                      final entry = allItems[index];
-                      final isSelected = _selectedItem?.item.id == entry.item.id;
-                      return _ApprovedItemCard(
-                        item: entry.item,
-                        pr: entry.pr,
+                      final pr = requests[index];
+                      final isSelected = pr.id == _selectedPrId;
+                      return PRCard(
+                        pr: pr,
                         isSelected: isSelected,
                         onTap: () {
                           if (isWide) {
                             setState(() {
-                              _selectedItem = entry;
+                              _selectedPrId = pr.id;
                             });
                           } else {
-                            context.push('/pr/${entry.pr.id}/approve');
+                            context.push('/pr/${pr.id}/approve');
                           }
                         },
                       );
@@ -390,14 +634,14 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
                           width: 360,
                           child: mainList,
                         ),
-                        const VerticalDivider(width: 1, thickness: 1, color: Color(0xFFE2E8F0)),
+                        Container(width: 0.5, color: separatorColor),
                         Expanded(
-                          child: _selectedItem != null
-                              ? _ApprovedItemDetailsView(entry: _selectedItem!)
-                              : const Center(
+                          child: _selectedPrId != null
+                              ? PRDetailsView(prId: _selectedPrId!)
+                              : Center(
                                   child: Text(
-                                    'Select an item to view details',
-                                    style: TextStyle(color: Color(0xFF64748B)),
+                                    'Select a Purchase Request to view details',
+                                    style: TextStyle(color: secondaryLabelColor),
                                   ),
                                 ),
                         ),
@@ -406,82 +650,50 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
                   } else {
                     return mainList;
                   }
-                }
+                },
+                loading: () => const Center(child: CupertinoActivityIndicator()),
+                error: (err, stack) => Center(child: Text('Error: $err')),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-                // ── STANDARD PR-BASED VIEW ────────────────────────────────
-                if (isWide) {
-                  if (requests.isNotEmpty &&
-                      (_selectedPrId == null || !requests.any((x) => x.id == _selectedPrId))) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (mounted) {
-                        setState(() {
-                          _selectedPrId = requests.first.id;
-                        });
-                      }
-                    });
-                  }
-                }
+  Widget _buildFilterChip(String label, String? value) {
+    final isSelected = _selectedStatus == value;
+    final contextResolvedBg = isSelected
+        ? const Color(0xFF6E56CF)
+        : CupertinoColors.tertiarySystemFill.resolveFrom(context);
+    final labelColor = isSelected
+        ? CupertinoColors.white
+        : CupertinoColors.label.resolveFrom(context);
 
-                final mainList = ListView.separated(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
-                  itemCount: requests.length + (showLoader ? 1 : 0),
-                  separatorBuilder: (ctx, i) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    if (index == requests.length) {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        child: Center(child: CircularProgressIndicator()),
-                      );
-                    }
-                    final pr = requests[index];
-                    final isSelected = pr.id == _selectedPrId;
-                    return PRCard(
-                      pr: pr,
-                      isSelected: isSelected,
-                      onTap: () {
-                        if (isWide) {
-                          setState(() {
-                            _selectedPrId = pr.id;
-                          });
-                        } else {
-                          context.push('/pr/${pr.id}/approve');
-                        }
-                      },
-                    );
-                  },
-                );
-
-                if (isWide) {
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 360,
-                        child: mainList,
-                      ),
-                      const VerticalDivider(width: 1, thickness: 1, color: Color(0xFFE2E8F0)),
-                      Expanded(
-                        child: _selectedPrId != null
-                            ? PRDetailsView(prId: _selectedPrId!)
-                            : const Center(
-                                child: Text(
-                                  'Select a Purchase Request to view details',
-                                  style: TextStyle(color: Color(0xFF64748B)),
-                                ),
-                              ),
-                      ),
-                    ],
-                  );
-                } else {
-                  return mainList;
-                }
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Center(child: Text('Error: $err')),
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedStatus = value;
+          _selectedPrId = null;
+          _selectedItem = null;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: contextResolvedBg,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: labelColor,
+              fontSize: 13,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -496,8 +708,24 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
   }) {
     final allItems = requests
         .expand((pr) => pr.details.map((item) => _ItemWithPr(item: item, pr: pr)))
-        .where((entry) => entry.item.status != 'po_created' && entry.item.status != 'waiting_bod_approval')
+        .where((entry) {
+          final status = entry.item.status?.toLowerCase();
+          if (status == 'approved' || status == 'waiting_comparison') {
+            return true;
+          }
+          if (entry.item.approvedQty != null && entry.item.approvedQty! > 0) {
+            final isExcluded = status == 'po_created' ||
+                status == 'waiting_bod_approval' ||
+                status == 'vendor_approved' ||
+                status == 'rejected';
+            return !isExcluded;
+          }
+          return false;
+        })
         .toList();
+
+    final secondaryLabelColor = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     if (allItems.isEmpty) {
       return const Center(child: Text('No items awaiting comparison'));
@@ -510,6 +738,15 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) setState(() => _selectedItem = allItems.first);
       });
+    } else if (isWide && _selectedItem != null) {
+      // Always sync _selectedItem to the fresh entry from the latest data,
+      // so the right pane reflects updated vendor/comparison data after assignment.
+      final freshEntry = allItems.where((x) => x.item.id == _selectedItem!.item.id).firstOrNull;
+      if (freshEntry != null && !identical(freshEntry.pr, _selectedItem!.pr)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) setState(() => _selectedItem = freshEntry);
+        });
+      }
     }
 
     final mainList = ListView.separated(
@@ -521,12 +758,11 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
         if (index == allItems.length) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(child: CupertinoActivityIndicator()),
           );
         }
         final entry = allItems[index];
         final isSelected = _selectedItem?.item.id == entry.item.id;
-        // Count how many comparisons cover this item
         final vendorCount = entry.pr.comparisons
             .where((c) => c.details.any((d) => d.purchaseRequestDetailId == entry.item.id))
             .length;
@@ -540,13 +776,34 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
             if (isWide) {
               setState(() => _selectedItem = entry);
             } else {
-              showModalBottomSheet(
+              showCupertinoModalPopup(
                 context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (_) => _ComparisonItemDetailSheet(
-                  entry: entry,
-                  vendorCount: vendorCount,
+                builder: (_) => Container(
+                  height: MediaQuery.of(context).size.height * 0.85,
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  child: CupertinoPageScaffold(
+                    navigationBar: CupertinoNavigationBar(
+                      middle: const Text('Detail Perbandingan'),
+                      trailing: CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        child: const Text('Tutup'),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ),
+                    child: SafeArea(
+                      child: _ComparisonItemDetailView(
+                        entry: entry,
+                        onAssigned: () {
+                          ref.invalidate(purchaseRequestsProvider);
+                          ref.invalidate(prItemSuggestionsProvider);
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ),
+                  ),
                 ),
               );
             }
@@ -560,7 +817,7 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(width: 380, child: mainList),
-          const VerticalDivider(width: 1, thickness: 1, color: Color(0xFFE2E8F0)),
+          Container(width: 0.5, color: separatorColor),
           Expanded(
             child: _selectedItem != null
                 ? _ComparisonItemDetailView(
@@ -570,10 +827,10 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
                       ref.invalidate(prItemSuggestionsProvider);
                     },
                   )
-                : const Center(
+                : Center(
                     child: Text(
                       'Select an item to assign a vendor',
-                      style: TextStyle(color: Color(0xFF64748B)),
+                      style: TextStyle(color: secondaryLabelColor),
                     ),
                   ),
           ),
@@ -590,14 +847,12 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
     required bool isWide,
     required bool showLoader,
   }) {
-    // 1. Group items across requests by supplier + warehouse code
     final Map<String, VendorWarehouseGroup> groups = {};
 
     for (final pr in requests) {
       for (final item in pr.details) {
         if (item.selectedComparisonId == null) continue;
 
-        // Find comparison corresponding to the selected comparison ID
         final comp = pr.comparisons.firstWhere(
           (c) => c.id == item.selectedComparisonId,
           orElse: () => const PurchaseRequestComparison(
@@ -617,7 +872,6 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
         final warehouseCode = item.warehouseCode ?? 'unknown';
         final warehouseName = item.warehouseName ?? 'Unknown Warehouse';
 
-        // Find offered price
         final cd = comp.details.firstWhere(
           (d) => d.purchaseRequestDetailId == item.id,
           orElse: () => const ComparisonDetail(id: -1, purchaseRequestDetailId: -1, offeredUnitPrice: 0.0),
@@ -626,7 +880,6 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
         final approvedQty = item.approvedQty ?? item.qtyRequested;
         final subtotal = offeredUnitPrice * approvedQty;
 
-        // Find associated POs matching this supplier
         final matchingPOs = pr.purchaseOrders
             .where((po) => po.supplierName == comp.supplierName)
             .toList();
@@ -663,12 +916,10 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
       }
     }
 
-    // Convert Map values to List and recalculate totals
     final List<VendorWarehouseGroup> groupedList = [];
     for (final group in groups.values) {
       final allPoCreated = group.items.every((entry) => entry.item.status == 'po_created');
 
-      // Filter based on tab status
       if (_selectedStatus == 'vendor_approved' && allPoCreated) continue;
       if (_selectedStatus == 'po_created' && !allPoCreated) continue;
 
@@ -690,18 +941,20 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
       ));
     }
 
+    final secondaryLabelColor = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+
     if (groupedList.isEmpty) {
       return Center(
         child: Text(
           _selectedStatus == 'vendor_approved'
               ? 'No vendor approved items awaiting PO'
               : 'No completed POs found',
-          style: const TextStyle(color: Color(0xFF64748B)),
+          style: TextStyle(color: secondaryLabelColor),
         ),
       );
     }
 
-    // 2. Select default group
     final hasSelectedGroup = groupedList.any((g) => "${g.supplierId}|${g.warehouseCode}" == _selectedGroupKey);
     if (_selectedGroupKey == null || !hasSelectedGroup) {
       final firstKey = "${groupedList.first.supplierId}|${groupedList.first.warehouseCode}";
@@ -719,7 +972,6 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
       orElse: () => groupedList.first,
     );
 
-    // Recalculate selected group's total price (since selectedGroup might be read directly from map)
     double selectedGroupTotalPrice = 0;
     for (final itemDetail in selectedGroup.items) {
       selectedGroupTotalPrice += itemDetail.subtotal;
@@ -745,7 +997,7 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
         if (index == groupedList.length) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(child: CupertinoActivityIndicator()),
           );
         }
         final group = groupedList[index];
@@ -761,45 +1013,32 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
                 _selectedGroupKey = key;
               });
             } else {
-              // Mobile view: Show full screen modal or sheet
-              showModalBottomSheet(
+              showCupertinoModalPopup(
                 context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (_) => DraggableScrollableSheet(
-                  initialChildSize: 0.9,
-                  maxChildSize: 0.95,
-                  minChildSize: 0.5,
-                  builder: (ctx, scrollController) {
-                    return Container(
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                builder: (_) => Container(
+                  height: MediaQuery.of(context).size.height * 0.85,
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  child: CupertinoPageScaffold(
+                    navigationBar: CupertinoNavigationBar(
+                      middle: Text(group.supplierName),
+                      trailing: CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        child: const Text('Tutup'),
+                        onPressed: () => Navigator.pop(context),
                       ),
-                      child: Column(
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.symmetric(vertical: 12),
-                            width: 36,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE2E8F0),
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                          Expanded(
-                            child: _GroupedDetailsView(
-                              group: group,
-                              scrollController: scrollController,
-                              isGeneratingPos: _isGeneratingPos,
-                              onProceedToPO: () => _handleProceedToPO(group),
-                              onDownloadPdf: (url, poNo) => _downloadAndPrintPdf(context, url, poNo),
-                            ),
-                          ),
-                        ],
+                    ),
+                    child: SafeArea(
+                      child: _GroupedDetailsView(
+                        group: group,
+                        isGeneratingPos: _isGeneratingPos,
+                        onProceedToPO: () => _handleProceedToPO(group),
+                        onDownloadPdf: (url, poNo) => _downloadAndPrintPdf(context, url, poNo),
                       ),
-                    );
-                  },
+                    ),
+                  ),
                 ),
               );
             }
@@ -816,7 +1055,7 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
             width: 360,
             child: mainList,
           ),
-          const VerticalDivider(width: 1, thickness: 1, color: Color(0xFFE2E8F0)),
+          Container(width: 0.5, color: separatorColor),
           Expanded(
             child: _GroupedDetailsView(
               group: selectedGroupWithPrice,
@@ -835,7 +1074,6 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
   Future<void> _handleProceedToPO(VendorWarehouseGroup group) async {
     setState(() => _isGeneratingPos = true);
     try {
-      // Find all unique PRs involved in this group
       final prGroups = <int, List<GroupedItemDetail>>{};
       for (final itemDetail in group.items) {
         prGroups.putIfAbsent(itemDetail.pr.id, () => []).add(itemDetail);
@@ -844,7 +1082,6 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
       final repo = ref.read(purchaseRequestRepositoryProvider);
       final List<dynamic> allCreatedPOs = [];
 
-      // Concurrently generate POs for each PR
       await Future.wait(prGroups.entries.map((entry) async {
         final prId = entry.key;
         final details = entry.value;
@@ -858,7 +1095,6 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
         allCreatedPOs.addAll(createdPOs);
       }));
 
-      // Refresh list provider
       ref.invalidate(purchaseRequestsProvider(
         status: _apiStatus,
         startDate: _startDateStr,
@@ -866,27 +1102,20 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
       ));
 
       if (mounted) {
-        // Show success dialog
-        await showDialog(
+        await showCupertinoDialog(
           context: context,
           builder: (dialogCtx) {
-            return AlertDialog(
-              title: const Row(
-                children: [
-                  Icon(Icons.check_circle_outline, color: Color(0xFF10B981)),
-                  SizedBox(width: 8),
-                  Text('POs Generated'),
-                ],
-              ),
-              content: SizedBox(
-                width: 400,
+            return CupertinoAlertDialog(
+              title: const Text('POs Generated'),
+              content: Padding(
+                padding: const EdgeInsets.only(top: 8.0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
                       'Successfully generated Purchase Orders for selected vendor and destination warehouse. You can download the PDF documents below:',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF475569)),
+                      style: TextStyle(fontSize: 13),
                     ),
                     const SizedBox(height: 16),
                     if (allCreatedPOs.isEmpty)
@@ -901,13 +1130,13 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
                           margin: const EdgeInsets.only(bottom: 8),
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
+                            color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(dialogCtx),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            border: Border.all(color: CupertinoColors.separator.resolveFrom(dialogCtx), width: 0.5),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.receipt_long_outlined, size: 18, color: Color(0xFF4F46E5)),
+                              const Icon(CupertinoIcons.doc_text, size: 18, color: Color(0xFF6E56CF)),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Column(
@@ -919,17 +1148,19 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
                                     ),
                                     Text(
                                       supplierName,
-                                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                      style: const TextStyle(fontSize: 11),
                                     ),
                                   ],
                                 ),
                               ),
                               if (pdfUrl != null)
-                                IconButton(
-                                  icon: const Icon(Icons.download_rounded, color: Color(0xFF4F46E5), size: 20),
+                                CupertinoButton(
+                                  padding: EdgeInsets.zero,
+                                  minSize: 0,
                                   onPressed: () {
-                                    _downloadAndPrintPdf(context, pdfUrl, poNum);
+                                    _downloadAndPrintPdf(dialogCtx, pdfUrl, poNum);
                                   },
+                                  child: const Icon(CupertinoIcons.cloud_download, color: CupertinoColors.activeBlue, size: 20),
                                 ),
                             ],
                           ),
@@ -939,9 +1170,9 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
                 ),
               ),
               actions: [
-                TextButton(
+                CupertinoDialogAction(
                   onPressed: () => Navigator.pop(dialogCtx),
-                  child: const Text('Tutup'),
+                  child: const Text('Close'),
                 ),
               ],
             );
@@ -950,12 +1181,7 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal membuat PO: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showNotification(context, 'Gagal membuat PO: $e', isError: true);
       }
     } finally {
       if (mounted) {
@@ -969,16 +1195,15 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
     bool dialogOpen = false;
     BuildContext? dialogContext;
     try {
-      // Delay showing dialog to allow pending transitions/pops to complete
       await Future.delayed(Duration.zero);
       if (!context.mounted) return;
 
-      showDialog(
+      showCupertinoDialog(
         context: context,
         barrierDismissible: false,
         builder: (dCtx) {
           dialogContext = dCtx;
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: CupertinoActivityIndicator(radius: 16));
         },
       );
       dialogOpen = true;
@@ -1000,14 +1225,12 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
 
       if (response.data != null) {
         if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
-          // Direct file saving for desktop
           final dir = await getDownloadsDirectory();
           if (dir != null) {
             final filePath = p.join(dir.path, '$fileName.pdf');
             final file = File(filePath);
             await file.writeAsBytes(response.data!);
 
-            // Open the saved file using default platform app
             try {
               if (Platform.isWindows) {
                 await Process.run('explorer.exe', [filePath.replaceAll('/', '\\')]);
@@ -1017,23 +1240,16 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
                 await Process.run('xdg-open', [filePath]);
               }
             } catch (e) {
-              // Ignore failure to open file
+              // Ignore explorer opening errors
             }
 
             if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Downloaded PDF to Downloads folder: $fileName.pdf'),
-                  backgroundColor: Colors.green,
-                  duration: const Duration(seconds: 4),
-                ),
-              );
+              _showNotification(context, 'Downloaded PDF to Downloads folder: $fileName.pdf');
             }
           } else {
             throw Exception('Could not find Downloads folder');
           }
         } else {
-          // Fallback for Web/Mobile (layoutPdf shows save/preview UI)
           await Printing.layoutPdf(
             name: fileName,
             onLayout: (format) async => Uint8List.fromList(response.data!),
@@ -1052,29 +1268,9 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
         }
       }
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to download PDF: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showNotification(context, 'Failed to download PDF: $e', isError: true);
       }
     }
-  }
-
-  Widget _buildFilterChip(String label, String? value) {
-    final isSelected = _selectedStatus == value;
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (selected) {
-        setState(() {
-          _selectedStatus = selected ? value : null;
-          _selectedPrId = null;
-          _selectedItem = null;
-        });
-      },
-    );
   }
 }
 
@@ -1129,221 +1325,210 @@ class _ComparisonItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasVendor = vendorCount > 0;
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFFE2E8F0),
-          width: isSelected ? 2.0 : 1.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0x0A0F0F0F),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardBg,
           borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header row: item name + vendor badge
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        item.itemName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: Color(0xFF0F172A),
-                        ),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF6E56CF) : separatorColor,
+            width: isSelected ? 2.0 : 0.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: CupertinoColors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      item.itemName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: labelColor,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    // Vendor count badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: hasVendor
-                            ? const Color(0xFFDCFCE7)
-                            : const Color(0xFFFEF2F2),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: hasVendor
-                              ? const Color(0xFF16A34A)
-                              : const Color(0xFFDC2626),
-                          width: 0.8,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            hasVendor ? Icons.store_outlined : Icons.store_rounded,
-                            size: 12,
-                            color: hasVendor
-                                ? const Color(0xFF16A34A)
-                                : const Color(0xFFDC2626),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            hasVendor ? '$vendorCount vendor' : 'No vendor',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: hasVendor
-                                  ? const Color(0xFF16A34A)
-                                  : const Color(0xFFDC2626),
-                            ),
-                          ),
-                        ],
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: hasVendor
+                          ? CupertinoColors.activeGreen.withOpacity(0.12)
+                          : CupertinoColors.destructiveRed.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: hasVendor ? CupertinoColors.activeGreen : CupertinoColors.destructiveRed,
+                        width: 0.5,
                       ),
                     ),
-                  ],
-                ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          CupertinoIcons.home,
+                          size: 12,
+                          color: hasVendor ? CupertinoColors.activeGreen : CupertinoColors.destructiveRed,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          hasVendor ? '$vendorCount vendor' : 'No vendor',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: hasVendor ? CupertinoColors.activeGreen : CupertinoColors.destructiveRed,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                item.itemCode,
+                style: TextStyle(color: secondaryLabel, fontSize: 12),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(CupertinoIcons.doc_text, size: 13, color: Color(0xFF6E56CF)),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      '${pr.code}  •  ${pr.companyName ?? "Unknown"}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF6E56CF),
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              if (pr.approvedAt != null) ...[
                 const SizedBox(height: 4),
-                Text(
-                  item.itemCode,
-                  style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
-                ),
-                const SizedBox(height: 6),
-                // PR reference
                 Row(
                   children: [
-                    const Icon(Icons.description_outlined, size: 13, color: Color(0xFF4F46E5)),
+                    const Icon(CupertinoIcons.calendar, size: 13, color: CupertinoColors.systemOrange),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        '${pr.code}  •  ${pr.companyName ?? "Unknown"}',
+                        _getDurationText(pr.approvedAt),
                         style: const TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF4F46E5),
-                          fontWeight: FontWeight.w600,
+                          color: CupertinoColors.systemOrange,
+                          fontWeight: FontWeight.w500,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
-                if (pr.approvedAt != null) ...[
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.calendar_today_outlined, size: 13, color: Color(0xFFEAB308)),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          _getDurationText(pr.approvedAt),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFFD97706),
-                            fontWeight: FontWeight.w500,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-                const SizedBox(height: 10),
-                const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                const SizedBox(height: 10),
-                // Qty row — show approved qty (what will actually be ordered)
-                (() {
-                  final displayQty = item.approvedQty ?? item.qtyRequested;
-                  final qtyLabel = item.approvedQty != null ? 'Approved Qty' : 'Req Qty';
-                  final qtyColor = item.approvedQty != null
-                      ? const Color(0xFF10B981)
-                      : const Color(0xFF0F172A);
-                  final refQty = item.approvedQty ?? item.qtyRequested;
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(qtyLabel,
-                              style: TextStyle(
-                                  color: item.approvedQty != null
-                                      ? const Color(0xFF10B981)
-                                      : const Color(0xFF64748B),
-                                  fontSize: 11,
-                                  fontWeight: item.approvedQty != null
-                                      ? FontWeight.bold
-                                      : FontWeight.normal)),
-                          const SizedBox(height: 2),
-                          Text(
-                            '$displayQty ${item.uom}',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: qtyColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                      // Stock warning
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.inventory_2_outlined,
-                            size: 13,
-                            color: item.currentStock < refQty
-                                ? const Color(0xFFF59E0B)
-                                : const Color(0xFF94A3B8),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Stock: ${item.currentStock} ${item.uom}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: item.currentStock < refQty
-                                  ? const Color(0xFFF59E0B)
-                                  : const Color(0xFF94A3B8),
-                              fontWeight: item.currentStock < refQty
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  );
-                })(),
-                // Action hint when no vendor
-                if (!hasVendor) ...[
-                  const SizedBox(height: 10),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF0F0FF),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Row(
+              ],
+              const SizedBox(height: 10),
+              Container(height: 0.5, color: separatorColor),
+              const SizedBox(height: 10),
+              (() {
+                final displayQty = item.approvedQty ?? item.qtyRequested;
+                final qtyLabel = item.approvedQty != null ? 'Approved Qty' : 'Req Qty';
+                final qtyColor = item.approvedQty != null
+                    ? CupertinoColors.activeGreen
+                    : labelColor;
+                final refQty = item.approvedQty ?? item.qtyRequested;
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.touch_app_outlined, size: 13, color: Color(0xFF4F46E5)),
-                        SizedBox(width: 6),
+                        Text(qtyLabel,
+                            style: TextStyle(
+                                color: item.approvedQty != null
+                                    ? CupertinoColors.activeGreen
+                                    : secondaryLabel,
+                                fontSize: 11,
+                                fontWeight: item.approvedQty != null
+                                    ? FontWeight.bold
+                                    : FontWeight.normal)),
+                        const SizedBox(height: 2),
                         Text(
-                          'Tap to assign a vendor',
-                          style: TextStyle(fontSize: 11, color: Color(0xFF4F46E5)),
+                          '$displayQty ${item.uom}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: qtyColor,
+                          ),
                         ),
                       ],
                     ),
+                    Row(
+                      children: [
+                        Icon(
+                          CupertinoIcons.archivebox,
+                          size: 13,
+                          color: item.currentStock < refQty
+                              ? CupertinoColors.systemOrange
+                              : secondaryLabel,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Stock: ${item.currentStock} ${item.uom}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: item.currentStock < refQty
+                                ? CupertinoColors.systemOrange
+                                : secondaryLabel,
+                            fontWeight: item.currentStock < refQty
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              })(),
+              if (!hasVendor) ...[
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6E56CF).withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(6),
                   ),
-                ],
+                  child: const Row(
+                    children: [
+                      Icon(CupertinoIcons.hand_point_right, size: 13, color: Color(0xFF6E56CF)),
+                      SizedBox(width: 6),
+                      Text(
+                        'Tap to assign a vendor',
+                        style: TextStyle(fontSize: 11, color: Color(0xFF6E56CF)),
+                      ),
+                    ],
+                  ),
+                ),
               ],
-            ),
+            ],
           ),
         ),
       ),
@@ -1368,26 +1553,61 @@ class _ComparisonItemDetailViewState
     extends ConsumerState<_ComparisonItemDetailView> {
   bool _isSubmittingToBod = false;
 
+  Future<void> _removeComparison(BuildContext context, int comparisonId) async {
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Hapus Vendor?'),
+        content: const Text('Apakah Anda yakin ingin menghapus vendor ini dari daftar perbandingan?'),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('Batal'),
+            onPressed: () => Navigator.pop(ctx, false),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        final prId = widget.entry.pr.id;
+        await ref.read(purchaseRequestRepositoryProvider).removeVendorComparison(prId, comparisonId);
+        
+        ref.invalidate(purchaseRequestsProvider);
+        ref.invalidate(prItemSuggestionsProvider);
+        
+        if (mounted) {
+          _showNotification(context, 'Vendor comparison removed successfully.');
+          if (widget.onAssigned != null) {
+            widget.onAssigned!();
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          _showNotification(context, 'Failed to remove vendor: $e', isError: true);
+        }
+      }
+    }
+  }
+
   Future<void> _submitToBod() async {
     setState(() => _isSubmittingToBod = true);
     try {
       await ref
           .read(purchaseRequestRepositoryProvider)
-          .submitToBod(widget.entry.pr.id);
+          .submitToBod(widget.entry.pr.id, itemIds: [widget.entry.item.id]);
       ref.invalidate(purchaseRequestsProvider);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('PR submitted to BOD for vendor selection.'),
-            backgroundColor: Color(0xFF10B981),
-          ),
-        );
+        _showNotification(context, 'Item submitted to BOD for vendor selection.');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
+        _showNotification(context, 'Error: $e', isError: true);
       }
     } finally {
       if (mounted) setState(() => _isSubmittingToBod = false);
@@ -1399,27 +1619,20 @@ class _ComparisonItemDetailViewState
     final item = widget.entry.item;
     final pr = widget.entry.pr;
 
-    // Comparisons that have a quote for this specific item
     final assignedComparisons = pr.comparisons
         .where((c) => c.details.any((d) => d.purchaseRequestDetailId == item.id))
         .toList();
 
-    // Check all items in the PR (that aren't already PO created or submitted to BOD) have at least 2 vendors
-    final allItemsHaveMin2Vendors = pr.details
-        .where((d) => d.status != 'po_created' && d.status != 'waiting_bod_approval')
-        .every((detail) {
-      final vendorCount = pr.comparisons
-          .where((c) => c.details.any((d) => d.purchaseRequestDetailId == detail.id))
-          .length;
-      return vendorCount >= 2;
-    });
+    final itemHasMin2Vendors = assignedComparisons.length >= 2;
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Item header ──────────────────────────────────────────────────
           _InfoCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1430,10 +1643,10 @@ class _ComparisonItemDetailViewState
                     Expanded(
                       child: Text(
                         item.itemName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A),
+                          color: labelColor,
                         ),
                       ),
                     ),
@@ -1445,20 +1658,20 @@ class _ComparisonItemDetailViewState
                 ),
                 const SizedBox(height: 4),
                 Text(item.itemCode,
-                    style: const TextStyle(fontSize: 14, color: Color(0xFF64748B))),
+                    style: TextStyle(fontSize: 14, color: secondaryLabel)),
                 const SizedBox(height: 12),
-                const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                Container(height: 0.5, color: separatorColor),
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    const Icon(Icons.description_outlined, size: 16, color: Color(0xFF4F46E5)),
+                    const Icon(CupertinoIcons.doc_text, size: 16, color: Color(0xFF6E56CF)),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         '${pr.code}  •  ${pr.companyName ?? "Unknown"}',
                         style: const TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF4F46E5),
+                          color: Color(0xFF6E56CF),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -1471,25 +1684,25 @@ class _ComparisonItemDetailViewState
                   runSpacing: 8,
                   children: [
                     _MetaChip(
-                      icon: Icons.shopping_basket_outlined,
+                      icon: CupertinoIcons.shopping_cart,
                       label: item.approvedQty != null
                           ? 'Approved: ${item.approvedQty} ${item.uom}'
                           : 'Req: ${item.qtyRequested} ${item.uom}',
                       strong: item.approvedQty != null,
                       warning: false,
                       color: item.approvedQty != null
-                          ? const Color(0xFF10B981)
+                          ? CupertinoColors.activeGreen
                           : null,
                     ),
                     _MetaChip(
-                      icon: Icons.inventory_2_outlined,
+                      icon: CupertinoIcons.archivebox,
                       label: 'Stock: ${item.currentStock} ${item.uom}',
                       warning: item.currentStock <
                           (item.approvedQty ?? item.qtyRequested),
                     ),
                     if (pr.approvedAt != null)
                       _MetaChip(
-                        icon: Icons.calendar_today_outlined,
+                        icon: CupertinoIcons.calendar,
                         label: _getDurationText(pr.approvedAt),
                         warning: true,
                         color: const Color(0xFFFFF7ED),
@@ -1518,10 +1731,10 @@ class _ComparisonItemDetailViewState
                 assignedComparisons.isEmpty
                     ? 'No Vendors Assigned'
                     : 'Vendors Assigned (${assignedComparisons.length})',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: labelColor,
                 ),
               ),
               _AssignVendorButton(
@@ -1545,12 +1758,12 @@ class _ComparisonItemDetailViewState
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFFFED7AA)),
               ),
-              child: Column(
+              child: const Column(
                 children: [
-                  const Icon(Icons.store_mall_directory_outlined,
+                  Icon(CupertinoIcons.house,
                       size: 36, color: Color(0xFFF97316)),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'No vendor has been assigned to this item yet.',
                     style: TextStyle(
                         fontSize: 13,
@@ -1559,7 +1772,7 @@ class _ComparisonItemDetailViewState
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Use "Assign Vendor" to add a quotation from a supplier.',
                     style: TextStyle(fontSize: 12, color: Color(0xFF9A3412)),
                     textAlign: TextAlign.center,
@@ -1571,49 +1784,64 @@ class _ComparisonItemDetailViewState
             ...assignedComparisons.map((comp) {
               final compDetail =
                   comp.details.firstWhere((d) => d.purchaseRequestDetailId == item.id);
+              final canRemove = pr.status != 'waiting_bod_approval' &&
+                  pr.status != 'approved_by_bod' &&
+                  pr.status != 'po_created';
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: separatorColor, width: 0.5),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.store_outlined,
-                            size: 16, color: Color(0xFF4F46E5)),
+                        const Icon(CupertinoIcons.home, size: 16, color: Color(0xFF6E56CF)),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             comp.supplierName,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
-                              color: Color(0xFF1E293B),
+                              color: labelColor,
                             ),
                           ),
                         ),
-                        if (comp.status != null)
+                        if (comp.status != null) ...[
                           _Badge(comp.status!.toUpperCase(),
                               color: const Color(0xFFEFF6FF),
                               textColor: const Color(0xFF1D4ED8)),
+                          const SizedBox(width: 8),
+                        ],
+                        if (canRemove)
+                          CupertinoButton(
+                            padding: EdgeInsets.zero,
+                            minSize: 0,
+                            onPressed: () => _removeComparison(context, comp.id),
+                            child: const Icon(
+                              CupertinoIcons.trash,
+                              size: 16,
+                              color: CupertinoColors.destructiveRed,
+                            ),
+                          ),
                       ],
                     ),
                     const SizedBox(height: 10),
                     Row(
                       children: [
                         _MetaChip(
-                          icon: Icons.price_change_outlined,
+                          icon: CupertinoIcons.money_dollar,
                           label: formatWithCurrency(compDetail.offeredUnitPrice, 'IDR'),
                           strong: true,
                         ),
                         const SizedBox(width: 8),
                         _MetaChip(
-                          icon: Icons.schedule_outlined,
+                          icon: CupertinoIcons.clock,
                           label: '${comp.leadTimeDays} days',
                         ),
                       ],
@@ -1622,8 +1850,8 @@ class _ComparisonItemDetailViewState
                       const SizedBox(height: 8),
                       Text(
                         comp.notes!,
-                        style: const TextStyle(
-                            fontSize: 12, color: Color(0xFF64748B), fontStyle: FontStyle.italic),
+                        style: TextStyle(
+                            fontSize: 12, color: secondaryLabel, fontStyle: FontStyle.italic),
                       ),
                     ],
                   ],
@@ -1631,15 +1859,15 @@ class _ComparisonItemDetailViewState
               );
             }),
 
-          // ── Submit to BOD button (when all items have min 2 vendors) ───────────
+          // ── Submit to BOD button (when item has min 2 vendors) ───────────
           const SizedBox(height: 8),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: allItemsHaveMin2Vendors ? const Color(0xFFF0FDF4) : const Color(0xFFFFF7ED),
+              color: itemHasMin2Vendors ? const Color(0xFFF0FDF4) : const Color(0xFFFFF7ED),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: allItemsHaveMin2Vendors ? const Color(0xFF86EFAC) : const Color(0xFFFED7AA)),
+              border: Border.all(color: itemHasMin2Vendors ? const Color(0xFF86EFAC) : const Color(0xFFFED7AA)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1647,19 +1875,19 @@ class _ComparisonItemDetailViewState
                 Row(
                   children: [
                     Icon(
-                      allItemsHaveMin2Vendors ? Icons.check_circle_outline : Icons.warning_amber_rounded,
+                      itemHasMin2Vendors ? CupertinoIcons.check_mark_circled : CupertinoIcons.exclamationmark_triangle,
                       size: 16,
-                      color: allItemsHaveMin2Vendors ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+                      color: itemHasMin2Vendors ? const Color(0xFF16A34A) : const Color(0xFFD97706),
                     ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        allItemsHaveMin2Vendors
-                            ? 'All items in this PR have at least 2 vendors assigned'
-                            : 'Each item must have a minimum of 2 vendors assigned to submit to BOD',
+                        itemHasMin2Vendors
+                            ? 'This item has at least 2 vendors assigned'
+                            : 'This item must have a minimum of 2 vendors assigned to submit to BOD',
                         style: TextStyle(
                           fontSize: 13,
-                          color: allItemsHaveMin2Vendors ? const Color(0xFF16A34A) : const Color(0xFFB45309),
+                          color: itemHasMin2Vendors ? const Color(0xFF16A34A) : const Color(0xFFB45309),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -1669,22 +1897,27 @@ class _ComparisonItemDetailViewState
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: (allItemsHaveMin2Vendors && !_isSubmittingToBod) ? _submitToBod : null,
-                    icon: _isSubmittingToBod
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                        : const Icon(Icons.send_outlined, size: 18),
-                    label: const Text('Submit to BOD for Approval'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: allItemsHaveMin2Vendors ? const Color(0xFF16A34A) : Colors.grey.shade300,
-                      foregroundColor: allItemsHaveMin2Vendors ? Colors.white : Colors.grey.shade500,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
+                  child: CupertinoButton(
+                    color: itemHasMin2Vendors ? const Color(0xFF16A34A) : CupertinoColors.tertiarySystemFill.resolveFrom(context),
+                    onPressed: (itemHasMin2Vendors && !_isSubmittingToBod) ? _submitToBod : null,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    borderRadius: BorderRadius.circular(8),
+                    child: _isSubmittingToBod
+                        ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(CupertinoIcons.paperplane, size: 18, color: itemHasMin2Vendors ? CupertinoColors.white : CupertinoColors.placeholderText.resolveFrom(context)),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Submit to BOD for Approval',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: itemHasMin2Vendors ? CupertinoColors.white : CupertinoColors.placeholderText.resolveFrom(context),
+                                ),
+                              ),
+                            ],
+                          ),
                   ),
                 ),
               ],
@@ -1693,65 +1926,6 @@ class _ComparisonItemDetailViewState
           const SizedBox(height: 32),
         ],
       ),
-    );
-  }
-}
-
-// ─── Comparison Item Detail Sheet (mobile — bottom sheet) ─────────────────────
-
-class _ComparisonItemDetailSheet extends ConsumerWidget {
-  final _ItemWithPr entry;
-  final int vendorCount;
-
-  const _ComparisonItemDetailSheet({
-    required this.entry,
-    required this.vendorCount,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.9,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            children: [
-              // Handle
-              const SizedBox(height: 12),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFCBD5E1),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 12),
-              // Content
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-                  child: _ComparisonItemDetailView(
-                    entry: entry,
-                    onAssigned: () {
-                      ref.invalidate(purchaseRequestsProvider);
-                      ref.invalidate(prItemSuggestionsProvider);
-                      Navigator.pop(context);
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }
@@ -1766,26 +1940,49 @@ class _AssignVendorButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton.icon(
+    return CupertinoButton(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      minSize: 0,
+      color: const Color(0xFF6E56CF),
+      borderRadius: BorderRadius.circular(8),
       onPressed: () {
-        showModalBottomSheet(
+        showCupertinoModalPopup(
           context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => _AssignVendorSheet(
-            entry: entry,
-            onAssigned: onAssigned,
+          builder: (popupContext) => Container(
+            height: MediaQuery.of(context).size.height * 0.85,
+            decoration: BoxDecoration(
+              color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: CupertinoPageScaffold(
+              navigationBar: CupertinoNavigationBar(
+                middle: const Text('Assign Vendor'),
+                trailing: CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  child: const Text('Tutup'),
+                  onPressed: () => Navigator.pop(popupContext),
+                ),
+              ),
+              child: SafeArea(
+                child: _AssignVendorSheet(
+                  entry: entry,
+                  onAssigned: onAssigned,
+                ),
+              ),
+            ),
           ),
         );
       },
-      icon: const Icon(Icons.add_business_outlined, size: 16),
-      label: const Text('Assign Vendor'),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF4F46E5),
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(CupertinoIcons.plus_app, size: 16, color: CupertinoColors.white),
+          SizedBox(width: 6),
+          Text(
+            'Assign Vendor',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: CupertinoColors.white),
+          ),
+        ],
       ),
     );
   }
@@ -1803,9 +2000,8 @@ class _AssignVendorSheet extends ConsumerStatefulWidget {
   ConsumerState<_AssignVendorSheet> createState() => _AssignVendorSheetState();
 }
 
-class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet> {
+  int _selectedTabIndex = 0;
 
   // New Vendor tab state
   final _searchController = TextEditingController();
@@ -1817,14 +2013,7 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet>
   bool _isSubmitting = false;
 
   @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
   void dispose() {
-    _tabController.dispose();
     _searchController.dispose();
     _priceController.dispose();
     _leadTimeController.dispose();
@@ -1856,22 +2045,12 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet>
       ref.invalidate(prItemSuggestionsProvider);
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Vendor assigned successfully.'),
-            backgroundColor: Color(0xFF10B981),
-          ),
-        );
+        _showNotification(context, 'Vendor assigned successfully.');
         widget.onAssigned?.call();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showNotification(context, 'Error: $e', isError: true);
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -1882,105 +2061,72 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet>
   Widget build(BuildContext context) {
     final item = widget.entry.item;
     final suggestionsAsync = ref.watch(prItemSuggestionsProvider(widget.entry.pr.id));
+    final scrollController = ScrollController();
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      builder: (ctx, scrollController) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
+    return Column(
+      children: [
+        const SizedBox(height: 16),
+        // Header info
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
             children: [
-              // Handle + Header
-              const SizedBox(height: 12),
-              Container(
-                width: 40, height: 4,
-                decoration: BoxDecoration(
-                    color: const Color(0xFFCBD5E1),
-                    borderRadius: BorderRadius.circular(2)),
-              ),
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: [
-                    const Icon(Icons.add_business_outlined,
-                        color: Color(0xFF4F46E5), size: 22),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Assign Vendor',
-                              style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0F172A))),
-                          Text(
-                            item.itemName,
-                            style: const TextStyle(
-                                fontSize: 12, color: Color(0xFF64748B)),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, size: 20),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Tabs
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: TabBar(
-                  controller: _tabController,
-                  indicator: BoxDecoration(
-                    color: const Color(0xFF4F46E5),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: const Color(0xFF64748B),
-                  dividerColor: Colors.transparent,
-                  tabs: const [
-                    Tab(text: 'Historical Data'),
-                    Tab(text: 'New Vendor'),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // Tab views
+              const Icon(CupertinoIcons.plus_app, color: Color(0xFF6E56CF), size: 22),
+              const SizedBox(width: 10),
               Expanded(
-                child: TabBarView(
-                  controller: _tabController,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Tab 1: Historical Data ──
-                    _buildHistoricalTab(
-                        context, item, suggestionsAsync, scrollController),
-
-                    // ── Tab 2: New Vendor ──
-                    _buildNewVendorTab(context, scrollController),
+                    const Text('Assign Vendor',
+                        style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold)),
+                    Text(
+                      item.itemName,
+                      style: TextStyle(
+                          fontSize: 12, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
                 ),
               ),
             ],
           ),
-        );
-      },
+        ),
+        const SizedBox(height: 16),
+
+        // Custom Sliding Control for Tabs
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          width: double.infinity,
+          child: CupertinoSlidingSegmentedControl<int>(
+            groupValue: _selectedTabIndex,
+            onValueChanged: (val) {
+              if (val != null) {
+                setState(() => _selectedTabIndex = val);
+              }
+            },
+            children: const {
+              0: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text('Historical Data', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+              ),
+              1: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text('New Vendor', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+              ),
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // Tabs Content stack
+        Expanded(
+          child: _selectedTabIndex == 0
+              ? _buildHistoricalTab(context, item, suggestionsAsync, scrollController)
+              : _buildNewVendorTab(context, scrollController),
+        ),
+      ],
     );
   }
 
@@ -1993,7 +2139,7 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet>
     ScrollController scrollController,
   ) {
     return suggestionsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: CupertinoActivityIndicator()),
       error: (err, _) =>
           Center(child: Text('Error loading history: $err')),
       data: (suggestions) {
@@ -2011,7 +2157,6 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet>
           controller: scrollController,
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           children: [
-            // Current comparisons
             if (currentComparisons.isNotEmpty) ...[
               const _SectionHeader('Sudah Ditetapkan'),
               const SizedBox(height: 8),
@@ -2019,19 +2164,18 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet>
               const SizedBox(height: 20),
             ],
 
-            // Last vendor suggestion
             if (lastVendor != null) ...[
               const _SectionHeader('Vendor Terakhir Digunakan'),
               const SizedBox(height: 8),
               _HistoricalVendorCard(
-                icon: Icons.history,
+                icon: CupertinoIcons.clock,
                 supplierName: lastVendor['supplier_name'] ?? 'Tidak Diketahui',
                 price: lastVendor['price'] != null
                     ? (lastVendor['price'] as num).toDouble()
                     : null,
                 leadTimeDays: lastVendor['lead_time_days'] as int? ?? 7,
                 date: lastVendor['last_purchased_at'] as String?,
-                accentColor: const Color(0xFF6366F1),
+                accentColor: const Color(0xFF6E56CF),
                 isSubmitting: _isSubmitting,
                 onAssign: (price, leadTime) => _submitAssignment(
                   supplierId: lastVendor['supplier_id'] as int,
@@ -2042,18 +2186,17 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet>
               const SizedBox(height: 16),
             ],
 
-            // Cheapest vendor suggestion
             if (cheapestVendor != null) ...[
               const _SectionHeader('Vendor Termurah (Historis)'),
               const SizedBox(height: 8),
               _HistoricalVendorCard(
-                icon: Icons.monetization_on_outlined,
+                icon: CupertinoIcons.money_dollar,
                 supplierName: cheapestVendor['supplier_name'] ?? 'Tidak Diketahui',
                 price: cheapestVendor['price'] != null
                     ? (cheapestVendor['price'] as num).toDouble()
                     : null,
                 leadTimeDays: cheapestVendor['lead_time_days'] as int? ?? 7,
-                accentColor: const Color(0xFF10B981),
+                accentColor: CupertinoColors.activeGreen,
                 isSubmitting: _isSubmitting,
                 onAssign: (price, leadTime) => _submitAssignment(
                   supplierId: cheapestVendor['supplier_id'] as int,
@@ -2065,8 +2208,8 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet>
             ],
 
             if (lastVendor == null && cheapestVendor == null && currentComparisons.isEmpty)
-              _EmptyState(
-                icon: Icons.history_toggle_off_outlined,
+              const _EmptyState(
+                icon: CupertinoIcons.clock,
                 title: 'No purchase history',
                 subtitle:
                     'No previous vendor data found for this item. Use "New Vendor" tab to assign manually.',
@@ -2079,8 +2222,9 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet>
 
   // ── New Vendor tab ─────────────────────────────────────────────────────────
 
-  Widget _buildNewVendorTab(
-      BuildContext context, ScrollController scrollController) {
+  Widget _buildNewVendorTab(BuildContext context, ScrollController scrollController) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+
     if (_selectedSupplier != null) {
       return ListView(
         controller: scrollController,
@@ -2089,16 +2233,17 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Selected Supplier',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF64748B),
+                  color: CupertinoColors.secondaryLabel.resolveFrom(context),
                   letterSpacing: 0.5,
                 ),
               ),
-              TextButton.icon(
+              CupertinoButton(
+                padding: EdgeInsets.zero,
                 onPressed: () {
                   setState(() {
                     _selectedSupplier = null;
@@ -2107,13 +2252,12 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet>
                     _notesController.clear();
                   });
                 },
-                icon: const Icon(Icons.swap_horiz, size: 16),
-                label: const Text('Change'),
-                style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF4F46E5),
-                  padding: EdgeInsets.zero,
-                  minimumSize: const Size(0, 0),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                child: const Row(
+                  children: [
+                    Icon(CupertinoIcons.refresh, size: 14),
+                    SizedBox(width: 4),
+                    Text('Change', style: TextStyle(fontSize: 12)),
+                  ],
                 ),
               ),
             ],
@@ -2132,75 +2276,66 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet>
             },
           ),
           const SizedBox(height: 20),
-          const Divider(color: Color(0xFFE2E8F0)),
+          Container(height: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
           const SizedBox(height: 16),
           Text(
             'Quote details for ${_selectedSupplier!.name}',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF0F172A),
+              color: labelColor,
             ),
           ),
-          const SizedBox(height: 12),
-          // Price field
-          TextField(
+          const SizedBox(height: 16),
+          
+          const Text('Unit Price (IDR) *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 6),
+          CupertinoTextField(
             controller: _priceController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              labelText: 'Unit Price (IDR) *',
-              prefixText: 'Rp ',
-              filled: true,
-              fillColor: const Color(0xFFF8FAFC),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            prefix: const Padding(
+              padding: EdgeInsets.only(left: 10),
+              child: Text('Rp ', style: TextStyle(color: CupertinoColors.placeholderText)),
             ),
+            placeholder: '0',
           ),
           const SizedBox(height: 12),
-          // Lead time field
-          TextField(
+          
+          const Text('Lead Time (days)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 6),
+          CupertinoTextField(
             controller: _leadTimeController,
             keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: 'Lead Time (days)',
-              suffixText: 'days',
-              filled: true,
-              fillColor: const Color(0xFFF8FAFC),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            suffix: const Padding(
+              padding: EdgeInsets.only(right: 10),
+              child: Text('days', style: TextStyle(color: CupertinoColors.placeholderText)),
             ),
           ),
           const SizedBox(height: 12),
-          // Notes field
-          TextField(
+          
+          const Text('Notes (optional)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 6),
+          CupertinoTextField(
             controller: _notesController,
             maxLines: 2,
-            decoration: InputDecoration(
-              labelText: 'Notes (optional)',
-              hintText: 'e.g. includes delivery, FOB terms...',
-              filled: true,
-              fillColor: const Color(0xFFF8FAFC),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            ),
+            placeholder: 'e.g. includes delivery, FOB terms...',
           ),
           const SizedBox(height: 20),
+          
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton.icon(
+            child: CupertinoButton.filled(
               onPressed: _isSubmitting ? null : _submitNewVendor,
-              icon: _isSubmitting
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
-                  : const Icon(Icons.save_outlined, size: 18),
-              label: const Text('Save Vendor Assignment'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4F46E5),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-              ),
+              child: _isSubmitting
+                  ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                  : const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(CupertinoIcons.check_mark, size: 18),
+                        SizedBox(width: 8),
+                        Text('Save Vendor Assignment', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ],
+                    ),
             ),
           ),
           const SizedBox(height: 40),
@@ -2214,34 +2349,9 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet>
       controller: scrollController,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       children: [
-        // Search box
-        TextField(
+        CupertinoSearchTextField(
           controller: _searchController,
-          decoration: InputDecoration(
-            hintText: 'Search supplier by name or code...',
-            prefixIcon: const Icon(Icons.search, size: 20),
-            suffixIcon: _searchQuery.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear, size: 18),
-                    onPressed: () {
-                      _searchController.clear();
-                      setState(() => _searchQuery = '');
-                    },
-                  )
-                : null,
-            filled: true,
-            fillColor: const Color(0xFFF8FAFC),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-            ),
-          ),
+          placeholder: 'Search supplier by name or code...',
           onChanged: (val) {
             _debounce?.cancel();
             _debounce = Timer(const Duration(milliseconds: 500), () {
@@ -2251,18 +2361,17 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet>
         ),
         const SizedBox(height: 12),
 
-        // Supplier list
         suppliersAsync.when(
           loading: () => const Padding(
             padding: EdgeInsets.symmetric(vertical: 32),
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(child: CupertinoActivityIndicator()),
           ),
           error: (e, _) => Text('Error loading suppliers: $e',
-              style: const TextStyle(color: Colors.red)),
+              style: const TextStyle(color: CupertinoColors.destructiveRed)),
           data: (suppliers) {
             if (suppliers.isEmpty) {
-              return _EmptyState(
-                icon: Icons.search_off_outlined,
+              return const _EmptyState(
+                icon: CupertinoIcons.search,
                 title: 'No suppliers found',
                 subtitle: 'Try a different search term.',
               );
@@ -2271,8 +2380,8 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('${suppliers.length} suppliers found',
-                    style: const TextStyle(
-                        fontSize: 12, color: Color(0xFF64748B))),
+                    style: TextStyle(
+                        fontSize: 12, color: CupertinoColors.secondaryLabel.resolveFrom(context))),
                 const SizedBox(height: 8),
                 ...suppliers.map((s) {
                   final isSelected = _selectedSupplier?.id == s.id;
@@ -2300,16 +2409,12 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet>
     if (supplier == null) return;
     final priceText = _priceController.text.trim();
     if (priceText.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter the unit price')),
-      );
+      _showNotification(context, 'Please enter the unit price', isError: true);
       return;
     }
     final price = double.tryParse(priceText.replaceAll(',', '.'));
     if (price == null || price < 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid price value')),
-      );
+      _showNotification(context, 'Invalid price value', isError: true);
       return;
     }
     final leadTime = int.tryParse(_leadTimeController.text.trim()) ?? 7;
@@ -2359,10 +2464,8 @@ class _HistoricalVendorCardState extends State<_HistoricalVendorCard> {
   @override
   void initState() {
     super.initState();
-    _priceCtrl = TextEditingController(
-        text: widget.price?.toStringAsFixed(0) ?? '');
-    _leadTimeCtrl =
-        TextEditingController(text: widget.leadTimeDays.toString());
+    _priceCtrl = TextEditingController(text: widget.price?.toStringAsFixed(0) ?? '');
+    _leadTimeCtrl = TextEditingController(text: widget.leadTimeDays.toString());
   }
 
   @override
@@ -2374,15 +2477,23 @@ class _HistoricalVendorCardState extends State<_HistoricalVendorCard> {
 
   @override
   Widget build(BuildContext context) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
+        border: Border.all(color: separatorColor, width: 0.5),
+        boxShadow: [
           BoxShadow(
-              color: Color(0x06000000), blurRadius: 8, offset: Offset(0, 2))
+            color: CupertinoColors.black.withOpacity(0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          )
         ],
       ),
       child: Column(
@@ -2395,17 +2506,16 @@ class _HistoricalVendorCardState extends State<_HistoricalVendorCard> {
               Expanded(
                 child: Text(
                   widget.supplierName,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Color(0xFF0F172A)),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: labelColor),
                 ),
               ),
-              TextButton(
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minSize: 0,
                 onPressed: () => setState(() => _editing = !_editing),
                 child: Text(
                   _editing ? 'Cancel' : 'Edit Price',
-                  style: TextStyle(fontSize: 12, color: widget.accentColor),
+                  style: TextStyle(fontSize: 12, color: widget.accentColor, fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -2415,75 +2525,54 @@ class _HistoricalVendorCardState extends State<_HistoricalVendorCard> {
             if (widget.price != null)
               Text(
                 formatWithCurrency(widget.price!, 'IDR'),
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: widget.accentColor),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: widget.accentColor),
               )
             else
-              const Text('No price on record',
-                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13)),
+              Text('No price on record', style: TextStyle(color: secondaryLabel, fontSize: 13)),
             if (widget.date != null) ...[
               const SizedBox(height: 4),
-              Text('Last purchased: ${widget.date}',
-                  style: const TextStyle(
-                      fontSize: 12, color: Color(0xFF64748B))),
+              Text('Last purchased: ${widget.date}', style: TextStyle(fontSize: 12, color: secondaryLabel)),
             ],
           ] else ...[
-            TextField(
+            const Text('Unit Price (IDR)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+            const SizedBox(height: 4),
+            CupertinoTextField(
               controller: _priceCtrl,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                labelText: 'Unit Price (IDR)',
-                prefixText: 'Rp ',
-                isDense: true,
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              prefix: const Padding(
+                padding: EdgeInsets.only(left: 10),
+                child: Text('Rp ', style: TextStyle(color: CupertinoColors.placeholderText)),
               ),
             ),
             const SizedBox(height: 8),
-            TextField(
+            const Text('Lead Time (days)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+            const SizedBox(height: 4),
+            CupertinoTextField(
               controller: _leadTimeCtrl,
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: 'Lead Time (days)',
-                suffixText: 'days',
-                isDense: true,
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              suffix: const Padding(
+                padding: EdgeInsets.only(right: 10),
+                child: Text('days', style: TextStyle(color: CupertinoColors.placeholderText)),
               ),
             ),
           ],
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton(
+            child: CupertinoButton(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              color: widget.accentColor,
+              borderRadius: BorderRadius.circular(8),
               onPressed: widget.isSubmitting
                   ? null
                   : () {
-                      final price = double.tryParse(
-                              _priceCtrl.text.replaceAll(',', '.')) ??
-                          widget.price ??
-                          0.0;
-                      final leadTime =
-                          int.tryParse(_leadTimeCtrl.text) ?? widget.leadTimeDays;
+                      final price = double.tryParse(_priceCtrl.text.replaceAll(',', '.')) ?? widget.price ?? 0.0;
+                      final leadTime = int.tryParse(_leadTimeCtrl.text) ?? widget.leadTimeDays;
                       widget.onAssign(price, leadTime);
                     },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: widget.accentColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-              ),
               child: widget.isSubmitting
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
-                  : const Text('Quick Assign'),
+                  ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                  : const Text('Quick Assign', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: CupertinoColors.white)),
             ),
           ),
         ],
@@ -2507,71 +2596,67 @@ class _SupplierTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFFEEF2FF) : Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFFE2E8F0),
-          width: isSelected ? 1.5 : 1.0,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final activeBg = const Color(0xFF6E56CF).withOpacity(0.08);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? activeBg : cardBg,
           borderRadius: BorderRadius.circular(10),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? const Color(0xFF4F46E5)
-                        : const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.store_outlined,
-                    size: 18,
-                    color: isSelected ? Colors.white : const Color(0xFF64748B),
-                  ),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF6E56CF) : separatorColor,
+            width: isSelected ? 1.5 : 0.5,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: isSelected ? const Color(0xFF6E56CF) : CupertinoColors.systemGroupedBackground.resolveFrom(context),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        supplier.name,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                          color: isSelected
-                              ? const Color(0xFF4338CA)
-                              : const Color(0xFF1E293B),
-                        ),
+                child: Icon(
+                  CupertinoIcons.home,
+                  size: 18,
+                  color: isSelected ? CupertinoColors.white : secondaryLabel,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      supplier.name,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: isSelected ? const Color(0xFF6E56CF) : labelColor,
                       ),
-                      if (supplier.city != null || supplier.code != null)
-                        Text(
-                          [supplier.code, supplier.city]
-                              .where((x) => x != null)
-                              .join(' • '),
-                          style: const TextStyle(
-                              fontSize: 11, color: Color(0xFF94A3B8)),
-                        ),
-                    ],
-                  ),
+                    ),
+                    if (supplier.city != null || supplier.code != null)
+                      Text(
+                        [supplier.code, supplier.city]
+                            .where((x) => x != null)
+                            .join(' • '),
+                        style: TextStyle(fontSize: 11, color: secondaryLabel),
+                      ),
+                  ],
                 ),
-                if (isSelected)
-                  const Icon(Icons.check_circle,
-                      size: 20, color: Color(0xFF4F46E5)),
-              ],
-            ),
+              ),
+              if (isSelected)
+                const Icon(CupertinoIcons.check_mark_circled_solid, size: 20, color: Color(0xFF6E56CF)),
+            ],
           ),
         ),
       ),
@@ -2590,18 +2675,18 @@ class _CurrentComparisonTile extends StatelessWidget {
     final name = data['supplier_name'] ?? 'Unknown';
     final price = data['price'] != null ? (data['price'] as num).toDouble() : null;
     final lead = data['lead_time_days'] as int? ?? 0;
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: const Color(0xFFF0FDF4),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFBBF7D0)),
+        border: Border.all(color: const Color(0xFFBBF7D0), width: 0.5),
       ),
       child: Row(
         children: [
-          const Icon(Icons.check_circle_outline,
-              size: 16, color: Color(0xFF16A34A)),
+          const Icon(CupertinoIcons.check_mark_circled, size: 16, color: Color(0xFF16A34A)),
           const SizedBox(width: 10),
           Expanded(
             child: Text(name,
@@ -2618,7 +2703,7 @@ class _CurrentComparisonTile extends StatelessWidget {
                     fontWeight: FontWeight.bold)),
           const SizedBox(width: 8),
           Text('$lead d',
-              style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+              style: TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel.resolveFrom(context))),
         ],
       ),
     );
@@ -2633,15 +2718,22 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(color: Color(0x0A0F0F0F), blurRadius: 8, offset: Offset(0, 2)),
+        border: Border.all(color: separatorColor, width: 0.5),
+        boxShadow: [
+          BoxShadow(
+            color: CupertinoColors.black.withOpacity(0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: child,
@@ -2667,7 +2759,7 @@ class _Badge extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
       ),
       child: Text(
         text,
@@ -2697,7 +2789,7 @@ class _MetaChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isBadge = textColor != null;
-    final iconTextColor = textColor ?? color ?? (warning ? const Color(0xFFF59E0B) : const Color(0xFF64748B));
+    final iconTextColor = textColor ?? color ?? (warning ? CupertinoColors.systemOrange : CupertinoColors.secondaryLabel.resolveFrom(context));
     
     final row = Row(
       mainAxisSize: MainAxisSize.min,
@@ -2737,20 +2829,25 @@ class _FieldBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+    final boxBg = CupertinoColors.systemGroupedBackground.resolveFrom(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+        Text(label, style: TextStyle(fontSize: 11, color: secondaryLabel)),
         const SizedBox(height: 4),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
+            color: boxBg,
             borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: separatorColor, width: 0.5),
           ),
-          child: Text(value, style: const TextStyle(fontSize: 12, color: Color(0xFF334155))),
+          child: Text(value, style: TextStyle(fontSize: 12, color: labelColor)),
         ),
       ],
     );
@@ -2765,10 +2862,10 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.bold,
-        color: Color(0xFF64748B),
+        color: CupertinoColors.secondaryLabel.resolveFrom(context),
         letterSpacing: 0.5,
       ),
     );
@@ -2788,20 +2885,22 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 32),
       child: Column(
         children: [
-          Icon(icon, size: 48, color: const Color(0xFFCBD5E1)),
+          Icon(icon, size: 48, color: secondaryLabel.withOpacity(0.4)),
           const SizedBox(height: 12),
           Text(title,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF64748B))),
+                  color: secondaryLabel)),
           const SizedBox(height: 6),
           Text(subtitle,
-              style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+              style: TextStyle(fontSize: 12, color: secondaryLabel.withOpacity(0.8)),
               textAlign: TextAlign.center),
         ],
       ),
@@ -2826,211 +2925,217 @@ class _ApprovedItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFFE2E8F0),
-          width: isSelected ? 2.0 : 1.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0x0A0F0F0F),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardBg,
           borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
+          border: Border.all(
+            color: isSelected ? const Color(0xFF6E56CF) : separatorColor,
+            width: isSelected ? 2.0 : 0.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: CupertinoColors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      item.itemName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: labelColor,
+                      ),
+                    ),
+                  ),
+                  if (item.costCode != null) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: separatorColor, width: 0.5),
+                      ),
                       child: Text(
-                        item.itemName,
-                        style: const TextStyle(
+                        item.costCode!,
+                        style: TextStyle(
+                          fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: Color(0xFF0F172A),
+                          color: secondaryLabel,
                         ),
                       ),
                     ),
-                    if (item.costCode != null) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
-                        ),
-                        child: Text(
-                          item.costCode!,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF475569),
-                          ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(item.itemCode, style: TextStyle(color: secondaryLabel, fontSize: 12)),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  const Icon(CupertinoIcons.doc_text, size: 13, color: Color(0xFF6E56CF)),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      '${pr.code}  •  ${pr.companyName ?? "Unknown"}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF6E56CF),
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 12,
+                runSpacing: 4,
+                children: [
+                  _buildMetadataIconText(
+                    CupertinoIcons.calendar,
+                    'Requested: ${pr.requestDate}',
+                    secondaryLabel,
+                  ),
+                  if (pr.approvedBy != null && pr.approvedBy!.isNotEmpty)
+                    _buildMetadataIconText(
+                      CupertinoIcons.person,
+                      'Approved By: ${pr.approvedBy}',
+                      secondaryLabel,
+                    ),
+                  if (pr.approvedAt != null && pr.approvedAt!.isNotEmpty)
+                    _buildMetadataIconText(
+                      CupertinoIcons.check_mark_circled,
+                      'Approved At: ${_formatDate(pr.approvedAt!)}',
+                      secondaryLabel,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Container(height: 0.5, color: separatorColor),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Req Qty',
+                        style: TextStyle(color: secondaryLabel, fontSize: 11),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${item.qtyRequested} ${item.uom}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: labelColor,
                         ),
                       ),
                     ],
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(item.itemCode, style: const TextStyle(color: Color(0xFF64748B), fontSize: 12)),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    const Icon(Icons.description_outlined, size: 13, color: Color(0xFF4F46E5)),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        '${pr.code}  •  ${pr.companyName ?? "Unknown"}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF4F46E5),
-                          fontWeight: FontWeight.w600,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 4,
-                  children: [
-                    _buildMetadataIconText(
-                      Icons.calendar_today_outlined,
-                      'Requested: ${pr.requestDate}',
-                    ),
-                    if (pr.approvedBy != null && pr.approvedBy!.isNotEmpty)
-                      _buildMetadataIconText(
-                        Icons.person_outline,
-                        'Approved By: ${pr.approvedBy}',
-                      ),
-                    if (pr.approvedAt != null && pr.approvedAt!.isNotEmpty)
-                      _buildMetadataIconText(
-                        Icons.assignment_turned_in_outlined,
-                        'Approved At: ${_formatDate(pr.approvedAt!)}',
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
+                  ),
+                  if (item.approvedQty != null)
                     Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         const Text(
-                          'Req Qty',
-                          style: TextStyle(color: Color(0xFF64748B), fontSize: 11),
+                          'Approved Qty',
+                          style: TextStyle(
+                            color: CupertinoColors.activeGreen,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${item.qtyRequested} ${item.uom}',
+                          '${item.approvedQty} ${item.uom}',
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
+                            color: CupertinoColors.activeGreen,
                           ),
                         ),
                       ],
                     ),
-                    if (item.approvedQty != null)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          const Text(
-                            'Approved Qty',
-                            style: TextStyle(
-                              color: Color(0xFF10B981),
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${item.approvedQty} ${item.uom}',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF10B981),
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(CupertinoIcons.archivebox, size: 14, color: secondaryLabel),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Current Stock: ${item.currentStock} ${item.uom}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: item.currentStock < item.qtyRequested
+                          ? CupertinoColors.systemOrange
+                          : secondaryLabel,
+                      fontWeight: item.currentStock < item.qtyRequested
+                          ? FontWeight.w500
+                          : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+              if (item.dtSpec != null && item.dtSpec!.trim().isNotEmpty) ...[
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.inventory_2_outlined, size: 14, color: Color(0xFF64748B)),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Current Stock: ${item.currentStock} ${item.uom}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: item.currentStock < item.qtyRequested
-                            ? const Color(0xFFF59E0B)
-                            : const Color(0xFF64748B),
-                        fontWeight: item.currentStock < item.qtyRequested
-                            ? FontWeight.w500
-                            : FontWeight.normal,
-                      ),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: separatorColor, width: 0.5),
+                  ),
+                  child: Text(
+                    'Spesifikasi: ${item.dtSpec}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: labelColor,
+                      fontStyle: FontStyle.italic,
                     ),
-                  ],
+                  ),
                 ),
-                if (item.dtSpec != null && item.dtSpec!.trim().isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      'Spesifikasi: ${item.dtSpec}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF475569),
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ),
-                ],
-                if (item.dtNotes != null && item.dtNotes!.trim().isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      'Keterangan: ${item.dtNotes}',
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF475569)),
-                    ),
-                  ),
-                ],
               ],
-            ),
+              if (item.dtNotes != null && item.dtNotes!.trim().isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: separatorColor, width: 0.5),
+                  ),
+                  child: Text(
+                    'Keterangan: ${item.dtNotes}',
+                    style: TextStyle(fontSize: 12, color: labelColor),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ),
@@ -3051,15 +3156,15 @@ class _ApprovedItemCard extends StatelessWidget {
     return dateTimeStr;
   }
 
-  Widget _buildMetadataIconText(IconData icon, String text) {
+  Widget _buildMetadataIconText(IconData icon, String text, Color color) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 12, color: const Color(0xFF64748B)),
+        Icon(icon, size: 12, color: color),
         const SizedBox(width: 4),
         Text(
           text,
-          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+          style: TextStyle(fontSize: 11, color: color),
         ),
       ],
     );
@@ -3088,89 +3193,45 @@ class _ApprovedItemDetailsViewState
       await repo.autoAssignVendors(widget.entry.pr.id, strategy: strategy);
       ref.invalidate(purchaseRequestsProvider);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Auto-assignment successful.')),
-        );
+        _showNotification(context, 'Auto-assignment successful.');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error auto-assigning: $e')),
-        );
+        _showNotification(context, 'Error auto-assigning: $e', isError: true);
       }
     } finally {
       if (mounted) setState(() => _isAutoAssigning = false);
     }
   }
 
-  Future<void> _showStrategyDialog() async {
-    String selectedStrategy = 'lowest_price';
-    await showDialog(
+  void _showStrategySheet() {
+    showCupertinoModalPopup(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Auto-Assign Vendors'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Select strategy to automatically find and assign the best vendors based on buying history:',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-                  ),
-                  const SizedBox(height: 16),
-                  RadioListTile<String>(
-                    title: const Text('Lowest Price'),
-                    subtitle: const Text(
-                        'Finds vendors with the lowest historical price for these items.'),
-                    value: 'lowest_price',
-                    groupValue: selectedStrategy,
-                    activeColor: const Color(0xFF4F46E5),
-                    onChanged: (val) {
-                      if (val != null) {
-                        setDialogState(() => selectedStrategy = val);
-                      }
-                    },
-                  ),
-                  RadioListTile<String>(
-                    title: const Text('Last Supplier'),
-                    subtitle: const Text(
-                        'Selects the supplier from the most recent purchase order.'),
-                    value: 'last_supplier',
-                    groupValue: selectedStrategy,
-                    activeColor: const Color(0xFF4F46E5),
-                    onChanged: (val) {
-                      if (val != null) {
-                        setDialogState(() => selectedStrategy = val);
-                      }
-                    },
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel',
-                      style: TextStyle(color: Color(0xFF64748B))),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _handleAutoAssign(selectedStrategy);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4F46E5),
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text('Run Assignment'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Auto-Assign Vendors'),
+        message: const Text('Select strategy to automatically find and assign the best vendors based on buying history:'),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _handleAutoAssign('lowest_price');
+            },
+            child: const Text('Lowest Price (Harga Terendah)'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _handleAutoAssign('last_supplier');
+            },
+            child: const Text('Last Supplier (Pemasok Terakhir)'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+      ),
     );
   }
 
@@ -3179,6 +3240,9 @@ class _ApprovedItemDetailsViewState
     final item = widget.entry.item;
     final pr = widget.entry.pr;
     final suggestionsAsync = ref.watch(prItemSuggestionsProvider(pr.id));
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -3195,10 +3259,10 @@ class _ApprovedItemDetailsViewState
                     Expanded(
                       child: Text(
                         item.itemName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A),
+                          color: labelColor,
                         ),
                       ),
                     ),
@@ -3211,22 +3275,21 @@ class _ApprovedItemDetailsViewState
                 const SizedBox(height: 6),
                 Text(
                   item.itemCode,
-                  style: const TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+                  style: TextStyle(fontSize: 14, color: secondaryLabel),
                 ),
                 const SizedBox(height: 16),
-                const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                Container(height: 0.5, color: separatorColor),
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    const Icon(Icons.description_outlined,
-                        size: 16, color: Color(0xFF4F46E5)),
+                    const Icon(CupertinoIcons.doc_text, size: 16, color: Color(0xFF6E56CF)),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         '${pr.code}  •  ${pr.companyName ?? "Unknown"}',
                         style: const TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF4F46E5),
+                          color: Color(0xFF6E56CF),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -3242,27 +3305,20 @@ class _ApprovedItemDetailsViewState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Quantity & Stock Information',
-                    style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A))),
+                Text('Quantity & Stock Information',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: labelColor)),
                 const SizedBox(height: 16),
                 Row(
                   children: [
                     Expanded(
-                      child: _buildQtyCard('Requested Qty',
-                          '${item.qtyRequested} ${item.uom}',
-                          const Color(0xFF0F172A), const Color(0xFFF1F5F9)),
+                      child: _buildQtyCard('Requested Qty', '${item.qtyRequested} ${item.uom}',
+                          labelColor, CupertinoColors.systemGroupedBackground.resolveFrom(context)),
                     ),
                     if (item.approvedQty != null) ...[
                       const SizedBox(width: 12),
                       Expanded(
-                        child: _buildQtyCard(
-                            'Approved Qty',
-                            '${item.approvedQty} ${item.uom}',
-                            const Color(0xFF10B981),
-                            const Color(0xFFECFDF5)),
+                        child: _buildQtyCard('Approved Qty', '${item.approvedQty} ${item.uom}',
+                            CupertinoColors.activeGreen, const Color(0xFFECFDF5)),
                       ),
                     ],
                   ],
@@ -3272,11 +3328,11 @@ class _ApprovedItemDetailsViewState
                     'Current Stock',
                     '${item.currentStock} ${item.uom}',
                     item.currentStock < item.qtyRequested
-                        ? const Color(0xFFD97706)
-                        : const Color(0xFF475569),
+                        ? CupertinoColors.systemOrange
+                        : secondaryLabel,
                     item.currentStock < item.qtyRequested
                         ? const Color(0xFFFEF3C7)
-                        : const Color(0xFFF8FAFC)),
+                        : CupertinoColors.systemGroupedBackground.resolveFrom(context)),
               ],
             ),
           ),
@@ -3286,25 +3342,19 @@ class _ApprovedItemDetailsViewState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Spesifikasi',
-                    style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A))),
+                Text('Spesifikasi',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: labelColor)),
                 const SizedBox(height: 12),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFF1F5F9))),
+                      border: Border.all(color: separatorColor, width: 0.5)),
                   child: Text(
-                    (item.dtSpec != null && item.dtSpec!.trim().isNotEmpty)
-                        ? item.dtSpec!
-                        : '-',
-                    style:
-                        const TextStyle(fontSize: 13, color: Color(0xFF334155)),
+                    (item.dtSpec != null && item.dtSpec!.trim().isNotEmpty) ? item.dtSpec! : '-',
+                    style: TextStyle(fontSize: 13, color: labelColor),
                   ),
                 ),
               ],
@@ -3316,25 +3366,19 @@ class _ApprovedItemDetailsViewState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Keterangan',
-                    style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A))),
+                Text('Keterangan',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: labelColor)),
                 const SizedBox(height: 12),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFF1F5F9))),
+                      border: Border.all(color: separatorColor, width: 0.5)),
                   child: Text(
-                    (item.dtNotes != null && item.dtNotes!.trim().isNotEmpty)
-                        ? item.dtNotes!
-                        : '-',
-                    style:
-                        const TextStyle(fontSize: 13, color: Color(0xFF334155)),
+                    (item.dtNotes != null && item.dtNotes!.trim().isNotEmpty) ? item.dtNotes! : '-',
+                    style: TextStyle(fontSize: 13, color: labelColor),
                   ),
                 ),
               ],
@@ -3346,11 +3390,8 @@ class _ApprovedItemDetailsViewState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Last Vendor Details',
-                    style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A))),
+                Text('Last Vendor Details',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: labelColor)),
                 const SizedBox(height: 16),
                 suggestionsAsync.when(
                   data: (suggestions) {
@@ -3359,16 +3400,12 @@ class _ApprovedItemDetailsViewState
                       orElse: () => null,
                     );
                     final lastVendor = itemData?['suggestions']?['last_vendor'];
-                    final cheapestVendor =
-                        itemData?['suggestions']?['cheapest'];
+                    final cheapestVendor = itemData?['suggestions']?['cheapest'];
 
                     if (lastVendor == null && cheapestVendor == null) {
-                      return const Text(
+                      return Text(
                         'No purchase history found for this item.',
-                        style: TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF64748B),
-                            fontStyle: FontStyle.italic),
+                        style: TextStyle(fontSize: 13, color: secondaryLabel, fontStyle: FontStyle.italic),
                       );
                     }
 
@@ -3376,40 +3413,28 @@ class _ApprovedItemDetailsViewState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (lastVendor != null) ...[
-                          _buildHistoryRow(Icons.history, 'Last Vendor',
-                              lastVendor['supplier_name'] ?? 'Unknown',
-                              price: lastVendor['price'] != null
-                                  ? formatWithCurrency(
-                                      lastVendor['price'], 'IDR')
-                                  : null,
-                              date: lastVendor['last_purchased_at'] != null
-                                  ? _formatDate(lastVendor['last_purchased_at'])
-                                  : null),
+                          _buildHistoryRow(CupertinoIcons.clock, 'Last Vendor', lastVendor['supplier_name'] ?? 'Unknown',
+                              price: lastVendor['price'] != null ? formatWithCurrency(lastVendor['price'], 'IDR') : null,
+                              date: lastVendor['last_purchased_at'] != null ? _formatDate(lastVendor['last_purchased_at']) : null),
                         ],
                         if (lastVendor != null && cheapestVendor != null)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                            child: Divider(height: 1, color: Color(0xFFF1F5F9)),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Container(height: 0.5, color: separatorColor),
                           ),
                         if (cheapestVendor != null) ...[
-                          _buildHistoryRow(
-                              Icons.monetization_on_outlined,
-                              'Cheapest Vendor',
-                              cheapestVendor['supplier_name'] ?? 'Unknown',
-                              price: cheapestVendor['price'] != null
-                                  ? formatWithCurrency(
-                                      cheapestVendor['price'], 'IDR')
-                                  : null),
+                          _buildHistoryRow(CupertinoIcons.money_dollar, 'Cheapest Vendor', cheapestVendor['supplier_name'] ?? 'Unknown',
+                              price: cheapestVendor['price'] != null ? formatWithCurrency(cheapestVendor['price'], 'IDR') : null),
                         ],
                       ],
                     );
                   },
                   loading: () => const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
+                        padding: EdgeInsets.all(16),
+                        child: Center(child: CupertinoActivityIndicator()),
+                      ),
                   error: (err, _) => Text('Error loading history: $err',
-                      style: const TextStyle(color: Colors.red, fontSize: 12)),
+                      style: TextStyle(color: CupertinoColors.destructiveRed, fontSize: 12)),
                 ),
               ],
             ),
@@ -3417,23 +3442,18 @@ class _ApprovedItemDetailsViewState
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _isAutoAssigning ? null : _showStrategyDialog,
-              icon: _isAutoAssigning
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
-                  : const Icon(Icons.auto_awesome, size: 18),
-              label: const Text('Auto-Assign Vendors to this PR'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4F46E5),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-              ),
+            child: CupertinoButton.filled(
+              onPressed: _isAutoAssigning ? null : _showStrategySheet,
+              child: _isAutoAssigning
+                  ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                  : const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(CupertinoIcons.wand_stars, size: 18),
+                        SizedBox(width: 8),
+                        Text('Auto-Assign Vendors to this PR', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ],
+                    ),
             ),
           ),
         ],
@@ -3441,43 +3461,30 @@ class _ApprovedItemDetailsViewState
     );
   }
 
-  Widget _buildQtyCard(
-      String label, String val, Color textColor, Color bgColor) {
+  Widget _buildQtyCard(String label, String val, Color textColor, Color bgColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration:
-          BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(8)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: const TextStyle(
-                  fontSize: 11,
-                  color: Color(0xFF64748B),
-                  fontWeight: FontWeight.w500)),
+          Text(label, style: TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel.resolveFrom(context), fontWeight: FontWeight.w500)),
           const SizedBox(height: 4),
-          Text(val,
-              style: TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.bold, color: textColor)),
+          Text(val, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor)),
         ],
       ),
     );
   }
 
-  Widget _buildHistoryRow(IconData icon, String label, String supplierName,
-      {String? price, String? date}) {
+  Widget _buildHistoryRow(IconData icon, String label, String supplierName, {String? price, String? date}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(icon, size: 16, color: const Color(0xFF4F46E5)),
+            Icon(icon, size: 16, color: const Color(0xFF6E56CF)),
             const SizedBox(width: 8),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F172A))),
+            Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: CupertinoColors.label.resolveFrom(context))),
           ],
         ),
         const SizedBox(height: 8),
@@ -3486,22 +3493,14 @@ class _ApprovedItemDetailsViewState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(supplierName,
-                  style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF1E293B),
-                      fontWeight: FontWeight.w600)),
+              Text(supplierName, style: TextStyle(fontSize: 13, color: CupertinoColors.label.resolveFrom(context), fontWeight: FontWeight.w600)),
               if (price != null) ...[
                 const SizedBox(height: 4),
-                Text('Price: $price',
-                    style: const TextStyle(
-                        fontSize: 12, color: Color(0xFF64748B))),
+                Text('Price: $price', style: TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel.resolveFrom(context))),
               ],
               if (date != null) ...[
                 const SizedBox(height: 2),
-                Text('Purchased at: $date',
-                    style: const TextStyle(
-                        fontSize: 12, color: Color(0xFF64748B))),
+                Text('Purchased at: $date', style: TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel.resolveFrom(context))),
               ],
             ],
           ),
@@ -3523,8 +3522,9 @@ class _ApprovedItemDetailsViewState
     } catch (_) {}
     return dateTimeStr;
   }
-
 }
+
+// ─── Vendor Warehouse Grouping Data Structure ────────────────────────────────
 
 class VendorWarehouseGroup {
   final int supplierId;
@@ -3564,6 +3564,8 @@ class GroupedItemDetail {
   });
 }
 
+// ─── Vendor Warehouse Group Card ─────────────────────────────────────────────
+
 class VendorWarehouseGroupCard extends StatelessWidget {
   final VendorWarehouseGroup group;
   final bool isSelected;
@@ -3579,134 +3581,136 @@ class VendorWarehouseGroupCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final allPoCreated = group.items.every((entry) => entry.item.status == 'po_created');
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFFE2E8F0),
-          width: isSelected ? 2.0 : 1.0,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x140F0F0F),
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardBg,
           borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        group.supplierName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                    ),
-                    if (allPoCreated)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFECFDF5),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: const Color(0xFFA7F3D0)),
-                        ),
-                        child: const Text(
-                          'PO Created',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF059669),
-                          ),
-                        ),
-                      )
-                    else
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: const Color(0xFFBFDBFE)),
-                        ),
-                        child: const Text(
-                          'Awaiting PO',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1D4ED8),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Lead time: ${group.leadTimeDays} days',
-                  style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
-                ),
-                const SizedBox(height: 12),
-                const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    const Icon(Icons.warehouse_outlined, size: 14, color: Color(0xFF4F46E5)),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        group.warehouseName,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF475569),
-                          fontWeight: FontWeight.w500,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '${group.totalItemCount} items',
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-                    ),
-                    Text(
-                      formatWithCurrency(group.totalPrice, 'IDR'),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF4F46E5),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+          border: Border.all(
+            color: isSelected ? const Color(0xFF6E56CF) : separatorColor,
+            width: isSelected ? 2.0 : 0.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: CupertinoColors.black.withOpacity(0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      group.supplierName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: labelColor,
+                      ),
+                    ),
+                  ),
+                  if (allPoCreated)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.activeGreen.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: CupertinoColors.activeGreen.withOpacity(0.3)),
+                      ),
+                      child: const Text(
+                        'PO Created',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: CupertinoColors.activeGreen,
+                        ),
+                      ),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.activeBlue.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: CupertinoColors.activeBlue.withOpacity(0.3)),
+                      ),
+                      child: const Text(
+                        'Awaiting PO',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: CupertinoColors.activeBlue,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Lead time: ${group.leadTimeDays} days',
+                style: TextStyle(color: secondaryLabel, fontSize: 12),
+              ),
+              const SizedBox(height: 12),
+              Container(height: 0.5, color: separatorColor),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  const Icon(CupertinoIcons.home, size: 14, color: Color(0xFF6E56CF)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      group.warehouseName,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: labelColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '${group.totalItemCount} items',
+                    style: TextStyle(fontSize: 13, color: secondaryLabel),
+                  ),
+                  Text(
+                    formatWithCurrency(group.totalPrice, 'IDR'),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF6E56CF),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 }
+
+// ─── Grouped Details View ───────────────────────────────────────────────────
 
 class _GroupedDetailsView extends StatelessWidget {
   final VendorWarehouseGroup group;
@@ -3726,6 +3730,10 @@ class _GroupedDetailsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final allPoCreated = group.items.every((entry) => entry.item.status == 'po_created');
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
 
     return Column(
       children: [
@@ -3734,19 +3742,18 @@ class _GroupedDetailsView extends StatelessWidget {
             controller: scrollController,
             padding: const EdgeInsets.all(16),
             children: [
-              // Metadata header
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cardBg,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                  boxShadow: const [
+                  border: Border.all(color: separatorColor, width: 0.5),
+                  boxShadow: [
                     BoxShadow(
-                      color: Color(0x0A0F0F0F),
+                      color: CupertinoColors.black.withOpacity(0.04),
                       blurRadius: 8,
-                      offset: Offset(0, 2),
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
@@ -3759,24 +3766,29 @@ class _GroupedDetailsView extends StatelessWidget {
                         Expanded(
                           child: Text(
                             group.supplierName,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF0F172A),
+                              color: labelColor,
                             ),
                           ),
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: allPoCreated ? const Color(0xFFECFDF5) : const Color(0xFFEFF6FF),
+                            color: allPoCreated
+                                ? CupertinoColors.activeGreen.withOpacity(0.12)
+                                : CupertinoColors.activeBlue.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: allPoCreated ? const Color(0xFFA7F3D0) : const Color(0xFFBFDBFE)),
+                            border: Border.all(
+                                color: allPoCreated
+                                    ? CupertinoColors.activeGreen.withOpacity(0.3)
+                                    : CupertinoColors.activeBlue.withOpacity(0.3)),
                           ),
                           child: Text(
                             allPoCreated ? 'PO CREATED' : 'APPROVED',
                             style: TextStyle(
-                              color: allPoCreated ? const Color(0xFF059669) : const Color(0xFF1D4ED8),
+                              color: allPoCreated ? CupertinoColors.activeGreen : CupertinoColors.activeBlue,
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
                             ),
@@ -3787,12 +3799,12 @@ class _GroupedDetailsView extends StatelessWidget {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        const Icon(Icons.warehouse_outlined, size: 14, color: Color(0xFF64748B)),
+                        Icon(CupertinoIcons.home, size: 14, color: secondaryLabel),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
                             'Warehouse: ${group.warehouseName}',
-                            style: const TextStyle(fontSize: 13, color: Color(0xFF475569), fontWeight: FontWeight.w600),
+                            style: TextStyle(fontSize: 13, color: labelColor, fontWeight: FontWeight.w600),
                           ),
                         ),
                       ],
@@ -3800,28 +3812,31 @@ class _GroupedDetailsView extends StatelessWidget {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        const Icon(Icons.timer_outlined, size: 14, color: Color(0xFF64748B)),
+                        Icon(CupertinoIcons.clock, size: 14, color: secondaryLabel),
                         const SizedBox(width: 6),
                         Text(
                           'Estimated Lead Time: ${group.leadTimeDays} days',
-                          style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                          style: TextStyle(fontSize: 13, color: secondaryLabel),
                         ),
                       ],
                     ),
-                    const Divider(height: 24, color: Color(0xFFE2E8F0)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Container(height: 0.5, color: separatorColor),
+                    ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Total Order Value:',
-                          style: TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                          style: TextStyle(fontSize: 13, color: secondaryLabel, fontWeight: FontWeight.w500),
                         ),
                         Text(
                           formatWithCurrency(group.totalPrice, 'IDR'),
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF4F46E5),
+                            color: Color(0xFF6E56CF),
                           ),
                         ),
                       ],
@@ -3831,31 +3846,30 @@ class _GroupedDetailsView extends StatelessWidget {
               ),
 
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'Items to be Ordered',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: labelColor,
                 ),
               ),
               const SizedBox(height: 8),
 
-              // Items details list
               ...group.items.map((entry) {
                 final item = entry.item;
                 final pr = entry.pr;
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cardBg,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                    boxShadow: const [
+                    border: Border.all(color: separatorColor, width: 0.5),
+                    boxShadow: [
                       BoxShadow(
-                        color: Color(0x06000000),
+                        color: CupertinoColors.black.withOpacity(0.02),
                         blurRadius: 8,
-                        offset: Offset(0, 2),
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
@@ -3870,20 +3884,17 @@ class _GroupedDetailsView extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 item.itemName,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
-                                  color: Color(0xFF0F172A),
+                                  color: labelColor,
                                 ),
                               ),
                             ),
                             Text(
                               formatWithCurrency(entry.subtotal, 'IDR'),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                                color: Color(0xFF0F172A),
-                              ),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 13, color: labelColor),
                             ),
                           ],
                         ),
@@ -3893,27 +3904,30 @@ class _GroupedDetailsView extends StatelessWidget {
                           children: [
                             Text(
                               item.itemCode,
-                              style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                              style: TextStyle(color: secondaryLabel, fontSize: 12),
                             ),
                             Text(
                               'Qty: ${item.approvedQty ?? item.qtyRequested} ${item.uom} @ ${formatWithCurrency(entry.offeredUnitPrice, "IDR")}',
-                              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                              style: TextStyle(fontSize: 12, color: secondaryLabel),
                             ),
                           ],
                         ),
-                        const Divider(height: 20, color: Color(0xFFF1F5F9)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          child: Container(height: 0.5, color: separatorColor),
+                        ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.description_outlined, size: 13, color: Color(0xFF4F46E5)),
+                                const Icon(CupertinoIcons.doc_text, size: 13, color: Color(0xFF6E56CF)),
                                 const SizedBox(width: 4),
                                 Text(
                                   pr.code,
                                   style: const TextStyle(
                                     fontSize: 12,
-                                    color: Color(0xFF4F46E5),
+                                    color: Color(0xFF6E56CF),
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -3923,7 +3937,7 @@ class _GroupedDetailsView extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFECFDF5),
+                                  color: CupertinoColors.activeGreen.withOpacity(0.12),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
@@ -3931,7 +3945,7 @@ class _GroupedDetailsView extends StatelessWidget {
                                   style: const TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF059669),
+                                    color: CupertinoColors.activeGreen,
                                   ),
                                 ),
                               ),
@@ -3941,14 +3955,14 @@ class _GroupedDetailsView extends StatelessWidget {
                           const SizedBox(height: 8),
                           Text(
                             'Spesifikasi: ${item.dtSpec}',
-                            style: const TextStyle(fontSize: 12, color: Color(0xFF475569), fontStyle: FontStyle.italic),
+                            style: TextStyle(fontSize: 12, color: secondaryLabel, fontStyle: FontStyle.italic),
                           ),
                         ],
                         if (item.dtNotes != null && item.dtNotes!.trim().isNotEmpty) ...[
                           const SizedBox(height: 4),
                           Text(
                             'Keterangan: ${item.dtNotes}',
-                            style: const TextStyle(fontSize: 12, color: Color(0xFF475569)),
+                            style: TextStyle(fontSize: 12, color: secondaryLabel),
                           ),
                         ],
                       ],
@@ -3957,104 +3971,98 @@ class _GroupedDetailsView extends StatelessWidget {
                 );
               }),
 
-              // Generated POs
               if (group.purchaseOrders.isNotEmpty) ...[
                 const SizedBox(height: 24),
-                const Text(
+                Text(
                   'Associated Purchase Orders',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F172A),
+                    color: labelColor,
                   ),
                 ),
                 const SizedBox(height: 8),
                 ...group.purchaseOrders.map((po) => Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.receipt_long_outlined, color: Color(0xFF4F46E5), size: 20),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              po.poNumber,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                                color: Color(0xFF0F172A),
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Status: ${po.status.toUpperCase()}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: po.status.toLowerCase() == 'ordered' ? const Color(0xFF059669) : const Color(0xFF64748B),
-                              ),
-                            ),
-                          ],
-                        ),
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: cardBg,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: separatorColor, width: 0.5),
                       ),
-                      if (po.pdfUrl != null && po.pdfUrl!.isNotEmpty)
-                        OutlinedButton.icon(
-                          onPressed: () => onDownloadPdf(po.pdfUrl!, po.poNumber),
-                          icon: const Icon(Icons.download_outlined, size: 14),
-                          label: const Text('PDF'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF4F46E5),
-                            side: const BorderSide(color: Color(0xFF4F46E5)),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                      child: Row(
+                        children: [
+                          const Icon(CupertinoIcons.doc_plaintext, color: Color(0xFF6E56CF), size: 20),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  po.poNumber,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: labelColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Status: ${po.status.toUpperCase()}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: po.status.toLowerCase() == 'ordered' ? CupertinoColors.activeGreen : secondaryLabel,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                    ],
-                  ),
-                )),
+                          if (po.pdfUrl != null && po.pdfUrl!.isNotEmpty)
+                            CupertinoButton(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              minSize: 0,
+                              color: const Color(0xFF6E56CF),
+                              borderRadius: BorderRadius.circular(6),
+                              onPressed: () => onDownloadPdf(po.pdfUrl!, po.poNumber),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(CupertinoIcons.cloud_download, size: 14, color: CupertinoColors.white),
+                                  SizedBox(width: 4),
+                                  Text('PDF', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: CupertinoColors.white)),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    )),
               ],
             ],
           ),
         ),
 
-        // Sticky Proceed to PO Button
         if (!allPoCreated)
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+            decoration: BoxDecoration(
+              color: cardBg,
+              border: Border(top: BorderSide(color: separatorColor, width: 0.5)),
             ),
             child: SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
+              child: CupertinoButton.filled(
                 onPressed: isGeneratingPos ? null : onProceedToPO,
-                icon: isGeneratingPos
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.playlist_add_check, size: 18),
-                label: const Text('Proceed to PO'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                ),
+                child: isGeneratingPos
+                    ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(CupertinoIcons.list_bullet, size: 18),
+                          SizedBox(width: 8),
+                          Text('Proceed to PO', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        ],
+                      ),
               ),
             ),
           ),
@@ -4062,4 +4070,3 @@ class _GroupedDetailsView extends StatelessWidget {
     );
   }
 }
-

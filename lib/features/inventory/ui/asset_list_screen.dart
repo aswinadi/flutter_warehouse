@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show Colors; // kept for legacy Color references if needed
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -77,10 +78,8 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
   }
 
   void _openScanner() {
-    showModalBottomSheet(
+    showCupertinoModalPopup(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => const AssetScanBottomSheet(),
     );
   }
@@ -88,18 +87,18 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'available':
-        return Colors.green;
+        return CupertinoColors.activeGreen;
       case 'assigned':
-        return Colors.blue;
+        return CupertinoColors.activeBlue;
       case 'maintenance':
-        return Colors.orange;
+        return CupertinoColors.systemOrange;
       case 'broken':
       case 'lost':
-        return Colors.red;
+        return CupertinoColors.destructiveRed;
       case 'retired':
-        return Colors.grey;
+        return CupertinoColors.systemGrey;
       default:
-        return Colors.blueGrey;
+        return CupertinoColors.systemGrey;
     }
   }
 
@@ -131,321 +130,363 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
       status: _selectedStatus == 'all' ? null : _selectedStatus,
     ));
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0F172A),
-        foregroundColor: Colors.white,
-        title: const Text('Hardware Assets'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.qr_code_scanner),
-            tooltip: 'Scan QR Aset',
-            onPressed: _openScanner,
-          ),
-          const SizedBox(width: 8),
-        ],
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+      navigationBar: CupertinoNavigationBar(
+        middle: const Text('Hardware Assets'),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: const Icon(CupertinoIcons.qrcode_viewfinder, size: 24),
+              onPressed: _openScanner,
+            ),
+            const SizedBox(width: 12),
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: const Icon(CupertinoIcons.add, size: 24),
+              onPressed: () => context.push('/assets/add'),
+            ),
+          ],
+        ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/assets/add'),
-        backgroundColor: const Color(0xFF6E56CF),
-        foregroundColor: Colors.white,
-        child: const Icon(Icons.add),
-      ),
-      body: Column(
-        children: [
-          // Header Company Switcher & Date Range
-          Container(
-            color: const Color(0xFF0F172A),
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Column(
-              children: [
-                const CompanySwitcher(),
-                const SizedBox(height: 12),
-                // Search Bar
-                TextField(
-                  controller: _searchController,
-                  onChanged: _onSearchChanged,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    hintText: 'Cari nama, tag, S/N, atau brand aset...',
-                    hintStyle: const TextStyle(color: Colors.white54, fontSize: 14),
-                    prefixIcon: const Icon(Icons.search, color: Colors.white54),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, color: Colors.white54),
-                            onPressed: () {
-                              _searchController.clear();
-                              _onSearchChanged('');
-                            },
-                          )
-                        : null,
-                    filled: true,
-                    fillColor: Colors.white.withOpacity(0.1),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Company Switcher Header
+            const CompanySwitcher(),
+            
+            // Search Bar Area
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: CupertinoSearchTextField(
+                controller: _searchController,
+                placeholder: 'Cari nama, tag, S/N, atau brand aset...',
+                onChanged: _onSearchChanged,
+              ),
+            ),
+
+            // Horizontal Filters Section
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Category Selector
+                  SizedBox(
+                    height: 32,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: _categories.length,
+                      itemBuilder: (context, index) {
+                        final cat = _categories[index];
+                        final isSelected = _selectedCategory == cat;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: _buildCategoryChip(cat, isSelected),
+                        );
+                      },
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-
-          // Filters Section
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Category Selector
-                SizedBox(
-                  height: 38,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _categories.length,
-                    itemBuilder: (context, index) {
-                      final cat = _categories[index];
-                      final isSelected = _selectedCategory == cat;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ChoiceChip(
-                          label: Text(cat == 'all' ? 'Semua Kategori' : cat),
-                          selected: isSelected,
-                          selectedColor: const Color(0xFF6E56CF).withOpacity(0.15),
-                          checkmarkColor: const Color(0xFF6E56CF),
-                          labelStyle: TextStyle(
-                            color: isSelected ? const Color(0xFF6E56CF) : Colors.black87,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          ),
-                          onSelected: (selected) {
-                            setState(() {
-                              _selectedCategory = cat;
-                            });
-                          },
-                        ),
-                      );
-                    },
+                  const SizedBox(height: 8),
+                  // Status Selector
+                  SizedBox(
+                    height: 32,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: _statuses.length,
+                      itemBuilder: (context, index) {
+                        final status = _statuses[index];
+                        final isSelected = _selectedStatus == status;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: _buildStatusChip(status, isSelected),
+                        );
+                      },
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                // Status Selector
-                SizedBox(
-                  height: 38,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _statuses.length,
-                    itemBuilder: (context, index) {
-                      final status = _statuses[index];
-                      final isSelected = _selectedStatus == status;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ChoiceChip(
-                          label: Text(status == 'all' ? 'Semua Status' : _getStatusLabel(status)),
-                          selected: isSelected,
-                          selectedColor: _getStatusColor(status).withOpacity(0.15),
-                          checkmarkColor: _getStatusColor(status),
-                          labelStyle: TextStyle(
-                            color: isSelected ? _getStatusColor(status) : Colors.black87,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          ),
-                          onSelected: (selected) {
-                            setState(() {
-                              _selectedStatus = status;
-                            });
-                          },
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
 
-          // Assets List
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: () => ref.refresh(assetListProvider(
-                search: _searchQuery.isEmpty ? null : _searchQuery,
-                category: _selectedCategory == 'all' ? null : _selectedCategory,
-                status: _selectedStatus == 'all' ? null : _selectedStatus,
-              ).future),
+            // Assets List with RefreshIndicator (via CustomScrollView & CupertinoSliverRefreshControl)
+            Expanded(
               child: assetsAsync.when(
                 data: (assets) {
                   if (assets.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.computer, size: 64, color: Colors.grey.shade300),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Tidak ada aset hardware ditemukan',
-                            style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(16),
-                    itemCount: assets.length + (ref.watch(assetListProvider(
-                      search: _searchQuery.isEmpty ? null : _searchQuery,
-                      category: _selectedCategory == 'all' ? null : _selectedCategory,
-                      status: _selectedStatus == 'all' ? null : _selectedStatus,
-                    ).notifier).hasMore ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == assets.length) {
-                        return const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Center(child: CircularProgressIndicator()),
-                        );
-                      }
-
-                      final asset = assets[index];
-                      final statusColor = _getStatusColor(asset.status);
-
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        elevation: 1,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: const BorderSide(color: Color(0xFFE2E8F0)),
+                    return CustomScrollView(
+                      controller: _scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        CupertinoSliverRefreshControl(
+                          onRefresh: () => ref.refresh(assetListProvider(
+                            search: _searchQuery.isEmpty ? null : _searchQuery,
+                            category: _selectedCategory == 'all' ? null : _selectedCategory,
+                            status: _selectedStatus == 'all' ? null : _selectedStatus,
+                          ).future),
                         ),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () => context.push('/assets/${asset.id}'),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
+                        SliverFillRemaining(
+                          child: Center(
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                // Top row: Tag and Status badge
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey.shade100,
-                                        borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(color: Colors.grey.shade300),
-                                      ),
-                                      child: Text(
-                                        asset.assetTag,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                          fontFamily: 'monospace',
-                                          color: Color(0xFF1E293B),
-                                        ),
-                                      ),
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: statusColor.withOpacity(0.12),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Text(
-                                        _getStatusLabel(asset.status),
-                                        style: TextStyle(
-                                          color: statusColor,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 11,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                // Asset Name
+                                Icon(CupertinoIcons.device_laptop, size: 64, color: secondaryLabel.withOpacity(0.5)),
+                                const SizedBox(height: 16),
                                 Text(
-                                  asset.name,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF0F172A),
-                                  ),
-                                ),
-                                if (asset.brand != null || asset.model != null) ...[
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${asset.brand ?? ''} ${asset.model ?? ''}'.trim(),
-                                    style: const TextStyle(
-                                      color: Color(0xFF64748B),
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
-                                const Divider(height: 24, color: Color(0xFFF1F5F9)),
-                                // Footer row: Category, Assigned employee & office
-                                Row(
-                                  children: [
-                                    // Category badge
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFF1F5F9),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        asset.category,
-                                        style: const TextStyle(
-                                          color: Color(0xFF475569),
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    // Assigned Info
-                                    if (asset.employeeName != null) ...[
-                                      const Icon(Icons.person_outline, size: 14, color: Color(0xFF64748B)),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        asset.employeeName!,
-                                        style: const TextStyle(fontSize: 12, color: Color(0xFF475569), fontWeight: FontWeight.w500),
-                                      ),
-                                    ] else if (asset.officeName != null) ...[
-                                      const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF64748B)),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        asset.officeName!,
-                                        style: const TextStyle(fontSize: 12, color: Color(0xFF475569), fontWeight: FontWeight.w500),
-                                      ),
-                                    ] else ...[
-                                      const Icon(Icons.info_outline, size: 14, color: Color(0xFF94A3B8)),
-                                      const SizedBox(width: 4),
-                                      const Text(
-                                        'Unassigned',
-                                        style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8), fontStyle: FontStyle.italic),
-                                      ),
-                                    ],
-                                  ],
+                                  'Tidak ada aset hardware ditemukan',
+                                  style: TextStyle(color: secondaryLabel, fontSize: 16),
                                 ),
                               ],
                             ),
                           ),
                         ),
-                      );
-                    },
+                      ],
+                    );
+                  }
+
+                  final hasMore = ref.watch(assetListProvider(
+                    search: _searchQuery.isEmpty ? null : _searchQuery,
+                    category: _selectedCategory == 'all' ? null : _selectedCategory,
+                    status: _selectedStatus == 'all' ? null : _selectedStatus,
+                  ).notifier).hasMore;
+
+                  return CustomScrollView(
+                    controller: _scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      CupertinoSliverRefreshControl(
+                        onRefresh: () => ref.refresh(assetListProvider(
+                          search: _searchQuery.isEmpty ? null : _searchQuery,
+                          category: _selectedCategory == 'all' ? null : _selectedCategory,
+                          status: _selectedStatus == 'all' ? null : _selectedStatus,
+                        ).future),
+                      ),
+                      SliverPadding(
+                        padding: const EdgeInsets.all(16),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              if (index == assets.length) {
+                                return const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 16),
+                                  child: Center(child: CupertinoActivityIndicator()),
+                                );
+                              }
+
+                              final asset = assets[index];
+                              final statusColor = _getStatusColor(asset.status);
+
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                decoration: BoxDecoration(
+                                  color: cardBg,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: separatorColor, width: 0.5),
+                                ),
+                                child: GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () => context.push('/assets/${asset.id}'),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        // Top row: Tag and Status badge
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+                                                borderRadius: BorderRadius.circular(6),
+                                                border: Border.all(color: separatorColor, width: 0.5),
+                                              ),
+                                              child: Text(
+                                                asset.assetTag,
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 12,
+                                                  fontFamily: 'monospace',
+                                                  color: labelColor,
+                                                ),
+                                              ),
+                                            ),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: statusColor.withOpacity(0.12),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Text(
+                                                _getStatusLabel(asset.status),
+                                                style: TextStyle(
+                                                  color: statusColor,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 11,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 12),
+                                        // Asset Name
+                                        Text(
+                                          asset.name,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: labelColor,
+                                          ),
+                                        ),
+                                        if (asset.brand != null || asset.model != null) ...[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '${asset.brand ?? ''} ${asset.model ?? ''}'.trim(),
+                                            style: TextStyle(
+                                              color: secondaryLabel,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                        ],
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 12.0),
+                                          child: Container(height: 0.5, color: separatorColor),
+                                        ),
+                                        // Footer row: Category, Assigned employee & office
+                                        Row(
+                                          children: [
+                                            // Category badge
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                              decoration: BoxDecoration(
+                                                color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: Text(
+                                                asset.category,
+                                                style: TextStyle(
+                                                  color: secondaryLabel,
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            // Assigned Info
+                                            if (asset.employeeName != null) ...[
+                                              Icon(CupertinoIcons.person, size: 14, color: secondaryLabel),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                asset.employeeName!,
+                                                style: TextStyle(fontSize: 12, color: secondaryLabel, fontWeight: FontWeight.w500),
+                                              ),
+                                            ] else if (asset.officeName != null) ...[
+                                              Icon(CupertinoIcons.location, size: 14, color: secondaryLabel),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                asset.officeName!,
+                                                style: TextStyle(fontSize: 12, color: secondaryLabel, fontWeight: FontWeight.w500),
+                                              ),
+                                            ] else ...[
+                                              Icon(CupertinoIcons.info, size: 14, color: secondaryLabel.withOpacity(0.6)),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                'Unassigned',
+                                                style: TextStyle(fontSize: 12, color: secondaryLabel.withOpacity(0.6), fontStyle: FontStyle.italic),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                            childCount: assets.length + (hasMore ? 1 : 0),
+                          ),
+                        ),
+                      ),
+                    ],
                   );
                 },
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => const Center(child: CupertinoActivityIndicator()),
                 error: (err, stack) => Center(
-                  child: Text('Gagal memuat daftar aset: $err', style: const TextStyle(color: Colors.red)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text('Gagal memuat daftar aset: $err', style: const TextStyle(color: CupertinoColors.destructiveRed)),
+                  ),
                 ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryChip(String cat, bool isSelected) {
+    final contextResolvedBg = isSelected
+        ? const Color(0xFF6E56CF)
+        : CupertinoColors.tertiarySystemFill.resolveFrom(context);
+    final labelColor = isSelected
+        ? CupertinoColors.white
+        : CupertinoColors.label.resolveFrom(context);
+
+    return GestureDetector(
+      onTap: () => setState(() => _selectedCategory = cat),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: contextResolvedBg,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          cat == 'all' ? 'Semua Kategori' : cat,
+          style: TextStyle(
+            color: labelColor,
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusChip(String status, bool isSelected) {
+    final statusColor = _getStatusColor(status);
+    final contextResolvedBg = isSelected
+        ? statusColor
+        : CupertinoColors.tertiarySystemFill.resolveFrom(context);
+    final labelColor = isSelected
+        ? CupertinoColors.white
+        : CupertinoColors.label.resolveFrom(context);
+
+    return GestureDetector(
+      onTap: () => setState(() => _selectedStatus = status),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: contextResolvedBg,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          status == 'all' ? 'Semua Status' : _getStatusLabel(status),
+          style: TextStyle(
+            color: labelColor,
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
       ),
     );
   }
@@ -526,8 +567,8 @@ class _AssetScanBottomSheetState extends ConsumerState<AssetScanBottomSheet> wit
       final asset = await repository.getAssetByTag(cleanCode);
 
       if (mounted) {
-        Navigator.pop(context); // Close bottom sheet
-        context.push('/assets/${asset.id}'); // Navigate directly to details
+        Navigator.pop(context);
+        context.push('/assets/${asset.id}');
       }
     } catch (e) {
       String msg = e.toString();
@@ -557,48 +598,22 @@ class _AssetScanBottomSheetState extends ConsumerState<AssetScanBottomSheet> wit
 
     return Container(
       height: sheetHeight,
-      decoration: const BoxDecoration(
-        color: Color(0xFF0F172A),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: CupertinoColors.systemBackground.resolveFrom(context),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: Column(
-        children: [
-          Center(
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+      child: CupertinoPageScaffold(
+        navigationBar: CupertinoNavigationBar(
+          middle: const Text('Scan QR Code Aset'),
+          trailing: CupertinoButton(
+            padding: EdgeInsets.zero,
+            child: const Text('Tutup'),
+            onPressed: () => Navigator.pop(context),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Scan QR Code Aset',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white70),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-          ),
-          const Divider(color: Colors.white10),
-          Expanded(
-            child: _buildMainContent(),
-          ),
-        ],
+        ),
+        child: SafeArea(
+          child: _buildMainContent(),
+        ),
       ),
     );
   }
@@ -609,11 +624,11 @@ class _AssetScanBottomSheetState extends ConsumerState<AssetScanBottomSheet> wit
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(color: Color(0xFF6E56CF)),
+            CupertinoActivityIndicator(),
             SizedBox(height: 16),
             Text(
               'Mencari data aset...',
-              style: TextStyle(color: Colors.white70, fontSize: 14),
+              style: TextStyle(fontSize: 14),
             ),
           ],
         ),
@@ -646,14 +661,14 @@ class _AssetScanBottomSheetState extends ConsumerState<AssetScanBottomSheet> wit
           children: [
             ColorFiltered(
               colorFilter: ColorFilter.mode(
-                Colors.black.withOpacity(0.6),
+                CupertinoColors.black.withOpacity(0.6),
                 BlendMode.srcOut,
               ),
               child: Stack(
                 children: [
                   Container(
                     decoration: const BoxDecoration(
-                      color: Colors.black,
+                      color: CupertinoColors.black,
                       backgroundBlendMode: BlendMode.dstOut,
                     ),
                   ),
@@ -663,7 +678,7 @@ class _AssetScanBottomSheetState extends ConsumerState<AssetScanBottomSheet> wit
                       width: scanSize,
                       height: scanSize,
                       decoration: BoxDecoration(
-                        color: Colors.red,
+                        color: CupertinoColors.systemRed,
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
@@ -693,10 +708,10 @@ class _AssetScanBottomSheetState extends ConsumerState<AssetScanBottomSheet> wit
                   child: Container(
                     height: 2,
                     decoration: const BoxDecoration(
-                      color: Colors.redAccent,
+                      color: CupertinoColors.systemRed,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.red,
+                          color: CupertinoColors.systemRed,
                           blurRadius: 8,
                           spreadRadius: 2,
                         ),
@@ -713,16 +728,17 @@ class _AssetScanBottomSheetState extends ConsumerState<AssetScanBottomSheet> wit
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.black54,
+                  color: CupertinoColors.black.withOpacity(0.6),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Text(
                   'Arahkan kamera ke QR Code label aset',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.white70,
+                    color: CupertinoColors.white,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
+                    decoration: TextDecoration.none,
                   ),
                 ),
               ),
@@ -731,6 +747,10 @@ class _AssetScanBottomSheetState extends ConsumerState<AssetScanBottomSheet> wit
         );
       },
     );
+  }
+
+  Widget _buildView() {
+    return Container();
   }
 
   Widget _buildErrorState(String message) {
@@ -742,48 +762,37 @@ class _AssetScanBottomSheetState extends ConsumerState<AssetScanBottomSheet> wit
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.1),
+              color: CupertinoColors.destructiveRed.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            child: const Icon(CupertinoIcons.exclamationmark_triangle, color: CupertinoColors.destructiveRed, size: 48),
           ),
           const SizedBox(height: 16),
           const Text(
             'Verifikasi Gagal',
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white70, fontSize: 14),
+            style: TextStyle(color: CupertinoColors.secondaryLabel.resolveFrom(context), fontSize: 14),
           ),
           const SizedBox(height: 32),
           Row(
             children: [
               Expanded(
-                child: OutlinedButton(
+                child: CupertinoButton(
+                  color: CupertinoColors.quaternarySystemFill,
                   onPressed: () => Navigator.pop(context),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white70,
-                    side: const BorderSide(color: Colors.white24),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: const Text('TUTUP'),
+                  child: const Text('Tutup', style: TextStyle(color: CupertinoColors.label)),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: ElevatedButton(
+                child: CupertinoButton.filled(
                   onPressed: _resetScanner,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6E56CF),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: const Text('COBA LAGI'),
+                  child: const Text('Coba Lagi'),
                 ),
               ),
             ],

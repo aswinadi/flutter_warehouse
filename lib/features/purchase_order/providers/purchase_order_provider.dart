@@ -20,7 +20,12 @@ class PurchaseOrders extends _$PurchaseOrders {
   bool get hasMore => _hasMore;
 
   @override
-  Future<List<PurchaseOrder>> build({String? status, String? search}) async {
+  Future<List<PurchaseOrder>> build({
+    String? status,
+    String? search,
+    String? dateFrom,
+    String? dateTo,
+  }) async {
     ref.watch(purchaseOrderRepositoryProvider);
     ref.watch(selectedCompanyProvider);
 
@@ -39,6 +44,8 @@ class PurchaseOrders extends _$PurchaseOrders {
       status: status,
       search: search,
       companyId: selectedCompany?.id,
+      dateFrom: dateFrom,
+      dateTo: dateTo,
     );
 
     if (response.meta != null) {

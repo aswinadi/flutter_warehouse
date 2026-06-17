@@ -7,6 +7,11 @@ import 'package:image_picker/image_picker.dart';
 import '../providers/invoice_repository.dart';
 import '../../../core/utils/currency_utils.dart';
 import '../../../core/config/app_config.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
+import '../../../core/widgets/cupertino_glass_dialog.dart';
+import '../../../core/widgets/cupertino_glass_toast.dart';
 
 class InvoiceApprovalScreen extends ConsumerStatefulWidget {
   final int invoiceId;
@@ -57,40 +62,14 @@ class _InvoiceApprovalScreenState extends ConsumerState<InvoiceApprovalScreen> {
       ref.invalidate(invoiceDetailProvider(widget.invoiceId));
       ref.invalidate(invoicesProvider);
       if (mounted) {
-        showCupertinoDialog(
-          context: context,
-          builder: (context) => CupertinoAlertDialog(
-            title: const Text('Sukses'),
-            content: const Text('Invoice Disetujui'),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text('OK'),
-                onPressed: () {
-                  Navigator.pop(context);
-                  if (!widget.isEmbedded && mounted) {
-                    context.pop();
-                  }
-                },
-              ),
-            ],
-          ),
-        );
+        CupertinoGlassToast.showSuccess(context, 'Invoice Disetujui');
+        if (!widget.isEmbedded) {
+          context.pop();
+        }
       }
     } catch (e) {
       if (mounted) {
-        showCupertinoDialog(
-          context: context,
-          builder: (context) => CupertinoAlertDialog(
-            title: const Text('Gagal'),
-            content: Text('Gagal menyetujui: $e'),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text('OK'),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-        );
+        CupertinoGlassToast.showError(context, 'Gagal menyetujui: $e');
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -101,7 +80,7 @@ class _InvoiceApprovalScreenState extends ConsumerState<InvoiceApprovalScreen> {
     final reasonController = TextEditingController();
     final result = await showCupertinoDialog<bool>(
       context: context,
-      builder: (context) => CupertinoAlertDialog(
+      builder: (context) => CupertinoGlassDialog(
         title: const Text('Tolak Invoice'),
         content: Padding(
           padding: const EdgeInsets.only(top: 12.0),
@@ -114,13 +93,11 @@ class _InvoiceApprovalScreenState extends ConsumerState<InvoiceApprovalScreen> {
                 controller: reasonController,
                 placeholder: 'Alasan Penolakan',
                 maxLines: 3,
-                placeholderStyle: TextStyle(
+                placeholderStyle: context.footnote.copyWith(
                   color: CupertinoColors.placeholderText.resolveFrom(context),
-                  fontSize: 13,
                 ),
-                style: TextStyle(
+                style: context.footnote.copyWith(
                   color: CupertinoColors.label.resolveFrom(context),
-                  fontSize: 13,
                 ),
                 decoration: BoxDecoration(
                   color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
@@ -135,12 +112,12 @@ class _InvoiceApprovalScreenState extends ConsumerState<InvoiceApprovalScreen> {
           ),
         ),
         actions: [
-          CupertinoDialogAction(
+          CupertinoGlassDialogAction(
             child: const Text('Batal'),
             onPressed: () => Navigator.pop(context, false),
           ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
+          CupertinoGlassDialogAction(
+            isDestructive: true,
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Tolak'),
           ),
@@ -155,40 +132,14 @@ class _InvoiceApprovalScreenState extends ConsumerState<InvoiceApprovalScreen> {
         ref.invalidate(invoiceDetailProvider(widget.invoiceId));
         ref.invalidate(invoicesProvider);
         if (mounted) {
-          showCupertinoDialog(
-            context: context,
-            builder: (context) => CupertinoAlertDialog(
-              title: const Text('Sukses'),
-              content: const Text('Invoice Ditolak'),
-              actions: [
-                CupertinoDialogAction(
-                  child: const Text('OK'),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    if (!widget.isEmbedded && mounted) {
-                      context.pop();
-                    }
-                  },
-                ),
-              ],
-            ),
-          );
+          CupertinoGlassToast.showSuccess(context, 'Invoice Ditolak');
+          if (!widget.isEmbedded) {
+            context.pop();
+          }
         }
       } catch (e) {
         if (mounted) {
-          showCupertinoDialog(
-            context: context,
-            builder: (context) => CupertinoAlertDialog(
-              title: const Text('Gagal'),
-              content: Text('Gagal menolak: $e'),
-              actions: [
-                CupertinoDialogAction(
-                  child: const Text('OK'),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-          );
+          CupertinoGlassToast.showError(context, 'Gagal menolak: $e');
         }
       } finally {
         if (mounted) setState(() => _isSubmitting = false);
@@ -206,38 +157,14 @@ class _InvoiceApprovalScreenState extends ConsumerState<InvoiceApprovalScreen> {
       }
     } catch (e) {
       if (mounted) {
-        showCupertinoDialog(
-          context: context,
-          builder: (context) => CupertinoAlertDialog(
-            title: const Text('Gagal'),
-            content: Text('Gagal mengambil gambar: $e'),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text('OK'),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-        );
+        CupertinoGlassToast.showError(context, 'Gagal mengambil gambar: $e');
       }
     }
   }
 
   Future<void> _saveVerification() async {
     if (_vendorInvoiceNoController.text.isEmpty && _imageFile == null) {
-      showCupertinoDialog(
-        context: context,
-        builder: (context) => CupertinoAlertDialog(
-          title: const Text('Peringatan'),
-          content: const Text('Silakan masukkan nomor invoice vendor atau pilih file bukti.'),
-          actions: [
-            CupertinoDialogAction(
-              child: const Text('OK'),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ],
-        ),
-      );
+      CupertinoGlassToast.showError(context, 'Masukkan nomor invoice vendor atau pilih file bukti.');
       return;
     }
 
@@ -253,40 +180,14 @@ class _InvoiceApprovalScreenState extends ConsumerState<InvoiceApprovalScreen> {
       ref.invalidate(invoicesProvider);
 
       if (mounted) {
-        showCupertinoDialog(
-          context: context,
-          builder: (context) => CupertinoAlertDialog(
-            title: const Text('Sukses'),
-            content: const Text('Verifikasi Invoice Berhasil Disimpan'),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text('OK'),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-        );
+        CupertinoGlassToast.showSuccess(context, 'Verifikasi Invoice Berhasil Disimpan');
         setState(() {
           _imageFile = null;
         });
       }
     } catch (e) {
       if (mounted) {
-        showCupertinoDialog(
-          context: context,
-          builder: (context) => CupertinoAlertDialog(
-            title: const Text('Gagal'),
-            content: Text('Gagal menyimpan verifikasi: $e'),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text('OK'),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-        );
+        CupertinoGlassToast.showError(context, 'Gagal menyimpan verifikasi: $e');
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -369,116 +270,124 @@ class _InvoiceApprovalScreenState extends ConsumerState<InvoiceApprovalScreen> {
                       if (isDraftOrPending) ...[
                         Text(
                           'Verifikasi & Bukti Pendukung',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
+                          style: context.callout.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                         ),
-                        const SizedBox(height: 8),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: secondaryBgColor,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                CupertinoTextField(
-                                  controller: _vendorInvoiceNoController,
-                                  placeholder: 'Nomor Invoice Vendor',
-                                  placeholderStyle: TextStyle(
-                                    color: CupertinoColors.placeholderText.resolveFrom(context),
-                                    fontSize: 14,
-                                  ),
-                                  style: TextStyle(
-                                    color: labelColor,
-                                    fontSize: 14,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                                  decoration: BoxDecoration(
-                                    color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
-                                    border: Border.all(
-                                      color: CupertinoColors.separator.resolveFrom(context),
-                                      width: 0.5,
-                                    ),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
+                        const SizedBox(height: CupertinoSpacing.s),
+                        CupertinoGlassContainer(
+                          borderRadius: CupertinoSpacing.cardRadius,
+                          padding: const EdgeInsets.all(CupertinoSpacing.l),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              CupertinoTextField(
+                                controller: _vendorInvoiceNoController,
+                                placeholder: 'Nomor Invoice Vendor',
+                                placeholderStyle: context.subhead.copyWith(
+                                  color: CupertinoColors.placeholderText.resolveFrom(context),
                                 ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Foto / Bukti Dukung Vendor Invoice',
-                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: labelColor),
+                                style: context.subhead.copyWith(
+                                  color: labelColor,
                                 ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: CupertinoButton(
-                                        padding: EdgeInsets.zero,
-                                        color: CupertinoColors.activeBlue,
-                                        onPressed: () => _pickImage(ImageSource.camera),
-                                        child: const Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(CupertinoIcons.camera),
-                                            SizedBox(width: 8),
-                                            Text('Kamera'),
-                                          ],
-                                        ),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
+                                  border: Border.all(
+                                    color: CupertinoColors.separator.resolveFrom(context),
+                                    width: 0.5,
+                                  ),
+                                  borderRadius: BorderRadius.circular(CupertinoSpacing.cardRadius),
+                                ),
+                              ),
+                              const SizedBox(height: CupertinoSpacing.l),
+                              Text(
+                                'Foto / Bukti Dukung Vendor Invoice',
+                                style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: labelColor),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: CupertinoButton(
+                                      padding: EdgeInsets.zero,
+                                      color: CupertinoColors.activeBlue,
+                                      onPressed: () => _pickImage(ImageSource.camera),
+                                      child: const Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            CupertinoIcons.camera,
+                                            color: CupertinoColors.white,
+                                          ),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'Kamera',
+                                            style: TextStyle(
+                                              color: CupertinoColors.white,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: CupertinoButton(
-                                        padding: EdgeInsets.zero,
-                                        color: CupertinoColors.activeBlue,
-                                        onPressed: () => _pickImage(ImageSource.gallery),
-                                        child: const Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(CupertinoIcons.photo),
-                                            SizedBox(width: 8),
-                                            Text('Galeri'),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                if (_imageFile != null) ...[
-                                  const SizedBox(height: 12),
-                                  Container(
-                                    height: 200,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(8),
-                                      image: DecorationImage(
-                                        image: FileImage(File(_imageFile!.path)),
-                                        fit: BoxFit.cover,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: CupertinoButton(
+                                      padding: EdgeInsets.zero,
+                                      color: CupertinoColors.activeBlue,
+                                      onPressed: () => _pickImage(ImageSource.gallery),
+                                      child: const Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            CupertinoIcons.photo,
+                                            color: CupertinoColors.white,
+                                          ),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'Galeri',
+                                            style: TextStyle(
+                                              color: CupertinoColors.white,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
                                 ],
-                                const SizedBox(height: 16),
-                                CupertinoButton(
-                                  color: const Color(0xFF6E56CF),
-                                  padding: EdgeInsets.zero,
-                                  onPressed: _isSubmitting ? null : _saveVerification,
-                                  child: Container(
-                                    height: 48,
-                                    alignment: Alignment.center,
-                                    child: _isSubmitting
-                                        ? const CupertinoActivityIndicator(color: CupertinoColors.white)
-                                        : const Text(
-                                            'SIMPAN VERIFIKASI',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: CupertinoColors.white,
-                                            ),
-                                          ),
+                              ),
+                              if (_imageFile != null) ...[
+                                const SizedBox(height: 12),
+                                Container(
+                                  height: 200,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    image: DecorationImage(
+                                      image: FileImage(File(_imageFile!.path)),
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
                                 ),
                               ],
-                            ),
+                              const SizedBox(height: 16),
+                              CupertinoButton(
+                                color: const Color(0xFF6E56CF),
+                                padding: EdgeInsets.zero,
+                                onPressed: _isSubmitting ? null : _saveVerification,
+                                child: Container(
+                                  height: 48,
+                                  alignment: Alignment.center,
+                                  child: _isSubmitting
+                                      ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                                      : const Text(
+                                          'SIMPAN VERIFIKASI',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: CupertinoColors.white,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -486,36 +395,39 @@ class _InvoiceApprovalScreenState extends ConsumerState<InvoiceApprovalScreen> {
                       if (invoice.media.isNotEmpty) ...[
                         Text(
                           'Dokumen Pendukung Terupload',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
+                          style: context.callout.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: CupertinoSpacing.s),
                         ...invoice.media.map((med) {
                           final isImage = med.mimeType.startsWith('image/');
                           return Container(
-                            margin: const EdgeInsets.only(bottom: 8),
+                            margin: const EdgeInsets.only(bottom: CupertinoSpacing.s),
                             decoration: BoxDecoration(
                               color: secondaryBgColor,
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
                               border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: CupertinoSpacing.l,
+                                vertical: CupertinoSpacing.m,
+                              ),
                               child: Row(
                                 children: [
                                   Icon(isImage ? CupertinoIcons.photo : CupertinoIcons.doc_text, color: const Color(0xFF6E56CF), size: 24),
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: CupertinoSpacing.m),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           med.fileName,
-                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: labelColor),
+                                          style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
                                           med.mimeType.toUpperCase(),
-                                          style: TextStyle(fontSize: 12, color: secondaryLabelColor),
+                                          style: context.caption1.copyWith(color: secondaryLabelColor),
                                         ),
                                       ],
                                     ),
@@ -567,18 +479,21 @@ class _InvoiceApprovalScreenState extends ConsumerState<InvoiceApprovalScreen> {
                       ],
                       Text(
                         'Item Invoice',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
+                        style: context.callout.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: CupertinoSpacing.s),
                       ...invoice.items.map((item) => Container(
-                            margin: const EdgeInsets.only(bottom: 8),
+                            margin: const EdgeInsets.only(bottom: CupertinoSpacing.s),
                             decoration: BoxDecoration(
                               color: secondaryBgColor,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(CupertinoSpacing.cardRadius),
                               border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: CupertinoSpacing.l,
+                                vertical: CupertinoSpacing.m,
+                              ),
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -593,17 +508,17 @@ class _InvoiceApprovalScreenState extends ConsumerState<InvoiceApprovalScreen> {
                                         const SizedBox(height: 4),
                                         Text(
                                           'SKU: ${item.productCode}',
-                                          style: TextStyle(color: secondaryLabelColor, fontSize: 12),
+                                          style: context.caption1.copyWith(color: secondaryLabelColor),
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
                                           '${item.quantity.toStringAsFixed(item.quantity.truncateToDouble() == item.quantity ? 0 : 2)} ${item.unit} × ${formatWithCurrency(item.unitPrice, invoice.currency)}',
-                                          style: TextStyle(color: secondaryLabelColor, fontSize: 12),
+                                          style: context.caption1.copyWith(color: secondaryLabelColor),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: CupertinoSpacing.m),
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
@@ -614,12 +529,12 @@ class _InvoiceApprovalScreenState extends ConsumerState<InvoiceApprovalScreen> {
                                       if (item.discount > 0)
                                         Text(
                                           'Diskon: ${formatWithCurrency(item.discount, invoice.currency)}',
-                                          style: const TextStyle(color: CupertinoColors.destructiveRed, fontSize: 11),
+                                          style: context.caption2.copyWith(color: CupertinoColors.destructiveRed),
                                         ),
                                       if (item.taxAmount > 0)
                                         Text(
                                           'Pajak: ${formatWithCurrency(item.taxAmount, invoice.currency)}',
-                                          style: TextStyle(color: secondaryLabelColor, fontSize: 11),
+                                          style: context.caption2.copyWith(color: secondaryLabelColor),
                                         ),
                                     ],
                                   ),
@@ -711,12 +626,11 @@ class _InvoiceApprovalScreenState extends ConsumerState<InvoiceApprovalScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(color: secondaryLabelColor, fontSize: 14)),
+          Text(label, style: context.subhead.copyWith(color: secondaryLabelColor)),
           Text(
             value,
-            style: TextStyle(
+            style: context.subhead.copyWith(
               fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-              fontSize: 14,
               color: labelColor,
             ),
           ),

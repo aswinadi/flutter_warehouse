@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:printing/printing.dart';
@@ -16,6 +15,11 @@ import '../../../core/providers/company_provider.dart';
 import '../../../core/api/dio_client.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/services/reporting_service.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
+import '../../../core/widgets/cupertino_glass_toast.dart';
+import '../../../core/widgets/cupertino_glass_dialog.dart';
 
 class InventoryValuationScreen extends ConsumerStatefulWidget {
   const InventoryValuationScreen({super.key});
@@ -54,12 +58,13 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
     showCupertinoDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const CupertinoAlertDialog(
+      builder: (context) => const CupertinoGlassDialog(
+        actions: [],
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             CupertinoActivityIndicator(radius: 14),
-            SizedBox(height: 12),
+            SizedBox(height: CupertinoSpacing.m),
             Text('Menyiapkan file PDF...'),
           ],
         ),
@@ -69,7 +74,11 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
     try {
       final dio = ref.read(dioProvider);
       final selectedCompany = ref.read(selectedCompanyProvider);
-      final String queryStr = selectedCompany != null ? '?company_id=${selectedCompany.id}' : '';
+      final showEmpty = ref.read(showEmptyValuationStockProvider);
+      final List<String> params = [];
+      if (selectedCompany != null) params.add('company_id=${selectedCompany.id}');
+      if (showEmpty) params.add('show_empty=1');
+      final String queryStr = params.isNotEmpty ? '?' + params.join('&') : '';
       final targetUrl = '${AppConfig.baseUrl.replaceAll('/api/v1/', '')}/pdf/inventory-valuation$queryStr';
 
       final response = await dio.get<List<int>>(
@@ -96,19 +105,7 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
           if (mounted) Navigator.pop(context); // Dismiss loading
 
           if (mounted) {
-            showCupertinoDialog(
-              context: context,
-              builder: (context) => CupertinoAlertDialog(
-                title: const Text('Sukses'),
-                content: const Text('Berhasil mengunduh PDF ke folder Downloads.'),
-                actions: [
-                  CupertinoDialogAction(
-                    child: const Text('OK'),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-            );
+            CupertinoGlassToast.showSuccess(context, 'Berhasil mengunduh PDF ke folder Downloads.');
           }
         } else {
           if (mounted) Navigator.pop(context); // Dismiss loading
@@ -120,19 +117,7 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
     } catch (e) {
       if (mounted) Navigator.pop(context); // Dismiss loading
       if (mounted) {
-        showCupertinoDialog(
-          context: context,
-          builder: (context) => CupertinoAlertDialog(
-            title: const Text('Gagal'),
-            content: Text('Gagal mengunduh PDF: $e'),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text('OK'),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-        );
+        CupertinoGlassToast.showError(context, 'Gagal mengunduh PDF: $e');
       }
     }
   }
@@ -141,12 +126,13 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
     showCupertinoDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const CupertinoAlertDialog(
+      builder: (context) => const CupertinoGlassDialog(
+        actions: [],
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             CupertinoActivityIndicator(radius: 14),
-            SizedBox(height: 12),
+            SizedBox(height: CupertinoSpacing.m),
             Text('Menyiapkan file Excel...'),
           ],
         ),
@@ -156,10 +142,12 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
     try {
       final dio = ref.read(dioProvider);
       final selectedCompany = ref.read(selectedCompanyProvider);
+      final showEmpty = ref.read(showEmptyValuationStockProvider);
       const apiPath = 'wh/inventory-report/valuation';
       
       final response = await dio.get(apiPath, queryParameters: {
         if (selectedCompany != null) 'company_id': selectedCompany.id,
+        'show_empty': showEmpty ? 1 : 0,
         'detailed': 1,
       });
 
@@ -195,19 +183,7 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
     } catch (e) {
       if (mounted) Navigator.pop(context); // Dismiss loading
       if (mounted) {
-        showCupertinoDialog(
-          context: context,
-          builder: (context) => CupertinoAlertDialog(
-            title: const Text('Gagal'),
-            content: Text('Gagal mengunduh Excel: $e'),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text('OK'),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-        );
+        CupertinoGlassToast.showError(context, 'Gagal mengunduh Excel: $e');
       }
     }
   }
@@ -234,7 +210,7 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
         children: [
           const CompanySwitcher(),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
             child: CupertinoSearchTextField(
               controller: _searchController,
               placeholder: 'Cari SKU atau Produk...',
@@ -252,6 +228,27 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
               },
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: CupertinoSpacing.screenMargin,
+              vertical: CupertinoSpacing.xs,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Tampilkan Stok Kosong',
+                  style: context.subhead.copyWith(color: secondaryLabelColor),
+                ),
+                CupertinoSwitch(
+                  value: ref.watch(showEmptyValuationStockProvider),
+                  onChanged: (val) {
+                    ref.read(showEmptyValuationStockProvider.notifier).state = val;
+                  },
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: valuationAsync.when(
               data: (items) {
@@ -259,7 +256,7 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
                   return Center(
                     child: Text(
                       'Tidak ada valuasi inventaris ditemukan',
-                      style: TextStyle(color: secondaryLabelColor),
+                      style: context.body.copyWith(color: secondaryLabelColor),
                     ),
                   );
                 }
@@ -274,24 +271,21 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
                 }
 
                 return ListView.separated(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                   itemCount: items.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 12),
+                  separatorBuilder: (context, index) => const SizedBox(height: CupertinoSpacing.m),
                   itemBuilder: (context, index) {
                     final item = items[index];
                     final isSelected = isLargeScreen && item.sku == _selectedSku;
 
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: isSelected 
-                            ? const Color(0xFF6E56CF).withValues(alpha: 0.08) 
-                            : CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSelected ? const Color(0xFF6E56CF) : CupertinoColors.separator.resolveFrom(context),
-                          width: isSelected ? 2 : 0.5,
-                        ),
-                      ),
+                    return CupertinoGlassContainer(
+                      borderRadius: CupertinoSpacing.cardRadius + 2,
+                      backgroundColor: isSelected 
+                          ? const Color(0xFF6E56CF).withValues(alpha: 0.08) 
+                          : null,
+                      borderColor: isSelected 
+                          ? const Color(0xFF6E56CF) 
+                          : null,
                       child: GestureDetector(
                         behavior: HitTestBehavior.opaque,
                         onTap: () {
@@ -305,7 +299,7 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
                           }
                         },
                         child: Padding(
-                          padding: const EdgeInsets.all(16.0),
+                          padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                           child: Row(
                             children: [
                               Expanded(
@@ -314,49 +308,45 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
                                   children: [
                                     Text(
                                       item.productName,
-                                      style: TextStyle(
+                                      style: context.subhead.copyWith(
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 15,
                                         color: labelColor,
                                       ),
                                     ),
-                                    const SizedBox(height: 6),
+                                    const SizedBox(height: CupertinoSpacing.xs + 2),
                                     Text(
                                       'SKU: ${item.sku}',
-                                      style: TextStyle(
-                                        fontSize: 13,
+                                      style: context.footnote.copyWith(
                                         color: secondaryLabelColor,
                                       ),
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
                                       'HPP: ${_formatCurrency(item.hpp)}',
-                                      style: TextStyle(
-                                        fontSize: 13,
+                                      style: context.footnote.copyWith(
                                         color: secondaryLabelColor,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                              const SizedBox(width: 16),
+                              const SizedBox(width: CupertinoSpacing.screenMargin),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
                                     _formatCurrency(item.totalValuation),
-                                    style: const TextStyle(
+                                    style: context.footnote.copyWith(
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF6E56CF),
+                                      color: const Color(0xFF6E56CF),
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: CupertinoSpacing.xs),
                                   Text(
                                     '${_formatQty(item.quantity)} ${item.productUnit}',
-                                    style: TextStyle(
-                                      fontSize: 12,
+                                    style: context.caption1.copyWith(
                                       color: secondaryLabelColor,
                                     ),
                                   ),
@@ -374,7 +364,7 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
               error: (err, stack) => Center(
                 child: Text(
                   'Error: $err',
-                  style: TextStyle(color: secondaryLabelColor),
+                  style: context.body.copyWith(color: secondaryLabelColor),
                 ),
               ),
             ),
@@ -389,23 +379,23 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
         backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
         middle: Text(
           'Valuasi Inventaris',
-          style: TextStyle(color: labelColor),
+          style: context.headline.copyWith(color: labelColor),
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             CupertinoButton(
               padding: EdgeInsets.zero,
-              minSize: 32,
-              child: const Icon(CupertinoIcons.doc_text, size: 22),
+              minimumSize: const Size.square(32),
               onPressed: _downloadPdf,
+              child: const Icon(CupertinoIcons.doc_text, size: 22),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: CupertinoSpacing.s),
             CupertinoButton(
               padding: EdgeInsets.zero,
-              minSize: 32,
-              child: const Icon(CupertinoIcons.table, size: 22),
+              minimumSize: const Size.square(32),
               onPressed: _downloadExcel,
+              child: const Icon(CupertinoIcons.table, size: 22),
             ),
           ],
         ),
@@ -434,10 +424,10 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(CupertinoIcons.chart_bar, size: 48, color: secondaryLabelColor),
-                                  const SizedBox(height: 16),
+                                  const SizedBox(height: CupertinoSpacing.l),
                                   Text(
                                     'Pilih barang untuk melihat rincian valuasi',
-                                    style: TextStyle(color: secondaryLabelColor, fontSize: 14),
+                                    style: context.subhead.copyWith(color: secondaryLabelColor, fontSize: 14),
                                   ),
                                 ],
                               ),
@@ -466,7 +456,7 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
           top: false,
           child: Column(
             children: [
-              const SizedBox(height: 12),
+              const SizedBox(height: CupertinoSpacing.m),
               Center(
                 child: Container(
                   width: 36,
@@ -477,15 +467,15 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: CupertinoSpacing.s),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.xl, vertical: CupertinoSpacing.s),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       'Rincian Valuasi Barang',
-                      style: TextStyle(
+                      style: context.title3.copyWith(
                         color: CupertinoColors.label.resolveFrom(context),
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -494,7 +484,7 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
                     ),
                     CupertinoButton(
                       padding: EdgeInsets.zero,
-                      minSize: 32,
+                      minimumSize: const Size.square(32),
                       child: Icon(
                         CupertinoIcons.xmark_circle_fill,
                         color: CupertinoColors.secondaryLabel.resolveFrom(context),
@@ -549,27 +539,27 @@ class ValuationDetailPane extends ConsumerWidget {
         Container(
           width: double.infinity,
           color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(CupertinoSpacing.xl),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 item.productName,
-                style: TextStyle(
+                style: context.title3.copyWith(
                   color: labelColor,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: CupertinoSpacing.s),
               Text(
                 'SKU: ${item.sku}',
-                style: TextStyle(
+                style: context.subhead.copyWith(
                   color: secondaryLabelColor,
                   fontSize: 14,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: CupertinoSpacing.l),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -578,12 +568,12 @@ class ValuationDetailPane extends ConsumerWidget {
                     children: [
                       Text(
                         'TOTAL STOK',
-                        style: TextStyle(color: secondaryLabelColor, fontSize: 10, fontWeight: FontWeight.bold),
+                        style: context.caption2.copyWith(color: secondaryLabelColor, fontSize: 10, fontWeight: FontWeight.bold),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: CupertinoSpacing.xs),
                       Text(
                         '${_formatQty(item.quantity)} ${item.productUnit}',
-                        style: TextStyle(color: labelColor, fontSize: 16, fontWeight: FontWeight.bold),
+                        style: context.callout.copyWith(color: labelColor, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -592,12 +582,12 @@ class ValuationDetailPane extends ConsumerWidget {
                     children: [
                       Text(
                         'TOTAL VALUE',
-                        style: TextStyle(color: secondaryLabelColor, fontSize: 10, fontWeight: FontWeight.bold),
+                        style: context.caption2.copyWith(color: secondaryLabelColor, fontSize: 10, fontWeight: FontWeight.bold),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: CupertinoSpacing.xs),
                       Text(
                         _formatCurrency(item.totalValuation),
-                        style: const TextStyle(color: Color(0xFF6E56CF), fontSize: 18, fontWeight: FontWeight.bold),
+                        style: context.title3.copyWith(color: const Color(0xFF6E56CF), fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -613,24 +603,19 @@ class ValuationDetailPane extends ConsumerWidget {
                 return Center(
                   child: Text(
                     'Tidak ada rincian gudang',
-                    style: TextStyle(color: secondaryLabelColor),
+                    style: context.body.copyWith(color: secondaryLabelColor),
                   ),
                 );
               }
 
               return ListView.builder(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(CupertinoSpacing.xl),
                 itemCount: breakdowns.length,
                 itemBuilder: (context, index) {
                   final bd = breakdowns[index];
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: CupertinoColors.systemBackground.resolveFrom(context),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
-                    ),
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(16.0),
+                  return CupertinoGlassContainer(
+                    margin: const EdgeInsets.only(bottom: CupertinoSpacing.m),
+                    padding: const EdgeInsets.all(CupertinoSpacing.l),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -639,7 +624,7 @@ class ValuationDetailPane extends ConsumerWidget {
                           children: [
                             Text(
                               bd.warehouseName,
-                              style: TextStyle(
+                              style: context.subhead.copyWith(
                                 color: labelColor,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
@@ -647,29 +632,27 @@ class ValuationDetailPane extends ConsumerWidget {
                             ),
                             Text(
                               _formatCurrency(bd.totalValuation),
-                              style: const TextStyle(
-                                color: Color(0xFF6E56CF),
+                              style: context.body.copyWith(
+                                color: const Color(0xFF6E56CF),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: CupertinoSpacing.s),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
                               'Lokasi: ${bd.locationCode}',
-                              style: TextStyle(
+                              style: context.caption1.copyWith(
                                 color: secondaryLabelColor,
-                                fontSize: 12,
                               ),
                             ),
                             Text(
                               '${_formatQty(bd.quantity)} ${item.productUnit}',
-                              style: TextStyle(
+                              style: context.caption1.copyWith(
                                 color: labelColor,
-                                fontSize: 12,
                               ),
                             ),
                           ],
@@ -684,7 +667,7 @@ class ValuationDetailPane extends ConsumerWidget {
             error: (err, stack) => Center(
               child: Text(
                 'Gagal memuat rincian: $err',
-                style: TextStyle(color: secondaryLabelColor),
+                style: context.body.copyWith(color: secondaryLabelColor),
               ),
             ),
           ),

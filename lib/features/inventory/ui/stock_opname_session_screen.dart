@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Colors, Divider, VerticalDivider, Scrollbar;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../models/stock_opname.dart';
 import '../providers/stock_opname_repository.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
+import '../../../core/widgets/cupertino_glass_dialog.dart';
 
 class StockOpnameSessionScreen extends ConsumerStatefulWidget {
   final int sessionId;
@@ -105,18 +108,18 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
       if (mounted) {
         showCupertinoDialog(
           context: context,
-          builder: (context) => CupertinoAlertDialog(
+          builder: (context) => CupertinoGlassDialog(
             title: const Text('Barcode Tidak Dikenal'),
             content: Text('Gagal mengenali barcode "$barcode": $e'),
             actions: [
-              CupertinoDialogAction(
-                child: const Text('OK'),
+              CupertinoGlassDialogAction(
                 onPressed: () {
                   Navigator.pop(context);
                   setState(() {
                     _isCameraActive = true;
                   });
                 },
+                child: const Text('OK'),
               )
             ],
           ),
@@ -150,130 +153,127 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
       context: context,
       barrierDismissible: false,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => CupertinoActionSheet(
-          title: Text(
-            'Input Jumlah Hitung',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: CupertinoColors.label.resolveFrom(context),
-            ),
-          ),
-          message: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                productName,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: CupertinoColors.label.resolveFrom(context),
-                ),
+        builder: (context, setDialogState) => Center(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.screenMargin),
+            child: CupertinoGlassDialog(
+              title: Text(
+                'Input Jumlah Hitung',
+                style: context.headline.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 4),
-              Text(
-                'SKU: $sku | Barcode: $barcode',
-                style: const TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: CupertinoColors.systemBackground.resolveFrom(context),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: CupertinoColors.separator.resolveFrom(context),
-                    width: 0.5,
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    productName,
+                    style: context.subhead.copyWith(fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
                   ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      _keypadValueStr.isEmpty ? '0' : _keypadValueStr,
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: _keypadValueStr.isEmpty
-                            ? CupertinoColors.placeholderText.resolveFrom(context)
-                            : CupertinoColors.activeBlue,
+                  const SizedBox(height: CupertinoSpacing.xs),
+                  Text(
+                    'SKU: $sku | Barcode: $barcode',
+                    style: context.caption2.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: CupertinoSpacing.l),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.systemBackground.resolveFrom(context),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: CupertinoColors.separator.resolveFrom(context),
+                        width: 0.5,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      productUnit,
-                      style: const TextStyle(fontSize: 16, color: CupertinoColors.secondaryLabel),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          _keypadValueStr.isEmpty ? '0' : _keypadValueStr,
+                          style: context.title1.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: _keypadValueStr.isEmpty
+                                ? CupertinoColors.placeholderText.resolveFrom(context)
+                                : CupertinoColors.activeBlue,
+                          ),
+                        ),
+                        const SizedBox(width: CupertinoSpacing.s),
+                        Text(
+                          productUnit,
+                          style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildKeypadGrid(
-                onKeyPress: (key) {
-                  setDialogState(() {
-                    if (key == 'BACK') {
-                      if (_keypadValueStr.isNotEmpty) {
-                        _keypadValueStr = _keypadValueStr.substring(0, _keypadValueStr.length - 1);
-                      }
-                    } else if (key == 'CLEAR') {
-                      _keypadValueStr = '';
-                    } else if (key == '+1') {
-                      final val = double.tryParse(_keypadValueStr) ?? 0.0;
-                      _keypadValueStr = (val + 1).toInt().toString();
-                    } else if (key == '-1') {
-                      final val = double.tryParse(_keypadValueStr) ?? 0.0;
-                      if (val > 0) {
-                        _keypadValueStr = (val - 1).toInt().toString();
-                      }
-                    } else if (key == '.') {
-                      if (!_keypadValueStr.contains('.')) {
-                        _keypadValueStr += _keypadValueStr.isEmpty ? '0.' : '.';
-                      }
-                    } else {
-                      _keypadValueStr += key;
-                    }
-                    _keypadValue = double.tryParse(_keypadValueStr) ?? 0.0;
-                  });
-                },
-              ),
-            ],
-          ),
-          actions: [
-            CupertinoActionSheetAction(
-              isDefaultAction: true,
-              onPressed: _isSubmitting
-                  ? () {}
-                  : () async {
+                  ),
+                  const SizedBox(height: CupertinoSpacing.l),
+                  _buildKeypadGrid(
+                    onKeyPress: (key) {
                       setDialogState(() {
-                        _isSubmitting = true;
-                      });
-                      final success = await _submitQty(barcode, _keypadValue);
-                      if (mounted) {
-                        setDialogState(() {
-                          _isSubmitting = false;
-                        });
-                        if (success) {
-                          Navigator.pop(context);
-                          setState(() {
-                            _isCameraActive = true;
-                          });
+                        if (key == 'BACK') {
+                          if (_keypadValueStr.isNotEmpty) {
+                            _keypadValueStr = _keypadValueStr.substring(0, _keypadValueStr.length - 1);
+                          }
+                        } else if (key == 'CLEAR') {
+                          _keypadValueStr = '';
+                        } else if (key == '+1') {
+                          final val = double.tryParse(_keypadValueStr) ?? 0.0;
+                          _keypadValueStr = (val + 1).toInt().toString();
+                        } else if (key == '-1') {
+                          final val = double.tryParse(_keypadValueStr) ?? 0.0;
+                          if (val > 0) {
+                            _keypadValueStr = (val - 1).toInt().toString();
+                          }
+                        } else if (key == '.') {
+                          if (!_keypadValueStr.contains('.')) {
+                            _keypadValueStr += _keypadValueStr.isEmpty ? '0.' : '.';
+                          }
+                        } else {
+                          _keypadValueStr += key;
                         }
-                      }
+                        _keypadValue = double.tryParse(_keypadValueStr) ?? 0.0;
+                      });
                     },
-              child: _isSubmitting
-                  ? const CupertinoActivityIndicator()
-                  : const Text('Simpan Hasil Hitung'),
+                  ),
+                ],
+              ),
+              actions: [
+                CupertinoGlassDialogAction(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    setState(() {
+                      _isCameraActive = true;
+                    });
+                  },
+                  child: const Text('Batal', style: TextStyle(color: CupertinoColors.destructiveRed)),
+                ),
+                CupertinoGlassDialogAction(
+                  isDefaultAction: true,
+                  onPressed: _isSubmitting
+                      ? () {}
+                      : () async {
+                          setDialogState(() {
+                            _isSubmitting = true;
+                          });
+                          final success = await _submitQty(barcode, _keypadValue);
+                          if (mounted) {
+                            setDialogState(() {
+                              _isSubmitting = false;
+                            });
+                            if (success) {
+                              Navigator.pop(context);
+                              setState(() {
+                                _isCameraActive = true;
+                              });
+                            }
+                          }
+                        },
+                  child: _isSubmitting
+                      ? const CupertinoActivityIndicator()
+                      : const Text('Simpan'),
+                ),
+              ],
             ),
-          ],
-          cancelButton: CupertinoActionSheetAction(
-            isDestructiveAction: true,
-            onPressed: () {
-              Navigator.pop(context);
-              setState(() {
-                _isCameraActive = true;
-              });
-            },
-            child: const Text('Batal'),
           ),
         ),
       ),
@@ -297,16 +297,16 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
             }
             return Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(4.0),
+                padding: const EdgeInsets.all(CupertinoSpacing.xs),
                 child: CupertinoButton(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.m),
                   color: (key == 'CLEAR' || key == 'BACK')
                       ? CupertinoColors.systemRed.withValues(alpha: 0.1)
                       : (key == '+1' || key == '-1')
                           ? CupertinoColors.activeOrange.withValues(alpha: 0.1)
                           : CupertinoColors.secondarySystemFill,
                   borderRadius: BorderRadius.circular(8),
-                  minSize: 0,
+                  minimumSize: Size.zero,
                   onPressed: () => onKeyPress(key),
                   child: Text(
                     key == 'BACK' ? '⌫' : key,
@@ -317,7 +317,7 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
                           ? CupertinoColors.systemRed
                           : (key == '+1' || key == '-1')
                               ? CupertinoColors.activeOrange
-                              : CupertinoColors.label,
+                              : CupertinoColors.label.resolveFrom(context),
                     ),
                   ),
                 ),
@@ -345,13 +345,13 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
       if (mounted) {
         showCupertinoDialog(
           context: context,
-          builder: (context) => CupertinoAlertDialog(
+          builder: (context) => CupertinoGlassDialog(
             title: const Text('Gagal Menyimpan'),
             content: Text('Terjadi kesalahan saat menyimpan data: $e'),
             actions: [
-              CupertinoDialogAction(
-                child: const Text('OK'),
+              CupertinoGlassDialogAction(
                 onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
               )
             ],
           ),
@@ -364,17 +364,17 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
   Future<void> _completeSession() async {
     final success = await showCupertinoDialog<bool>(
       context: context,
-      builder: (context) => CupertinoAlertDialog(
+      builder: (context) => CupertinoGlassDialog(
         title: const Text('Selesaikan Opname?'),
         content: const Text(
           'Tindakan ini akan mencocokkan stok fisik Anda dengan sistem dan membuat transaksi penyesuaian jika ada selisih. Tindakan ini tidak dapat dibatalkan.',
         ),
         actions: [
-          CupertinoDialogAction(
-            child: const Text('Batal'),
+          CupertinoGlassDialogAction(
             onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
           ),
-          CupertinoDialogAction(
+          CupertinoGlassDialogAction(
             isDefaultAction: true,
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Selesaikan & Reconcile'),
@@ -397,16 +397,16 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
         if (mounted) {
           showCupertinoDialog(
             context: context,
-            builder: (context) => CupertinoAlertDialog(
+            builder: (context) => CupertinoGlassDialog(
               title: const Text('Selesai'),
               content: const Text('Sesi opname berhasil diselesaikan dan stok disesuaikan.'),
               actions: [
-                CupertinoDialogAction(
-                  child: const Text('OK'),
+                CupertinoGlassDialogAction(
                   onPressed: () {
                     Navigator.pop(context); // Pop dialog
                     context.pop(); // Go back to list screen
                   },
+                  child: const Text('OK'),
                 )
               ],
             ),
@@ -416,13 +416,13 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
         if (mounted) {
           showCupertinoDialog(
             context: context,
-            builder: (context) => CupertinoAlertDialog(
+            builder: (context) => CupertinoGlassDialog(
               title: const Text('Gagal Menyelesaikan'),
               content: Text('Terjadi kesalahan: $e'),
               actions: [
-                CupertinoDialogAction(
-                  child: const Text('OK'),
+                CupertinoGlassDialogAction(
                   onPressed: () => Navigator.pop(context),
+                  child: const Text('OK'),
                 )
               ],
             ),
@@ -493,7 +493,7 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
                     flex: 5,
                     child: _buildItemsPane(filteredItems),
                   ),
-                  const VerticalDivider(width: 1, color: CupertinoColors.separator),
+                  Container(width: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
                   // Right Pane - Scanner / Inputs
                   Expanded(
                     flex: 4,
@@ -515,10 +515,10 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
                   ),
                   // Floating Scanner Button
                   Positioned(
-                    bottom: 24,
-                    right: 24,
+                    bottom: CupertinoSpacing.xxl,
+                    right: CupertinoSpacing.xxl,
                     child: CupertinoButton(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                       color: CupertinoColors.activeBlue,
                       borderRadius: BorderRadius.circular(30),
                       onPressed: () {
@@ -535,14 +535,14 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
           loading: () => const Center(child: CupertinoActivityIndicator()),
           error: (err, _) => Center(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(CupertinoIcons.exclamationmark_triangle, size: 48, color: CupertinoColors.systemRed),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: CupertinoSpacing.screenMargin),
                   Text('Gagal memuat data: $err', textAlign: TextAlign.center),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: CupertinoSpacing.screenMargin),
                   CupertinoButton.filled(
                     onPressed: () => ref.invalidate(stockOpnameSummaryProvider(widget.sessionId)),
                     child: const Text('Coba Lagi'),
@@ -571,13 +571,13 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
             children: [
               // Header
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Pindai Barcode Barang',
-                      style: TextStyle(color: CupertinoColors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      style: context.headline.copyWith(color: CupertinoColors.white, fontWeight: FontWeight.bold),
                     ),
                     CupertinoButton(
                       padding: EdgeInsets.zero,
@@ -587,7 +587,7 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
                   ],
                 ),
               ),
-              const Divider(color: Colors.white24, height: 1),
+              Container(height: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
               // Scanner view
               Expanded(
                 child: Stack(
@@ -606,7 +606,7 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
               // Manual key input bottom section
               Container(
                 color: const Color(0xFF1E293B),
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                 child: SafeArea(
                   top: false,
                   child: Row(
@@ -619,19 +619,19 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
                           decoration: BoxDecoration(
                             color: const Color(0xFF0F172A),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.white12),
+                            border: Border.all(color: CupertinoColors.white.withValues(alpha: 0.12)),
                           ),
                           style: const TextStyle(color: CupertinoColors.white),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.m),
                           onSubmitted: (val) {
                             Navigator.pop(context);
                             _manualLookup();
                           },
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: CupertinoSpacing.s),
                       CupertinoButton(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin),
                         color: CupertinoColors.activeBlue,
                         borderRadius: BorderRadius.circular(8),
                         onPressed: () {
@@ -656,7 +656,7 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
       children: [
         // Search & Filter header
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
           child: CupertinoSearchTextField(
             controller: _searchController,
             placeholder: 'Filter SKU atau nama produk...',
@@ -670,17 +670,17 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
         // Table list of items
         Expanded(
           child: items.isEmpty
-              ? const Center(
+              ? Center(
                   child: Text(
                     'Tidak ada produk yang cocok.',
-                    style: TextStyle(color: CupertinoColors.secondaryLabel),
+                    style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel),
                   ),
                 )
-              : Scrollbar(
+              : CupertinoScrollbar(
                   child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin),
                     itemCount: items.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 8),
+                    separatorBuilder: (context, index) => const SizedBox(height: CupertinoSpacing.halfScreenMargin),
                     itemBuilder: (context, index) {
                       final item = items[index];
                       final double diff = item.discrepancy;
@@ -698,18 +698,12 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
                             initialQty: item.countedQty,
                           );
                         },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: isDiff
-                                  ? (diff < 0 ? CupertinoColors.systemRed : CupertinoColors.systemGreen).withValues(alpha: 0.3)
-                                  : CupertinoColors.separator.resolveFrom(context),
-                              width: isDiff ? 1.0 : 0.5,
-                            ),
-                          ),
-                          padding: const EdgeInsets.all(12),
+                        child: CupertinoGlassContainer(
+                          borderRadius: 8,
+                          borderColor: isDiff
+                              ? (diff < 0 ? CupertinoColors.systemRed : CupertinoColors.systemGreen).withValues(alpha: 0.3)
+                              : null,
+                          padding: const EdgeInsets.all(CupertinoSpacing.m),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -719,13 +713,13 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
                                   Expanded(
                                     child: Text(
                                       item.productName,
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                      style: context.subhead.copyWith(fontWeight: FontWeight.bold),
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(width: CupertinoSpacing.s),
                                   if (isDiff)
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.halfScreenMargin, vertical: CupertinoSpacing.xs),
                                       decoration: BoxDecoration(
                                         color: (diff < 0 ? CupertinoColors.systemRed : CupertinoColors.systemGreen).withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(6),
@@ -741,29 +735,31 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
                                     ),
                                 ],
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: CupertinoSpacing.xs),
                               Text(
                                 'SKU: ${item.sku}',
-                                style: const TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel),
+                                style: context.caption2.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                               ),
-                              const Divider(color: CupertinoColors.separator, height: 16),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.halfScreenMargin),
+                                child: Container(height: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
+                              ),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Sistem: ${item.systemQty % 1 == 0 ? item.systemQty.toInt().toString() : item.systemQty.toString()} ${item.productUnit}',
-                                    style: const TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel),
+                                    style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel),
                                   ),
                                   Row(
                                     children: [
                                       const Icon(CupertinoIcons.pencil_ellipsis_rectangle, size: 14, color: CupertinoColors.activeBlue),
-                                      const SizedBox(width: 4),
+                                      const SizedBox(width: CupertinoSpacing.xs),
                                       Text(
                                         'Fisik: ${item.countedQty % 1 == 0 ? item.countedQty.toInt().toString() : item.countedQty.toString()} ${item.productUnit}',
-                                        style: const TextStyle(
-                                          fontSize: 12,
+                                        style: context.caption1.copyWith(
                                           fontWeight: FontWeight.bold,
-                                          color: CupertinoColors.label,
+                                          color: CupertinoColors.label.resolveFrom(context),
                                         ),
                                       ),
                                     ],
@@ -793,7 +789,7 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       CupertinoActivityIndicator(radius: 14),
-                      SizedBox(height: 12),
+                      SizedBox(height: CupertinoSpacing.m),
                       Text('Mencari data produk...', style: TextStyle(color: CupertinoColors.secondaryLabel)),
                     ],
                   ),
@@ -822,15 +818,15 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
         // Manual lookup & controller bar
         Container(
           color: CupertinoColors.systemBackground.resolveFrom(context),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
+              Text(
                 'Lookup Manual Barcode / SKU',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: CupertinoColors.secondaryLabel),
+                style: context.caption1.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: CupertinoSpacing.s),
               Row(
                 children: [
                   Expanded(
@@ -838,7 +834,7 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
                       controller: _manualBarcodeController,
                       placeholder: 'Masukkan Kode Barcode / SKU...',
                       placeholderStyle: const TextStyle(color: CupertinoColors.placeholderText),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.m),
                       decoration: BoxDecoration(
                         color: CupertinoColors.secondarySystemBackground.resolveFrom(context),
                         borderRadius: BorderRadius.circular(8),
@@ -846,9 +842,9 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
                       onSubmitted: (val) => _manualLookup(),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: CupertinoSpacing.s),
                   CupertinoButton(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin),
                     color: CupertinoColors.activeBlue,
                     borderRadius: BorderRadius.circular(8),
                     onPressed: _manualLookup,
@@ -875,14 +871,14 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
             // Darkened Outer Bounds
             ColorFiltered(
               colorFilter: ColorFilter.mode(
-                Colors.black.withOpacity(0.6),
+                CupertinoColors.black.withValues(alpha: 0.6),
                 BlendMode.srcOut,
               ),
               child: Stack(
                 children: [
                   Container(
                     decoration: const BoxDecoration(
-                      color: Colors.black,
+                      color: CupertinoColors.black,
                       backgroundBlendMode: BlendMode.dstOut,
                     ),
                   ),
@@ -892,7 +888,7 @@ class _StockOpnameSessionScreenState extends ConsumerState<StockOpnameSessionScr
                       width: scanSize,
                       height: scanSize,
                       decoration: BoxDecoration(
-                        color: Colors.red,
+                        color: CupertinoColors.systemRed,
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),

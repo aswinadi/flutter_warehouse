@@ -7,6 +7,9 @@ import '../api/dio_client.dart';
 import '../config/app_config.dart';
 import '../services/reporting_service.dart';
 import '../providers/company_provider.dart';
+import '../theme/cupertino_theme_extensions.dart';
+import '../theme/cupertino_spacing.dart';
+import '../widgets/cupertino_glass_toast.dart';
 
 class PdfPreviewScreen extends ConsumerStatefulWidget {
   final String title;
@@ -38,90 +41,6 @@ class _PdfPreviewScreenState extends ConsumerState<PdfPreviewScreen> {
         path.contains('pdf/warehouse-transfer/') ||
         (path.contains('pdf/containers/') && path.contains('/packing-list')) ||
         path.contains('pdf/inventory-valuation');
-  }
-
-  void _showNotification(String message, {bool isError = false}) {
-    if (!mounted) return;
-    
-    final overlay = Overlay.of(context);
-    late OverlayEntry entry;
-
-    entry = OverlayEntry(
-      builder: (context) => Positioned(
-        top: MediaQuery.of(context).padding.top + 24,
-        left: 24,
-        right: 24,
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 450),
-            child: DefaultTextStyle(
-              style: const TextStyle(color: CupertinoColors.white, fontFamily: '.SF Pro Text'),
-              child: TweenAnimationBuilder<double>(
-                duration: const Duration(milliseconds: 250),
-                tween: Tween(begin: 0.0, end: 1.0),
-                builder: (context, value, child) {
-                  return Opacity(
-                    opacity: value,
-                    child: Transform.translate(
-                      offset: Offset(0, (1 - value) * -20),
-                      child: child,
-                    ),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: isError ? CupertinoColors.systemRed : CupertinoColors.activeGreen,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x33000000),
-                        blurRadius: 12,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isError ? CupertinoIcons.exclamationmark_triangle : CupertinoIcons.check_mark_circled,
-                        color: CupertinoColors.white,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          message,
-                          style: const TextStyle(
-                            color: CupertinoColors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.none,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () {
-                          if (entry.mounted) entry.remove();
-                        },
-                        child: const Icon(CupertinoIcons.xmark, color: CupertinoColors.white, size: 18),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    overlay.insert(entry);
-    Future.delayed(const Duration(milliseconds: 3000), () {
-      if (entry.mounted) entry.remove();
-    });
   }
 
   Future<void> _exportExcel() async {
@@ -373,7 +292,9 @@ class _PdfPreviewScreenState extends ConsumerState<PdfPreviewScreen> {
         );
       }
     } catch (e) {
-      _showNotification('Gagal mengekspor Excel: $e', isError: true);
+      if (mounted) {
+        CupertinoGlassToast.showError(context, 'Gagal mengekspor Excel: $e');
+      }
     } finally {
       if (mounted) {
         setState(() => _isExporting = false);
@@ -437,13 +358,16 @@ class _PdfPreviewScreenState extends ConsumerState<PdfPreviewScreen> {
           canChangePageFormat: false,
           canChangeOrientation: false,
           pdfFileName: '${widget.title.replaceAll(' ', '_')}.pdf',
-          loadingWidget: const Center(
+          loadingWidget: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CupertinoActivityIndicator(),
-                SizedBox(height: 16),
-                Text('Memuat dokumen PDF...', style: TextStyle(decoration: TextDecoration.none, fontSize: 14)),
+                const CupertinoActivityIndicator(),
+                const SizedBox(height: CupertinoSpacing.l),
+                Text(
+                  'Memuat dokumen PDF...', 
+                  style: context.subhead.copyWith(decoration: TextDecoration.none),
+                ),
               ],
             ),
           ),

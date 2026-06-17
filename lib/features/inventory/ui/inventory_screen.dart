@@ -1,13 +1,14 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Colors; // kept for legacy Color references if needed
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/inventory_provider.dart';
 import '../../../core/widgets/company_switcher.dart';
 import 'barcode_lookup_bottom_sheet.dart';
 import '../providers/inventory_breakdown_provider.dart';
-import '../models/inventory_breakdown.dart';
 import '../models/inventory.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
 
 class InventoryScreen extends ConsumerStatefulWidget {
   const InventoryScreen({super.key});
@@ -51,7 +52,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
     const primaryAccent = Color(0xFF6E56CF);
 
     Widget buildLeftPane() {
@@ -59,7 +59,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         children: [
           const CompanySwitcher(),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
             child: CupertinoSearchTextField(
               controller: _searchController,
               placeholder: 'Cari SKU atau Produk...',
@@ -98,26 +98,18 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
                 return ListView.separated(
                   controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                   itemCount: items.length + (showLoader ? 1 : 0),
-                  separatorBuilder: (context, index) => const SizedBox(height: 12),
+                  separatorBuilder: (context, index) => const SizedBox(height: CupertinoSpacing.m),
                   itemBuilder: (context, index) {
                     if (index == items.length) {
                       return const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16),
+                        padding: EdgeInsets.symmetric(vertical: CupertinoSpacing.screenMargin),
                         child: Center(child: CupertinoActivityIndicator()),
                       );
                     }
                     final item = items[index];
                     final isSelected = isLargeScreen && item.sku == _selectedSku;
-
-                    final tileBg = isSelected
-                        ? primaryAccent.withOpacity(0.08)
-                        : cardBg;
-                    final tileBorder = Border.all(
-                      color: isSelected ? primaryAccent : separatorColor,
-                      width: isSelected ? 1.5 : 0.5,
-                    );
 
                     return GestureDetector(
                       onTap: () {
@@ -129,13 +121,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                           _showStockDetailBottomSheet(context, item.sku);
                         }
                       },
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: tileBg,
-                          borderRadius: BorderRadius.circular(12),
-                          border: tileBorder,
-                        ),
+                      child: CupertinoGlassContainer(
+                        padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
+                        borderColor: isSelected ? primaryAccent : null,
+                        backgroundColor: isSelected ? primaryAccent.withValues(alpha: 0.08) : null,
                         child: Row(
                           children: [
                             Expanded(
@@ -144,48 +133,43 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                 children: [
                                   Text(
                                     item.productName ?? 'Produk Tidak Dikenal',
-                                    style: TextStyle(
+                                    style: context.subhead.copyWith(
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 15,
                                       color: labelColor,
                                     ),
                                   ),
-                                  const SizedBox(height: 6),
+                                  const SizedBox(height: CupertinoSpacing.s),
                                   Text(
                                     'SKU: ${item.sku}',
-                                    style: TextStyle(
-                                      fontSize: 13,
+                                    style: context.footnote.copyWith(
                                       color: secondaryLabel,
                                     ),
                                   ),
-                                  const SizedBox(height: 2),
+                                  const SizedBox(height: CupertinoSpacing.xs),
                                   Text(
                                     'Lokasi: ${item.locationCode ?? "Belum Ditentukan"}',
-                                    style: TextStyle(
-                                      fontSize: 12,
+                                    style: context.caption1.copyWith(
                                       color: secondaryLabel,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: CupertinoSpacing.m),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
                                   '${item.quantity}',
-                                  style: TextStyle(
-                                    fontSize: 18,
+                                  style: context.title3.copyWith(
                                     fontWeight: FontWeight.bold,
                                     color: isSelected ? primaryAccent : CupertinoColors.activeBlue,
                                   ),
                                 ),
-                                const SizedBox(height: 2),
+                                const SizedBox(height: CupertinoSpacing.xs),
                                 Text(
                                   item.unit ?? 'pcs',
-                                  style: TextStyle(
-                                    fontSize: 12,
+                                  style: context.caption1.copyWith(
                                     color: secondaryLabel,
                                   ),
                                 ),
@@ -237,12 +221,12 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                   Icon(
                                     CupertinoIcons.square_stack_3d_up,
                                     size: 48,
-                                    color: secondaryLabel.withOpacity(0.5),
+                                    color: secondaryLabel.withValues(alpha: 0.5),
                                   ),
-                                  const SizedBox(height: 16),
+                                  const SizedBox(height: CupertinoSpacing.screenMargin),
                                   Text(
                                     'Pilih barang untuk melihat detail rincian stok',
-                                    style: TextStyle(color: secondaryLabel, fontSize: 14),
+                                    style: context.subhead.copyWith(color: secondaryLabel),
                                   ),
                                 ],
                               ),
@@ -287,74 +271,68 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                       final totalOrdered = breakdown.ordered.fold<double>(0, (sum, order) => sum + order.quantity);
                       final labelColor = CupertinoColors.label.resolveFrom(context);
                       final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
-                      final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
-                      final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
                       return SingleChildScrollView(
-                        padding: const EdgeInsets.all(20.0),
+                        padding: const EdgeInsets.all(CupertinoSpacing.xl),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // Product Name & SKU Card
-                            Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: cardBg,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: separatorColor, width: 0.5),
-                              ),
-                              padding: const EdgeInsets.all(16),
+                            CupertinoGlassContainer(
+                              padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     breakdown.productName,
-                                    style: TextStyle(
+                                    style: context.headline.copyWith(
                                       color: labelColor,
-                                      fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  const SizedBox(height: 6),
+                                  const SizedBox(height: CupertinoSpacing.s),
                                   Text(
                                     'SKU: ${breakdown.sku}',
-                                    style: TextStyle(color: secondaryLabel, fontSize: 13),
+                                    style: context.footnote.copyWith(color: secondaryLabel),
                                   ),
-                                  const SizedBox(height: 12),
-                                  CupertinoButton.filled(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                                    onPressed: () {
-                                      Navigator.pop(context); // Close bottom sheet
-                                      final firstWh = breakdown.onHand.isNotEmpty ? breakdown.onHand.first : null;
-                                      final firstLoc = (firstWh != null && firstWh.locations.isNotEmpty) ? firstWh.locations.first : null;
-                                      final item = Inventory(
-                                        id: firstLoc?.inventoryId ?? 0,
-                                        sku: breakdown.sku,
-                                        productName: breakdown.productName,
-                                        quantity: totalOnHand,
-                                        status: 'available',
-                                        warehouseName: firstWh?.warehouseName,
-                                        locationCode: firstLoc?.locationCode,
-                                        unit: breakdown.unit,
-                                      );
-                                      context.push('/inventory-adjustments', extra: item);
-                                    },
-                                    child: const Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(CupertinoIcons.arrow_2_circlepath, size: 16),
-                                        SizedBox(width: 8),
-                                        Text(
-                                          'Sesuaikan / Pakai Stok',
-                                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                                        ),
-                                      ],
+                                  const SizedBox(height: CupertinoSpacing.m),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: CupertinoButton.filled(
+                                      padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin),
+                                      onPressed: () {
+                                        Navigator.pop(context); // Close bottom sheet
+                                        final firstWh = breakdown.onHand.isNotEmpty ? breakdown.onHand.first : null;
+                                        final firstLoc = (firstWh != null && firstWh.locations.isNotEmpty) ? firstWh.locations.first : null;
+                                        final item = Inventory(
+                                          id: firstLoc?.inventoryId ?? 0,
+                                          sku: breakdown.sku,
+                                          productName: breakdown.productName,
+                                          quantity: totalOnHand,
+                                          status: 'available',
+                                          warehouseName: firstWh?.warehouseName,
+                                          locationCode: firstLoc?.locationCode,
+                                          unit: breakdown.unit,
+                                        );
+                                        context.push('/inventory-adjustments', extra: item);
+                                      },
+                                      child: const Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(CupertinoIcons.arrow_2_circlepath, size: 16),
+                                          SizedBox(width: CupertinoSpacing.s),
+                                          Text(
+                                            'Sesuaikan / Pakai Stok',
+                                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: CupertinoSpacing.l),
 
                             // Summary Grid
                             Row(
@@ -369,7 +347,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                     breakdown.unit,
                                   ),
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: CupertinoSpacing.s),
                                 Expanded(
                                   child: _buildSummaryGridItem(
                                     context,
@@ -380,7 +358,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                     breakdown.unit,
                                   ),
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: CupertinoSpacing.s),
                                 Expanded(
                                   child: _buildSummaryGridItem(
                                     context,
@@ -393,90 +371,51 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: CupertinoSpacing.xxl),
 
                             // On Hand Breakdown
                             Text(
                               'Rincian Stok Tersedia (On Hand)',
-                              style: TextStyle(
+                              style: context.footnote.copyWith(
                                 color: secondaryLabel,
-                                fontSize: 13,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: CupertinoSpacing.s),
                             if (breakdown.onHand.isEmpty)
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: cardBg.withOpacity(0.5),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  'Tidak ada stok tersedia di gudang mana pun.',
-                                  style: TextStyle(color: secondaryLabel, fontSize: 12),
-                                  textAlign: TextAlign.center,
-                                ),
-                              )
+                              _buildEmptyCard(context, 'Tidak ada stok tersedia di gudang mana pun.')
                             else
                               ...breakdown.onHand.map((wh) => WarehouseStockTile(warehouse: wh, unit: breakdown.unit)),
 
-                            const SizedBox(height: 20),
+                            const SizedBox(height: CupertinoSpacing.xl),
 
                             // In Transit Breakdown
                             Text(
                               'Rincian Dalam Perjalanan (In Transit)',
-                              style: TextStyle(
+                              style: context.footnote.copyWith(
                                 color: secondaryLabel,
-                                fontSize: 13,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: CupertinoSpacing.s),
                             if (breakdown.inTransit.isEmpty)
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: cardBg.withOpacity(0.5),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  'Tidak ada transfer barang aktif saat ini.',
-                                  style: TextStyle(color: secondaryLabel, fontSize: 12),
-                                  textAlign: TextAlign.center,
-                                ),
-                              )
+                              _buildEmptyCard(context, 'Tidak ada transfer barang aktif saat ini.')
                             else
                               ...breakdown.inTransit.map((transit) => InTransitStockTile(transit: transit, unit: breakdown.unit)),
 
-                            const SizedBox(height: 20),
+                            const SizedBox(height: CupertinoSpacing.xl),
 
                             // Ordered Breakdown
                             Text(
                               'Rincian Pesanan (On Order)',
-                              style: TextStyle(
+                              style: context.footnote.copyWith(
                                 color: secondaryLabel,
-                                fontSize: 13,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: CupertinoSpacing.s),
                             if (breakdown.ordered.isEmpty)
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: cardBg.withOpacity(0.5),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  'Tidak ada pesanan pembelian (PO) aktif untuk produk ini.',
-                                  style: TextStyle(color: secondaryLabel, fontSize: 12),
-                                  textAlign: TextAlign.center,
-                                ),
-                              )
+                              _buildEmptyCard(context, 'Tidak ada pesanan pembelian (PO) aktif untuk produk ini.')
                             else
                               ...breakdown.ordered.map((order) => OrderedStockTile(order: order, unit: breakdown.unit)),
                           ],
@@ -488,7 +427,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           CupertinoActivityIndicator(),
-                          SizedBox(height: 16),
+                          SizedBox(height: CupertinoSpacing.screenMargin),
                           Text(
                             'Memuat detail stok...',
                             style: TextStyle(fontSize: 14),
@@ -498,7 +437,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                     ),
                     error: (err, stack) => Center(
                       child: Padding(
-                        padding: const EdgeInsets.all(24.0),
+                        padding: const EdgeInsets.all(CupertinoSpacing.xxl),
                         child: Text(
                           'Gagal mengambil rincian stok: $err',
                           style: const TextStyle(color: CupertinoColors.destructiveRed, fontSize: 14),
@@ -524,15 +463,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     IconData icon,
     String unit,
   ) {
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: accentColor.withOpacity(0.15)),
-      ),
+    return CupertinoGlassContainer(
+      padding: const EdgeInsets.all(CupertinoSpacing.m),
+      borderColor: accentColor.withValues(alpha: 0.15),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -542,20 +476,19 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               Icon(icon, size: 16, color: accentColor),
               Text(
                 title,
-                style: TextStyle(color: secondaryLabel, fontSize: 11, fontWeight: FontWeight.w500),
+                style: context.caption2.copyWith(color: secondaryLabel, fontWeight: FontWeight.w500),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: CupertinoSpacing.s),
           Row(
             textBaseline: TextBaseline.alphabetic,
             crossAxisAlignment: CrossAxisAlignment.baseline,
             children: [
               Text(
                 qty % 1 == 0 ? qty.toInt().toString() : qty.toString(),
-                style: TextStyle(
+                style: context.title3.copyWith(
                   color: accentColor,
-                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -563,7 +496,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               Expanded(
                 child: Text(
                   unit,
-                  style: TextStyle(color: secondaryLabel.withOpacity(0.6), fontSize: 10),
+                  style: context.caption2.copyWith(color: secondaryLabel.withValues(alpha: 0.6), fontSize: 10),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -571,6 +504,22 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyCard(BuildContext context, String text) {
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    return CupertinoGlassContainer(
+      padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
+      backgroundColor: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context).withValues(alpha: 0.5),
+      child: SizedBox(
+        width: double.infinity,
+        child: Text(
+          text,
+          style: context.footnote.copyWith(color: secondaryLabel),
+          textAlign: TextAlign.center,
+        ),
       ),
     );
   }
@@ -585,8 +534,6 @@ class StockDetailPane extends ConsumerWidget {
     final breakdownAsync = ref.watch(inventoryBreakdownBySkuProvider(sku));
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
-    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return breakdownAsync.when(
       data: (breakdown) {
@@ -595,69 +542,65 @@ class StockDetailPane extends ConsumerWidget {
         final totalOrdered = breakdown.ordered.fold<double>(0, (sum, order) => sum + order.quantity);
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(CupertinoSpacing.xxl),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Product Details Card
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: cardBg,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: separatorColor, width: 0.5),
-                ),
-                padding: const EdgeInsets.all(20),
+              CupertinoGlassContainer(
+                padding: const EdgeInsets.all(CupertinoSpacing.xl),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       breakdown.productName,
-                      style: TextStyle(
+                      style: context.title3.copyWith(
                         color: labelColor,
-                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: CupertinoSpacing.s),
                     Text(
                       'SKU: ${breakdown.sku}',
-                      style: TextStyle(color: secondaryLabel, fontSize: 14),
+                      style: context.subhead.copyWith(color: secondaryLabel),
                     ),
-                    const SizedBox(height: 12),
-                    CupertinoButton.filled(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      onPressed: () {
-                        final firstWh = breakdown.onHand.isNotEmpty ? breakdown.onHand.first : null;
-                        final firstLoc = (firstWh != null && firstWh.locations.isNotEmpty) ? firstWh.locations.first : null;
-                        final item = Inventory(
-                          id: firstLoc?.inventoryId ?? 0,
-                          sku: breakdown.sku,
-                          productName: breakdown.productName,
-                          quantity: totalOnHand,
-                          status: 'available',
-                          warehouseName: firstWh?.warehouseName,
-                          locationCode: firstLoc?.locationCode,
-                          unit: breakdown.unit,
-                        );
-                        context.push('/inventory-adjustments', extra: item);
-                      },
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(CupertinoIcons.arrow_2_circlepath, size: 16),
-                          SizedBox(width: 8),
-                          Text(
-                            'Sesuaikan / Pakai Stok',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                          ),
-                        ],
+                    const SizedBox(height: CupertinoSpacing.m),
+                    SizedBox(
+                      width: double.infinity,
+                      child: CupertinoButton.filled(
+                        padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin),
+                        onPressed: () {
+                          final firstWh = breakdown.onHand.isNotEmpty ? breakdown.onHand.first : null;
+                          final firstLoc = (firstWh != null && firstWh.locations.isNotEmpty) ? firstWh.locations.first : null;
+                          final item = Inventory(
+                            id: firstLoc?.inventoryId ?? 0,
+                            sku: breakdown.sku,
+                            productName: breakdown.productName,
+                            quantity: totalOnHand,
+                            status: 'available',
+                            warehouseName: firstWh?.warehouseName,
+                            locationCode: firstLoc?.locationCode,
+                            unit: breakdown.unit,
+                          );
+                          context.push('/inventory-adjustments', extra: item);
+                        },
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(CupertinoIcons.arrow_2_circlepath, size: 16),
+                            SizedBox(width: CupertinoSpacing.s),
+                            Text(
+                              'Sesuaikan / Pakai Stok',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: CupertinoSpacing.xl),
 
               // Summary Grid
               Row(
@@ -672,7 +615,7 @@ class StockDetailPane extends ConsumerWidget {
                       breakdown.unit,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: CupertinoSpacing.m),
                   Expanded(
                     child: _buildSummaryGridItem(
                       context,
@@ -683,7 +626,7 @@ class StockDetailPane extends ConsumerWidget {
                       breakdown.unit,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: CupertinoSpacing.m),
                   Expanded(
                     child: _buildSummaryGridItem(
                       context,
@@ -696,40 +639,40 @@ class StockDetailPane extends ConsumerWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: CupertinoSpacing.xxl),
 
               // Rincian On Hand
               Text(
                 'Rincian Stok Tersedia (On Hand)',
-                style: TextStyle(color: labelColor, fontSize: 14, fontWeight: FontWeight.bold),
+                style: context.subhead.copyWith(color: labelColor, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: CupertinoSpacing.s),
               if (breakdown.onHand.isEmpty)
                 _buildEmptyCard(context, 'Tidak ada stok tersedia di gudang mana pun.')
               else
                 ...breakdown.onHand.map((wh) => WarehouseStockTile(warehouse: wh, unit: breakdown.unit)),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: CupertinoSpacing.xxl),
 
               // Rincian In Transit
               Text(
                 'Rincian Dalam Perjalanan (In Transit)',
-                style: TextStyle(color: labelColor, fontSize: 14, fontWeight: FontWeight.bold),
+                style: context.subhead.copyWith(color: labelColor, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: CupertinoSpacing.s),
               if (breakdown.inTransit.isEmpty)
                 _buildEmptyCard(context, 'Tidak ada transfer barang aktif.')
               else
                 ...breakdown.inTransit.map((transit) => InTransitStockTile(transit: transit, unit: breakdown.unit)),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: CupertinoSpacing.xxl),
 
               // Rincian Ordered
               Text(
                 'Rincian Pesanan (On Order)',
-                style: TextStyle(color: labelColor, fontSize: 14, fontWeight: FontWeight.bold),
+                style: context.subhead.copyWith(color: labelColor, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: CupertinoSpacing.s),
               if (breakdown.ordered.isEmpty)
                 _buildEmptyCard(context, 'Tidak ada pesanan pembelian aktif.')
               else
@@ -746,7 +689,7 @@ class StockDetailPane extends ConsumerWidget {
       ),
       error: (err, stack) => Center(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(CupertinoSpacing.xxl),
           child: Text(
             'Gagal memuat detail stok: $err',
             style: const TextStyle(color: CupertinoColors.destructiveRed),
@@ -765,15 +708,10 @@ class StockDetailPane extends ConsumerWidget {
     IconData icon,
     String unit,
   ) {
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: accentColor.withOpacity(0.15)),
-      ),
+    return CupertinoGlassContainer(
+      padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
+      borderColor: accentColor.withValues(alpha: 0.15),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -783,20 +721,19 @@ class StockDetailPane extends ConsumerWidget {
               Icon(icon, size: 18, color: accentColor),
               Text(
                 title,
-                style: TextStyle(color: secondaryLabel, fontSize: 12, fontWeight: FontWeight.w500),
+                style: context.caption1.copyWith(color: secondaryLabel, fontWeight: FontWeight.w500),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: CupertinoSpacing.s),
           Row(
             textBaseline: TextBaseline.alphabetic,
             crossAxisAlignment: CrossAxisAlignment.baseline,
             children: [
               Text(
                 qty % 1 == 0 ? qty.toInt().toString() : qty.toString(),
-                style: TextStyle(
+                style: context.title2.copyWith(
                   color: accentColor,
-                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -804,7 +741,7 @@ class StockDetailPane extends ConsumerWidget {
               Expanded(
                 child: Text(
                   unit,
-                  style: TextStyle(color: secondaryLabel.withOpacity(0.6), fontSize: 12),
+                  style: context.caption1.copyWith(color: secondaryLabel.withValues(alpha: 0.6)),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -817,19 +754,17 @@ class StockDetailPane extends ConsumerWidget {
   }
 
   Widget _buildEmptyCard(BuildContext context, String text) {
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cardBg.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(color: secondaryLabel, fontSize: 13),
-        textAlign: TextAlign.center,
+    return CupertinoGlassContainer(
+      padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
+      backgroundColor: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context).withValues(alpha: 0.5),
+      child: SizedBox(
+        width: double.infinity,
+        child: Text(
+          text,
+          style: context.footnote.copyWith(color: secondaryLabel),
+          textAlign: TextAlign.center,
+        ),
       ),
     );
   }

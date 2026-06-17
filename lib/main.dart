@@ -80,6 +80,11 @@ class MyApp extends ConsumerWidget {
           primaryColor: isDark
               ? CupertinoColors.white
               : CupertinoColors.label,
+          textStyle: TextStyle(
+            color: isDark
+                ? CupertinoColors.white
+                : CupertinoColors.label,
+          ),
         ),
       ),
     );

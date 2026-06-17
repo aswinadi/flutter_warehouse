@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/auth/providers/auth_provider.dart';
@@ -115,14 +114,18 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: 'pr-qty/:id',
                 builder: (context, state) {
                   final id = int.parse(state.pathParameters['id']!);
-                  return PRApprovalScreen(prId: id);
+                  final itemIdStr = state.uri.queryParameters['item_id'];
+                  final itemId = itemIdStr != null ? int.tryParse(itemIdStr) : null;
+                  return PRApprovalScreen(prId: id, itemId: itemId);
                 },
               ),
               GoRoute(
                 path: 'pr-vendor/:id',
                 builder: (context, state) {
                   final id = int.parse(state.pathParameters['id']!);
-                  return PRVendorApprovalScreen(prId: id);
+                  final itemIdStr = state.uri.queryParameters['item_id'];
+                  final itemId = itemIdStr != null ? int.tryParse(itemIdStr) : null;
+                  return PRVendorApprovalScreen(prId: id, itemId: itemId);
                 },
               ),
               GoRoute(

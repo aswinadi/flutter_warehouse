@@ -11,9 +11,9 @@ _$ReceivingItemImpl _$$ReceivingItemImplFromJson(Map<String, dynamic> json) =>
       id: (json['id'] as num).toInt(),
       productName: json['product_name'] as String,
       sku: json['sku'] as String,
-      quantity: (json['quantity'] as num).toDouble(),
-      orderedQty: (json['ordered_qty'] as num?)?.toDouble(),
-      remainingQty: (json['remaining_qty'] as num?)?.toDouble(),
+      quantity: doubleFromJson(json['quantity']),
+      orderedQty: doubleOrNullFromJson(json['ordered_qty']),
+      remainingQty: doubleOrNullFromJson(json['remaining_qty']),
       locationId: (json['location_id'] as num?)?.toInt(),
       locationName: json['location_name'] as String?,
     );
@@ -56,12 +56,12 @@ _$ReceivingItemRequestImpl _$$ReceivingItemRequestImplFromJson(
         Map<String, dynamic> json) =>
     _$ReceivingItemRequestImpl(
       poDetailId: (json['po_detail_id'] as num).toInt(),
-      receivedQty: (json['received_qty'] as num).toDouble(),
+      receivedQty: doubleFromJson(json['received_qty']),
       version: (json['version'] as num).toInt(),
       locationId: (json['location_id'] as num?)?.toInt(),
       discrepancyType: json['discrepancy_type'] as String? ?? 'none',
       discrepancyNote: json['discrepancy_note'] as String?,
-      discrepancyQty: (json['discrepancy_qty'] as num?)?.toDouble(),
+      discrepancyQty: doubleOrNullFromJson(json['discrepancy_qty']),
       photoPath: json['photo_path'] as String?,
     );
 

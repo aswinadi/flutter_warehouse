@@ -24,10 +24,11 @@ mixin _$ReceivingItem {
   @JsonKey(name: 'product_name')
   String get productName => throw _privateConstructorUsedError;
   String get sku => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: doubleFromJson)
   double get quantity => throw _privateConstructorUsedError;
-  @JsonKey(name: 'ordered_qty')
+  @JsonKey(name: 'ordered_qty', fromJson: doubleOrNullFromJson)
   double? get orderedQty => throw _privateConstructorUsedError;
-  @JsonKey(name: 'remaining_qty')
+  @JsonKey(name: 'remaining_qty', fromJson: doubleOrNullFromJson)
   double? get remainingQty => throw _privateConstructorUsedError;
   @JsonKey(name: 'location_id')
   int? get locationId => throw _privateConstructorUsedError;
@@ -50,9 +51,11 @@ abstract class $ReceivingItemCopyWith<$Res> {
       {int id,
       @JsonKey(name: 'product_name') String productName,
       String sku,
-      double quantity,
-      @JsonKey(name: 'ordered_qty') double? orderedQty,
-      @JsonKey(name: 'remaining_qty') double? remainingQty,
+      @JsonKey(fromJson: doubleFromJson) double quantity,
+      @JsonKey(name: 'ordered_qty', fromJson: doubleOrNullFromJson)
+      double? orderedQty,
+      @JsonKey(name: 'remaining_qty', fromJson: doubleOrNullFromJson)
+      double? remainingQty,
       @JsonKey(name: 'location_id') int? locationId,
       @JsonKey(name: 'location_name') String? locationName});
 }
@@ -128,9 +131,11 @@ abstract class _$$ReceivingItemImplCopyWith<$Res>
       {int id,
       @JsonKey(name: 'product_name') String productName,
       String sku,
-      double quantity,
-      @JsonKey(name: 'ordered_qty') double? orderedQty,
-      @JsonKey(name: 'remaining_qty') double? remainingQty,
+      @JsonKey(fromJson: doubleFromJson) double quantity,
+      @JsonKey(name: 'ordered_qty', fromJson: doubleOrNullFromJson)
+      double? orderedQty,
+      @JsonKey(name: 'remaining_qty', fromJson: doubleOrNullFromJson)
+      double? remainingQty,
       @JsonKey(name: 'location_id') int? locationId,
       @JsonKey(name: 'location_name') String? locationName});
 }
@@ -199,9 +204,11 @@ class _$ReceivingItemImpl implements _ReceivingItem {
       {required this.id,
       @JsonKey(name: 'product_name') required this.productName,
       required this.sku,
-      required this.quantity,
-      @JsonKey(name: 'ordered_qty') this.orderedQty,
-      @JsonKey(name: 'remaining_qty') this.remainingQty,
+      @JsonKey(fromJson: doubleFromJson) required this.quantity,
+      @JsonKey(name: 'ordered_qty', fromJson: doubleOrNullFromJson)
+      this.orderedQty,
+      @JsonKey(name: 'remaining_qty', fromJson: doubleOrNullFromJson)
+      this.remainingQty,
       @JsonKey(name: 'location_id') this.locationId,
       @JsonKey(name: 'location_name') this.locationName});
 
@@ -216,12 +223,13 @@ class _$ReceivingItemImpl implements _ReceivingItem {
   @override
   final String sku;
   @override
+  @JsonKey(fromJson: doubleFromJson)
   final double quantity;
   @override
-  @JsonKey(name: 'ordered_qty')
+  @JsonKey(name: 'ordered_qty', fromJson: doubleOrNullFromJson)
   final double? orderedQty;
   @override
-  @JsonKey(name: 'remaining_qty')
+  @JsonKey(name: 'remaining_qty', fromJson: doubleOrNullFromJson)
   final double? remainingQty;
   @override
   @JsonKey(name: 'location_id')
@@ -280,9 +288,11 @@ abstract class _ReceivingItem implements ReceivingItem {
           {required final int id,
           @JsonKey(name: 'product_name') required final String productName,
           required final String sku,
-          required final double quantity,
-          @JsonKey(name: 'ordered_qty') final double? orderedQty,
-          @JsonKey(name: 'remaining_qty') final double? remainingQty,
+          @JsonKey(fromJson: doubleFromJson) required final double quantity,
+          @JsonKey(name: 'ordered_qty', fromJson: doubleOrNullFromJson)
+          final double? orderedQty,
+          @JsonKey(name: 'remaining_qty', fromJson: doubleOrNullFromJson)
+          final double? remainingQty,
           @JsonKey(name: 'location_id') final int? locationId,
           @JsonKey(name: 'location_name') final String? locationName}) =
       _$ReceivingItemImpl;
@@ -298,12 +308,13 @@ abstract class _ReceivingItem implements ReceivingItem {
   @override
   String get sku;
   @override
+  @JsonKey(fromJson: doubleFromJson)
   double get quantity;
   @override
-  @JsonKey(name: 'ordered_qty')
+  @JsonKey(name: 'ordered_qty', fromJson: doubleOrNullFromJson)
   double? get orderedQty;
   @override
-  @JsonKey(name: 'remaining_qty')
+  @JsonKey(name: 'remaining_qty', fromJson: doubleOrNullFromJson)
   double? get remainingQty;
   @override
   @JsonKey(name: 'location_id')
@@ -571,7 +582,7 @@ ReceivingItemRequest _$ReceivingItemRequestFromJson(Map<String, dynamic> json) {
 mixin _$ReceivingItemRequest {
   @JsonKey(name: 'po_detail_id')
   int get poDetailId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'received_qty')
+  @JsonKey(name: 'received_qty', fromJson: doubleFromJson)
   double get receivedQty => throw _privateConstructorUsedError;
   int get version => throw _privateConstructorUsedError;
   @JsonKey(name: 'location_id')
@@ -580,7 +591,7 @@ mixin _$ReceivingItemRequest {
   String get discrepancyType => throw _privateConstructorUsedError;
   @JsonKey(name: 'discrepancy_note')
   String? get discrepancyNote => throw _privateConstructorUsedError;
-  @JsonKey(name: 'discrepancy_qty')
+  @JsonKey(name: 'discrepancy_qty', fromJson: doubleOrNullFromJson)
   double? get discrepancyQty => throw _privateConstructorUsedError;
   @JsonKey(name: 'photo_path')
   String? get photoPath => throw _privateConstructorUsedError;
@@ -599,12 +610,14 @@ abstract class $ReceivingItemRequestCopyWith<$Res> {
   @useResult
   $Res call(
       {@JsonKey(name: 'po_detail_id') int poDetailId,
-      @JsonKey(name: 'received_qty') double receivedQty,
+      @JsonKey(name: 'received_qty', fromJson: doubleFromJson)
+      double receivedQty,
       int version,
       @JsonKey(name: 'location_id') int? locationId,
       @JsonKey(name: 'discrepancy_type') String discrepancyType,
       @JsonKey(name: 'discrepancy_note') String? discrepancyNote,
-      @JsonKey(name: 'discrepancy_qty') double? discrepancyQty,
+      @JsonKey(name: 'discrepancy_qty', fromJson: doubleOrNullFromJson)
+      double? discrepancyQty,
       @JsonKey(name: 'photo_path') String? photoPath});
 }
 
@@ -678,12 +691,14 @@ abstract class _$$ReceivingItemRequestImplCopyWith<$Res>
   @useResult
   $Res call(
       {@JsonKey(name: 'po_detail_id') int poDetailId,
-      @JsonKey(name: 'received_qty') double receivedQty,
+      @JsonKey(name: 'received_qty', fromJson: doubleFromJson)
+      double receivedQty,
       int version,
       @JsonKey(name: 'location_id') int? locationId,
       @JsonKey(name: 'discrepancy_type') String discrepancyType,
       @JsonKey(name: 'discrepancy_note') String? discrepancyNote,
-      @JsonKey(name: 'discrepancy_qty') double? discrepancyQty,
+      @JsonKey(name: 'discrepancy_qty', fromJson: doubleOrNullFromJson)
+      double? discrepancyQty,
       @JsonKey(name: 'photo_path') String? photoPath});
 }
 
@@ -749,12 +764,14 @@ class __$$ReceivingItemRequestImplCopyWithImpl<$Res>
 class _$ReceivingItemRequestImpl implements _ReceivingItemRequest {
   const _$ReceivingItemRequestImpl(
       {@JsonKey(name: 'po_detail_id') required this.poDetailId,
-      @JsonKey(name: 'received_qty') required this.receivedQty,
+      @JsonKey(name: 'received_qty', fromJson: doubleFromJson)
+      required this.receivedQty,
       required this.version,
       @JsonKey(name: 'location_id') this.locationId,
       @JsonKey(name: 'discrepancy_type') this.discrepancyType = 'none',
       @JsonKey(name: 'discrepancy_note') this.discrepancyNote,
-      @JsonKey(name: 'discrepancy_qty') this.discrepancyQty,
+      @JsonKey(name: 'discrepancy_qty', fromJson: doubleOrNullFromJson)
+      this.discrepancyQty,
       @JsonKey(name: 'photo_path') this.photoPath});
 
   factory _$ReceivingItemRequestImpl.fromJson(Map<String, dynamic> json) =>
@@ -764,7 +781,7 @@ class _$ReceivingItemRequestImpl implements _ReceivingItemRequest {
   @JsonKey(name: 'po_detail_id')
   final int poDetailId;
   @override
-  @JsonKey(name: 'received_qty')
+  @JsonKey(name: 'received_qty', fromJson: doubleFromJson)
   final double receivedQty;
   @override
   final int version;
@@ -778,7 +795,7 @@ class _$ReceivingItemRequestImpl implements _ReceivingItemRequest {
   @JsonKey(name: 'discrepancy_note')
   final String? discrepancyNote;
   @override
-  @JsonKey(name: 'discrepancy_qty')
+  @JsonKey(name: 'discrepancy_qty', fromJson: doubleOrNullFromJson)
   final double? discrepancyQty;
   @override
   @JsonKey(name: 'photo_path')
@@ -835,12 +852,14 @@ class _$ReceivingItemRequestImpl implements _ReceivingItemRequest {
 abstract class _ReceivingItemRequest implements ReceivingItemRequest {
   const factory _ReceivingItemRequest(
           {@JsonKey(name: 'po_detail_id') required final int poDetailId,
-          @JsonKey(name: 'received_qty') required final double receivedQty,
+          @JsonKey(name: 'received_qty', fromJson: doubleFromJson)
+          required final double receivedQty,
           required final int version,
           @JsonKey(name: 'location_id') final int? locationId,
           @JsonKey(name: 'discrepancy_type') final String discrepancyType,
           @JsonKey(name: 'discrepancy_note') final String? discrepancyNote,
-          @JsonKey(name: 'discrepancy_qty') final double? discrepancyQty,
+          @JsonKey(name: 'discrepancy_qty', fromJson: doubleOrNullFromJson)
+          final double? discrepancyQty,
           @JsonKey(name: 'photo_path') final String? photoPath}) =
       _$ReceivingItemRequestImpl;
 
@@ -851,7 +870,7 @@ abstract class _ReceivingItemRequest implements ReceivingItemRequest {
   @JsonKey(name: 'po_detail_id')
   int get poDetailId;
   @override
-  @JsonKey(name: 'received_qty')
+  @JsonKey(name: 'received_qty', fromJson: doubleFromJson)
   double get receivedQty;
   @override
   int get version;
@@ -865,7 +884,7 @@ abstract class _ReceivingItemRequest implements ReceivingItemRequest {
   @JsonKey(name: 'discrepancy_note')
   String? get discrepancyNote;
   @override
-  @JsonKey(name: 'discrepancy_qty')
+  @JsonKey(name: 'discrepancy_qty', fromJson: doubleOrNullFromJson)
   double? get discrepancyQty;
   @override
   @JsonKey(name: 'photo_path')

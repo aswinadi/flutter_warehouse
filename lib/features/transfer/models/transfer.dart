@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../../core/models/warehouse.dart';
+import '../../../core/utils/json_utils.dart';
 
 part 'transfer.freezed.dart';
 part 'transfer.g.dart';
@@ -24,8 +25,8 @@ class TransferItem with _$TransferItem {
     @JsonKey(name: 'warehouse_transfer_id') required int warehouseTransferId,
     @JsonKey(name: 'product_id') int? productId,
     TransferProduct? product,
-    @JsonKey(name: 'qty_sent') required double qtySent,
-    @JsonKey(name: 'qty_received') double? qtyReceived,
+    @JsonKey(name: 'qty_sent', fromJson: doubleFromJson) required double qtySent,
+    @JsonKey(name: 'qty_received', fromJson: doubleOrNullFromJson) double? qtyReceived,
     String? notes,
   }) = _TransferItem;
 
@@ -49,9 +50,9 @@ class WarehouseTransfer with _$WarehouseTransfer {
     @JsonKey(name: 'vehicle_plate') String? vehiclePlate,
     String? notes,
     @JsonKey(name: 'pdf_url') String? pdfUrl,
-    @JsonKey(name: 'shipped_by') int? shippedBy,
+    @JsonKey(name: 'shipped_by') dynamic shippedBy,
     @JsonKey(name: 'shipped_at') String? shippedAt,
-    @JsonKey(name: 'received_by') int? receivedBy,
+    @JsonKey(name: 'received_by') dynamic receivedBy,
     @JsonKey(name: 'received_at') String? receivedAt,
     List<TransferItem>? items,
   }) = _WarehouseTransfer;
@@ -78,7 +79,7 @@ class CreateTransferRequest with _$CreateTransferRequest {
 class CreateTransferItemRequest with _$CreateTransferItemRequest {
   const factory CreateTransferItemRequest({
     @JsonKey(name: 'inventory_id') required int inventoryId,
-    required double quantity,
+    @JsonKey(fromJson: doubleFromJson) required double quantity,
   }) = _CreateTransferItemRequest;
 
   factory CreateTransferItemRequest.fromJson(Map<String, dynamic> json) =>
@@ -99,7 +100,7 @@ class ReceiveTransferRequest with _$ReceiveTransferRequest {
 class ReceiveTransferItemRequest with _$ReceiveTransferItemRequest {
   const factory ReceiveTransferItemRequest({
     @JsonKey(name: 'transfer_item_id') required int transferItemId,
-    @JsonKey(name: 'qty_received') required double qtyReceived,
+    @JsonKey(name: 'qty_received', fromJson: doubleFromJson) required double qtyReceived,
   }) = _ReceiveTransferItemRequest;
 
   factory ReceiveTransferItemRequest.fromJson(Map<String, dynamic> json) =>

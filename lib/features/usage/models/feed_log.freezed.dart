@@ -258,8 +258,11 @@ mixin _$AquaculturePond {
   int get id => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
   String? get code => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: doubleOrNullFromJson)
   double? get length => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: doubleOrNullFromJson)
   double? get width => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: doubleOrNullFromJson)
   double? get depth => throw _privateConstructorUsedError;
   @JsonKey(name: 'modul_id')
   int? get modulId => throw _privateConstructorUsedError;
@@ -280,9 +283,9 @@ abstract class $AquaculturePondCopyWith<$Res> {
       {int id,
       String name,
       String? code,
-      double? length,
-      double? width,
-      double? depth,
+      @JsonKey(fromJson: doubleOrNullFromJson) double? length,
+      @JsonKey(fromJson: doubleOrNullFromJson) double? width,
+      @JsonKey(fromJson: doubleOrNullFromJson) double? depth,
       @JsonKey(name: 'modul_id') int? modulId});
 }
 
@@ -352,9 +355,9 @@ abstract class _$$AquaculturePondImplCopyWith<$Res>
       {int id,
       String name,
       String? code,
-      double? length,
-      double? width,
-      double? depth,
+      @JsonKey(fromJson: doubleOrNullFromJson) double? length,
+      @JsonKey(fromJson: doubleOrNullFromJson) double? width,
+      @JsonKey(fromJson: doubleOrNullFromJson) double? depth,
       @JsonKey(name: 'modul_id') int? modulId});
 }
 
@@ -417,9 +420,9 @@ class _$AquaculturePondImpl implements _AquaculturePond {
       {required this.id,
       required this.name,
       this.code,
-      this.length,
-      this.width,
-      this.depth,
+      @JsonKey(fromJson: doubleOrNullFromJson) this.length,
+      @JsonKey(fromJson: doubleOrNullFromJson) this.width,
+      @JsonKey(fromJson: doubleOrNullFromJson) this.depth,
       @JsonKey(name: 'modul_id') this.modulId});
 
   factory _$AquaculturePondImpl.fromJson(Map<String, dynamic> json) =>
@@ -432,10 +435,13 @@ class _$AquaculturePondImpl implements _AquaculturePond {
   @override
   final String? code;
   @override
+  @JsonKey(fromJson: doubleOrNullFromJson)
   final double? length;
   @override
+  @JsonKey(fromJson: doubleOrNullFromJson)
   final double? width;
   @override
+  @JsonKey(fromJson: doubleOrNullFromJson)
   final double? depth;
   @override
   @JsonKey(name: 'modul_id')
@@ -485,9 +491,9 @@ abstract class _AquaculturePond implements AquaculturePond {
       {required final int id,
       required final String name,
       final String? code,
-      final double? length,
-      final double? width,
-      final double? depth,
+      @JsonKey(fromJson: doubleOrNullFromJson) final double? length,
+      @JsonKey(fromJson: doubleOrNullFromJson) final double? width,
+      @JsonKey(fromJson: doubleOrNullFromJson) final double? depth,
       @JsonKey(name: 'modul_id') final int? modulId}) = _$AquaculturePondImpl;
 
   factory _AquaculturePond.fromJson(Map<String, dynamic> json) =
@@ -500,10 +506,13 @@ abstract class _AquaculturePond implements AquaculturePond {
   @override
   String? get code;
   @override
+  @JsonKey(fromJson: doubleOrNullFromJson)
   double? get length;
   @override
+  @JsonKey(fromJson: doubleOrNullFromJson)
   double? get width;
   @override
+  @JsonKey(fromJson: doubleOrNullFromJson)
   double? get depth;
   @override
   @JsonKey(name: 'modul_id')
@@ -538,7 +547,7 @@ mixin _$FeedLog {
   String get date => throw _privateConstructorUsedError;
   @JsonKey(name: 'feed_code')
   String? get feedCode => throw _privateConstructorUsedError;
-  @JsonKey(name: 'amount_kg')
+  @JsonKey(name: 'amount_kg', fromJson: doubleFromJson)
   double get amountKg => throw _privateConstructorUsedError;
   int? get doc => throw _privateConstructorUsedError;
   String? get notes => throw _privateConstructorUsedError;
@@ -568,7 +577,7 @@ abstract class $FeedLogCopyWith<$Res> {
       @JsonKey(name: 'modul_name') String? modulName,
       String date,
       @JsonKey(name: 'feed_code') String? feedCode,
-      @JsonKey(name: 'amount_kg') double amountKg,
+      @JsonKey(name: 'amount_kg', fromJson: doubleFromJson) double amountKg,
       int? doc,
       String? notes,
       @JsonKey(name: 'created_at') String? createdAt,
@@ -687,7 +696,7 @@ abstract class _$$FeedLogImplCopyWith<$Res> implements $FeedLogCopyWith<$Res> {
       @JsonKey(name: 'modul_name') String? modulName,
       String date,
       @JsonKey(name: 'feed_code') String? feedCode,
-      @JsonKey(name: 'amount_kg') double amountKg,
+      @JsonKey(name: 'amount_kg', fromJson: doubleFromJson) double amountKg,
       int? doc,
       String? notes,
       @JsonKey(name: 'created_at') String? createdAt,
@@ -800,7 +809,8 @@ class _$FeedLogImpl implements _FeedLog {
       @JsonKey(name: 'modul_name') this.modulName,
       required this.date,
       @JsonKey(name: 'feed_code') this.feedCode,
-      @JsonKey(name: 'amount_kg') required this.amountKg,
+      @JsonKey(name: 'amount_kg', fromJson: doubleFromJson)
+      required this.amountKg,
       this.doc,
       this.notes,
       @JsonKey(name: 'created_at') this.createdAt,
@@ -838,7 +848,7 @@ class _$FeedLogImpl implements _FeedLog {
   @JsonKey(name: 'feed_code')
   final String? feedCode;
   @override
-  @JsonKey(name: 'amount_kg')
+  @JsonKey(name: 'amount_kg', fromJson: doubleFromJson)
   final double amountKg;
   @override
   final int? doc;
@@ -933,7 +943,8 @@ abstract class _FeedLog implements FeedLog {
       @JsonKey(name: 'modul_name') final String? modulName,
       required final String date,
       @JsonKey(name: 'feed_code') final String? feedCode,
-      @JsonKey(name: 'amount_kg') required final double amountKg,
+      @JsonKey(name: 'amount_kg', fromJson: doubleFromJson)
+      required final double amountKg,
       final int? doc,
       final String? notes,
       @JsonKey(name: 'created_at') final String? createdAt,
@@ -970,7 +981,7 @@ abstract class _FeedLog implements FeedLog {
   @JsonKey(name: 'feed_code')
   String? get feedCode;
   @override
-  @JsonKey(name: 'amount_kg')
+  @JsonKey(name: 'amount_kg', fromJson: doubleFromJson)
   double get amountKg;
   @override
   int? get doc;

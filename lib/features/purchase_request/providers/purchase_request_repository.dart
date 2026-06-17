@@ -105,10 +105,11 @@ class PurchaseRequestRepository {
   }
 
   /// Generates POs from BOD acknowledged vendor selections.
-  /// Optionally filter by [comparisonIds] to generate POs only for those selections.
-  Future<List<dynamic>> generatePOs(int prId, {List<int>? comparisonIds}) async {
+  /// Optionally filter by [comparisonIds] and [itemIds] to generate POs only for those selections/items.
+  Future<List<dynamic>> generatePOs(int prId, {List<int>? comparisonIds, List<int>? itemIds}) async {
     final response = await dio.post('wh/purchase-requests/$prId/generate-pos', data: {
       if (comparisonIds != null) 'comparison_ids': comparisonIds,
+      if (itemIds != null) 'item_ids': itemIds,
     });
     return response.data['purchase_orders'] as List<dynamic>;
   }

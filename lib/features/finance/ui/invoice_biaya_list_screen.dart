@@ -1,15 +1,19 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Colors, Divider, VerticalDivider, Icons, Scrollbar, showDatePicker, showDateRangePicker, Theme, ColorScheme, DateTimeRange;
+import 'package:flutter/material.dart' show Divider, VerticalDivider, Scrollbar, showDateRangePicker, Theme, ColorScheme, DateTimeRange;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../models/invoice_biaya.dart';
 import '../providers/invoice_biaya_repository.dart';
 import 'invoice_biaya_detail_screen.dart';
-import 'invoice_biaya_form_screen.dart';
 import '../../../core/widgets/company_switcher.dart';
 import '../../../core/utils/currency_utils.dart';
 import '../../payment_request/providers/payment_request_repository.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
+import '../../../core/widgets/cupertino_glass_toast.dart';
+import '../../../core/widgets/cupertino_glass_dialog.dart';
 
 class InvoiceBiayaListScreen extends ConsumerStatefulWidget {
   const InvoiceBiayaListScreen({super.key});
@@ -97,7 +101,7 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
               primary: Color(0xFF6E56CF), // Notion Purple
-              onPrimary: Colors.white,
+              onPrimary: CupertinoColors.white,
               onSurface: Color(0xFF1E293B),
             ),
           ),
@@ -133,35 +137,32 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
 
     final success = await showCupertinoDialog<bool>(
       context: context,
-      builder: (context) => CupertinoAlertDialog(
+      builder: (context) => CupertinoGlassDialog(
         title: const Text('Submit Payment Request'),
-        content: Container(
-          padding: const EdgeInsets.only(top: 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Membuat permintaan pembayaran untuk ${_selectedInvoiceIds.length} Invoice Biaya.'),
-              const SizedBox(height: 12),
-              CupertinoTextField(
-                controller: descriptionController,
-                placeholder: 'Keterangan/Alasan Pembayaran',
-                placeholderStyle: const TextStyle(color: CupertinoColors.placeholderText, fontSize: 14),
-                decoration: BoxDecoration(
-                  border: Border.all(color: CupertinoColors.separator),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                maxLines: 2,
-                padding: const EdgeInsets.all(8),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Membuat permintaan pembayaran untuk ${_selectedInvoiceIds.length} Invoice Biaya.'),
+            const SizedBox(height: CupertinoSpacing.m),
+            CupertinoTextField(
+              controller: descriptionController,
+              placeholder: 'Keterangan/Alasan Pembayaran',
+              placeholderStyle: context.subhead.copyWith(color: CupertinoColors.placeholderText.resolveFrom(context)),
+              decoration: BoxDecoration(
+                border: Border.all(color: CupertinoColors.separator.resolveFrom(context)),
+                borderRadius: BorderRadius.circular(6),
               ),
-            ],
-          ),
+              maxLines: 2,
+              padding: const EdgeInsets.all(CupertinoSpacing.s),
+            ),
+          ],
         ),
         actions: [
-          CupertinoDialogAction(
+          CupertinoGlassDialogAction(
             child: const Text('Batal'),
             onPressed: () => Navigator.pop(context, false),
           ),
-          CupertinoDialogAction(
+          CupertinoGlassDialogAction(
             isDefaultAction: true,
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Ajukan'),
@@ -181,21 +182,7 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
         });
 
         if (mounted) {
-          showCupertinoDialog(
-            context: context,
-            builder: (context) => CupertinoAlertDialog(
-              title: const Text('Sukses'),
-              content: const Text('Permintaan Pembayaran berhasil dibuat.'),
-              actions: [
-                CupertinoDialogAction(
-                  child: const Text('OK'),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
-              ],
-            ),
-          );
+          CupertinoGlassToast.showSuccess(context, 'Permintaan Pembayaran berhasil dibuat.');
 
           setState(() {
             _isSelectionMode = false;
@@ -207,19 +194,7 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
         }
       } catch (e) {
         if (mounted) {
-          showCupertinoDialog(
-            context: context,
-            builder: (context) => CupertinoAlertDialog(
-              title: const Text('Gagal'),
-              content: Text('Gagal membuat permintaan: $e'),
-              actions: [
-                CupertinoDialogAction(
-                  child: const Text('OK'),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-          );
+          CupertinoGlassToast.showError(context, 'Gagal membuat permintaan: $e');
         }
       }
     }
@@ -235,7 +210,7 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.xs + 2),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF6E56CF) : CupertinoColors.systemGroupedBackground.resolveFrom(context),
           borderRadius: BorderRadius.circular(16),
@@ -245,9 +220,8 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
         ),
         child: Text(
           label,
-          style: TextStyle(
+          style: context.caption1.copyWith(
             color: isSelected ? CupertinoColors.white : CupertinoColors.label.resolveFrom(context),
-            fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -270,7 +244,7 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
         backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
         middle: Text(
           'Invoice Biaya',
-          style: TextStyle(color: CupertinoColors.label.resolveFrom(context)),
+          style: context.headline.copyWith(color: CupertinoColors.label.resolveFrom(context)),
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
@@ -289,7 +263,7 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
                 });
               },
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: CupertinoSpacing.s),
             CupertinoButton(
               padding: EdgeInsets.zero,
               child: const Icon(CupertinoIcons.add, color: CupertinoColors.activeBlue, size: 22),
@@ -305,7 +279,7 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
           children: [
             const CompanySwitcher(),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
               decoration: BoxDecoration(
                 color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
                 border: Border(bottom: BorderSide(color: CupertinoColors.separator.resolveFrom(context), width: 0.5)),
@@ -313,18 +287,18 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
               child: Row(
                 children: [
                   const Icon(CupertinoIcons.calendar, size: 16, color: Color(0xFF6E56CF)),
-                  const SizedBox(width: 8),
-                  const Text(
+                  const SizedBox(width: CupertinoSpacing.s),
+                  Text(
                     'Periode:',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: CupertinoColors.secondaryLabel),
+                    style: context.footnote.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: CupertinoSpacing.m),
                   Expanded(
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: CupertinoButton(
                         padding: EdgeInsets.zero,
-                        minSize: 0,
+                        minimumSize: Size.zero,
                         onPressed: () {
                           // Standard action sheet for preset selection
                           showCupertinoModalPopup(
@@ -369,8 +343,8 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
                                 ),
                               ],
                               cancelButton: CupertinoActionSheetAction(
-                                child: const Text('Batal'),
-                                onPressed: () => Navigator.pop(context),
+                                  child: const Text('Batal'),
+                                  onPressed: () => Navigator.pop(context),
                               ),
                             ),
                           );
@@ -380,7 +354,7 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
                           _datePreset == '30days' ? '30 Hari Terakhir' :
                           _datePreset == 'thisMonth' ? 'Bulan Ini' :
                           _datePreset == '90days' ? '3 Bulan Terakhir' : 'Kustom',
-                          style: const TextStyle(fontSize: 13, color: Color(0xFF6E56CF), fontWeight: FontWeight.w600),
+                          style: context.footnote.copyWith(color: const Color(0xFF6E56CF), fontWeight: FontWeight.w600),
                         ),
                       ),
                     ),
@@ -388,7 +362,7 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
                   if (_startDate != null && _endDate != null) ...[
                     Text(
                       '${_startDate!.day}/${_startDate!.month} - ${_endDate!.day}/${_endDate!.month}',
-                      style: const TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel),
+                      style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                     ),
                   ],
                 ],
@@ -399,19 +373,19 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
               color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
                 child: Row(
                   children: [
                     _buildFilterChip('Semua', null),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: CupertinoSpacing.s),
                     _buildFilterChip('Draft', 'draft'),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: CupertinoSpacing.s),
                     _buildFilterChip('Pending', 'pending'),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: CupertinoSpacing.s),
                     _buildFilterChip('Submitted', 'submitted'),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: CupertinoSpacing.s),
                     _buildFilterChip('Paid', 'paid'),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: CupertinoSpacing.s),
                     _buildFilterChip('Cancelled', 'cancelled'),
                   ],
                 ),
@@ -421,10 +395,10 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
               child: invoicesAsync.when(
                 data: (invoices) {
                   if (invoices.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Text(
                         'Tidak ada invoice biaya yang ditemukan',
-                        style: TextStyle(color: CupertinoColors.secondaryLabel, fontSize: 15),
+                        style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                       ),
                     );
                   }
@@ -451,13 +425,13 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
                   final mainList = Scrollbar(
                     child: ListView.separated(
                       controller: _scrollController,
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                       itemCount: invoices.length + (showLoader ? 1 : 0),
-                      separatorBuilder: (context, index) => const SizedBox(height: 12),
+                      separatorBuilder: (context, index) => const SizedBox(height: CupertinoSpacing.m),
                       itemBuilder: (context, index) {
                         if (index == invoices.length) {
                           return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 16),
+                            padding: EdgeInsets.symmetric(vertical: CupertinoSpacing.screenMargin),
                             child: Center(child: CupertinoActivityIndicator()),
                           );
                         }
@@ -475,20 +449,7 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
                               if (invoice.status == 'pending') {
                                 _toggleSelection(invoice.id);
                               } else {
-                                // Show warning
-                                showCupertinoDialog(
-                                  context: context,
-                                  builder: (context) => CupertinoAlertDialog(
-                                    title: const Text('Status Tidak Valid'),
-                                    content: const Text('Hanya invoice dengan status PENDING yang dapat diajukan.'),
-                                    actions: [
-                                      CupertinoDialogAction(
-                                        child: const Text('OK'),
-                                        onPressed: () => Navigator.pop(context),
-                                      ),
-                                    ],
-                                  ),
-                                );
+                                CupertinoGlassToast.showError(context, 'Hanya invoice dengan status PENDING yang dapat diajukan.');
                               }
                             } else {
                               if (isWide) {
@@ -529,10 +490,10 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
                                     isEmbedded: true,
                                   ),
                                 )
-                              : const Center(
+                              : Center(
                                   child: Text(
                                     'Pilih Invoice untuk melihat detail',
-                                    style: TextStyle(color: CupertinoColors.secondaryLabel),
+                                    style: context.body.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                                   ),
                                 ),
                         ),
@@ -562,7 +523,7 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
     return SafeArea(
       top: false,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(CupertinoSpacing.m),
         decoration: BoxDecoration(
           color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
           border: const Border(top: BorderSide(color: CupertinoColors.separator, width: 0.5)),
@@ -572,17 +533,17 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
           children: [
             Text(
               '${_selectedInvoiceIds.length} invoice terpilih',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              style: context.subhead.copyWith(fontWeight: FontWeight.bold),
             ),
             CupertinoButton(
               color: const Color(0xFF6E56CF),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              borderRadius: BorderRadius.circular(8),
-              minSize: 0,
+              padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
+              borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
+              minimumSize: Size.zero,
               onPressed: _submitBulkPaymentRequest,
-              child: const Text(
+              child: Text(
                 'Ajukan Pembayaran',
-                style: TextStyle(color: CupertinoColors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                style: context.footnote.copyWith(color: CupertinoColors.white, fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -630,118 +591,120 @@ class _InvoiceBiayaCard extends StatelessWidget {
         statusColor = CupertinoColors.systemGrey;
     }
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF6E56CF) : CupertinoColors.separator.resolveFrom(context),
-            width: isSelected ? 2.0 : 0.5,
-          ),
-        ),
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            if (isSelectionMode) ...[
-              Container(
-                margin: const EdgeInsets.only(right: 12),
-                child: Icon(
-                  isChecked ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.circle,
-                  color: isChecked ? const Color(0xFF6E56CF) : CupertinoColors.inactiveGray,
-                  size: 20,
+    final isChecked = this.isChecked;
+    final isSelected = this.isSelected;
+
+    return CupertinoGlassContainer(
+      borderRadius: CupertinoSpacing.cardRadius + 2,
+      backgroundColor: isSelected 
+          ? const Color(0xFF6E56CF).withValues(alpha: 0.08) 
+          : null,
+      borderColor: isSelected 
+          ? const Color(0xFF6E56CF) 
+          : null,
+      padding: EdgeInsets.zero,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Padding(
+          padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
+          child: Row(
+            children: [
+              if (isSelectionMode) ...[
+                Container(
+                  margin: const EdgeInsets.only(right: CupertinoSpacing.m),
+                  child: Icon(
+                    isChecked ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.circle,
+                    color: isChecked ? const Color(0xFF6E56CF) : CupertinoColors.inactiveGray,
+                    size: 20,
+                  ),
                 ),
-              ),
-            ],
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        invoice.invoiceNumber,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: statusColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: statusColor, width: 0.5),
-                        ),
-                        child: Text(
-                          invoice.status.toUpperCase(),
-                          style: TextStyle(
-                            color: statusColor,
-                            fontSize: 10,
+              ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          invoice.invoiceNumber,
+                          style: context.subhead.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    invoice.supplierName ?? 'Pemasok Tidak Diketahui',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  if (invoice.vendorInvoiceNumber != null && invoice.vendorInvoiceNumber!.isNotEmpty) ...[
-                    Text(
-                      'No. Invoice Vendor: ${invoice.vendorInvoiceNumber}',
-                      style: const TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel),
-                    ),
-                    const SizedBox(height: 4),
-                  ],
-                  Row(
-                    children: [
-                      const Icon(CupertinoIcons.time, size: 12, color: CupertinoColors.secondaryLabel),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Tanggal: ${_formatDate(invoice.invoiceDate)}',
-                        style: const TextStyle(color: CupertinoColors.secondaryLabel, fontSize: 12),
-                      ),
-                      if (invoice.dueDate != null) ...[
-                        const SizedBox(width: 12),
-                        const Icon(CupertinoIcons.exclamationmark_triangle, size: 12, color: CupertinoColors.secondaryLabel),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Tempo: ${_formatDate(invoice.dueDate)}',
-                          style: const TextStyle(color: CupertinoColors.secondaryLabel, fontSize: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.halfScreenMargin, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: statusColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: statusColor, width: 0.5),
+                          ),
+                          child: Text(
+                            invoice.status.toUpperCase(),
+                            style: context.caption2.copyWith(
+                              color: statusColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ],
-                    ],
-                  ),
-                  const Divider(color: CupertinoColors.separator, height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Total Biaya',
-                        style: TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel),
+                    ),
+                    const SizedBox(height: CupertinoSpacing.xs + 2),
+                    Text(
+                      invoice.supplierName ?? 'Pemasok Tidak Diketahui',
+                      style: context.footnote.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
+                    ),
+                    const SizedBox(height: CupertinoSpacing.xs),
+                    if (invoice.vendorInvoiceNumber != null && invoice.vendorInvoiceNumber!.isNotEmpty) ...[
                       Text(
-                        formatWithCurrency(invoice.totalAmount, invoice.currency),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
+                        'No. Invoice Vendor: ${invoice.vendorInvoiceNumber}',
+                        style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                       ),
+                      const SizedBox(height: CupertinoSpacing.xs),
                     ],
-                  ),
-                ],
+                    Row(
+                      children: [
+                        const Icon(CupertinoIcons.time, size: 12, color: CupertinoColors.secondaryLabel),
+                        const SizedBox(width: CupertinoSpacing.xs),
+                        Text(
+                          'Tanggal: ${_formatDate(invoice.invoiceDate)}',
+                          style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                        ),
+                        if (invoice.dueDate != null) ...[
+                          const SizedBox(width: CupertinoSpacing.m),
+                          const Icon(CupertinoIcons.exclamationmark_triangle, size: 12, color: CupertinoColors.secondaryLabel),
+                          const SizedBox(width: CupertinoSpacing.xs),
+                          Text(
+                            'Tempo: ${_formatDate(invoice.dueDate)}',
+                            style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const Divider(color: CupertinoColors.separator, height: CupertinoSpacing.m + 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Total Biaya',
+                          style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                        ),
+                        Text(
+                          formatWithCurrency(invoice.totalAmount, invoice.currency),
+                          style: context.subhead.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

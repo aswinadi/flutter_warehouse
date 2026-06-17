@@ -2,6 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:dio/dio.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
 import '../providers/aquaculture_crud_provider.dart';
 
 class ShrimpPriceCalculatorScreen extends ConsumerStatefulWidget {
@@ -176,36 +179,33 @@ class _ShrimpPriceCalculatorScreenState extends ConsumerState<ShrimpPriceCalcula
   }) {
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
-    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 14,
+          style: context.subhead.copyWith(
             fontWeight: FontWeight.w600,
             color: labelColor,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: CupertinoSpacing.xs),
         GestureDetector(
           onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            decoration: BoxDecoration(
-              color: CupertinoColors.systemBackground.resolveFrom(context),
-              border: Border.all(color: separatorColor, width: 0.5),
-              borderRadius: BorderRadius.circular(8),
+          child: CupertinoGlassContainer(
+            padding: const EdgeInsets.symmetric(
+              horizontal: CupertinoSpacing.m,
+              vertical: CupertinoSpacing.m,
             ),
+            borderRadius: CupertinoSpacing.buttonRadius,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Text(
                     value,
-                    style: TextStyle(fontSize: 15, color: labelColor),
+                    style: context.subhead.copyWith(color: labelColor),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -224,7 +224,6 @@ class _ShrimpPriceCalculatorScreenState extends ConsumerState<ShrimpPriceCalcula
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final borderCol = CupertinoColors.separator.resolveFrom(context);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
 
     final selectedCompany = _companies.firstWhere((c) => c['id'] == _selectedCompanyId, orElse: () => null);
 
@@ -237,113 +236,104 @@ class _ShrimpPriceCalculatorScreenState extends ConsumerState<ShrimpPriceCalcula
         child: _isLoading
             ? const Center(child: CupertinoActivityIndicator())
             : SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: cardBg,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: borderCol, width: 0.5),
-                      ),
-                      padding: const EdgeInsets.all(16.0),
+                    CupertinoGlassContainer(
+                      borderRadius: CupertinoSpacing.cardRadius,
+                      padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Informasi Ukuran & Perusahaan',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
+                            style: context.callout.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: CupertinoSpacing.l),
                           _buildSelectField(
                             label: 'Perusahaan',
                             value: selectedCompany != null ? (selectedCompany['company_name'] ?? '') : 'Pilih Perusahaan',
                             onTap: _showCompanyPicker,
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: CupertinoSpacing.l),
                           Text(
                             'Size Udang Saat Ini (ekor/kg)',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: labelColor),
+                            style: context.subhead.copyWith(fontWeight: FontWeight.w600, color: labelColor),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: CupertinoSpacing.xs),
                           CupertinoTextField(
                             controller: _sizeController,
                             placeholder: 'Misal: 21.5',
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             suffix: Padding(
                               padding: const EdgeInsets.only(right: 12),
-                              child: Text('ekor/kg', style: TextStyle(color: secondaryLabel)),
+                              child: Text('ekor/kg', style: context.subhead.copyWith(color: secondaryLabel)),
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.m),
                             decoration: BoxDecoration(
                               color: CupertinoColors.systemBackground.resolveFrom(context),
                               border: Border.all(color: borderCol, width: 0.5),
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
                             ),
                             onChanged: (val) => _calculatePrice(),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: CupertinoSpacing.l),
                     if (_activeContractName != null) ...[
-                      Container(
-                        decoration: BoxDecoration(
-                          color: cardBg,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: borderCol, width: 0.5),
-                        ),
-                        padding: const EdgeInsets.all(16.0),
+                      CupertinoGlassContainer(
+                        borderRadius: CupertinoSpacing.cardRadius,
+                        padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               'Hasil Perhitungan Harga',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
+                              style: context.callout.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: CupertinoSpacing.m),
                             Text(
                               'Kontrak Aktif: $_activeContractName',
-                              style: TextStyle(fontSize: 14, color: secondaryLabel),
+                              style: context.subhead.copyWith(color: secondaryLabel),
                             ),
                             if (_calculatedPrice != null) ...[
-                              const SizedBox(height: 16),
+                              const SizedBox(height: CupertinoSpacing.l),
                               Center(
                                 child: Column(
                                   children: [
                                     Text(
                                       currencyFormat.format(_calculatedPrice),
-                                      style: const TextStyle(
-                                        fontSize: 28,
+                                      style: context.title1.copyWith(
                                         fontWeight: FontWeight.w900,
                                         color: CupertinoColors.activeGreen,
                                       ),
                                     ),
                                     Text(
                                       'per kilogram (kg)',
-                                      style: TextStyle(fontSize: 12, color: secondaryLabel),
+                                      style: context.caption1.copyWith(color: secondaryLabel),
                                     ),
                                   ],
                                 ),
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: CupertinoSpacing.l),
                               Container(height: 0.5, color: borderCol),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: CupertinoSpacing.m),
                               Text(
                                 'Rincian Perhitungan:',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: labelColor),
+                                style: context.footnote.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                               ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: CupertinoSpacing.xs),
                               Text(
                                 _calculationBreakdown,
-                                style: TextStyle(fontSize: 13, height: 1.5, color: labelColor),
+                                style: context.footnote.copyWith(height: 1.5, color: labelColor),
                               ),
                             ] else ...[
-                              const SizedBox(height: 12),
+                              const SizedBox(height: CupertinoSpacing.m),
                               Text(
                                 _calculationBreakdown,
-                                style: const TextStyle(fontSize: 14, color: CupertinoColors.destructiveRed),
+                                style: context.subhead.copyWith(color: CupertinoColors.destructiveRed),
                               ),
                             ],
                           ],

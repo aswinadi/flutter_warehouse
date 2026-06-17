@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import '../../../core/utils/json_utils.dart';
 
 part 'receiving.freezed.dart';
 part 'receiving.g.dart';
@@ -9,9 +10,9 @@ class ReceivingItem with _$ReceivingItem {
     required int id,
     @JsonKey(name: 'product_name') required String productName,
     required String sku,
-    required double quantity,
-    @JsonKey(name: 'ordered_qty') double? orderedQty,
-    @JsonKey(name: 'remaining_qty') double? remainingQty,
+    @JsonKey(fromJson: doubleFromJson) required double quantity,
+    @JsonKey(name: 'ordered_qty', fromJson: doubleOrNullFromJson) double? orderedQty,
+    @JsonKey(name: 'remaining_qty', fromJson: doubleOrNullFromJson) double? remainingQty,
     @JsonKey(name: 'location_id') int? locationId,
     @JsonKey(name: 'location_name') String? locationName,
   }) = _ReceivingItem;
@@ -38,12 +39,12 @@ class CreateReceivingRequest with _$CreateReceivingRequest {
 class ReceivingItemRequest with _$ReceivingItemRequest {
   const factory ReceivingItemRequest({
     @JsonKey(name: 'po_detail_id') required int poDetailId,
-    @JsonKey(name: 'received_qty') required double receivedQty,
+    @JsonKey(name: 'received_qty', fromJson: doubleFromJson) required double receivedQty,
     required int version,
     @JsonKey(name: 'location_id') int? locationId,
     @JsonKey(name: 'discrepancy_type') @Default('none') String discrepancyType,
     @JsonKey(name: 'discrepancy_note') String? discrepancyNote,
-    @JsonKey(name: 'discrepancy_qty') double? discrepancyQty,
+    @JsonKey(name: 'discrepancy_qty', fromJson: doubleOrNullFromJson) double? discrepancyQty,
     @JsonKey(name: 'photo_path') String? photoPath,
   }) = _ReceivingItemRequest;
 

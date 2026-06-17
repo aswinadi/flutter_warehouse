@@ -3,7 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:responsive_framework/responsive_framework.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
 import '../../../core/widgets/company_switcher.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
+import '../../../core/widgets/cupertino_glass_dialog.dart';
+import '../../../core/widgets/cupertino_glass_toast.dart';
 import '../providers/aquaculture_crud_config.dart';
 import '../providers/aquaculture_crud_provider.dart';
 import 'aquaculture_crud_form_screen.dart';
@@ -71,58 +76,35 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
   Future<void> _deleteRecord(int id) async {
     final l10nConfig = aquacultureCrudConfigs[widget.resource];
     final title = l10nConfig?.title ?? 'Data';
+    final screenContext = context;
 
     showCupertinoDialog(
       context: context,
-      builder: (context) => CupertinoAlertDialog(
+      builder: (dialogContext) => CupertinoGlassDialog(
         title: Text('Hapus $title'),
         content: const Text('Apakah Anda yakin ingin menghapus data ini secara permanen?'),
         actions: [
-          CupertinoDialogAction(
-            isDestructiveAction: true,
+          CupertinoGlassDialogAction(
+            isDestructive: true,
             onPressed: () async {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               try {
                 await ref.read(aquacultureCrudRepositoryProvider).delete(widget.resource, id);
                 ref.read(aquacultureCrudListProvider(widget.resource).notifier).refresh();
-                if (mounted) {
-                  showCupertinoDialog(
-                    context: context,
-                    builder: (context) => CupertinoAlertDialog(
-                      title: const Text('Berhasil'),
-                      content: const Text('Data berhasil dihapus.'),
-                      actions: [
-                        CupertinoDialogAction(
-                          child: const Text('OK'),
-                          onPressed: () => Navigator.pop(context),
-                        )
-                      ],
-                    ),
-                  );
+                if (screenContext.mounted) {
+                  CupertinoGlassToast.showSuccess(screenContext, 'Data berhasil dihapus.');
                 }
               } catch (err) {
-                if (mounted) {
-                  showCupertinoDialog(
-                    context: context,
-                    builder: (context) => CupertinoAlertDialog(
-                      title: const Text('Gagal'),
-                      content: Text('Gagal menghapus data: $err'),
-                      actions: [
-                        CupertinoDialogAction(
-                          child: const Text('OK'),
-                          onPressed: () => Navigator.pop(context),
-                        )
-                      ],
-                    ),
-                  );
+                if (screenContext.mounted) {
+                  CupertinoGlassToast.showError(screenContext, 'Gagal menghapus data: $err');
                 }
               }
             },
             child: const Text('Hapus'),
           ),
-          CupertinoDialogAction(
+          CupertinoGlassDialogAction(
             isDefaultAction: true,
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Batal'),
           ),
         ],
@@ -139,12 +121,12 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
         children: [
           Text(
             item['name'] ?? '',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: context.callout.copyWith(fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: CupertinoSpacing.xs),
           Text(
             'Perusahaan: ${item['company']?['company_name'] ?? '-'}',
-            style: const TextStyle(fontSize: 14, color: CupertinoColors.secondaryLabel),
+            style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel),
           ),
         ],
       );
@@ -156,28 +138,28 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
             children: [
               Text(
                 item['name'] ?? '',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: context.callout.copyWith(fontWeight: FontWeight.bold),
               ),
               if (item['code'] != null && item['code'].toString().isNotEmpty) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: CupertinoSpacing.s),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: CupertinoColors.activeBlue.withOpacity(0.1),
+                    color: CupertinoColors.activeBlue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     item['code'],
-                    style: const TextStyle(fontSize: 11, color: CupertinoColors.activeBlue, fontWeight: FontWeight.w600),
+                    style: context.caption2.copyWith(color: CupertinoColors.activeBlue, fontWeight: FontWeight.w600),
                   ),
                 ),
               ],
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: CupertinoSpacing.xs),
           Text(
             'Tambak: ${item['tambak']?['name'] ?? '-'} (${item['tambak']?['company']?['company_name'] ?? ''})',
-            style: const TextStyle(fontSize: 14, color: CupertinoColors.secondaryLabel),
+            style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel),
           ),
         ],
       );
@@ -189,28 +171,28 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
             children: [
               Text(
                 item['name'] ?? '',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: context.callout.copyWith(fontWeight: FontWeight.bold),
               ),
               if (item['code'] != null && item['code'].toString().isNotEmpty) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: CupertinoSpacing.s),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: CupertinoColors.activeBlue.withOpacity(0.1),
+                    color: CupertinoColors.activeBlue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     item['code'],
-                    style: const TextStyle(fontSize: 11, color: CupertinoColors.activeBlue, fontWeight: FontWeight.w600),
+                    style: context.caption2.copyWith(color: CupertinoColors.activeBlue, fontWeight: FontWeight.w600),
                   ),
                 ),
               ],
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: CupertinoSpacing.xs),
           Text(
             'Blok: ${item['blok']?['name'] ?? '-'} | Tambak: ${item['blok']?['tambak']?['name'] ?? '-'}',
-            style: const TextStyle(fontSize: 14, color: CupertinoColors.secondaryLabel),
+            style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel),
           ),
         ],
       );
@@ -222,34 +204,34 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
             children: [
               Text(
                 item['name'] ?? '',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: context.callout.copyWith(fontWeight: FontWeight.bold),
               ),
               if (item['code'] != null && item['code'].toString().isNotEmpty) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: CupertinoSpacing.s),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: CupertinoColors.activeBlue.withOpacity(0.1),
+                    color: CupertinoColors.activeBlue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     item['code'],
-                    style: const TextStyle(fontSize: 11, color: CupertinoColors.activeBlue, fontWeight: FontWeight.w600),
+                    style: context.caption2.copyWith(color: CupertinoColors.activeBlue, fontWeight: FontWeight.w600),
                   ),
                 ),
               ],
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: CupertinoSpacing.s),
           Text(
             'Modul: ${item['modul']?['name'] ?? '-'} | Blok: ${item['modul']?['blok']?['name'] ?? '-'} | Tambak: ${item['modul']?['blok']?['tambak']?['name'] ?? '-'}',
-            style: const TextStyle(fontSize: 13, color: CupertinoColors.secondaryLabel),
+            style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel),
           ),
           if (item['length'] != null || item['width'] != null || item['depth'] != null) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: CupertinoSpacing.xs),
             Text(
               'Dimensi: ${item['length'] ?? '-'}m x ${item['width'] ?? '-'}m | Kedalaman: ${item['depth'] ?? '-'}m',
-              style: const TextStyle(fontSize: 13, color: CupertinoColors.secondaryLabel),
+              style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel),
             ),
           ],
         ],
@@ -264,18 +246,17 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
             children: [
               Text(
                 item['name'] ?? '',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: context.callout.copyWith(fontWeight: FontWeight.bold),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: isActive ? CupertinoColors.activeGreen.withOpacity(0.15) : CupertinoColors.systemGrey.withOpacity(0.15),
+                  color: isActive ? CupertinoColors.activeGreen.withValues(alpha: 0.15) : CupertinoColors.systemGrey.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   isActive ? 'Aktif' : 'Selesai',
-                  style: TextStyle(
-                    fontSize: 12,
+                  style: context.caption1.copyWith(
                     fontWeight: FontWeight.bold,
                     color: isActive ? CupertinoColors.activeGreen : CupertinoColors.secondaryLabel,
                   ),
@@ -283,15 +264,15 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: CupertinoSpacing.s),
           Text(
             'Modul: ${item['modul']?['name'] ?? '-'} | Tambak: ${item['modul']?['blok']?['tambak']?['name'] ?? '-'}',
-            style: const TextStyle(fontSize: 13, color: CupertinoColors.secondaryLabel),
+            style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: CupertinoSpacing.xs),
           Text(
             'Mulai Tebar: ${_formatDate(item['stocking_date'])}',
-            style: const TextStyle(fontSize: 13, color: CupertinoColors.secondaryLabel),
+            style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel),
           ),
         ],
       );
@@ -305,18 +286,17 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
             children: [
               Text(
                 item['name'] ?? '',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: context.callout.copyWith(fontWeight: FontWeight.bold),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: isActive ? CupertinoColors.activeGreen.withOpacity(0.15) : CupertinoColors.systemGrey.withOpacity(0.15),
+                  color: isActive ? CupertinoColors.activeGreen.withValues(alpha: 0.15) : CupertinoColors.systemGrey.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   isActive ? 'Aktif' : 'Mati',
-                  style: TextStyle(
-                    fontSize: 12,
+                  style: context.caption1.copyWith(
                     fontWeight: FontWeight.bold,
                     color: isActive ? CupertinoColors.activeGreen : CupertinoColors.secondaryLabel,
                   ),
@@ -324,20 +304,20 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: CupertinoSpacing.s),
           Text(
             'No. Kontrak: ${item['contract_number'] ?? '-'}',
-            style: const TextStyle(fontSize: 13, color: CupertinoColors.secondaryLabel),
+            style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: CupertinoSpacing.xs),
           Text(
             'Pembeli: ${item['buyer_name'] ?? '-'} | Penjual: ${item['seller_name'] ?? '-'}',
-            style: const TextStyle(fontSize: 13, color: CupertinoColors.secondaryLabel),
+            style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: CupertinoSpacing.xs),
           Text(
             'Tanggal Kontrak: ${_formatDate(item['contract_date'])}',
-            style: const TextStyle(fontSize: 13, color: CupertinoColors.secondaryLabel),
+            style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel),
           ),
         ],
       );
@@ -350,23 +330,23 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
             children: [
               Text(
                 item['product_name'] ?? '',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: context.callout.copyWith(fontWeight: FontWeight.bold),
               ),
               Text(
                 '${item['amount'] ?? '-'} ${item['unit'] ?? ''}',
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: CupertinoColors.activeBlue),
+                style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.activeBlue),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: CupertinoSpacing.s),
           Text(
             'Petak: ${item['pond']?['name'] ?? '-'} | Siklus: ${item['cycle']?['name'] ?? '-'}',
-            style: const TextStyle(fontSize: 13, color: CupertinoColors.secondaryLabel),
+            style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: CupertinoSpacing.xs),
           Text(
             'Tanggal Penggunaan: ${_formatDate(item['date'])}',
-            style: const TextStyle(fontSize: 13, color: CupertinoColors.secondaryLabel),
+            style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel),
           ),
         ],
       );
@@ -380,18 +360,17 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
             children: [
               Text(
                 item['code'] ?? '',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: CupertinoColors.activeBlue),
+                style: context.callout.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.activeBlue),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: isActive ? CupertinoColors.activeGreen.withOpacity(0.15) : CupertinoColors.systemGrey.withOpacity(0.15),
+                  color: isActive ? CupertinoColors.activeGreen.withValues(alpha: 0.15) : CupertinoColors.systemGrey.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   isActive ? 'Aktif' : 'Nonaktif',
-                  style: TextStyle(
-                    fontSize: 11,
+                  style: context.caption2.copyWith(
                     fontWeight: FontWeight.bold,
                     color: isActive ? CupertinoColors.activeGreen : CupertinoColors.secondaryLabel,
                   ),
@@ -399,22 +378,22 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: CupertinoSpacing.s),
           Text(
             item['name'] ?? '',
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+            style: context.subhead.copyWith(fontWeight: FontWeight.w500),
           ),
           if (item['parent_code'] != null && item['parent_code'].toString().isNotEmpty) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: CupertinoSpacing.xs),
             Text(
               'Induk: ${item['parent_code']}',
-              style: const TextStyle(fontSize: 13, color: CupertinoColors.secondaryLabel),
+              style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel),
             ),
           ],
-          const SizedBox(height: 4),
+          const SizedBox(height: CupertinoSpacing.xs),
           Text(
             'Perusahaan: ${item['company']?['company_name'] ?? '-'}',
-            style: const TextStyle(fontSize: 13, color: CupertinoColors.secondaryLabel),
+            style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel),
           ),
         ],
       );
@@ -443,7 +422,7 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
 
   Widget _buildKeyValueRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.xs),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -451,19 +430,17 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
             width: 140,
             child: Text(
               label,
-              style: const TextStyle(
-                fontSize: 14,
+              style: context.subhead.copyWith(
                 color: CupertinoColors.secondaryLabel,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: CupertinoSpacing.s),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
-                fontSize: 14,
+              style: context.subhead.copyWith(
                 color: CupertinoColors.label,
                 fontWeight: FontWeight.w600,
               ),
@@ -475,14 +452,8 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
   }
 
   Widget _buildCardContainer({required Widget child}) {
-    final borderCol = CupertinoColors.separator.resolveFrom(context);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
-    return Container(
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderCol, width: 0.5),
-      ),
+    return CupertinoGlassContainer(
+      borderRadius: CupertinoSpacing.cardRadius,
       child: child,
     );
   }
@@ -579,7 +550,7 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
         children: [
           _buildCardContainer(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
               child: Column(
                 children: [
                   _buildKeyValueRow('Nama Kontrak', item['name'] ?? '-'),
@@ -602,18 +573,18 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
               ),
             ),
           ),
-          const SizedBox(height: 20),
-          const Text(
+          const SizedBox(height: CupertinoSpacing.xl),
+          Text(
             'Size Brackets & Prices',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: context.callout.copyWith(fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: CupertinoSpacing.s),
           if (brackets.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(8.0),
+            Padding(
+              padding: const EdgeInsets.all(CupertinoSpacing.s),
               child: Text(
                 'Tidak ada size brackets untuk kontrak ini.',
-                style: TextStyle(color: CupertinoColors.secondaryLabel, fontStyle: FontStyle.italic),
+                style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel, fontStyle: FontStyle.italic),
               ),
             )
           else
@@ -631,7 +602,7 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
                 final dec = b['price_decrement'];
                 return _buildCardContainer(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: CupertinoSpacing.m),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -640,18 +611,18 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
                           children: [
                             Text(
                               'Size: $minSize - $maxSize (Dasar: $baseSize)',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              style: context.subhead.copyWith(fontWeight: FontWeight.bold),
                             ),
                             Text(
                               _formatRupiah(basePrice),
-                              style: const TextStyle(fontWeight: FontWeight.bold, color: CupertinoColors.activeBlue, fontSize: 14),
+                              style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.activeBlue),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: CupertinoSpacing.xs),
                         Text(
                           'Increment: ${_formatRupiah(inc)} | Decrement: ${_formatRupiah(dec)}',
-                          style: const TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel),
+                          style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel),
                         ),
                       ],
                     ),
@@ -705,10 +676,10 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
 
   Widget _buildDetailView(dynamic item) {
     if (item == null) {
-      return const Center(
+      return Center(
         child: Text(
           'Pilih item untuk melihat detail.',
-          style: TextStyle(color: CupertinoColors.secondaryLabel),
+          style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel),
         ),
       );
     }
@@ -719,7 +690,7 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
     final title = config?.title ?? 'Data';
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -729,7 +700,7 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
               Expanded(
                 child: Text(
                   'Detail $title',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: context.title3.copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
               Row(
@@ -744,7 +715,7 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
                     },
                     child: const Icon(CupertinoIcons.pencil, color: CupertinoColors.activeBlue),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: CupertinoSpacing.s),
                   CupertinoButton(
                     padding: EdgeInsets.zero,
                     onPressed: () async {
@@ -759,9 +730,9 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: CupertinoSpacing.s),
           Container(height: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
-          const SizedBox(height: 16),
+          const SizedBox(height: CupertinoSpacing.l),
           _buildDetailFields(item),
         ],
       ),
@@ -780,7 +751,7 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
     final listContent = Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(12.0),
+          padding: const EdgeInsets.all(CupertinoSpacing.m),
           child: CupertinoSearchTextField(
             controller: _searchController,
             placeholder: 'Cari...',
@@ -793,10 +764,10 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
               final filtered = list.where((item) => _matchesSearch(item, _searchQuery)).toList();
 
               if (filtered.isEmpty) {
-                return const Center(
+                return Center(
                   child: Text(
                     'Tidak ada data ditemukan.',
-                    style: TextStyle(color: CupertinoColors.secondaryLabel),
+                    style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel),
                   ),
                 );
               }
@@ -821,13 +792,13 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
                     onRefresh: () => notifier.refresh(),
                   ),
                   SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.s),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
                           if (index == filtered.length) {
                             return const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 16.0),
+                              padding: EdgeInsets.symmetric(vertical: CupertinoSpacing.l),
                               child: Center(child: CupertinoActivityIndicator()),
                             );
                           }
@@ -836,18 +807,12 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
                           final id = item['id'] as int;
                           final isSelected = isWide && _selectedId == id;
 
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            decoration: BoxDecoration(
-                              color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isSelected
-                                    ? CupertinoColors.activeBlue.resolveFrom(context)
-                                    : borderCol,
-                                width: isSelected ? 1.5 : 0.5,
-                              ),
-                            ),
+                          return CupertinoGlassContainer(
+                            margin: const EdgeInsets.only(bottom: CupertinoSpacing.s),
+                            borderRadius: CupertinoSpacing.cardRadius,
+                            borderColor: isSelected
+                                ? CupertinoColors.activeBlue.resolveFrom(context)
+                                : borderCol,
                             child: GestureDetector(
                               behavior: HitTestBehavior.opaque,
                               onTap: () {
@@ -862,7 +827,7 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
                                 }
                               },
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.l, vertical: CupertinoSpacing.m),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
@@ -876,7 +841,7 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
                                             onPressed: () => context.go('/aquaculture/${widget.resource}/edit/$id'),
                                             child: const Icon(CupertinoIcons.pencil, size: 20, color: CupertinoColors.activeBlue),
                                           ),
-                                          const SizedBox(width: 4),
+                                          const SizedBox(width: CupertinoSpacing.xs),
                                           CupertinoButton(
                                             padding: EdgeInsets.zero,
                                             onPressed: () => _deleteRecord(id),
@@ -900,7 +865,7 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
             loading: () => const Center(child: CupertinoActivityIndicator()),
             error: (err, stack) => Center(
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(CupertinoSpacing.xxl),
                 child: Text(
                   'Error loading data: $err',
                   textAlign: TextAlign.center,

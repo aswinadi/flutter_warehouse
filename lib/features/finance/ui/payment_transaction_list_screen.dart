@@ -1,11 +1,14 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Divider, Colors;
+import 'package:flutter/material.dart' show Divider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/widgets/company_switcher.dart';
 import '../models/payment_transaction.dart';
 import '../providers/payment_transaction_provider.dart';
 import 'payment_transaction_detail_screen.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
 
 class PaymentTransactionListScreen extends ConsumerStatefulWidget {
   const PaymentTransactionListScreen({super.key});
@@ -81,7 +84,7 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
         backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
         middle: Text(
           'Transaksi Pembayaran Supplier',
-          style: TextStyle(color: labelColor),
+          style: context.headline.copyWith(color: labelColor),
         ),
       ),
       child: SafeArea(
@@ -90,18 +93,18 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
             const CompanySwitcher(),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
               color: CupertinoColors.systemBackground.resolveFrom(context),
               child: CupertinoSlidingSegmentedControl<int>(
                 groupValue: _selectedSegment,
-                children: const {
+                children: {
                   0: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                    child: Text('Belum Unggah Bukti', style: TextStyle(fontSize: 13)),
+                    padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.s, vertical: CupertinoSpacing.xs + 2),
+                    child: Text('Belum Unggah Bukti', style: context.footnote),
                   ),
                   1: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                    child: Text('Semua Transaksi', style: TextStyle(fontSize: 13)),
+                    padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.s, vertical: CupertinoSpacing.xs + 2),
+                    child: Text('Semua Transaksi', style: context.footnote),
                   ),
                 },
                 onValueChanged: (value) {
@@ -114,7 +117,7 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
               child: CupertinoSearchTextField(
                 controller: _searchController,
                 placeholder: 'Cari nomor transaksi atau supplier...',
@@ -179,10 +182,10 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(CupertinoIcons.creditcard, size: 48, color: secondaryLabelColor),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: CupertinoSpacing.l),
                           Text(
                             'Pilih transaksi pembayaran untuk melihat detail',
-                            style: TextStyle(color: secondaryLabelColor, fontSize: 16),
+                            style: context.callout.copyWith(color: secondaryLabelColor),
                           ),
                         ],
                       ),
@@ -210,10 +213,10 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
         if (transactions.isEmpty) {
           return Center(
             child: Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.all(CupertinoSpacing.xxxl),
               child: Text(
                 'Tidak ada transaksi pembayaran',
-                style: TextStyle(color: secondaryLabelColor, fontSize: 16),
+                style: context.callout.copyWith(color: secondaryLabelColor),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -227,14 +230,14 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
 
         return ListView.separated(
           controller: controller,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
           itemCount: transactions.length + (hasMore ? 1 : 0),
-          separatorBuilder: (context, index) => const SizedBox(height: 12),
+          separatorBuilder: (context, index) => const SizedBox(height: CupertinoSpacing.m),
           itemBuilder: (context, index) {
             if (index == transactions.length) {
               return const Center(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
+                  padding: EdgeInsets.symmetric(vertical: CupertinoSpacing.screenMargin),
                   child: CupertinoActivityIndicator(),
                 ),
               );
@@ -243,19 +246,15 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
             final trx = transactions[index];
             final isSelected = trx.id == _selectedTransactionId;
 
-            return Container(
-              decoration: BoxDecoration(
-                color: isSelected 
-                    ? CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.08)
-                    : CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isSelected
-                      ? CupertinoColors.activeBlue.resolveFrom(context)
-                      : CupertinoColors.separator.resolveFrom(context),
-                  width: isSelected ? 2.0 : 0.5,
-                ),
-              ),
+            return CupertinoGlassContainer(
+              borderRadius: CupertinoSpacing.cardRadius + 2,
+              backgroundColor: isSelected 
+                  ? CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.08)
+                  : null,
+              borderColor: isSelected
+                  ? CupertinoColors.activeBlue.resolveFrom(context)
+                  : null,
+              padding: EdgeInsets.zero,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () {
@@ -268,7 +267,7 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
                   }
                 },
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -278,16 +277,15 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
                           Expanded(
                             child: Text(
                               trx.transactionNumber,
-                              style: TextStyle(
+                              style: context.subhead.copyWith(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 15,
                                 color: labelColor,
                               ),
                             ),
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
+                                horizontal: CupertinoSpacing.s + 2, vertical: CupertinoSpacing.xs),
                             decoration: BoxDecoration(
                               color: trx.receiptPath != null
                                   ? CupertinoColors.systemGreen.withValues(alpha: 0.1)
@@ -304,8 +302,7 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
                               trx.receiptPath != null
                                   ? 'Bukti Terunggah'
                                   : 'Butuh Bukti',
-                              style: TextStyle(
-                                fontSize: 12,
+                              style: context.caption1.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: trx.receiptPath != null
                                     ? CupertinoColors.systemGreen.resolveFrom(context)
@@ -315,52 +312,48 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: CupertinoSpacing.m),
                       Row(
                         children: [
                           Icon(CupertinoIcons.building_2_fill, size: 16, color: secondaryLabelColor),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: CupertinoSpacing.s),
                           Expanded(
                             child: Text(
                               trx.supplierName ?? 'Pemasok Tidak Diketahui',
-                              style: TextStyle(
-                                fontSize: 14,
+                              style: context.subhead.copyWith(
                                 color: labelColor,
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: CupertinoSpacing.s),
                       Row(
                         children: [
                           Icon(CupertinoIcons.calendar, size: 16, color: secondaryLabelColor),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: CupertinoSpacing.s),
                           Text(
                             trx.transactionDate,
-                            style: TextStyle(
-                              fontSize: 13,
+                            style: context.footnote.copyWith(
                               color: secondaryLabelColor,
                             ),
                           ),
                         ],
                       ),
-                      const Divider(height: 20),
+                      const Divider(height: CupertinoSpacing.xl),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
                             'Total Pembayaran',
-                            style: TextStyle(
-                              fontSize: 13,
+                            style: context.footnote.copyWith(
                               color: secondaryLabelColor,
                             ),
                           ),
                           Text(
                             _formatCurrency(trx.totalAmount),
-                            style: TextStyle(
+                            style: context.subhead.copyWith(
                               fontWeight: FontWeight.bold,
-                              fontSize: 15,
                               color: CupertinoColors.activeBlue.resolveFrom(context),
                             ),
                           ),

@@ -1,5 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
+import '../../../core/widgets/cupertino_glass_toast.dart';
 import '../models/usage.dart';
 import '../providers/usage_repository.dart';
 import '../../inventory/models/inventory.dart';
@@ -55,35 +59,32 @@ class _UsageScreenState extends ConsumerState<UsageScreen> {
   }) {
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
-    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 14,
+          style: context.subhead.copyWith(
             fontWeight: FontWeight.w600,
             color: labelColor,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: CupertinoSpacing.s),
         GestureDetector(
           onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            decoration: BoxDecoration(
-              color: CupertinoColors.systemBackground.resolveFrom(context),
-              border: Border.all(color: separatorColor, width: 0.5),
-              borderRadius: BorderRadius.circular(10),
+          child: CupertinoGlassContainer(
+            padding: const EdgeInsets.symmetric(
+              horizontal: CupertinoSpacing.m,
+              vertical: CupertinoSpacing.m,
             ),
+            borderRadius: CupertinoSpacing.cardRadius,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   value,
-                  style: TextStyle(fontSize: 15, color: labelColor),
+                  style: context.subhead.copyWith(color: labelColor),
                 ),
                 Icon(CupertinoIcons.chevron_down, size: 14, color: secondaryLabel),
               ],
@@ -109,7 +110,7 @@ class _UsageScreenState extends ConsumerState<UsageScreen> {
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -138,7 +139,7 @@ class _UsageScreenState extends ConsumerState<UsageScreen> {
                   ]),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: CupertinoSpacing.xxl),
               if (_scannedItem == null)
                 _buildScanButton()
               else
@@ -148,7 +149,7 @@ class _UsageScreenState extends ConsumerState<UsageScreen> {
                 onPressed: (_selectedPond != null && _scannedItem != null && !_isLoading)
                     ? _submit
                     : null,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
                 child: _isLoading
                     ? const CupertinoActivityIndicator(color: CupertinoColors.white)
                     : const Text(
@@ -165,17 +166,12 @@ class _UsageScreenState extends ConsumerState<UsageScreen> {
 
   Widget _buildScanButton() {
     final themePrimary = CupertinoColors.activeBlue.resolveFrom(context);
-    final borderCol = CupertinoColors.separator.resolveFrom(context);
 
     return GestureDetector(
       onTap: _scanBarcode,
-      child: Container(
+      child: CupertinoGlassContainer(
         padding: const EdgeInsets.symmetric(vertical: 40),
-        decoration: BoxDecoration(
-          color: CupertinoColors.systemBackground.resolveFrom(context),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderCol, width: 0.5),
-        ),
+        borderRadius: CupertinoSpacing.cardRadius,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -184,13 +180,12 @@ class _UsageScreenState extends ConsumerState<UsageScreen> {
               size: 48,
               color: themePrimary,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: CupertinoSpacing.m),
             Text(
               'PINDAI BARCODE BARANG',
-              style: TextStyle(
+              style: context.subhead.copyWith(
                 fontWeight: FontWeight.w600,
                 color: themePrimary,
-                fontSize: 14,
               ),
             ),
           ],
@@ -205,13 +200,9 @@ class _UsageScreenState extends ConsumerState<UsageScreen> {
     Color labelColor,
     Color secondaryLabel,
   ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderCol, width: 0.5),
-      ),
-      padding: const EdgeInsets.all(16),
+    return CupertinoGlassContainer(
+      borderRadius: CupertinoSpacing.cardRadius,
+      padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -224,17 +215,15 @@ class _UsageScreenState extends ConsumerState<UsageScreen> {
                   children: [
                     Text(
                       _scannedItem!.productName ?? 'Item',
-                      style: TextStyle(
+                      style: context.callout.copyWith(
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
                         color: labelColor,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: CupertinoSpacing.xs),
                     Text(
                       'Stok: ${_scannedItem!.quantity} ${_scannedItem!.unit ?? ""}',
-                      style: TextStyle(
-                        fontSize: 14,
+                      style: context.subhead.copyWith(
                         color: secondaryLabel,
                       ),
                     ),
@@ -252,12 +241,12 @@ class _UsageScreenState extends ConsumerState<UsageScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          const Text(
+          const SizedBox(height: CupertinoSpacing.l),
+          Text(
             'Jumlah yang Digunakan',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            style: context.subhead.copyWith(fontWeight: FontWeight.w600),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: CupertinoSpacing.s),
           CupertinoTextField(
             controller: _qtyController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -266,14 +255,14 @@ class _UsageScreenState extends ConsumerState<UsageScreen> {
               padding: const EdgeInsets.only(right: 12),
               child: Text(
                 _scannedItem!.unit ?? 'kg',
-                style: TextStyle(color: secondaryLabel),
+                style: context.subhead.copyWith(color: secondaryLabel),
               ),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.m),
             decoration: BoxDecoration(
               color: CupertinoColors.systemBackground.resolveFrom(context),
               border: Border.all(color: borderCol, width: 0.5),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
             ),
           ),
         ],
@@ -298,19 +287,7 @@ class _UsageScreenState extends ConsumerState<UsageScreen> {
     if (_selectedPond == null || _scannedItem == null) return;
     final qty = double.tryParse(_qtyController.text);
     if (qty == null || qty <= 0) {
-      showCupertinoDialog(
-        context: context,
-        builder: (ctx) => CupertinoAlertDialog(
-          title: const Text('Input Tidak Valid'),
-          content: const Text('Harap masukkan jumlah pemakaian yang valid.'),
-          actions: [
-            CupertinoDialogAction(
-              child: const Text('OK'),
-              onPressed: () => Navigator.pop(ctx),
-            ),
-          ],
-        ),
-      );
+      CupertinoGlassToast.showError(context, 'Harap masukkan jumlah pemakaian yang valid.');
       return;
     }
 
@@ -327,40 +304,14 @@ class _UsageScreenState extends ConsumerState<UsageScreen> {
       await ref.read(usageRepositoryProvider).submitUsage(req);
 
       if (!mounted) return;
-      showCupertinoDialog(
-        context: context,
-        builder: (ctx) => CupertinoAlertDialog(
-          title: const Text('Berhasil'),
-          content: const Text('Pemakaian tambak berhasil dikirim.'),
-          actions: [
-            CupertinoDialogAction(
-              child: const Text('OK'),
-              onPressed: () {
-                Navigator.pop(ctx);
-                setState(() {
-                  _scannedItem = null;
-                  _qtyController.clear();
-                });
-              },
-            ),
-          ],
-        ),
-      );
+      CupertinoGlassToast.showSuccess(context, 'Pemakaian tambak berhasil dikirim.');
+      setState(() {
+        _scannedItem = null;
+        _qtyController.clear();
+      });
     } catch (e) {
       if (!mounted) return;
-      showCupertinoDialog(
-        context: context,
-        builder: (ctx) => CupertinoAlertDialog(
-          title: const Text('Gagal'),
-          content: Text('Gagal mengirim pemakaian: $e'),
-          actions: [
-            CupertinoDialogAction(
-              child: const Text('OK'),
-              onPressed: () => Navigator.pop(ctx),
-            ),
-          ],
-        ),
-      );
+      CupertinoGlassToast.showError(context, 'Gagal mengirim pemakaian: $e');
     } finally {
       if (mounted) {
         setState(() {

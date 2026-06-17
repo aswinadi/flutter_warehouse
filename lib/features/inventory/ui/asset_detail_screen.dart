@@ -1,11 +1,14 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Colors; // kept for legacy Color references if needed
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../models/asset.dart';
 import '../providers/asset_repository.dart';
 import '../../../core/config/app_config.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
 
 class AssetDetailScreen extends StatelessWidget {
   final int assetId;
@@ -113,35 +116,35 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
         final statusColor = _getStatusColor(asset.status);
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header Panel Card
               _buildHeaderCard(asset, statusColor),
-              const SizedBox(height: 16),
+              const SizedBox(height: CupertinoSpacing.l),
 
               // Assignment & Location Card
               _buildAssignmentCard(asset),
-              const SizedBox(height: 16),
+              const SizedBox(height: CupertinoSpacing.l),
 
               // Acquisition & Commercial Card
               _buildAcquisitionCard(asset),
-              const SizedBox(height: 16),
+              const SizedBox(height: CupertinoSpacing.l),
 
               // Specs and Notes Card
               _buildDetailsCard(asset),
-              const SizedBox(height: 16),
+              const SizedBox(height: CupertinoSpacing.l),
 
               // Photos Section
               if (asset.media.isNotEmpty) ...[
                 _buildPhotosSection(asset),
-                const SizedBox(height: 16),
+                const SizedBox(height: CupertinoSpacing.l),
               ],
 
               // Action Buttons (Edit & Print)
               _buildActionButtons(asset),
-              const SizedBox(height: 32),
+              const SizedBox(height: CupertinoSpacing.xxxl),
             ],
           ),
         );
@@ -149,18 +152,18 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
       loading: () => const Center(child: CupertinoActivityIndicator()),
       error: (err, stack) => Center(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(CupertinoSpacing.xxl),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(CupertinoIcons.exclamationmark_triangle, color: CupertinoColors.destructiveRed, size: 48),
-              const SizedBox(height: 12),
+              const SizedBox(height: CupertinoSpacing.m),
               Text(
                 'Gagal memuat detail aset: $err',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: CupertinoColors.destructiveRed),
+                style: context.body.copyWith(color: CupertinoColors.destructiveRed),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: CupertinoSpacing.l),
               CupertinoButton.filled(
                 onPressed: () => ref.refresh(assetDetailProvider(widget.assetId)),
                 child: const Text('Coba Lagi'),
@@ -173,18 +176,12 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
   }
 
   Widget _buildHeaderCard(Asset asset, Color statusColor) {
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: separatorColor, width: 0.5),
-      ),
-      padding: const EdgeInsets.all(20),
+    return CupertinoGlassContainer(
+      padding: const EdgeInsets.all(CupertinoSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -193,7 +190,7 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
             children: [
               // Category
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.halfScreenMargin, vertical: CupertinoSpacing.xs),
                 decoration: BoxDecoration(
                   color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
                   borderRadius: BorderRadius.circular(8),
@@ -201,50 +198,46 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
                 ),
                 child: Text(
                   asset.category,
-                  style: TextStyle(
+                  style: context.caption1.copyWith(
                     color: labelColor,
-                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
               // Status Badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.xs),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.12),
+                  color: statusColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   _getStatusLabel(asset.status),
-                  style: TextStyle(
+                  style: context.caption1.copyWith(
                     color: statusColor,
                     fontWeight: FontWeight.bold,
-                    fontSize: 12,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: CupertinoSpacing.l),
           Text(
             asset.name,
-            style: TextStyle(
-              fontSize: 22,
+            style: context.title2.copyWith(
               fontWeight: FontWeight.bold,
               color: labelColor,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: CupertinoSpacing.s),
           Text(
             '${asset.brand ?? ''} ${asset.model ?? ''}'.trim(),
-            style: TextStyle(
-              fontSize: 15,
+            style: context.subhead.copyWith(
               color: secondaryLabel,
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.l),
             child: Container(height: 0.5, color: separatorColor),
           ),
           // Asset Tag & S/N info
@@ -256,16 +249,15 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
                   children: [
                     Text(
                       'ASSET TAG',
-                      style: TextStyle(color: secondaryLabel, fontSize: 10, fontWeight: FontWeight.bold),
+                      style: context.caption2.copyWith(color: secondaryLabel, fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: CupertinoSpacing.xs),
                     Text(
                       asset.assetTag,
-                      style: TextStyle(
+                      style: context.subhead.copyWith(
                         color: labelColor,
                         fontWeight: FontWeight.bold,
                         fontFamily: 'monospace',
-                        fontSize: 15,
                       ),
                     ),
                   ],
@@ -276,23 +268,22 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
                 width: 0.5,
                 color: separatorColor,
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: CupertinoSpacing.l),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'SERIAL NUMBER (S/N)',
-                      style: TextStyle(color: secondaryLabel, fontSize: 10, fontWeight: FontWeight.bold),
+                      style: context.caption2.copyWith(color: secondaryLabel, fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: CupertinoSpacing.xs),
                     Text(
                       asset.serialNumber ?? '—',
-                      style: TextStyle(
+                      style: context.subhead.copyWith(
                         color: labelColor,
                         fontWeight: FontWeight.bold,
                         fontFamily: 'monospace',
-                        fontSize: 15,
                       ),
                     ),
                   ],
@@ -306,38 +297,31 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
   }
 
   Widget _buildAssignmentCard(Asset asset) {
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
-    final separatorColor = CupertinoColors.separator.resolveFrom(context);
     final labelColor = CupertinoColors.label.resolveFrom(context);
     const primaryAccent = Color(0xFF6E56CF);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: separatorColor, width: 0.5),
-      ),
-      padding: const EdgeInsets.all(20),
+    return CupertinoGlassContainer(
+      padding: const EdgeInsets.all(CupertinoSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               const Icon(CupertinoIcons.person_crop_square, color: primaryAccent, size: 20),
-              const SizedBox(width: 8),
+              const SizedBox(width: CupertinoSpacing.s),
               Text(
                 'Status Penempatan & Pengguna',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
+                style: context.headline.copyWith(fontWeight: FontWeight.bold, color: labelColor),
               ),
             ],
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12.0),
-            child: Container(height: 0.5, color: separatorColor),
+            padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.m),
+            child: Container(height: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
           ),
           _buildDetailRow('Perusahaan', asset.companyName ?? '—'),
           _buildDetailRow('Lokasi / Kantor', asset.officeName ?? '—'),
-          _buildDetailRow('Pengguna / Karyawan', asset.employeeName ?? 'Belum Ditugaskan', valueStyle: asset.employeeName == null ? const TextStyle(fontStyle: FontStyle.italic, color: CupertinoColors.placeholderText) : null),
+          _buildDetailRow('Pengguna / Karyawan', asset.employeeName ?? 'Belum Ditugaskan', valueStyle: asset.employeeName == null ? context.subhead.copyWith(fontStyle: FontStyle.italic, color: CupertinoColors.placeholderText) : null),
           _buildDetailRow('Tanggal Penyerahan', _formatDate(asset.assignedDate)),
         ],
       ),
@@ -345,34 +329,27 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
   }
 
   Widget _buildAcquisitionCard(Asset asset) {
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
-    final separatorColor = CupertinoColors.separator.resolveFrom(context);
     final labelColor = CupertinoColors.label.resolveFrom(context);
     const primaryAccent = Color(0xFF6E56CF);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: separatorColor, width: 0.5),
-      ),
-      padding: const EdgeInsets.all(20),
+    return CupertinoGlassContainer(
+      padding: const EdgeInsets.all(CupertinoSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               const Icon(CupertinoIcons.shopping_cart, color: primaryAccent, size: 20),
-              const SizedBox(width: 8),
+              const SizedBox(width: CupertinoSpacing.s),
               Text(
                 'Informasi Pembelian & Garansi',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
+                style: context.headline.copyWith(fontWeight: FontWeight.bold, color: labelColor),
               ),
             ],
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12.0),
-            child: Container(height: 0.5, color: separatorColor),
+            padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.m),
+            child: Container(height: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
           ),
           _buildDetailRow('Tanggal Pembelian', _formatDate(asset.purchaseDate)),
           _buildDetailRow('Harga Pembelian', _formatCurrency(asset.purchasePrice)),
@@ -384,58 +361,51 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
   }
 
   Widget _buildDetailsCard(Asset asset) {
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
-    final separatorColor = CupertinoColors.separator.resolveFrom(context);
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     const primaryAccent = Color(0xFF6E56CF);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: separatorColor, width: 0.5),
-      ),
-      padding: const EdgeInsets.all(20),
+    return CupertinoGlassContainer(
+      padding: const EdgeInsets.all(CupertinoSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               const Icon(CupertinoIcons.doc_text, color: primaryAccent, size: 20),
-              const SizedBox(width: 8),
+              const SizedBox(width: CupertinoSpacing.s),
               Text(
                 'Spesifikasi Teknis & Catatan',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
+                style: context.headline.copyWith(fontWeight: FontWeight.bold, color: labelColor),
               ),
             ],
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12.0),
-            child: Container(height: 0.5, color: separatorColor),
+            padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.m),
+            child: Container(height: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
           ),
           Text(
             'Spesifikasi',
-            style: TextStyle(color: secondaryLabel, fontSize: 13, fontWeight: FontWeight.bold),
+            style: context.footnote.copyWith(color: secondaryLabel, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: CupertinoSpacing.s),
           Text(
             (asset.specifications != null && asset.specifications!.isNotEmpty)
                 ? asset.specifications!
                 : 'Tidak ada spesifikasi khusus.',
-            style: TextStyle(color: labelColor, fontSize: 14),
+            style: context.subhead.copyWith(color: labelColor),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: CupertinoSpacing.l),
           Text(
             'Catatan Tambahan',
-            style: TextStyle(color: secondaryLabel, fontSize: 13, fontWeight: FontWeight.bold),
+            style: context.footnote.copyWith(color: secondaryLabel, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: CupertinoSpacing.s),
           Text(
             (asset.notes != null && asset.notes!.isNotEmpty)
                 ? asset.notes!
                 : 'Tidak ada catatan tambahan.',
-            style: TextStyle(color: labelColor, fontSize: 14),
+            style: context.subhead.copyWith(color: labelColor),
           ),
         ],
       ),
@@ -443,19 +413,17 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
   }
 
   Widget _buildPhotosSection(Asset asset) {
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
     final labelColor = CupertinoColors.label.resolveFrom(context);
-    final separatorColor = CupertinoColors.separator.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.xs, vertical: CupertinoSpacing.s),
           child: Text(
             'Dokumentasi Kondisi Aset',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
+            style: context.headline.copyWith(fontWeight: FontWeight.bold, color: labelColor),
           ),
         ),
         SizedBox(
@@ -478,7 +446,7 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
                       builder: (context) => CupertinoPageScaffold(
                         backgroundColor: CupertinoColors.black,
                         navigationBar: CupertinoNavigationBar(
-                          backgroundColor: CupertinoColors.black.withOpacity(0.5),
+                          backgroundColor: CupertinoColors.black.withValues(alpha: 0.5),
                           middle: Text(med.fileName, style: const TextStyle(color: CupertinoColors.white)),
                           leading: CupertinoButton(
                             padding: EdgeInsets.zero,
@@ -495,15 +463,10 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
                     );
                   }
                 },
-                child: Container(
-                  margin: const EdgeInsets.only(right: 12),
+                child: CupertinoGlassContainer(
+                  margin: const EdgeInsets.only(right: CupertinoSpacing.m),
                   width: 120,
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    border: Border.all(color: separatorColor, width: 0.5),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  clipBehavior: Clip.antiAlias,
+                  padding: EdgeInsets.zero,
                   child: isImage
                       ? Image.network(mediaUrl, fit: BoxFit.cover)
                       : Center(
@@ -511,10 +474,10 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               const Icon(CupertinoIcons.doc_text_fill, color: CupertinoColors.systemRed, size: 36),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: CupertinoSpacing.xs),
                               Text(
                                 'PDF Dokumen',
-                                style: TextStyle(fontSize: 9, color: secondaryLabel),
+                                style: context.caption2.copyWith(fontSize: 9, color: secondaryLabel),
                                 textAlign: TextAlign.center,
                               ),
                             ],
@@ -543,13 +506,13 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(CupertinoIcons.pencil, size: 20, color: CupertinoColors.white),
-                SizedBox(width: 8),
+                SizedBox(width: CupertinoSpacing.s),
                 Text('Edit Aset Hardware', style: TextStyle(fontWeight: FontWeight.bold, color: CupertinoColors.white)),
               ],
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: CupertinoSpacing.m),
         SizedBox(
           width: double.infinity,
           child: CupertinoButton(
@@ -561,7 +524,7 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(CupertinoIcons.qrcode, size: 20, color: CupertinoColors.white),
-                SizedBox(width: 8),
+                SizedBox(width: CupertinoSpacing.s),
                 Text('Print QR Barcode Label', style: TextStyle(fontWeight: FontWeight.bold, color: CupertinoColors.white)),
               ],
             ),
@@ -575,7 +538,7 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.s),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -583,21 +546,19 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
             width: 140,
             child: Text(
               label,
-              style: TextStyle(
+              style: context.footnote.copyWith(
                 color: secondaryLabel,
-                fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: CupertinoSpacing.s),
           Expanded(
             child: Text(
               value,
               style: valueStyle ??
-                  TextStyle(
+                  context.subhead.copyWith(
                     color: labelColor,
-                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
             ),

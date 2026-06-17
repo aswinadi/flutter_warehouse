@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../../../core/api/token_provider.dart';
 import '../../../core/config/app_config.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -44,211 +47,212 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         child: SingleChildScrollView(
           child: Container(
             constraints: const BoxConstraints(maxWidth: 400),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'MAXMAR WAREHOUSE',
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: CupertinoColors.activeBlue,
+            margin: const EdgeInsets.all(CupertinoSpacing.screenMargin),
+            child: CupertinoGlassContainer(
+              padding: const EdgeInsets.all(CupertinoSpacing.xxl),
+              borderRadius: CupertinoSpacing.cardRadius,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'MAXMAR WAREHOUSE',
+                    style: context.title1.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: CupertinoColors.activeBlue,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 48),
-                CupertinoTextField(
-                  controller: _usernameController,
-                  placeholder: 'Username',
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: CupertinoColors.secondarySystemGroupedBackground,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: CupertinoColors.separator,
-                      width: 0.5,
-                    ),
-                  ),
-                  prefix: const Padding(
-                    padding: EdgeInsets.only(left: 12),
-                    child: Icon(
-                      CupertinoIcons.person,
-                      color: CupertinoColors.placeholderText,
-                      size: 20,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                CupertinoTextField(
-                  controller: _passwordController,
-                  placeholder: 'Password',
-                  obscureText: _obscurePassword,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: CupertinoColors.secondarySystemGroupedBackground,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: CupertinoColors.separator,
-                      width: 0.5,
-                    ),
-                  ),
-                  prefix: const Padding(
-                    padding: EdgeInsets.only(left: 12),
-                    child: Icon(
-                      CupertinoIcons.lock,
-                      color: CupertinoColors.placeholderText,
-                      size: 20,
-                    ),
-                  ),
-                  suffix: Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      child: Icon(
-                        _obscurePassword ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
-                        color: CupertinoColors.placeholderText,
-                        size: 20,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    CupertinoSwitch(
-                      value: _rememberMe,
-                      onChanged: (value) {
-                        setState(() {
-                          _rememberMe = value;
-                        });
-                      },
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      'Ingat saya',
-                      style: TextStyle(
-                        color: CupertinoColors.label.resolveFrom(context),
-                        fontSize: 15,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                CupertinoButton.filled(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  borderRadius: BorderRadius.circular(10),
-                  onPressed: authState.isLoading
-                      ? null
-                      : () {
-                          final username = _usernameController.text;
-                          if (_rememberMe) {
-                            ref.read(tokenProvider).saveUsername(username);
-                          } else {
-                            ref.read(tokenProvider).clearSavedUsername();
-                          }
-                          ref.read(authProvider.notifier).login(
-                                username,
-                                _passwordController.text,
-                              );
-                        },
-                  child: authState.isLoading
-                      ? const CupertinoActivityIndicator(
-                          color: CupertinoColors.white,
-                        )
-                      : const Text(
-                          'MASUK',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                ),
-                if (authState.hasError)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 16),
-                    child: Text(
-                      'Sesi kadaluarsa, silakan login kembali.',
-                      style: TextStyle(color: CupertinoColors.destructiveRed),
-                      textAlign: TextAlign.center,
-                    ),
-                  )
-                else if (authState.hasValue)
-                  authState.value!.when(
-                    authenticated: (user, token) => const Padding(
-                      padding: EdgeInsets.only(top: 16),
-                      child: Text(
-                        'Berhasil masuk!',
-                        style: TextStyle(color: CupertinoColors.activeGreen),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    unauthenticated: (message) => message != null
-                        ? Padding(
-                            padding: const EdgeInsets.only(top: 16),
-                            child: Text(
-                              message,
-                              style: const TextStyle(color: CupertinoColors.destructiveRed),
-                              textAlign: TextAlign.center,
-                            ),
-                          )
-                        : const SizedBox.shrink(),
-                    initial: () => const SizedBox.shrink(),
-                    loading: () => const SizedBox.shrink(),
-                  ),
-                if (AppConfig.isDev) ...[
-                  const SizedBox(height: 32),
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  const SizedBox(height: CupertinoSpacing.xxxl),
+                  CupertinoTextField(
+                    controller: _usernameController,
+                    placeholder: 'Username',
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
-                      color: CupertinoColors.systemOrange.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(10),
+                      color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
+                      borderRadius: BorderRadius.circular(CupertinoSpacing.cardRadius),
                       border: Border.all(
-                        color: CupertinoColors.systemOrange.withValues(alpha: 0.3),
+                        color: CupertinoColors.separator.resolveFrom(context),
                         width: 0.5,
                       ),
                     ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              CupertinoIcons.exclamationmark_triangle_fill,
-                              color: CupertinoColors.systemOrange,
-                              size: 18,
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'DEVELOPMENT ENVIRONMENT',
-                              style: TextStyle(
-                                color: CupertinoColors.systemOrange,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          AppConfig.baseUrl,
-                          style: const TextStyle(
-                            color: CupertinoColors.secondaryLabel,
-                            fontSize: 11,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+                    prefix: const Padding(
+                      padding: EdgeInsets.only(left: 12),
+                      child: Icon(
+                        CupertinoIcons.person,
+                        color: CupertinoColors.placeholderText,
+                        size: 20,
+                      ),
                     ),
                   ),
+                  const SizedBox(height: CupertinoSpacing.l),
+                  CupertinoTextField(
+                    controller: _passwordController,
+                    placeholder: 'Password',
+                    obscureText: _obscurePassword,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
+                      borderRadius: BorderRadius.circular(CupertinoSpacing.cardRadius),
+                      border: Border.all(
+                        color: CupertinoColors.separator.resolveFrom(context),
+                        width: 0.5,
+                      ),
+                    ),
+                    prefix: const Padding(
+                      padding: EdgeInsets.only(left: 12),
+                      child: Icon(
+                        CupertinoIcons.lock,
+                        color: CupertinoColors.placeholderText,
+                        size: 20,
+                      ),
+                    ),
+                    suffix: Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        child: Icon(
+                          _obscurePassword ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
+                          color: CupertinoColors.placeholderText,
+                          size: 20,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: CupertinoSpacing.l),
+                  Row(
+                    children: [
+                      CupertinoSwitch(
+                        value: _rememberMe,
+                        onChanged: (value) {
+                          setState(() {
+                            _rememberMe = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Ingat saya',
+                        style: context.subhead.copyWith(
+                          color: CupertinoColors.label.resolveFrom(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: CupertinoSpacing.xxl),
+                  SizedBox(
+                    height: CupertinoSpacing.primaryButtonHeight,
+                    child: CupertinoButton.filled(
+                      padding: EdgeInsets.zero,
+                      borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
+                      onPressed: authState.isLoading
+                          ? null
+                          : () {
+                              final username = _usernameController.text;
+                              if (_rememberMe) {
+                                ref.read(tokenProvider).saveUsername(username);
+                              } else {
+                                ref.read(tokenProvider).clearSavedUsername();
+                              }
+                              ref.read(authProvider.notifier).login(
+                                    username,
+                                    _passwordController.text,
+                                  );
+                            },
+                      child: authState.isLoading
+                          ? const CupertinoActivityIndicator(
+                              color: CupertinoColors.white,
+                            )
+                          : const Text(
+                              'MASUK',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                    ),
+                  ),
+                  if (authState.hasError)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Text(
+                        'Sesi kadaluarsa, silakan login kembali.',
+                        style: context.footnote.copyWith(color: CupertinoColors.destructiveRed),
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  else if (authState.hasValue)
+                    authState.value!.when(
+                      authenticated: (user, token) => Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: Text(
+                          'Berhasil masuk!',
+                          style: context.footnote.copyWith(color: CupertinoColors.activeGreen),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      unauthenticated: (message) => message != null
+                          ? Padding(
+                              padding: const EdgeInsets.only(top: 16),
+                              child: Text(
+                                message,
+                                style: context.footnote.copyWith(color: CupertinoColors.destructiveRed),
+                                textAlign: TextAlign.center,
+                              ),
+                            )
+                          : const SizedBox.shrink(),
+                      initial: () => const SizedBox.shrink(),
+                      loading: () => const SizedBox.shrink(),
+                    ),
+                  if (AppConfig.isDev) ...[
+                    const SizedBox(height: CupertinoSpacing.xxxl),
+                    CupertinoGlassContainer(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: CupertinoSpacing.m,
+                        horizontal: CupertinoSpacing.l,
+                      ),
+                      borderRadius: CupertinoSpacing.cardRadius,
+                      backgroundColor: CupertinoColors.systemOrange.withValues(alpha: 0.08),
+                      borderColor: CupertinoColors.systemOrange.withValues(alpha: 0.3),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                CupertinoIcons.exclamationmark_triangle_fill,
+                                color: CupertinoColors.systemOrange,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'DEVELOPMENT ENVIRONMENT',
+                                style: context.footnote.copyWith(
+                                  color: CupertinoColors.systemOrange,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            AppConfig.baseUrl,
+                            style: context.caption2.copyWith(
+                              color: CupertinoColors.secondaryLabel,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),

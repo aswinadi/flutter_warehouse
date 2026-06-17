@@ -32,9 +32,9 @@ _$AquaculturePondImpl _$$AquaculturePondImplFromJson(
       id: (json['id'] as num).toInt(),
       name: json['name'] as String,
       code: json['code'] as String?,
-      length: (json['length'] as num?)?.toDouble(),
-      width: (json['width'] as num?)?.toDouble(),
-      depth: (json['depth'] as num?)?.toDouble(),
+      length: doubleOrNullFromJson(json['length']),
+      width: doubleOrNullFromJson(json['width']),
+      depth: doubleOrNullFromJson(json['depth']),
       modulId: (json['modul_id'] as num?)?.toInt(),
     );
 
@@ -62,7 +62,7 @@ _$FeedLogImpl _$$FeedLogImplFromJson(Map<String, dynamic> json) =>
       modulName: json['modul_name'] as String?,
       date: json['date'] as String,
       feedCode: json['feed_code'] as String?,
-      amountKg: (json['amount_kg'] as num).toDouble(),
+      amountKg: doubleFromJson(json['amount_kg']),
       doc: (json['doc'] as num?)?.toInt(),
       notes: json['notes'] as String?,
       createdAt: json['created_at'] as String?,

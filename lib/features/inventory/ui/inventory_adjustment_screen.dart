@@ -9,6 +9,10 @@ import '../models/inventory.dart';
 import '../providers/inventory_provider.dart';
 import '../providers/inventory_adjustment_repository.dart';
 import '../../../core/widgets/company_switcher.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
+import '../../../core/widgets/cupertino_glass_toast.dart';
 
 class InventoryAdjustmentScreen extends ConsumerStatefulWidget {
   final Inventory? prefilledItem;
@@ -189,7 +193,7 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
 
   Future<void> _submit() async {
     if (_selectedItem == null) {
-      _showNotification('Silakan pilih atau pindai barang terlebih dahulu.', isError: true);
+      CupertinoGlassToast.showError(context, 'Silakan pilih atau pindai barang terlebih dahulu.');
       return;
     }
 
@@ -239,7 +243,7 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
         photoFile: _photoFile,
       );
 
-      _showNotification('Penyesuaian stok berhasil dikirim!');
+      CupertinoGlassToast.showSuccess(context, 'Penyesuaian stok berhasil dikirim!');
       ref.invalidate(inventoryRepositoryProvider);
       
       if (mounted) {
@@ -256,7 +260,7 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
         }
       }
     } catch (e) {
-      _showNotification('Gagal mengirim penyesuaian: $e', isError: true);
+      CupertinoGlassToast.showError(context, 'Gagal mengirim penyesuaian: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -264,90 +268,6 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
         });
       }
     }
-  }
-
-  void _showNotification(String message, {bool isError = false}) {
-    if (!mounted) return;
-    
-    final overlay = Overlay.of(context);
-    late OverlayEntry entry;
-
-    entry = OverlayEntry(
-      builder: (context) => Positioned(
-        top: MediaQuery.of(context).padding.top + 24,
-        left: 24,
-        right: 24,
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 450),
-            child: DefaultTextStyle(
-              style: const TextStyle(color: CupertinoColors.white, fontFamily: '.SF Pro Text'),
-              child: TweenAnimationBuilder<double>(
-                duration: const Duration(milliseconds: 250),
-                tween: Tween(begin: 0.0, end: 1.0),
-                builder: (context, value, child) {
-                  return Opacity(
-                    opacity: value,
-                    child: Transform.translate(
-                      offset: Offset(0, (1 - value) * -20),
-                      child: child,
-                    ),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: isError ? CupertinoColors.systemRed : CupertinoColors.activeGreen,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: CupertinoColors.black,
-                        blurRadius: 12,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isError ? CupertinoIcons.exclamationmark_triangle : CupertinoIcons.check_mark_circled,
-                        color: CupertinoColors.white,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          message,
-                          style: const TextStyle(
-                            color: CupertinoColors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.none,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () {
-                          if (entry.mounted) entry.remove();
-                        },
-                        child: const Icon(CupertinoIcons.xmark, color: CupertinoColors.white, size: 18),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    overlay.insert(entry);
-    Future.delayed(const Duration(milliseconds: 3000), () {
-      if (entry.mounted) entry.remove();
-    });
   }
 
   @override
@@ -364,9 +284,6 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
       maxLayoutWidth = double.infinity;
     }
 
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
-    final separatorColor = CupertinoColors.separator.resolveFrom(context);
-
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
       navigationBar: const CupertinoNavigationBar(
@@ -382,32 +299,32 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
                 const CompanySwitcher(),
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _buildItemSelectionCard(),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: CupertinoSpacing.l),
                         if (_selectedItem != null) _buildAdjustmentFormCard(),
                       ],
                     ),
                   ),
                 ),
                 if (_selectedItem != null)
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: cardBg,
-                      border: Border(top: BorderSide(color: separatorColor, width: 0.5)),
-                    ),
-                    child: CupertinoButton.filled(
-                      onPressed: _isSubmitting ? null : _submit,
-                      child: _isSubmitting
-                          ? const CupertinoActivityIndicator(color: CupertinoColors.white)
-                          : const Text(
-                              'Kirim Penyesuaian Stok',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
+                  CupertinoGlassContainer(
+                    borderRadius: 0,
+                    padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: CupertinoButton.filled(
+                        onPressed: _isSubmitting ? null : _submit,
+                        child: _isSubmitting
+                            ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                            : const Text(
+                                'Kirim Penyesuaian Stok',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                      ),
                     ),
                   ),
               ],
@@ -421,60 +338,54 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
   Widget _buildItemSelectionCard() {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobileNarrow = screenWidth < 400;
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
-    final separatorColor = CupertinoColors.separator.resolveFrom(context);
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
     const primaryAccent = Color(0xFF6E56CF);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: separatorColor, width: 0.5),
-      ),
-      padding: const EdgeInsets.all(16.0),
+    return CupertinoGlassContainer(
+      padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             'Informasi Barang',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
+            style: context.headline.copyWith(fontWeight: FontWeight.bold, color: labelColor),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: CupertinoSpacing.l),
           if (_selectedItem == null) ...[
             CupertinoButton(
-              color: primaryAccent.withOpacity(0.1),
+              color: primaryAccent.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
               onPressed: _scanBarcode,
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(CupertinoIcons.qrcode_viewfinder, color: primaryAccent, size: 20),
-                  SizedBox(width: 8),
+                  SizedBox(width: CupertinoSpacing.s),
                   Text('PINDAI BARCODE BARANG', style: TextStyle(color: primaryAccent, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: CupertinoSpacing.l),
             Row(
               children: [
                 Expanded(child: Container(height: 0.5, color: separatorColor)),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text('ATAU CARI MANUAL', style: TextStyle(fontSize: 11, color: secondaryLabel)),
+                  padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m),
+                  child: Text('ATAU CARI MANUAL', style: context.caption2.copyWith(color: secondaryLabel)),
                 ),
                 Expanded(child: Container(height: 0.5, color: separatorColor)),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: CupertinoSpacing.l),
             if (isMobileNarrow) ...[
               CupertinoTextField(
                 controller: _searchController,
                 placeholder: 'Masukkan Barcode atau SKU...',
                 onSubmitted: (val) => _lookupItem(val),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: CupertinoSpacing.m),
               CupertinoButton(
                 color: CupertinoColors.activeBlue,
                 onPressed: _isLoadingItem ? null : () => _lookupItem(_searchController.text),
@@ -492,9 +403,9 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
                       onSubmitted: (val) => _lookupItem(val),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: CupertinoSpacing.m),
                   CupertinoButton(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.xxl),
                     color: CupertinoColors.activeBlue,
                     onPressed: _isLoadingItem ? null : () => _lookupItem(_searchController.text),
                     child: _isLoadingItem
@@ -505,20 +416,16 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
               ),
             ],
             if (_itemErrorMessage != null) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: CupertinoSpacing.m),
               Text(
                 _itemErrorMessage!,
-                style: const TextStyle(color: CupertinoColors.destructiveRed, fontSize: 13),
+                style: context.footnote.copyWith(color: CupertinoColors.destructiveRed),
               ),
             ],
           ] else ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: separatorColor, width: 0.5),
-              ),
+            CupertinoGlassContainer(
+              borderRadius: 8,
+              padding: const EdgeInsets.all(CupertinoSpacing.m),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -529,28 +436,28 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
                       Expanded(
                         child: Text(
                           _selectedItem!.productName ?? 'Unknown Product',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: labelColor),
+                          style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                         ),
                       ),
                       if (widget.prefilledItem == null)
                         GestureDetector(
                           onTap: () => setState(() => _selectedItem = null),
-                          child: const Text('Ganti', style: TextStyle(color: primaryAccent, fontWeight: FontWeight.bold)),
+                          child: Text('Ganti', style: context.subhead.copyWith(color: primaryAccent, fontWeight: FontWeight.bold)),
                         ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: CupertinoSpacing.xs),
                   Text(
                     'SKU: ${_selectedItem!.sku}',
-                    style: TextStyle(fontSize: 13, color: secondaryLabel),
+                    style: context.footnote.copyWith(color: secondaryLabel),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: CupertinoSpacing.xs),
                   Text(
                     'Gudang: ${_selectedItem!.warehouseName ?? "-"} • Lokasi: ${_selectedItem!.locationCode ?? "-"}',
-                    style: TextStyle(fontSize: 13, color: secondaryLabel),
+                    style: context.footnote.copyWith(color: secondaryLabel),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12.0),
+                    padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.m),
                     child: Container(height: 0.5, color: separatorColor),
                   ),
                   Row(
@@ -558,11 +465,11 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
                     children: [
                       Text(
                         'Stok Tersedia Saat Ini:',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: secondaryLabel),
+                        style: context.footnote.copyWith(fontWeight: FontWeight.w500, color: secondaryLabel),
                       ),
                       Text(
                         '${_selectedItem!.quantity.toStringAsFixed(1)} ${_selectedItem!.unit ?? "PCS"}',
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: primaryAccent),
+                        style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: primaryAccent),
                       ),
                     ],
                   ),
@@ -578,33 +485,28 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
   Widget _buildAdjustmentFormCard() {
     final currentItem = _selectedItem!;
     final unit = currentItem.unit ?? 'PCS';
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
-    final separatorColor = CupertinoColors.separator.resolveFrom(context);
     final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: separatorColor, width: 0.5),
-      ),
-      padding: const EdgeInsets.all(16.0),
+    return CupertinoGlassContainer(
+      padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             'Detail Transaksi',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
+            style: context.headline.copyWith(fontWeight: FontWeight.bold, color: labelColor),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: CupertinoSpacing.l),
           
           // Reason Type Selector
-          const Text('Tipe Penyesuaian / Pemakaian *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 6),
+          Text('Tipe Penyesuaian / Pemakaian *', style: context.caption1.copyWith(fontWeight: FontWeight.w500)),
+          const SizedBox(height: CupertinoSpacing.s),
           GestureDetector(
             onTap: _showReasonPicker,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.m),
               decoration: BoxDecoration(
                 color: CupertinoColors.systemBackground.resolveFrom(context),
                 border: Border.all(color: separatorColor, width: 0.5),
@@ -613,44 +515,44 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(_reasons[_reasonType] ?? '', style: TextStyle(fontSize: 14, color: labelColor)),
-                  Icon(CupertinoIcons.chevron_down, size: 14, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                  Text(_reasons[_reasonType] ?? '', style: context.subhead.copyWith(color: labelColor)),
+                  Icon(CupertinoIcons.chevron_down, size: 14, color: secondaryLabel),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: CupertinoSpacing.l),
 
           // Quantity Input
-          const Text('Jumlah yang Disesuaikan *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 6),
+          Text('Jumlah yang Disesuaikan *', style: context.caption1.copyWith(fontWeight: FontWeight.w500)),
+          const SizedBox(height: CupertinoSpacing.s),
           CupertinoTextField(
             controller: _qtyController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             placeholder: 'Contoh: 10',
             suffix: Padding(
-              padding: const EdgeInsets.only(right: 12.0),
-              child: Text(unit, style: TextStyle(color: CupertinoColors.secondaryLabel.resolveFrom(context))),
+              padding: const EdgeInsets.only(right: CupertinoSpacing.m),
+              child: Text(unit, style: TextStyle(color: secondaryLabel)),
             ),
           ),
           if (_qtyErrorMessage != null) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: CupertinoSpacing.xs),
             Text(
               _qtyErrorMessage!,
-              style: const TextStyle(color: CupertinoColors.destructiveRed, fontSize: 12),
+              style: context.caption1.copyWith(color: CupertinoColors.destructiveRed),
             ),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: CupertinoSpacing.l),
 
           // Notes Input
-          const Text('Keterangan / Notes', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 6),
+          Text('Keterangan / Notes', style: context.caption1.copyWith(fontWeight: FontWeight.w500)),
+          const SizedBox(height: CupertinoSpacing.s),
           CupertinoTextField(
             controller: _notesController,
             maxLines: 3,
             placeholder: 'Tuliskan alasan penyesuaian...',
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: CupertinoSpacing.l),
 
           // Photo Picker Section
           _buildPhotoPickerSection(),
@@ -660,17 +562,12 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
   }
 
   Widget _buildPhotoPickerSection() {
-    final separatorColor = CupertinoColors.separator.resolveFrom(context);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
     const primaryAccent = Color(0xFF6E56CF);
 
     if (_photoFile != null) {
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: separatorColor, width: 0.5),
-        ),
+      return CupertinoGlassContainer(
+        borderRadius: 8,
+        padding: const EdgeInsets.all(CupertinoSpacing.m),
         child: Row(
           children: [
             ClipRRect(
@@ -682,7 +579,7 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
                 fit: BoxFit.cover,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: CupertinoSpacing.m),
             const Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -713,13 +610,13 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
     }
 
     return CupertinoButton(
-      color: primaryAccent.withOpacity(0.1),
+      color: primaryAccent.withValues(alpha: 0.1),
       onPressed: _pickImage,
       child: const Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(CupertinoIcons.camera, color: primaryAccent, size: 18),
-          SizedBox(width: 8),
+          SizedBox(width: CupertinoSpacing.s),
           Text('LAMPIRKAN FOTO BUKTI (OPSIONAL)', style: TextStyle(color: primaryAccent, fontWeight: FontWeight.bold, fontSize: 13)),
         ],
       ),
@@ -800,7 +697,7 @@ class _BarcodeScannerBottomSheetState extends State<BarcodeScannerBottomSheet> {
             ),
           ),
           const Positioned(
-            bottom: 30,
+            bottom: CupertinoSpacing.xxxl,
             left: 0,
             right: 0,
             child: Center(

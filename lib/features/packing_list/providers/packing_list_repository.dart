@@ -73,4 +73,26 @@ class PackingListRepository {
     });
     return PackingList.fromJson(response.data['data'] as Map<String, dynamic>);
   }
+
+  Future<PackingList> updatePackingList({
+    required int id,
+    required String containerNumber,
+    required String carrierName,
+    required String plateNumber,
+    required int sourceWarehouseId,
+    required int destinationWarehouseId,
+    DateTime? estimatedDeparture,
+    DateTime? closingDate,
+  }) async {
+    final response = await dio.put('wh/containers/$id', data: {
+      'container_number': containerNumber,
+      'carrier_name': carrierName,
+      'plate_number': plateNumber,
+      'source_warehouse_id': sourceWarehouseId,
+      'destination_warehouse_id': destinationWarehouseId,
+      'estimated_departure': estimatedDeparture?.toIso8601String(),
+      'closing_date': closingDate?.toIso8601String(),
+    });
+    return PackingList.fromJson(response.data['data'] as Map<String, dynamic>);
+  }
 }

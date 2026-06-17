@@ -32,8 +32,8 @@ _$TransferItemImpl _$$TransferItemImplFromJson(Map<String, dynamic> json) =>
       product: json['product'] == null
           ? null
           : TransferProduct.fromJson(json['product'] as Map<String, dynamic>),
-      qtySent: (json['qty_sent'] as num).toDouble(),
-      qtyReceived: (json['qty_received'] as num?)?.toDouble(),
+      qtySent: doubleFromJson(json['qty_sent']),
+      qtyReceived: doubleOrNullFromJson(json['qty_received']),
       notes: json['notes'] as String?,
     );
 
@@ -70,9 +70,9 @@ _$WarehouseTransferImpl _$$WarehouseTransferImplFromJson(
       vehiclePlate: json['vehicle_plate'] as String?,
       notes: json['notes'] as String?,
       pdfUrl: json['pdf_url'] as String?,
-      shippedBy: (json['shipped_by'] as num?)?.toInt(),
+      shippedBy: json['shipped_by'],
       shippedAt: json['shipped_at'] as String?,
-      receivedBy: (json['received_by'] as num?)?.toInt(),
+      receivedBy: json['received_by'],
       receivedAt: json['received_at'] as String?,
       items: (json['items'] as List<dynamic>?)
           ?.map((e) => TransferItem.fromJson(e as Map<String, dynamic>))
@@ -129,7 +129,7 @@ _$CreateTransferItemRequestImpl _$$CreateTransferItemRequestImplFromJson(
         Map<String, dynamic> json) =>
     _$CreateTransferItemRequestImpl(
       inventoryId: (json['inventory_id'] as num).toInt(),
-      quantity: (json['quantity'] as num).toDouble(),
+      quantity: doubleFromJson(json['quantity']),
     );
 
 Map<String, dynamic> _$$CreateTransferItemRequestImplToJson(
@@ -158,7 +158,7 @@ _$ReceiveTransferItemRequestImpl _$$ReceiveTransferItemRequestImplFromJson(
         Map<String, dynamic> json) =>
     _$ReceiveTransferItemRequestImpl(
       transferItemId: (json['transfer_item_id'] as num).toInt(),
-      qtyReceived: (json['qty_received'] as num).toDouble(),
+      qtyReceived: doubleFromJson(json['qty_received']),
     );
 
 Map<String, dynamic> _$$ReceiveTransferItemRequestImplToJson(

@@ -1,9 +1,12 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Divider, Scrollbar, Colors;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/notification_provider.dart';
 import '../models/notification_model.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
+import '../../../core/widgets/cupertino_glass_toast.dart';
 
 class NotificationInboxScreen extends ConsumerStatefulWidget {
   const NotificationInboxScreen({super.key});
@@ -110,7 +113,6 @@ class _NotificationInboxScreenState extends ConsumerState<NotificationInboxScree
     final notificationsAsync = ref.watch(notificationsListProvider);
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabelColor = CupertinoColors.secondaryLabel.resolveFrom(context);
-    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
@@ -120,25 +122,19 @@ class _NotificationInboxScreenState extends ConsumerState<NotificationInboxScree
         slivers: [
           CupertinoSliverNavigationBar(
             largeTitle: const Text('Notifikasi'),
-            backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
+            backgroundColor: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context).withValues(alpha: 0.96),
+            border: Border(
+              bottom: BorderSide(
+                color: CupertinoColors.separator.resolveFrom(context),
+                width: 0.5,
+              ),
+            ),
             trailing: CupertinoButton(
               padding: EdgeInsets.zero,
               child: const Icon(CupertinoIcons.checkmark_seal, size: 22),
               onPressed: () {
                 ref.read(notificationsListProvider.notifier).markAllAsRead();
-                showCupertinoDialog(
-                  context: context,
-                  builder: (context) => CupertinoAlertDialog(
-                    title: const Text('Sukses'),
-                    content: const Text('Semua notifikasi ditandai sebagai dibaca.'),
-                    actions: [
-                      CupertinoDialogAction(
-                        child: const Text('OK'),
-                        onPressed: () => Navigator.pop(context),
-                      )
-                    ],
-                  ),
-                );
+                CupertinoGlassToast.showSuccess(context, 'Semua notifikasi ditandai sebagai dibaca.');
               },
             ),
           ),
@@ -168,20 +164,18 @@ class _NotificationInboxScreenState extends ConsumerState<NotificationInboxScree
                               color: CupertinoColors.secondaryLabel,
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: CupertinoSpacing.l),
                           Text(
                             'Tidak ada pemberitahuan',
-                            style: TextStyle(
-                              fontSize: 16,
+                            style: context.headline.copyWith(
                               fontWeight: FontWeight.bold,
                               color: labelColor,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: CupertinoSpacing.s),
                           Text(
                             'Semua notifikasi baru akan muncul di sini.',
-                            style: TextStyle(
-                              fontSize: 14,
+                            style: context.subhead.copyWith(
                               color: secondaryLabelColor,
                             ),
                             textAlign: TextAlign.center,
@@ -195,123 +189,124 @@ class _NotificationInboxScreenState extends ConsumerState<NotificationInboxScree
 
               final hasMore = ref.watch(notificationsListProvider.notifier).hasMore;
 
-              return SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    if (index == notifications.length) {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 24.0),
-                        child: Center(
-                          child: CupertinoActivityIndicator(),
-                        ),
-                      );
-                    }
+              return SliverPadding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: CupertinoSpacing.screenMargin,
+                  vertical: CupertinoSpacing.s,
+                ),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      if (index == notifications.length) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: CupertinoSpacing.xxl),
+                          child: Center(
+                            child: CupertinoActivityIndicator(),
+                          ),
+                        );
+                      }
 
-                    final notification = notifications[index];
-                    final iconColor = _getColorForType(notification.type);
+                      final notification = notifications[index];
+                      final iconColor = _getColorForType(notification.type);
 
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: notification.isRead 
-                            ? CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context)
-                            : CupertinoColors.systemBackground.resolveFrom(context),
-                        border: Border(
-                          bottom: BorderSide(color: separatorColor, width: 0.5),
-                        ),
-                      ),
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () => _handleNotificationTap(notification),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Unread Dot Indicator
-                              Padding(
-                                padding: const EdgeInsets.only(top: 14.0, right: 10.0),
-                                child: Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: notification.isRead 
-                                        ? Colors.transparent 
-                                        : CupertinoColors.activeBlue,
-                                  ),
-                                ),
-                              ),
-                              // Notification Icon
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: iconColor.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Icon(
-                                  _getIconForType(notification.type),
-                                  color: iconColor,
-                                  size: 22,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              // Content
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            notification.title,
-                                            style: TextStyle(
-                                              fontWeight: notification.isRead 
-                                                  ? FontWeight.w600 
-                                                  : FontWeight.bold,
-                                              fontSize: 14,
-                                              color: labelColor,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: CupertinoSpacing.s),
+                        child: CupertinoGlassContainer(
+                          borderRadius: CupertinoSpacing.cardRadius,
+                          backgroundColor: notification.isRead 
+                              ? null 
+                              : CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.05),
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => _handleNotificationTap(notification),
+                            child: Padding(
+                              padding: const EdgeInsets.all(CupertinoSpacing.l),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Unread Dot Indicator
+                                  if (!notification.isRead)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 6.0, right: 8.0),
+                                      child: Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: const BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: CupertinoColors.activeBlue,
                                         ),
-                                        const SizedBox(width: 8),
+                                      ),
+                                    ),
+                                  // Notification Icon
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: iconColor.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(
+                                      _getIconForType(notification.type),
+                                      color: iconColor,
+                                      size: 22,
+                                    ),
+                                  ),
+                                  const SizedBox(width: CupertinoSpacing.m),
+                                  // Content
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                notification.title,
+                                                style: context.subhead.copyWith(
+                                                  fontWeight: notification.isRead 
+                                                      ? FontWeight.w600 
+                                                      : FontWeight.bold,
+                                                  color: labelColor,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              notification.timeAgo,
+                                              style: context.caption2.copyWith(
+                                                color: secondaryLabelColor,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4),
                                         Text(
-                                          notification.timeAgo,
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: secondaryLabelColor,
+                                          notification.message,
+                                          style: context.footnote.copyWith(
+                                            color: notification.isRead 
+                                                ? secondaryLabelColor 
+                                                : labelColor,
+                                            fontWeight: notification.isRead 
+                                                ? FontWeight.normal 
+                                                : FontWeight.w500,
                                           ),
+                                          maxLines: 3,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      notification.message,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: notification.isRead 
-                                            ? secondaryLabelColor 
-                                            : labelColor,
-                                        fontWeight: notification.isRead 
-                                            ? FontWeight.normal 
-                                            : FontWeight.w500,
-                                      ),
-                                      maxLines: 3,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  },
-                  childCount: notifications.length + (hasMore ? 1 : 0),
+                      );
+                    },
+                    childCount: notifications.length + (hasMore ? 1 : 0),
+                  ),
                 ),
               );
             },
@@ -336,12 +331,12 @@ class _NotificationInboxScreenState extends ConsumerState<NotificationInboxScree
                       const SizedBox(height: 12),
                       Text(
                         'Gagal memuat notifikasi',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
+                        style: context.headline.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         err.toString(),
-                        style: TextStyle(color: secondaryLabelColor),
+                        style: context.footnote.copyWith(color: secondaryLabelColor),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 16),

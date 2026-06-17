@@ -13,14 +13,18 @@ class PurchaseOrderRepository {
     String? search,
     int? supplierId,
     int? companyId,
+    String? dateFrom,
+    String? dateTo,
   }) async {
     final response = await dio.get('wh/purchase-orders', queryParameters: {
       'page': page,
-      if (status != null) 'status': status,
-      if (search != null) 'search': search,
-      if (supplierId != null) 'supplier_id': supplierId,
-      if (companyId != null) 'company_id': companyId,
-    });
+      'status': status,
+      'search': search,
+      'supplier_id': supplierId,
+      'company_id': companyId,
+      'date_from': dateFrom,
+      'date_to': dateTo,
+    }..removeWhere((key, value) => value == null));
 
     return PaginatedResponse.fromJson(
       response.data,

@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Colors; // kept for legacy Color references if needed
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -7,6 +6,9 @@ import '../providers/asset_repository.dart';
 import '../../../core/widgets/company_switcher.dart';
 import '../../../core/providers/company_provider.dart';
 import 'asset_detail_screen.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
 
 class AssetListScreen extends ConsumerStatefulWidget {
   const AssetListScreen({super.key});
@@ -134,7 +136,6 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
 
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
     final isWide = MediaQuery.of(context).size.width > 900;
 
@@ -147,14 +148,14 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
           children: [
             CupertinoButton(
               padding: EdgeInsets.zero,
-              child: const Icon(CupertinoIcons.qrcode_viewfinder, size: 24),
               onPressed: _openScanner,
+              child: const Icon(CupertinoIcons.qrcode_viewfinder, size: 24),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: CupertinoSpacing.m),
             CupertinoButton(
               padding: EdgeInsets.zero,
-              child: const Icon(CupertinoIcons.add, size: 24),
               onPressed: () => context.push('/assets/add'),
+              child: const Icon(CupertinoIcons.add, size: 24),
             ),
           ],
         ),
@@ -167,7 +168,7 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
             
             // Search Bar Area
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
               child: CupertinoSearchTextField(
                 controller: _searchController,
                 placeholder: 'Cari nama, tag, S/N, atau brand aset...',
@@ -177,7 +178,7 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
 
             // Horizontal Filters Section
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.halfScreenMargin),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -186,31 +187,31 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
                     height: 32,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin),
                       itemCount: _categories.length,
                       itemBuilder: (context, index) {
                         final cat = _categories[index];
                         final isSelected = _selectedCategory == cat;
                         return Padding(
-                          padding: const EdgeInsets.only(right: 8),
+                          padding: const EdgeInsets.only(right: CupertinoSpacing.s),
                           child: _buildCategoryChip(cat, isSelected),
                         );
                       },
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: CupertinoSpacing.s),
                   // Status Selector
                   SizedBox(
                     height: 32,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin),
                       itemCount: _statuses.length,
                       itemBuilder: (context, index) {
                         final status = _statuses[index];
                         final isSelected = _selectedStatus == status;
                         return Padding(
-                          padding: const EdgeInsets.only(right: 8),
+                          padding: const EdgeInsets.only(right: CupertinoSpacing.s),
                           child: _buildStatusChip(status, isSelected),
                         );
                       },
@@ -241,11 +242,11 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(CupertinoIcons.device_laptop, size: 64, color: secondaryLabel.withOpacity(0.5)),
-                                const SizedBox(height: 16),
+                                Icon(CupertinoIcons.device_laptop, size: 64, color: secondaryLabel.withValues(alpha: 0.5)),
+                                const SizedBox(height: CupertinoSpacing.screenMargin),
                                 Text(
                                   'Tidak ada aset hardware ditemukan',
-                                  style: TextStyle(color: secondaryLabel, fontSize: 16),
+                                  style: context.body.copyWith(color: secondaryLabel),
                                 ),
                               ],
                             ),
@@ -267,7 +268,7 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
                             child: Center(
                               child: Text(
                                 'Tidak ada aset hardware ditemukan',
-                                style: TextStyle(color: secondaryLabel),
+                                style: context.body.copyWith(color: secondaryLabel),
                               ),
                             ),
                           ),
@@ -308,13 +309,13 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
                         ).future),
                       ),
                       SliverPadding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
                               if (index == assets.length) {
                                 return const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 16),
+                                  padding: EdgeInsets.symmetric(vertical: CupertinoSpacing.screenMargin),
                                   child: Center(child: CupertinoActivityIndicator()),
                                 );
                               }
@@ -323,16 +324,10 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
                               final statusColor = _getStatusColor(asset.status);
                               final isSelected = _selectedAssetId == asset.id;
 
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                decoration: BoxDecoration(
-                                  color: cardBg,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: isSelected && isWide ? const Color(0xFF6E56CF) : separatorColor,
-                                    width: isSelected && isWide ? 2.0 : 0.5,
-                                  ),
-                                ),
+                              return CupertinoGlassContainer(
+                                margin: const EdgeInsets.only(bottom: CupertinoSpacing.m),
+                                borderColor: isSelected && isWide ? const Color(0xFF6E56CF) : null,
+                                padding: EdgeInsets.zero,
                                 child: GestureDetector(
                                   behavior: HitTestBehavior.opaque,
                                   onTap: () {
@@ -345,7 +340,7 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
                                     }
                                   },
                                   child: Padding(
-                                    padding: const EdgeInsets.all(16),
+                                    padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -354,7 +349,7 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
                                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.halfScreenMargin, vertical: CupertinoSpacing.xs),
                                               decoration: BoxDecoration(
                                                 color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
                                                 borderRadius: BorderRadius.circular(6),
@@ -362,53 +357,49 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
                                               ),
                                               child: Text(
                                                 asset.assetTag,
-                                                style: TextStyle(
+                                                style: context.caption1.copyWith(
                                                   fontWeight: FontWeight.bold,
-                                                  fontSize: 12,
                                                   fontFamily: 'monospace',
                                                   color: labelColor,
                                                 ),
                                               ),
                                             ),
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                              padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.halfScreenMargin, vertical: CupertinoSpacing.xs),
                                               decoration: BoxDecoration(
-                                                color: statusColor.withOpacity(0.12),
+                                                color: statusColor.withValues(alpha: 0.12),
                                                 borderRadius: BorderRadius.circular(12),
                                               ),
                                               child: Text(
                                                 _getStatusLabel(asset.status),
-                                                style: TextStyle(
+                                                style: context.caption2.copyWith(
                                                   color: statusColor,
                                                   fontWeight: FontWeight.bold,
-                                                  fontSize: 11,
                                                 ),
                                               ),
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(height: 12),
+                                        const SizedBox(height: CupertinoSpacing.m),
                                         // Asset Name
                                         Text(
                                           asset.name,
-                                          style: TextStyle(
-                                            fontSize: 16,
+                                          style: context.headline.copyWith(
                                             fontWeight: FontWeight.bold,
                                             color: labelColor,
                                           ),
                                         ),
                                         if (asset.brand != null || asset.model != null) ...[
-                                          const SizedBox(height: 4),
+                                          const SizedBox(height: CupertinoSpacing.xs),
                                           Text(
                                             '${asset.brand ?? ''} ${asset.model ?? ''}'.trim(),
-                                            style: TextStyle(
+                                            style: context.footnote.copyWith(
                                               color: secondaryLabel,
-                                              fontSize: 13,
                                             ),
                                           ),
                                         ],
                                         Padding(
-                                          padding: const EdgeInsets.symmetric(vertical: 12.0),
+                                          padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.m),
                                           child: Container(height: 0.5, color: separatorColor),
                                         ),
                                         // Footer row: Category, Assigned employee & office
@@ -416,16 +407,15 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
                                           children: [
                                             // Category badge
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                              padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.halfScreenMargin, vertical: CupertinoSpacing.xs),
                                               decoration: BoxDecoration(
                                                 color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
                                                 borderRadius: BorderRadius.circular(6),
                                               ),
                                               child: Text(
                                                 asset.category,
-                                                style: TextStyle(
+                                                style: context.caption2.copyWith(
                                                   color: secondaryLabel,
-                                                  fontSize: 11,
                                                   fontWeight: FontWeight.w600,
                                                 ),
                                               ),
@@ -434,24 +424,24 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
                                             // Assigned Info
                                             if (asset.employeeName != null) ...[
                                               Icon(CupertinoIcons.person, size: 14, color: secondaryLabel),
-                                              const SizedBox(width: 4),
+                                              const SizedBox(width: CupertinoSpacing.xs),
                                               Text(
                                                 asset.employeeName!,
-                                                style: TextStyle(fontSize: 12, color: secondaryLabel, fontWeight: FontWeight.w500),
+                                                style: context.caption1.copyWith(color: secondaryLabel, fontWeight: FontWeight.w500),
                                               ),
                                             ] else if (asset.officeName != null) ...[
                                               Icon(CupertinoIcons.location, size: 14, color: secondaryLabel),
-                                              const SizedBox(width: 4),
+                                              const SizedBox(width: CupertinoSpacing.xs),
                                               Text(
                                                 asset.officeName!,
-                                                style: TextStyle(fontSize: 12, color: secondaryLabel, fontWeight: FontWeight.w500),
+                                                style: context.caption1.copyWith(color: secondaryLabel, fontWeight: FontWeight.w500),
                                               ),
                                             ] else ...[
-                                              Icon(CupertinoIcons.info, size: 14, color: secondaryLabel.withOpacity(0.6)),
-                                              const SizedBox(width: 4),
+                                              Icon(CupertinoIcons.info, size: 14, color: secondaryLabel.withValues(alpha: 0.6)),
+                                              const SizedBox(width: CupertinoSpacing.xs),
                                               Text(
                                                 'Unassigned',
-                                                style: TextStyle(fontSize: 12, color: secondaryLabel.withOpacity(0.6), fontStyle: FontStyle.italic),
+                                                style: context.caption1.copyWith(color: secondaryLabel.withValues(alpha: 0.6), fontStyle: FontStyle.italic),
                                               ),
                                             ],
                                           ],
@@ -483,11 +473,11 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
                               ? AssetDetailContent(
                                   key: ValueKey(_selectedAssetId),
                                   assetId: _selectedAssetId!,
-                                )
+                                  )
                               : Center(
                                   child: Text(
                                     'Pilih aset untuk melihat detail',
-                                    style: TextStyle(color: secondaryLabel),
+                                    style: context.body.copyWith(color: secondaryLabel),
                                   ),
                                 ),
                         ),
@@ -499,7 +489,7 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
                 loading: () => const Center(child: CupertinoActivityIndicator()),
                 error: (err, stack) => Center(
                   child: Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                     child: Text('Gagal memuat daftar aset: $err', style: const TextStyle(color: CupertinoColors.destructiveRed)),
                   ),
                 ),
@@ -522,16 +512,15 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
     return GestureDetector(
       onTap: () => setState(() => _selectedCategory = cat),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.xs),
         decoration: BoxDecoration(
           color: contextResolvedBg,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Text(
           cat == 'all' ? 'Semua Kategori' : cat,
-          style: TextStyle(
+          style: context.caption1.copyWith(
             color: labelColor,
-            fontSize: 12,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -551,16 +540,15 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
     return GestureDetector(
       onTap: () => setState(() => _selectedStatus = status),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.xs),
         decoration: BoxDecoration(
           color: contextResolvedBg,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Text(
           status == 'all' ? 'Semua Status' : _getStatusLabel(status),
-          style: TextStyle(
+          style: context.caption1.copyWith(
             color: labelColor,
-            fontSize: 12,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -702,7 +690,7 @@ class _AssetScanBottomSheetState extends ConsumerState<AssetScanBottomSheet> wit
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CupertinoActivityIndicator(),
-            SizedBox(height: 16),
+            SizedBox(height: CupertinoSpacing.screenMargin),
             Text(
               'Mencari data aset...',
               style: TextStyle(fontSize: 14),
@@ -738,7 +726,7 @@ class _AssetScanBottomSheetState extends ConsumerState<AssetScanBottomSheet> wit
           children: [
             ColorFiltered(
               colorFilter: ColorFilter.mode(
-                CupertinoColors.black.withOpacity(0.6),
+                CupertinoColors.black.withValues(alpha: 0.6),
                 BlendMode.srcOut,
               ),
               child: Stack(
@@ -799,23 +787,21 @@ class _AssetScanBottomSheetState extends ConsumerState<AssetScanBottomSheet> wit
               },
             ),
             Positioned(
-              bottom: 40,
-              left: 20,
-              right: 20,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: CupertinoColors.black.withOpacity(0.6),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
+              bottom: CupertinoSpacing.xxxl,
+              left: CupertinoSpacing.xl,
+              right: CupertinoSpacing.xl,
+              child: CupertinoGlassContainer(
+                borderRadius: 20,
+                blurSigma: 10.0,
+                backgroundColor: CupertinoColors.black.withValues(alpha: 0.6),
+                borderColor: CupertinoColors.white.withValues(alpha: 0.15),
+                padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
+                child: Text(
                   'Arahkan kamera ke QR Code label aset',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: context.footnote.copyWith(
                     color: CupertinoColors.white,
-                    fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    decoration: TextDecoration.none,
                   ),
                 ),
               ),
@@ -826,46 +812,42 @@ class _AssetScanBottomSheetState extends ConsumerState<AssetScanBottomSheet> wit
     );
   }
 
-  Widget _buildView() {
-    return Container();
-  }
-
   Widget _buildErrorState(String message) {
     return Padding(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.all(CupertinoSpacing.xxl),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
             decoration: BoxDecoration(
-              color: CupertinoColors.destructiveRed.withOpacity(0.1),
+              color: CupertinoColors.destructiveRed.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(CupertinoIcons.exclamationmark_triangle, color: CupertinoColors.destructiveRed, size: 48),
           ),
-          const SizedBox(height: 16),
-          const Text(
+          const SizedBox(height: CupertinoSpacing.screenMargin),
+          Text(
             'Verifikasi Gagal',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: context.title3.copyWith(fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: CupertinoSpacing.m),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: TextStyle(color: CupertinoColors.secondaryLabel.resolveFrom(context), fontSize: 14),
+            style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: CupertinoSpacing.xxxl),
           Row(
             children: [
               Expanded(
                 child: CupertinoButton(
                   color: CupertinoColors.quaternarySystemFill,
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Tutup', style: TextStyle(color: CupertinoColors.label)),
+                  child: Text('Tutup', style: TextStyle(color: CupertinoColors.label.resolveFrom(context))),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: CupertinoSpacing.screenMargin),
               Expanded(
                 child: CupertinoButton.filled(
                   onPressed: _resetScanner,

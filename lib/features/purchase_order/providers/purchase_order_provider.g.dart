@@ -176,16 +176,20 @@ class _PurchaseOrderDetailProviderElement
   int get id => (origin as PurchaseOrderDetailProvider).id;
 }
 
-String _$purchaseOrdersHash() => r'3197163e652d4eae1df828386bb80568010acfa7';
+String _$purchaseOrdersHash() => r'580aa5cedaa05193f6f7bc48eaa5b33bcb812101';
 
 abstract class _$PurchaseOrders
     extends BuildlessAutoDisposeAsyncNotifier<List<PurchaseOrder>> {
   late final String? status;
   late final String? search;
+  late final String? dateFrom;
+  late final String? dateTo;
 
   FutureOr<List<PurchaseOrder>> build({
     String? status,
     String? search,
+    String? dateFrom,
+    String? dateTo,
   });
 }
 
@@ -202,10 +206,14 @@ class PurchaseOrdersFamily extends Family<AsyncValue<List<PurchaseOrder>>> {
   PurchaseOrdersProvider call({
     String? status,
     String? search,
+    String? dateFrom,
+    String? dateTo,
   }) {
     return PurchaseOrdersProvider(
       status: status,
       search: search,
+      dateFrom: dateFrom,
+      dateTo: dateTo,
     );
   }
 
@@ -216,6 +224,8 @@ class PurchaseOrdersFamily extends Family<AsyncValue<List<PurchaseOrder>>> {
     return call(
       status: provider.status,
       search: provider.search,
+      dateFrom: provider.dateFrom,
+      dateTo: provider.dateTo,
     );
   }
 
@@ -241,10 +251,14 @@ class PurchaseOrdersProvider extends AutoDisposeAsyncNotifierProviderImpl<
   PurchaseOrdersProvider({
     String? status,
     String? search,
+    String? dateFrom,
+    String? dateTo,
   }) : this._internal(
           () => PurchaseOrders()
             ..status = status
-            ..search = search,
+            ..search = search
+            ..dateFrom = dateFrom
+            ..dateTo = dateTo,
           from: purchaseOrdersProvider,
           name: r'purchaseOrdersProvider',
           debugGetCreateSourceHash:
@@ -256,6 +270,8 @@ class PurchaseOrdersProvider extends AutoDisposeAsyncNotifierProviderImpl<
               PurchaseOrdersFamily._allTransitiveDependencies,
           status: status,
           search: search,
+          dateFrom: dateFrom,
+          dateTo: dateTo,
         );
 
   PurchaseOrdersProvider._internal(
@@ -267,10 +283,14 @@ class PurchaseOrdersProvider extends AutoDisposeAsyncNotifierProviderImpl<
     required super.from,
     required this.status,
     required this.search,
+    required this.dateFrom,
+    required this.dateTo,
   }) : super.internal();
 
   final String? status;
   final String? search;
+  final String? dateFrom;
+  final String? dateTo;
 
   @override
   FutureOr<List<PurchaseOrder>> runNotifierBuild(
@@ -279,6 +299,8 @@ class PurchaseOrdersProvider extends AutoDisposeAsyncNotifierProviderImpl<
     return notifier.build(
       status: status,
       search: search,
+      dateFrom: dateFrom,
+      dateTo: dateTo,
     );
   }
 
@@ -289,7 +311,9 @@ class PurchaseOrdersProvider extends AutoDisposeAsyncNotifierProviderImpl<
       override: PurchaseOrdersProvider._internal(
         () => create()
           ..status = status
-          ..search = search,
+          ..search = search
+          ..dateFrom = dateFrom
+          ..dateTo = dateTo,
         from: from,
         name: null,
         dependencies: null,
@@ -297,6 +321,8 @@ class PurchaseOrdersProvider extends AutoDisposeAsyncNotifierProviderImpl<
         debugGetCreateSourceHash: null,
         status: status,
         search: search,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
       ),
     );
   }
@@ -311,7 +337,9 @@ class PurchaseOrdersProvider extends AutoDisposeAsyncNotifierProviderImpl<
   bool operator ==(Object other) {
     return other is PurchaseOrdersProvider &&
         other.status == status &&
-        other.search == search;
+        other.search == search &&
+        other.dateFrom == dateFrom &&
+        other.dateTo == dateTo;
   }
 
   @override
@@ -319,6 +347,8 @@ class PurchaseOrdersProvider extends AutoDisposeAsyncNotifierProviderImpl<
     var hash = _SystemHash.combine(0, runtimeType.hashCode);
     hash = _SystemHash.combine(hash, status.hashCode);
     hash = _SystemHash.combine(hash, search.hashCode);
+    hash = _SystemHash.combine(hash, dateFrom.hashCode);
+    hash = _SystemHash.combine(hash, dateTo.hashCode);
 
     return _SystemHash.finish(hash);
   }
@@ -331,6 +361,12 @@ mixin PurchaseOrdersRef
 
   /// The parameter `search` of this provider.
   String? get search;
+
+  /// The parameter `dateFrom` of this provider.
+  String? get dateFrom;
+
+  /// The parameter `dateTo` of this provider.
+  String? get dateTo;
 }
 
 class _PurchaseOrdersProviderElement
@@ -342,6 +378,10 @@ class _PurchaseOrdersProviderElement
   String? get status => (origin as PurchaseOrdersProvider).status;
   @override
   String? get search => (origin as PurchaseOrdersProvider).search;
+  @override
+  String? get dateFrom => (origin as PurchaseOrdersProvider).dateFrom;
+  @override
+  String? get dateTo => (origin as PurchaseOrdersProvider).dateTo;
 }
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

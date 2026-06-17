@@ -216,9 +216,9 @@ mixin _$TransferItem {
   @JsonKey(name: 'product_id')
   int? get productId => throw _privateConstructorUsedError;
   TransferProduct? get product => throw _privateConstructorUsedError;
-  @JsonKey(name: 'qty_sent')
+  @JsonKey(name: 'qty_sent', fromJson: doubleFromJson)
   double get qtySent => throw _privateConstructorUsedError;
-  @JsonKey(name: 'qty_received')
+  @JsonKey(name: 'qty_received', fromJson: doubleOrNullFromJson)
   double? get qtyReceived => throw _privateConstructorUsedError;
   String? get notes => throw _privateConstructorUsedError;
 
@@ -239,8 +239,9 @@ abstract class $TransferItemCopyWith<$Res> {
       @JsonKey(name: 'warehouse_transfer_id') int warehouseTransferId,
       @JsonKey(name: 'product_id') int? productId,
       TransferProduct? product,
-      @JsonKey(name: 'qty_sent') double qtySent,
-      @JsonKey(name: 'qty_received') double? qtyReceived,
+      @JsonKey(name: 'qty_sent', fromJson: doubleFromJson) double qtySent,
+      @JsonKey(name: 'qty_received', fromJson: doubleOrNullFromJson)
+      double? qtyReceived,
       String? notes});
 
   $TransferProductCopyWith<$Res>? get product;
@@ -325,8 +326,9 @@ abstract class _$$TransferItemImplCopyWith<$Res>
       @JsonKey(name: 'warehouse_transfer_id') int warehouseTransferId,
       @JsonKey(name: 'product_id') int? productId,
       TransferProduct? product,
-      @JsonKey(name: 'qty_sent') double qtySent,
-      @JsonKey(name: 'qty_received') double? qtyReceived,
+      @JsonKey(name: 'qty_sent', fromJson: doubleFromJson) double qtySent,
+      @JsonKey(name: 'qty_received', fromJson: doubleOrNullFromJson)
+      double? qtyReceived,
       String? notes});
 
   @override
@@ -393,8 +395,10 @@ class _$TransferItemImpl implements _TransferItem {
       @JsonKey(name: 'warehouse_transfer_id') required this.warehouseTransferId,
       @JsonKey(name: 'product_id') this.productId,
       this.product,
-      @JsonKey(name: 'qty_sent') required this.qtySent,
-      @JsonKey(name: 'qty_received') this.qtyReceived,
+      @JsonKey(name: 'qty_sent', fromJson: doubleFromJson)
+      required this.qtySent,
+      @JsonKey(name: 'qty_received', fromJson: doubleOrNullFromJson)
+      this.qtyReceived,
       this.notes});
 
   factory _$TransferItemImpl.fromJson(Map<String, dynamic> json) =>
@@ -411,10 +415,10 @@ class _$TransferItemImpl implements _TransferItem {
   @override
   final TransferProduct? product;
   @override
-  @JsonKey(name: 'qty_sent')
+  @JsonKey(name: 'qty_sent', fromJson: doubleFromJson)
   final double qtySent;
   @override
-  @JsonKey(name: 'qty_received')
+  @JsonKey(name: 'qty_received', fromJson: doubleOrNullFromJson)
   final double? qtyReceived;
   @override
   final String? notes;
@@ -467,8 +471,10 @@ abstract class _TransferItem implements TransferItem {
       required final int warehouseTransferId,
       @JsonKey(name: 'product_id') final int? productId,
       final TransferProduct? product,
-      @JsonKey(name: 'qty_sent') required final double qtySent,
-      @JsonKey(name: 'qty_received') final double? qtyReceived,
+      @JsonKey(name: 'qty_sent', fromJson: doubleFromJson)
+      required final double qtySent,
+      @JsonKey(name: 'qty_received', fromJson: doubleOrNullFromJson)
+      final double? qtyReceived,
       final String? notes}) = _$TransferItemImpl;
 
   factory _TransferItem.fromJson(Map<String, dynamic> json) =
@@ -485,10 +491,10 @@ abstract class _TransferItem implements TransferItem {
   @override
   TransferProduct? get product;
   @override
-  @JsonKey(name: 'qty_sent')
+  @JsonKey(name: 'qty_sent', fromJson: doubleFromJson)
   double get qtySent;
   @override
-  @JsonKey(name: 'qty_received')
+  @JsonKey(name: 'qty_received', fromJson: doubleOrNullFromJson)
   double? get qtyReceived;
   @override
   String? get notes;
@@ -528,11 +534,11 @@ mixin _$WarehouseTransfer {
   @JsonKey(name: 'pdf_url')
   String? get pdfUrl => throw _privateConstructorUsedError;
   @JsonKey(name: 'shipped_by')
-  int? get shippedBy => throw _privateConstructorUsedError;
+  dynamic get shippedBy => throw _privateConstructorUsedError;
   @JsonKey(name: 'shipped_at')
   String? get shippedAt => throw _privateConstructorUsedError;
   @JsonKey(name: 'received_by')
-  int? get receivedBy => throw _privateConstructorUsedError;
+  dynamic get receivedBy => throw _privateConstructorUsedError;
   @JsonKey(name: 'received_at')
   String? get receivedAt => throw _privateConstructorUsedError;
   List<TransferItem>? get items => throw _privateConstructorUsedError;
@@ -563,9 +569,9 @@ abstract class $WarehouseTransferCopyWith<$Res> {
       @JsonKey(name: 'vehicle_plate') String? vehiclePlate,
       String? notes,
       @JsonKey(name: 'pdf_url') String? pdfUrl,
-      @JsonKey(name: 'shipped_by') int? shippedBy,
+      @JsonKey(name: 'shipped_by') dynamic shippedBy,
       @JsonKey(name: 'shipped_at') String? shippedAt,
-      @JsonKey(name: 'received_by') int? receivedBy,
+      @JsonKey(name: 'received_by') dynamic receivedBy,
       @JsonKey(name: 'received_at') String? receivedAt,
       List<TransferItem>? items});
 
@@ -661,7 +667,7 @@ class _$WarehouseTransferCopyWithImpl<$Res, $Val extends WarehouseTransfer>
       shippedBy: freezed == shippedBy
           ? _value.shippedBy
           : shippedBy // ignore: cast_nullable_to_non_nullable
-              as int?,
+              as dynamic,
       shippedAt: freezed == shippedAt
           ? _value.shippedAt
           : shippedAt // ignore: cast_nullable_to_non_nullable
@@ -669,7 +675,7 @@ class _$WarehouseTransferCopyWithImpl<$Res, $Val extends WarehouseTransfer>
       receivedBy: freezed == receivedBy
           ? _value.receivedBy
           : receivedBy // ignore: cast_nullable_to_non_nullable
-              as int?,
+              as dynamic,
       receivedAt: freezed == receivedAt
           ? _value.receivedAt
           : receivedAt // ignore: cast_nullable_to_non_nullable
@@ -728,9 +734,9 @@ abstract class _$$WarehouseTransferImplCopyWith<$Res>
       @JsonKey(name: 'vehicle_plate') String? vehiclePlate,
       String? notes,
       @JsonKey(name: 'pdf_url') String? pdfUrl,
-      @JsonKey(name: 'shipped_by') int? shippedBy,
+      @JsonKey(name: 'shipped_by') dynamic shippedBy,
       @JsonKey(name: 'shipped_at') String? shippedAt,
-      @JsonKey(name: 'received_by') int? receivedBy,
+      @JsonKey(name: 'received_by') dynamic receivedBy,
       @JsonKey(name: 'received_at') String? receivedAt,
       List<TransferItem>? items});
 
@@ -826,7 +832,7 @@ class __$$WarehouseTransferImplCopyWithImpl<$Res>
       shippedBy: freezed == shippedBy
           ? _value.shippedBy
           : shippedBy // ignore: cast_nullable_to_non_nullable
-              as int?,
+              as dynamic,
       shippedAt: freezed == shippedAt
           ? _value.shippedAt
           : shippedAt // ignore: cast_nullable_to_non_nullable
@@ -834,7 +840,7 @@ class __$$WarehouseTransferImplCopyWithImpl<$Res>
       receivedBy: freezed == receivedBy
           ? _value.receivedBy
           : receivedBy // ignore: cast_nullable_to_non_nullable
-              as int?,
+              as dynamic,
       receivedAt: freezed == receivedAt
           ? _value.receivedAt
           : receivedAt // ignore: cast_nullable_to_non_nullable
@@ -913,13 +919,13 @@ class _$WarehouseTransferImpl implements _WarehouseTransfer {
   final String? pdfUrl;
   @override
   @JsonKey(name: 'shipped_by')
-  final int? shippedBy;
+  final dynamic shippedBy;
   @override
   @JsonKey(name: 'shipped_at')
   final String? shippedAt;
   @override
   @JsonKey(name: 'received_by')
-  final int? receivedBy;
+  final dynamic receivedBy;
   @override
   @JsonKey(name: 'received_at')
   final String? receivedAt;
@@ -965,12 +971,11 @@ class _$WarehouseTransferImpl implements _WarehouseTransfer {
                 other.vehiclePlate == vehiclePlate) &&
             (identical(other.notes, notes) || other.notes == notes) &&
             (identical(other.pdfUrl, pdfUrl) || other.pdfUrl == pdfUrl) &&
-            (identical(other.shippedBy, shippedBy) ||
-                other.shippedBy == shippedBy) &&
+            const DeepCollectionEquality().equals(other.shippedBy, shippedBy) &&
             (identical(other.shippedAt, shippedAt) ||
                 other.shippedAt == shippedAt) &&
-            (identical(other.receivedBy, receivedBy) ||
-                other.receivedBy == receivedBy) &&
+            const DeepCollectionEquality()
+                .equals(other.receivedBy, receivedBy) &&
             (identical(other.receivedAt, receivedAt) ||
                 other.receivedAt == receivedAt) &&
             const DeepCollectionEquality().equals(other._items, _items));
@@ -993,9 +998,9 @@ class _$WarehouseTransferImpl implements _WarehouseTransfer {
       vehiclePlate,
       notes,
       pdfUrl,
-      shippedBy,
+      const DeepCollectionEquality().hash(shippedBy),
       shippedAt,
-      receivedBy,
+      const DeepCollectionEquality().hash(receivedBy),
       receivedAt,
       const DeepCollectionEquality().hash(_items));
 
@@ -1032,9 +1037,9 @@ abstract class _WarehouseTransfer implements WarehouseTransfer {
       @JsonKey(name: 'vehicle_plate') final String? vehiclePlate,
       final String? notes,
       @JsonKey(name: 'pdf_url') final String? pdfUrl,
-      @JsonKey(name: 'shipped_by') final int? shippedBy,
+      @JsonKey(name: 'shipped_by') final dynamic shippedBy,
       @JsonKey(name: 'shipped_at') final String? shippedAt,
-      @JsonKey(name: 'received_by') final int? receivedBy,
+      @JsonKey(name: 'received_by') final dynamic receivedBy,
       @JsonKey(name: 'received_at') final String? receivedAt,
       final List<TransferItem>? items}) = _$WarehouseTransferImpl;
 
@@ -1079,13 +1084,13 @@ abstract class _WarehouseTransfer implements WarehouseTransfer {
   String? get pdfUrl;
   @override
   @JsonKey(name: 'shipped_by')
-  int? get shippedBy;
+  dynamic get shippedBy;
   @override
   @JsonKey(name: 'shipped_at')
   String? get shippedAt;
   @override
   @JsonKey(name: 'received_by')
-  int? get receivedBy;
+  dynamic get receivedBy;
   @override
   @JsonKey(name: 'received_at')
   String? get receivedAt;
@@ -1359,6 +1364,7 @@ CreateTransferItemRequest _$CreateTransferItemRequestFromJson(
 mixin _$CreateTransferItemRequest {
   @JsonKey(name: 'inventory_id')
   int get inventoryId => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: doubleFromJson)
   double get quantity => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -1373,7 +1379,9 @@ abstract class $CreateTransferItemRequestCopyWith<$Res> {
           $Res Function(CreateTransferItemRequest) then) =
       _$CreateTransferItemRequestCopyWithImpl<$Res, CreateTransferItemRequest>;
   @useResult
-  $Res call({@JsonKey(name: 'inventory_id') int inventoryId, double quantity});
+  $Res call(
+      {@JsonKey(name: 'inventory_id') int inventoryId,
+      @JsonKey(fromJson: doubleFromJson) double quantity});
 }
 
 /// @nodoc
@@ -1415,7 +1423,9 @@ abstract class _$$CreateTransferItemRequestImplCopyWith<$Res>
       __$$CreateTransferItemRequestImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({@JsonKey(name: 'inventory_id') int inventoryId, double quantity});
+  $Res call(
+      {@JsonKey(name: 'inventory_id') int inventoryId,
+      @JsonKey(fromJson: doubleFromJson) double quantity});
 }
 
 /// @nodoc
@@ -1452,7 +1462,7 @@ class __$$CreateTransferItemRequestImplCopyWithImpl<$Res>
 class _$CreateTransferItemRequestImpl implements _CreateTransferItemRequest {
   const _$CreateTransferItemRequestImpl(
       {@JsonKey(name: 'inventory_id') required this.inventoryId,
-      required this.quantity});
+      @JsonKey(fromJson: doubleFromJson) required this.quantity});
 
   factory _$CreateTransferItemRequestImpl.fromJson(Map<String, dynamic> json) =>
       _$$CreateTransferItemRequestImplFromJson(json);
@@ -1461,6 +1471,7 @@ class _$CreateTransferItemRequestImpl implements _CreateTransferItemRequest {
   @JsonKey(name: 'inventory_id')
   final int inventoryId;
   @override
+  @JsonKey(fromJson: doubleFromJson)
   final double quantity;
 
   @override
@@ -1500,8 +1511,9 @@ class _$CreateTransferItemRequestImpl implements _CreateTransferItemRequest {
 
 abstract class _CreateTransferItemRequest implements CreateTransferItemRequest {
   const factory _CreateTransferItemRequest(
-      {@JsonKey(name: 'inventory_id') required final int inventoryId,
-      required final double quantity}) = _$CreateTransferItemRequestImpl;
+          {@JsonKey(name: 'inventory_id') required final int inventoryId,
+          @JsonKey(fromJson: doubleFromJson) required final double quantity}) =
+      _$CreateTransferItemRequestImpl;
 
   factory _CreateTransferItemRequest.fromJson(Map<String, dynamic> json) =
       _$CreateTransferItemRequestImpl.fromJson;
@@ -1510,6 +1522,7 @@ abstract class _CreateTransferItemRequest implements CreateTransferItemRequest {
   @JsonKey(name: 'inventory_id')
   int get inventoryId;
   @override
+  @JsonKey(fromJson: doubleFromJson)
   double get quantity;
   @override
   @JsonKey(ignore: true)
@@ -1679,7 +1692,7 @@ ReceiveTransferItemRequest _$ReceiveTransferItemRequestFromJson(
 mixin _$ReceiveTransferItemRequest {
   @JsonKey(name: 'transfer_item_id')
   int get transferItemId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'qty_received')
+  @JsonKey(name: 'qty_received', fromJson: doubleFromJson)
   double get qtyReceived => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -1697,7 +1710,8 @@ abstract class $ReceiveTransferItemRequestCopyWith<$Res> {
   @useResult
   $Res call(
       {@JsonKey(name: 'transfer_item_id') int transferItemId,
-      @JsonKey(name: 'qty_received') double qtyReceived});
+      @JsonKey(name: 'qty_received', fromJson: doubleFromJson)
+      double qtyReceived});
 }
 
 /// @nodoc
@@ -1741,7 +1755,8 @@ abstract class _$$ReceiveTransferItemRequestImplCopyWith<$Res>
   @useResult
   $Res call(
       {@JsonKey(name: 'transfer_item_id') int transferItemId,
-      @JsonKey(name: 'qty_received') double qtyReceived});
+      @JsonKey(name: 'qty_received', fromJson: doubleFromJson)
+      double qtyReceived});
 }
 
 /// @nodoc
@@ -1778,7 +1793,8 @@ class __$$ReceiveTransferItemRequestImplCopyWithImpl<$Res>
 class _$ReceiveTransferItemRequestImpl implements _ReceiveTransferItemRequest {
   const _$ReceiveTransferItemRequestImpl(
       {@JsonKey(name: 'transfer_item_id') required this.transferItemId,
-      @JsonKey(name: 'qty_received') required this.qtyReceived});
+      @JsonKey(name: 'qty_received', fromJson: doubleFromJson)
+      required this.qtyReceived});
 
   factory _$ReceiveTransferItemRequestImpl.fromJson(
           Map<String, dynamic> json) =>
@@ -1788,7 +1804,7 @@ class _$ReceiveTransferItemRequestImpl implements _ReceiveTransferItemRequest {
   @JsonKey(name: 'transfer_item_id')
   final int transferItemId;
   @override
-  @JsonKey(name: 'qty_received')
+  @JsonKey(name: 'qty_received', fromJson: doubleFromJson)
   final double qtyReceived;
 
   @override
@@ -1829,9 +1845,9 @@ class _$ReceiveTransferItemRequestImpl implements _ReceiveTransferItemRequest {
 abstract class _ReceiveTransferItemRequest
     implements ReceiveTransferItemRequest {
   const factory _ReceiveTransferItemRequest(
-          {@JsonKey(name: 'transfer_item_id') required final int transferItemId,
-          @JsonKey(name: 'qty_received') required final double qtyReceived}) =
-      _$ReceiveTransferItemRequestImpl;
+      {@JsonKey(name: 'transfer_item_id') required final int transferItemId,
+      @JsonKey(name: 'qty_received', fromJson: doubleFromJson)
+      required final double qtyReceived}) = _$ReceiveTransferItemRequestImpl;
 
   factory _ReceiveTransferItemRequest.fromJson(Map<String, dynamic> json) =
       _$ReceiveTransferItemRequestImpl.fromJson;
@@ -1840,7 +1856,7 @@ abstract class _ReceiveTransferItemRequest
   @JsonKey(name: 'transfer_item_id')
   int get transferItemId;
   @override
-  @JsonKey(name: 'qty_received')
+  @JsonKey(name: 'qty_received', fromJson: doubleFromJson)
   double get qtyReceived;
   @override
   @JsonKey(ignore: true)

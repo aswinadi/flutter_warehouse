@@ -19,6 +19,11 @@ import '../../../core/widgets/company_switcher.dart';
 import 'pr_approval_screen.dart';
 import '../../../core/utils/currency_utils.dart';
 import '../../../core/api/dio_client.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
+import '../../../core/widgets/cupertino_glass_dialog.dart';
+import '../../../core/widgets/cupertino_glass_toast.dart';
 
 // ─── Sentinel values ──────────────────────────────────────────────────────────
 
@@ -42,85 +47,11 @@ class _WebScrollBehavior extends CupertinoScrollBehavior {
 // ─── Global Toast Helper ──────────────────────────────────────────────────────
 
 void _showNotification(BuildContext context, String message, {bool isError = false}) {
-  final overlay = Overlay.of(context);
-  late OverlayEntry entry;
-
-  entry = OverlayEntry(
-    builder: (context) => Positioned(
-      top: MediaQuery.of(context).padding.top + 24,
-      left: 24,
-      right: 24,
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 450),
-          child: DefaultTextStyle(
-            style: const TextStyle(color: CupertinoColors.white, fontFamily: '.SF Pro Text'),
-            child: TweenAnimationBuilder<double>(
-              duration: const Duration(milliseconds: 250),
-              tween: Tween(begin: 0.0, end: 1.0),
-              builder: (context, value, child) {
-                return Opacity(
-                  opacity: value,
-                  child: Transform.translate(
-                    offset: Offset(0, (1 - value) * -20),
-                    child: child,
-                  ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: isError ? CupertinoColors.systemRed : CupertinoColors.activeGreen,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: CupertinoColors.black,
-                      blurRadius: 12,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      isError ? CupertinoIcons.exclamationmark_triangle : CupertinoIcons.check_mark_circled,
-                      color: CupertinoColors.white,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        message,
-                        style: const TextStyle(
-                          color: CupertinoColors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          decoration: TextDecoration.none,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () {
-                        if (entry.mounted) entry.remove();
-                      },
-                      child: const Icon(CupertinoIcons.xmark, color: CupertinoColors.white, size: 18),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
-
-  overlay.insert(entry);
-  Future.delayed(const Duration(milliseconds: 3000), () {
-    if (entry.mounted) entry.remove();
-  });
+  if (isError) {
+    CupertinoGlassToast.showError(context, message);
+  } else {
+    CupertinoGlassToast.showSuccess(context, message);
+  }
 }
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -1169,7 +1100,7 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
                       child: _GroupedDetailsView(
                         group: group,
                         isGeneratingPos: _isGeneratingPos,
-                        onProceedToPO: () => _handleProceedToPO(group),
+                        onProceedToPO: (selectedIds) => _handleProceedToPO(group, selectedIds),
                         onDownloadPdf: (url, poNo) => _downloadAndPrintPdf(context, url, poNo),
                       ),
                     ),
@@ -1195,7 +1126,7 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
             child: _GroupedDetailsView(
               group: selectedGroupWithPrice,
               isGeneratingPos: _isGeneratingPos,
-              onProceedToPO: () => _handleProceedToPO(selectedGroupWithPrice),
+              onProceedToPO: (selectedIds) => _handleProceedToPO(selectedGroupWithPrice, selectedIds),
               onDownloadPdf: (url, poNo) => _downloadAndPrintPdf(context, url, poNo),
             ),
           ),
@@ -1206,12 +1137,14 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
     }
   }
 
-  Future<void> _handleProceedToPO(VendorWarehouseGroup group) async {
+  Future<void> _handleProceedToPO(VendorWarehouseGroup group, List<int> selectedItemIds) async {
     setState(() => _isGeneratingPos = true);
     try {
       final prGroups = <int, List<GroupedItemDetail>>{};
       for (final itemDetail in group.items) {
-        prGroups.putIfAbsent(itemDetail.pr.id, () => []).add(itemDetail);
+        if (selectedItemIds.contains(itemDetail.item.id)) {
+          prGroups.putIfAbsent(itemDetail.pr.id, () => []).add(itemDetail);
+        }
       }
 
       final repo = ref.read(purchaseRequestRepositoryProvider);
@@ -1225,8 +1158,13 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
             .whereType<int>()
             .toSet()
             .toList();
+        final detailItemIds = details.map((d) => d.item.id).toList();
 
-        final createdPOs = await repo.generatePOs(prId, comparisonIds: compIds);
+        final createdPOs = await repo.generatePOs(
+          prId,
+          comparisonIds: compIds,
+          itemIds: detailItemIds,
+        );
         allCreatedPOs.addAll(createdPOs);
       }));
 
@@ -1240,10 +1178,10 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
         await showCupertinoDialog(
           context: context,
           builder: (dialogCtx) {
-            return CupertinoAlertDialog(
+            return CupertinoGlassDialog(
               title: const Text('POs Generated'),
               content: Padding(
-                padding: const EdgeInsets.only(top: 8.0),
+                padding: const EdgeInsets.only(top: CupertinoSpacing.s),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1252,7 +1190,7 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
                       'Successfully generated Purchase Orders for selected vendor and destination warehouse. You can download the PDF documents below:',
                       style: TextStyle(fontSize: 13),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: CupertinoSpacing.screenMargin),
                     if (allCreatedPOs.isEmpty)
                       const Text('No new PO generated (might be already created).', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold))
                     else
@@ -1261,18 +1199,13 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
                         final supplierName = poRaw['supplier_name'] ?? 'Supplier';
                         final pdfUrl = poRaw['pdf_url'];
 
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(dialogCtx),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: CupertinoColors.separator.resolveFrom(dialogCtx), width: 0.5),
-                          ),
+                        return CupertinoGlassContainer(
+                          margin: const EdgeInsets.only(bottom: CupertinoSpacing.s),
+                          padding: const EdgeInsets.all(CupertinoSpacing.s),
                           child: Row(
                             children: [
                               const Icon(CupertinoIcons.doc_text, size: 18, color: Color(0xFF6E56CF)),
-                              const SizedBox(width: 10),
+                              const SizedBox(width: CupertinoSpacing.s),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1291,7 +1224,7 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
                               if (pdfUrl != null)
                                 CupertinoButton(
                                   padding: EdgeInsets.zero,
-                                  minSize: 0,
+                                  minimumSize: Size.zero,
                                   onPressed: () {
                                     _downloadAndPrintPdf(dialogCtx, pdfUrl, poNum);
                                   },
@@ -1305,7 +1238,7 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
                 ),
               ),
               actions: [
-                CupertinoDialogAction(
+                CupertinoGlassDialogAction(
                   onPressed: () => Navigator.pop(dialogCtx),
                   child: const Text('Close'),
                 ),
@@ -1412,7 +1345,14 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
 String _getDurationText(String? approvedAt) {
   if (approvedAt == null || approvedAt.isEmpty) return 'Approved: N/A';
   try {
-    final parsed = DateTime.parse(approvedAt);
+    String formattedStr = approvedAt.trim();
+    if (!formattedStr.endsWith('Z') &&
+        !formattedStr.contains('+') &&
+        !RegExp(r'-\d{2}:\d{2}$').hasMatch(formattedStr)) {
+      // Append 'Z' to treat the database timestamp as UTC if no offset is present
+      formattedStr = '${formattedStr}Z';
+    }
+    final parsed = DateTime.parse(formattedStr).toLocal();
     final now = DateTime.now();
     final diff = now.difference(parsed);
 
@@ -1467,24 +1407,12 @@ class _ComparisonItemCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF6E56CF) : separatorColor,
-            width: isSelected ? 2.0 : 0.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: CupertinoColors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
+      child: CupertinoGlassContainer(
+        borderColor: isSelected ? const Color(0xFF6E56CF) : separatorColor,
+        borderRadius: CupertinoSpacing.cardRadius,
+        padding: EdgeInsets.zero,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1691,16 +1619,16 @@ class _ComparisonItemDetailViewState
   Future<void> _removeComparison(BuildContext context, int comparisonId) async {
     final confirmed = await showCupertinoDialog<bool>(
       context: context,
-      builder: (ctx) => CupertinoAlertDialog(
+      builder: (ctx) => CupertinoGlassDialog(
         title: const Text('Hapus Vendor?'),
         content: const Text('Apakah Anda yakin ingin menghapus vendor ini dari daftar perbandingan?'),
         actions: [
-          CupertinoDialogAction(
-            child: const Text('Batal'),
+          CupertinoGlassDialogAction(
             onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
           ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
+          CupertinoGlassDialogAction(
+            isDestructive: true,
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Hapus'),
           ),
@@ -3067,24 +2995,12 @@ class _ApprovedItemCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF6E56CF) : separatorColor,
-            width: isSelected ? 2.0 : 0.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: CupertinoColors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
+      child: CupertinoGlassContainer(
+        borderColor: isSelected ? const Color(0xFF6E56CF) : separatorColor,
+        borderRadius: CupertinoSpacing.cardRadius,
+        padding: EdgeInsets.zero,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -3723,24 +3639,12 @@ class VendorWarehouseGroupCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF6E56CF) : separatorColor,
-            width: isSelected ? 2.0 : 0.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: CupertinoColors.black.withOpacity(0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
+      child: CupertinoGlassContainer(
+        borderColor: isSelected ? const Color(0xFF6E56CF) : separatorColor,
+        borderRadius: CupertinoSpacing.cardRadius,
+        padding: EdgeInsets.zero,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -3847,11 +3751,11 @@ class VendorWarehouseGroupCard extends StatelessWidget {
 
 // ─── Grouped Details View ───────────────────────────────────────────────────
 
-class _GroupedDetailsView extends StatelessWidget {
+class _GroupedDetailsView extends StatefulWidget {
   final VendorWarehouseGroup group;
   final ScrollController? scrollController;
   final bool isGeneratingPos;
-  final VoidCallback onProceedToPO;
+  final Function(List<int> selectedItemIds) onProceedToPO;
   final Function(String url, String number) onDownloadPdf;
 
   const _GroupedDetailsView({
@@ -3863,18 +3767,56 @@ class _GroupedDetailsView extends StatelessWidget {
   });
 
   @override
+  State<_GroupedDetailsView> createState() => _GroupedDetailsViewState();
+}
+
+class _GroupedDetailsViewState extends State<_GroupedDetailsView> {
+  late Set<int> _selectedItemIds;
+
+  @override
+  void initState() {
+    super.initState();
+    _initSelection();
+  }
+
+  @override
+  void didUpdateWidget(_GroupedDetailsView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.group != widget.group) {
+      _initSelection();
+    }
+  }
+
+  void _initSelection() {
+    _selectedItemIds = widget.group.items
+        .where((entry) => entry.item.status != 'po_created')
+        .map((entry) => entry.item.id)
+        .toSet();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final allPoCreated = group.items.every((entry) => entry.item.status == 'po_created');
+    final allPoCreated = widget.group.items.every((entry) => entry.item.status == 'po_created');
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
     final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
 
+    final selectedTotal = allPoCreated
+        ? widget.group.totalPrice
+        : widget.group.items
+            .where((entry) => _selectedItemIds.contains(entry.item.id))
+            .fold<double>(0, (sum, entry) => sum + entry.subtotal);
+
+    final unOrderedItems = widget.group.items.where((entry) => entry.item.status != 'po_created').toList();
+    final allUnOrderedSelected = unOrderedItems.isNotEmpty &&
+        unOrderedItems.every((entry) => _selectedItemIds.contains(entry.item.id));
+
     return Column(
       children: [
         Expanded(
           child: ListView(
-            controller: scrollController,
+            controller: widget.scrollController,
             padding: const EdgeInsets.all(16),
             children: [
               Container(
@@ -3900,7 +3842,7 @@ class _GroupedDetailsView extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            group.supplierName,
+                            widget.group.supplierName,
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -3938,7 +3880,7 @@ class _GroupedDetailsView extends StatelessWidget {
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            'Warehouse: ${group.warehouseName}',
+                            'Warehouse: ${widget.group.warehouseName}',
                             style: TextStyle(fontSize: 13, color: labelColor, fontWeight: FontWeight.w600),
                           ),
                         ),
@@ -3950,7 +3892,7 @@ class _GroupedDetailsView extends StatelessWidget {
                         Icon(CupertinoIcons.clock, size: 14, color: secondaryLabel),
                         const SizedBox(width: 6),
                         Text(
-                          'Estimated Lead Time: ${group.leadTimeDays} days',
+                          'Estimated Lead Time: ${widget.group.leadTimeDays} days',
                           style: TextStyle(fontSize: 13, color: secondaryLabel),
                         ),
                       ],
@@ -3967,7 +3909,7 @@ class _GroupedDetailsView extends StatelessWidget {
                           style: TextStyle(fontSize: 13, color: secondaryLabel, fontWeight: FontWeight.w500),
                         ),
                         Text(
-                          formatWithCurrency(group.totalPrice, 'IDR'),
+                          formatWithCurrency(selectedTotal, 'IDR'),
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -3981,19 +3923,49 @@ class _GroupedDetailsView extends StatelessWidget {
               ),
 
               const SizedBox(height: 24),
-              Text(
-                'Items to be Ordered',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: labelColor,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Items to be Ordered',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: labelColor,
+                    ),
+                  ),
+                  if (unOrderedItems.isNotEmpty)
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      minSize: 0,
+                      onPressed: () {
+                        setState(() {
+                          if (allUnOrderedSelected) {
+                            _selectedItemIds.clear();
+                          } else {
+                            _selectedItemIds.addAll(unOrderedItems.map((e) => e.item.id));
+                          }
+                        });
+                      },
+                      child: Text(
+                        allUnOrderedSelected ? 'Deselect All' : 'Select All',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF6E56CF),
+                        ),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(height: 8),
 
-              ...group.items.map((entry) {
+              ...widget.group.items.map((entry) {
                 final item = entry.item;
                 final pr = entry.pr;
+                final isOrdered = item.status == 'po_created';
+                final isChecked = _selectedItemIds.contains(item.id);
+
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
@@ -4008,105 +3980,137 @@ class _GroupedDetailsView extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                item.itemName,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  color: labelColor,
-                                ),
-                              ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      if (!isOrdered)
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              if (isChecked) {
+                                _selectedItemIds.remove(item.id);
+                              } else {
+                                _selectedItemIds.add(item.id);
+                              }
+                            });
+                          },
+                          behavior: HitTestBehavior.opaque,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 16),
+                            child: Icon(
+                              isChecked
+                                  ? CupertinoIcons.checkmark_square_fill
+                                  : CupertinoIcons.square,
+                              color: isChecked
+                                  ? const Color(0xFF6E56CF)
+                                  : secondaryLabel,
+                              size: 22,
                             ),
-                            Text(
-                              formatWithCurrency(entry.subtotal, 'IDR'),
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 13, color: labelColor),
-                            ),
-                          ],
+                          ),
                         ),
-                        const SizedBox(height: 2),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              item.itemCode,
-                              style: TextStyle(color: secondaryLabel, fontSize: 12),
-                            ),
-                            Text(
-                              'Qty: ${item.approvedQty ?? item.qtyRequested} ${item.uom} @ ${formatWithCurrency(entry.offeredUnitPrice, "IDR")}',
-                              style: TextStyle(fontSize: 12, color: secondaryLabel),
-                            ),
-                          ],
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          child: Container(height: 0.5, color: separatorColor),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(CupertinoIcons.doc_text, size: 13, color: Color(0xFF6E56CF)),
-                                const SizedBox(width: 4),
-                                Text(
-                                  pr.code,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF6E56CF),
-                                    fontWeight: FontWeight.bold,
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      item.itemName,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                        color: labelColor,
+                                      ),
+                                    ),
                                   ),
+                                  Text(
+                                    formatWithCurrency(entry.subtotal, 'IDR'),
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold, fontSize: 13, color: labelColor),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    item.itemCode,
+                                    style: TextStyle(color: secondaryLabel, fontSize: 12),
+                                  ),
+                                  Text(
+                                    'Qty: ${item.approvedQty ?? item.qtyRequested} ${item.uom} @ ${formatWithCurrency(entry.offeredUnitPrice, "IDR")}',
+                                    style: TextStyle(fontSize: 12, color: secondaryLabel),
+                                  ),
+                                ],
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                child: Container(height: 0.5, color: separatorColor),
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(CupertinoIcons.doc_text, size: 13, color: Color(0xFF6E56CF)),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        pr.code,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF6E56CF),
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (isOrdered)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: CupertinoColors.activeGreen.withOpacity(0.12),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        item.poNumber != null ? 'PO: ${item.poNumber}' : 'PO Created',
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: CupertinoColors.activeGreen,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              if (item.dtSpec != null && item.dtSpec!.trim().isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Spesifikasi: ${item.dtSpec}',
+                                  style: TextStyle(fontSize: 12, color: secondaryLabel, fontStyle: FontStyle.italic),
                                 ),
                               ],
-                            ),
-                            if (item.status == 'po_created')
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: CupertinoColors.activeGreen.withOpacity(0.12),
-                                  borderRadius: BorderRadius.circular(4),
+                              if (item.dtNotes != null && item.dtNotes!.trim().isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Keterangan: ${item.dtNotes}',
+                                  style: TextStyle(fontSize: 12, color: secondaryLabel),
                                 ),
-                                child: Text(
-                                  item.poNumber != null ? 'PO: ${item.poNumber}' : 'PO Created',
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: CupertinoColors.activeGreen,
-                                  ),
-                                ),
-                              ),
-                          ],
+                              ],
+                            ],
+                          ),
                         ),
-                        if (item.dtSpec != null && item.dtSpec!.trim().isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            'Spesifikasi: ${item.dtSpec}',
-                            style: TextStyle(fontSize: 12, color: secondaryLabel, fontStyle: FontStyle.italic),
-                          ),
-                        ],
-                        if (item.dtNotes != null && item.dtNotes!.trim().isNotEmpty) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            'Keterangan: ${item.dtNotes}',
-                            style: TextStyle(fontSize: 12, color: secondaryLabel),
-                          ),
-                        ],
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 );
               }),
 
-              if (group.purchaseOrders.isNotEmpty) ...[
+              if (widget.group.purchaseOrders.isNotEmpty) ...[
                 const SizedBox(height: 24),
                 Text(
                   'Associated Purchase Orders',
@@ -4117,7 +4121,7 @@ class _GroupedDetailsView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                ...group.purchaseOrders.map((po) => Container(
+                ...widget.group.purchaseOrders.map((po) => Container(
                       margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -4159,7 +4163,7 @@ class _GroupedDetailsView extends StatelessWidget {
                               minSize: 0,
                               color: const Color(0xFF6E56CF),
                               borderRadius: BorderRadius.circular(6),
-                              onPressed: () => onDownloadPdf(po.pdfUrl!, po.poNumber),
+                              onPressed: () => widget.onDownloadPdf(po.pdfUrl!, po.poNumber),
                               child: const Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -4187,8 +4191,10 @@ class _GroupedDetailsView extends StatelessWidget {
             child: SizedBox(
               width: double.infinity,
               child: CupertinoButton.filled(
-                onPressed: isGeneratingPos ? null : onProceedToPO,
-                child: isGeneratingPos
+                onPressed: widget.isGeneratingPos || _selectedItemIds.isEmpty
+                    ? null
+                    : () => widget.onProceedToPO(_selectedItemIds.toList()),
+                child: widget.isGeneratingPos
                     ? const CupertinoActivityIndicator(color: CupertinoColors.white)
                     : const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -4221,70 +4227,6 @@ class _WaitingBodItemDetailView extends ConsumerStatefulWidget {
 
 class _WaitingBodItemDetailViewState
     extends ConsumerState<_WaitingBodItemDetailView> {
-  int? _selectedComparisonId;
-  bool _isSubmitting = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeSelection();
-  }
-
-  @override
-  void didUpdateWidget(covariant _WaitingBodItemDetailView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.entry.item.id != widget.entry.item.id) {
-      _initializeSelection();
-    }
-  }
-
-  void _initializeSelection() {
-    final item = widget.entry.item;
-    final pr = widget.entry.pr;
-    final assignedComparisons = pr.comparisons
-        .where((c) => c.details.any((d) => d.purchaseRequestDetailId == item.id))
-        .toList();
-    if (assignedComparisons.isNotEmpty) {
-      _selectedComparisonId = assignedComparisons.first.id;
-    } else {
-      _selectedComparisonId = null;
-    }
-  }
-
-  Future<void> _approveVendor() async {
-    if (_selectedComparisonId == null) return;
-    setState(() => _isSubmitting = true);
-    try {
-      final prId = widget.entry.pr.id;
-      final itemId = widget.entry.item.id;
-      
-      await ref.read(purchaseRequestRepositoryProvider).approvePurchaseRequestComparisons(
-        prId,
-        [
-          {
-            'item_id': itemId,
-            'comparison_id': _selectedComparisonId!,
-          }
-        ]
-      );
-
-      ref.invalidate(purchaseRequestsProvider);
-      
-      if (mounted) {
-        _showNotification(context, 'Vendor approved and PO generated successfully.');
-        if (widget.onApproved != null) {
-          widget.onApproved!();
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        _showNotification(context, 'Failed to approve vendor: $e', isError: true);
-      }
-    } finally {
-      if (mounted) setState(() => _isSubmitting = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final item = widget.entry.item;
@@ -4298,7 +4240,6 @@ class _WaitingBodItemDetailViewState
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
     final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
-    final canApproveNow = pr.canApprove;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -4390,7 +4331,7 @@ class _WaitingBodItemDetailViewState
           Text(
             assignedComparisons.isEmpty
                 ? 'No Vendors Assigned'
-                : 'Pilih Vendor untuk Persetujuan (${assignedComparisons.length})',
+                : 'Perbandingan Vendor (${assignedComparisons.length})',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
@@ -4414,112 +4355,64 @@ class _WaitingBodItemDetailViewState
             ...assignedComparisons.map((comp) {
               final compDetail =
                   comp.details.firstWhere((d) => d.purchaseRequestDetailId == item.id);
-              final isSelected = _selectedComparisonId == comp.id;
 
-              return GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: canApproveNow
-                    ? () {
-                        setState(() => _selectedComparisonId = comp.id);
-                      }
-                    : null,
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: isSelected ? const Color(0xFF6E56CF) : separatorColor,
-                      width: isSelected ? 2.0 : 0.5,
-                    ),
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: separatorColor,
+                    width: 0.5,
                   ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2.0, right: 12.0),
-                        child: Icon(
-                          isSelected ? CupertinoIcons.check_mark_circled_solid : CupertinoIcons.circle,
-                          color: isSelected ? const Color(0xFF6E56CF) : secondaryLabel,
-                          size: 20,
-                        ),
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              comp.supplierName,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                color: labelColor,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            comp.supplierName,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: labelColor,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              _MetaChip(
+                                icon: CupertinoIcons.money_dollar,
+                                label: formatWithCurrency(compDetail.offeredUnitPrice, 'IDR'),
+                                strong: true,
                               ),
-                            ),
-                            const SizedBox(height: 10),
-                            Row(
-                              children: [
-                                _MetaChip(
-                                  icon: CupertinoIcons.money_dollar,
-                                  label: formatWithCurrency(compDetail.offeredUnitPrice, 'IDR'),
-                                  strong: true,
-                                ),
-                                const SizedBox(width: 8),
-                                _MetaChip(
-                                  icon: CupertinoIcons.clock,
-                                  label: '${comp.leadTimeDays} days',
-                                ),
-                              ],
-                            ),
-                            if (comp.notes != null && comp.notes!.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                comp.notes!,
-                                style: TextStyle(
-                                    fontSize: 12, color: secondaryLabel, fontStyle: FontStyle.italic),
+                              const SizedBox(width: 8),
+                              _MetaChip(
+                                icon: CupertinoIcons.clock,
+                                label: '${comp.leadTimeDays} days',
                               ),
                             ],
+                          ),
+                          if (comp.notes != null && comp.notes!.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              comp.notes!,
+                              style: TextStyle(
+                                  fontSize: 12, color: secondaryLabel, fontStyle: FontStyle.italic),
+                            ),
                           ],
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               );
             }),
 
-          const SizedBox(height: 16),
-          if (assignedComparisons.isNotEmpty)
-            SizedBox(
-              width: double.infinity,
-              child: CupertinoButton(
-                color: canApproveNow ? const Color(0xFF16A34A) : CupertinoColors.tertiarySystemFill.resolveFrom(context),
-                onPressed: (canApproveNow && !_isSubmitting) ? _approveVendor : null,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                borderRadius: BorderRadius.circular(8),
-                child: _isSubmitting
-                    ? const CupertinoActivityIndicator(color: CupertinoColors.white)
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            CupertinoIcons.check_mark_circled,
-                            size: 18,
-                            color: canApproveNow ? CupertinoColors.white : CupertinoColors.placeholderText.resolveFrom(context),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            canApproveNow ? 'Setujui Pilihan Vendor (Approve)' : 'Belum Memiliki Izin Persetujuan',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: canApproveNow ? CupertinoColors.white : CupertinoColors.placeholderText.resolveFrom(context),
-                            ),
-                          ),
-                        ],
-                      ),
-              ),
-            ),
           const SizedBox(height: 32),
         ],
       ),

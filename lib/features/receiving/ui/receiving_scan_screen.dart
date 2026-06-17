@@ -9,6 +9,9 @@ import 'package:printing/printing.dart';
 import 'package:dio/dio.dart';
 import '../../../core/api/dio_client.dart';
 import '../../../core/config/app_config.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
+import '../../../core/widgets/cupertino_glass_toast.dart';
 import '../../../core/widgets/company_switcher.dart';
 import '../../purchase_order/providers/purchase_order_provider.dart';
 import '../providers/receiving_provider.dart';
@@ -84,13 +87,28 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> {
       barrierDismissible: false,
       builder: (ctx) {
         dialogContext = ctx;
-        return const CupertinoAlertDialog(
-          content: Row(
-            children: [
-              CupertinoActivityIndicator(),
-              SizedBox(width: 16),
-              Text('Membuat PDF...'),
-            ],
+        return Center(
+          child: SizedBox(
+            width: 200,
+            height: 100,
+            child: CupertinoGlassContainer(
+              borderRadius: CupertinoSpacing.dialogRadius,
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CupertinoActivityIndicator(),
+                  SizedBox(width: 16),
+                  Text(
+                    'Membuat PDF...',
+                    style: TextStyle(
+                      color: CupertinoColors.white,
+                      fontSize: 14,
+                      decoration: TextDecoration.none,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       },
@@ -133,7 +151,7 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> {
             }
 
             if (mounted) {
-              _showTopNotification(context, 'PDF berhasil diunduh ke folder Downloads: $fileName.pdf');
+              CupertinoGlassToast.showSuccess(context, 'PDF berhasil diunduh ke folder Downloads: $fileName.pdf');
             }
           } else {
             throw Exception('Could not find Downloads folder');
@@ -155,7 +173,7 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> {
         }
       }
       if (mounted) {
-        _showTopNotification(context, 'Gagal mengunduh PDF: $e', isError: true);
+        CupertinoGlassToast.showError(context, 'Gagal mengunduh PDF: $e');
       }
     } finally {
       if (mounted) {
@@ -236,7 +254,6 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> {
 
   Widget _buildOpenPOsTabContent(bool isWide) {
     final leftPanel = _buildOpenPOsTab(isWide);
-    final labelColor = CupertinoColors.label.resolveFrom(context);
 
     if (isWide) {
       return Row(
@@ -315,7 +332,6 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> {
 
   Widget _buildOpenPOsTab(bool isWide) {
     final labelColor = CupertinoColors.label.resolveFrom(context);
-    final navBarBg = CupertinoColors.systemBackground.resolveFrom(context);
 
     return Column(
       children: [
@@ -829,7 +845,6 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> {
                     return const Center(child: Text('Data tidak ditemukan'));
                   }
 
-                  final date = data['transaction_date'] ?? '';
                   final supplier = data['supplier_name'] ?? 'N/A';
                   final notes = data['notes'] ?? '';
                   final truckNumber = data['truck_number'] ?? '';
@@ -1081,7 +1096,7 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> {
       builder: (context) => CupertinoPageScaffold(
         backgroundColor: CupertinoColors.black,
         navigationBar: CupertinoNavigationBar(
-          backgroundColor: CupertinoColors.black.withOpacity(0.5),
+          backgroundColor: CupertinoColors.black.withValues(alpha: 0.5),
           leading: CupertinoButton(
             padding: EdgeInsets.zero,
             child: const Icon(CupertinoIcons.xmark, color: CupertinoColors.white),
@@ -1189,7 +1204,7 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> {
                           ),
                           CupertinoButton(
                             padding: EdgeInsets.zero,
-                            minSize: 0,
+                            minimumSize: Size.zero,
                             onPressed: () => _downloadAndPrintPdf(record.id, record.receivingNumber),
                             child: const Icon(
                               CupertinoIcons.printer,
@@ -1264,76 +1279,4 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> {
       error: (err, _) => Center(child: Text('Gagal memuat riwayat: $err')),
     );
   }
-}
-
-void _showTopNotification(BuildContext context, String message, {bool isError = false}) {
-  final overlay = Overlay.of(context);
-  late OverlayEntry entry;
-
-  entry = OverlayEntry(
-    builder: (context) => Positioned(
-      top: MediaQuery.of(context).padding.top + 24,
-      left: 24,
-      right: 24,
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 450),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: isError ? CupertinoColors.destructiveRed : CupertinoColors.activeGreen,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x42000000),
-                  blurRadius: 12,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isError ? CupertinoIcons.exclamationmark_circle : CupertinoIcons.check_mark_circled,
-                  color: CupertinoColors.white,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    message,
-                    style: const TextStyle(
-                      color: CupertinoColors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      decoration: TextDecoration.none,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () {
-                    if (entry.mounted) {
-                      entry.remove();
-                    }
-                  },
-                  child: const Icon(CupertinoIcons.xmark, color: CupertinoColors.white, size: 18),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
-
-  overlay.insert(entry);
-
-  Future.delayed(const Duration(milliseconds: 2500), () {
-    if (entry.mounted) {
-      entry.remove();
-    }
-  });
 }

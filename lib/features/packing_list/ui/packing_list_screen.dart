@@ -12,6 +12,11 @@ import '../models/packing_list.dart';
 import 'package:dio/dio.dart';
 import '../../../core/api/dio_client.dart';
 import '../../../core/widgets/company_switcher.dart';
+import '../../../core/widgets/cupertino_glass_toast.dart';
+import '../../../core/widgets/cupertino_glass_dialog.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/theme/cupertino_spacing.dart';
 import '../../../core/providers/warehouse_provider.dart';
 import '../../../core/models/warehouse.dart';
 import '../../../core/providers/company_provider.dart';
@@ -79,13 +84,28 @@ class _PackingListScreenState extends ConsumerState<PackingListScreen> {
       barrierDismissible: false,
       builder: (ctx) {
         dialogContext = ctx;
-        return const CupertinoAlertDialog(
-          content: Row(
-            children: [
-              CupertinoActivityIndicator(),
-              SizedBox(width: 16),
-              Text('Membuat PDF...'),
-            ],
+        return Center(
+          child: SizedBox(
+            width: 200,
+            height: 100,
+            child: CupertinoGlassContainer(
+              borderRadius: CupertinoSpacing.dialogRadius,
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CupertinoActivityIndicator(),
+                  SizedBox(width: 16),
+                  Text(
+                    'Membuat PDF...',
+                    style: TextStyle(
+                      color: CupertinoColors.white,
+                      fontSize: 14,
+                      decoration: TextDecoration.none,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       },
@@ -559,18 +579,18 @@ class _ContainerDetailView extends ConsumerWidget {
   Future<void> _updateContainerStatus(BuildContext context, WidgetRef ref, int id, String status) async {
     final result = await showCupertinoDialog<bool>(
       context: context,
-      builder: (ctx) => CupertinoAlertDialog(
+      builder: (ctx) => CupertinoGlassDialog(
         title: Text(status == 'shipped' ? 'Kirim Kontainer' : 'Tutup Kontainer'),
         content: Text(status == 'shipped'
             ? 'Apakah Anda yakin ingin menandai kontainer ini sebagai dikirim?'
             : 'Apakah Anda yakin ingin menutup daftar packing ini?'),
         actions: [
-          CupertinoDialogAction(
+          CupertinoGlassDialogAction(
             child: const Text('Batal'),
             onPressed: () => Navigator.pop(ctx, false),
           ),
-          CupertinoDialogAction(
-            isDestructiveAction: status == 'cancelled',
+          CupertinoGlassDialogAction(
+            isDestructive: status == 'cancelled',
             child: const Text('Konfirmasi'),
             onPressed: () => Navigator.pop(ctx, true),
           ),
@@ -592,9 +612,23 @@ class _ContainerDetailView extends ConsumerWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        _showTopNotification(context, 'Gagal memperbarui status kontainer: $e', isError: true);
+        _showTopNotification(context, 'Gagal memperbarui status kontainer: ${_getErrorMessage(e)}', isError: true);
       }
     }
+  }
+
+  void _showEditContainerDialog(BuildContext context, WidgetRef ref, PackingList container) {
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (_) => Container(
+        height: MediaQuery.of(context).size.height * 0.85,
+        decoration: BoxDecoration(
+          color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: _CreateContainerDialog(container: container),
+      ),
+    );
   }
 
   @override
@@ -632,23 +666,49 @@ class _ContainerDetailView extends ConsumerWidget {
                               'Kontainer: ${container.containerNumber}',
                               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
                             ),
-                            Container(
-                              decoration: BoxDecoration(
-                                border: Border.all(color: CupertinoColors.activeBlue.resolveFrom(context), width: 0.5),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: CupertinoButton(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                minSize: 0,
-                                onPressed: () => onDownloadPdf(container.id, container.containerNumber),
-                                child: const Row(
-                                  children: [
-                                    Icon(CupertinoIcons.printer, size: 14),
-                                    SizedBox(width: 4),
-                                    Text('Unduh PDF', style: TextStyle(fontSize: 12)),
-                                  ],
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: CupertinoColors.activeBlue.resolveFrom(context), width: 0.5),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: CupertinoButton(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    minSize: 0,
+                                    onPressed: () => onDownloadPdf(container.id, container.containerNumber),
+                                    child: const Row(
+                                      children: [
+                                        Icon(CupertinoIcons.printer, size: 14),
+                                        SizedBox(width: 4),
+                                        Text('Unduh PDF', style: TextStyle(fontSize: 12)),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                if (isEditable) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: CupertinoColors.activeBlue.resolveFrom(context), width: 0.5),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: CupertinoButton(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      minSize: 0,
+                                      onPressed: () => _showEditContainerDialog(context, ref, container),
+                                      child: const Row(
+                                        children: [
+                                          Icon(CupertinoIcons.pencil, size: 14),
+                                          SizedBox(width: 4),
+                                          Text('Edit', style: TextStyle(fontSize: 12)),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ],
                         ),
@@ -695,7 +755,7 @@ class _ContainerDetailView extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (isEditable) ...[
+                        if (isEditable || container.status.toLowerCase() == 'closed') ...[
                           Text(
                             'Detail Segel & Tindakan',
                             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
@@ -961,7 +1021,7 @@ class _EditManifestSheetState extends ConsumerState<_EditManifestSheet> {
       }
     } catch (e) {
       if (mounted) {
-        _showTopNotification(context, 'Error: $e', isError: true);
+        _showTopNotification(context, 'Error: ${_getErrorMessage(e)}', isError: true);
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -1059,7 +1119,6 @@ class _EditManifestSheetState extends ConsumerState<_EditManifestSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final labelColor = CupertinoColors.label.resolveFrom(context);
     final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
@@ -1121,9 +1180,17 @@ class _EditManifestSheetState extends ConsumerState<_EditManifestSheet> {
                           },
                         ),
                   // Tab 1: PO items
-                  _AvailablePoItemsView(containerId: widget.container.id, onAdd: _addItem),
+                  _AvailablePoItemsView(
+                    containerId: widget.container.id,
+                    onAdd: _addItem,
+                    manifestItems: _manifestItems,
+                  ),
                   // Tab 2: Warehouse stock
-                  _AvailableInventoryView(containerId: widget.container.id, onAdd: _addItem),
+                  _AvailableInventoryView(
+                    containerId: widget.container.id,
+                    onAdd: _addItem,
+                    manifestItems: _manifestItems,
+                  ),
                 ],
               ),
             ),
@@ -1154,15 +1221,17 @@ class _EditManifestSheetState extends ConsumerState<_EditManifestSheet> {
 class _AvailablePoItemsView extends ConsumerWidget {
   final int containerId;
   final Function(Map<String, dynamic>) onAdd;
+  final List<Map<String, dynamic>> manifestItems;
 
-  const _AvailablePoItemsView({required this.containerId, required this.onAdd});
+  const _AvailablePoItemsView({
+    required this.containerId,
+    required this.onAdd,
+    required this.manifestItems,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncItems = ref.watch(availablePoItemsProvider(containerId));
-    final labelColor = CupertinoColors.label.resolveFrom(context);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
-    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return asyncItems.when(
       data: (items) {
@@ -1175,47 +1244,11 @@ class _AvailablePoItemsView extends ConsumerWidget {
           separatorBuilder: (context, index) => const SizedBox(height: 8),
           itemBuilder: (context, index) {
             final item = items[index];
-            return Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: cardBg,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: separatorColor, width: 0.5),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(item['product_name'] ?? 'Item', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: labelColor)),
-                  const SizedBox(height: 2),
-                  Text('SKU: ${item['sku']} • Ref: ${item['po_number']}', style: TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel.resolveFrom(context))),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Sisa: ${item['remaining_qty']} ${item['unit']}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: labelColor)),
-                      CupertinoButton(
-                        color: CupertinoColors.activeBlue,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                        minSize: 0,
-                        borderRadius: BorderRadius.circular(6),
-                        onPressed: () {
-                          onAdd({
-                            'type': 'po',
-                            'po_detail_id': item['po_detail_id'],
-                            'inventory_id': null,
-                            'po_number': item['po_number'],
-                            'sku': item['sku'],
-                            'product_name': item['product_name'],
-                            'planned_qty': 1.0,
-                            'unit': item['unit'] ?? 'PCS',
-                          });
-                        },
-                        child: const Text('Tambah', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: CupertinoColors.white)),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+            final isAdded = manifestItems.any((x) => x['type'] == 'po' && x['po_detail_id'] == item['po_detail_id']);
+            return _AvailablePoItemCard(
+              item: item,
+              isAdded: isAdded,
+              onAdd: onAdd,
             );
           },
         );
@@ -1226,18 +1259,146 @@ class _AvailablePoItemsView extends ConsumerWidget {
   }
 }
 
+class _AvailablePoItemCard extends StatefulWidget {
+  final Map<String, dynamic> item;
+  final bool isAdded;
+  final Function(Map<String, dynamic>) onAdd;
+
+  const _AvailablePoItemCard({
+    required this.item,
+    required this.isAdded,
+    required this.onAdd,
+  });
+
+  @override
+  State<_AvailablePoItemCard> createState() => _AvailablePoItemCardState();
+}
+
+class _AvailablePoItemCardState extends State<_AvailablePoItemCard> {
+  late TextEditingController _qtyController;
+
+  @override
+  void initState() {
+    super.initState();
+    final remainingQty = widget.item['remaining_qty'] ?? 1.0;
+    _qtyController = TextEditingController(text: _formatQty(remainingQty));
+  }
+
+  String _formatQty(dynamic val) {
+    if (val == null) return '1';
+    final parsed = double.tryParse(val.toString());
+    if (parsed == null) return val.toString();
+    if (parsed == parsed.roundToDouble()) {
+      return parsed.round().toString();
+    }
+    return parsed.toString();
+  }
+
+  @override
+  void dispose() {
+    _qtyController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: separatorColor, width: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(widget.item['product_name'] ?? 'Item', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: labelColor)),
+          const SizedBox(height: 2),
+          Text('SKU: ${widget.item['sku']} • Ref: ${widget.item['po_number']}', style: TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel.resolveFrom(context))),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Sisa: ${widget.item['remaining_qty']} ${widget.item['unit']}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: labelColor)),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!widget.isAdded) ...[
+                    Text('Qty: ', style: TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel.resolveFrom(context))),
+                    const SizedBox(width: 4),
+                    SizedBox(
+                      width: 60,
+                      height: 28,
+                      child: CupertinoTextField(
+                        controller: _qtyController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 12, color: labelColor, fontWeight: FontWeight.bold),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: separatorColor, width: 0.5),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  CupertinoButton(
+                    color: widget.isAdded ? CupertinoColors.inactiveGray : CupertinoColors.activeBlue,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    minSize: 0,
+                    borderRadius: BorderRadius.circular(6),
+                    onPressed: widget.isAdded
+                        ? null
+                        : () {
+                            final parsedQty = double.tryParse(_qtyController.text);
+                            if (parsedQty == null || parsedQty <= 0) {
+                              _showTopNotification(context, 'Kuantitas tidak valid', isError: true);
+                              return;
+                            }
+                            widget.onAdd({
+                              'type': 'po',
+                              'po_detail_id': widget.item['po_detail_id'],
+                              'inventory_id': null,
+                              'po_number': widget.item['po_number'],
+                              'sku': widget.item['sku'],
+                              'product_name': widget.item['product_name'],
+                              'planned_qty': parsedQty,
+                              'unit': widget.item['unit'] ?? 'PCS',
+                            });
+                          },
+                    child: Text(
+                      widget.isAdded ? 'Sudah Ditambah' : 'Tambah',
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: CupertinoColors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _AvailableInventoryView extends ConsumerWidget {
   final int containerId;
   final Function(Map<String, dynamic>) onAdd;
+  final List<Map<String, dynamic>> manifestItems;
 
-  const _AvailableInventoryView({required this.containerId, required this.onAdd});
+  const _AvailableInventoryView({
+    required this.containerId,
+    required this.onAdd,
+    required this.manifestItems,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncItems = ref.watch(availableInventoryItemsProvider(containerId));
-    final labelColor = CupertinoColors.label.resolveFrom(context);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
-    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return asyncItems.when(
       data: (items) {
@@ -1250,47 +1411,11 @@ class _AvailableInventoryView extends ConsumerWidget {
           separatorBuilder: (context, index) => const SizedBox(height: 8),
           itemBuilder: (context, index) {
             final item = items[index];
-            return Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: cardBg,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: separatorColor, width: 0.5),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(item['product_name'] ?? 'Item', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: labelColor)),
-                  const SizedBox(height: 2),
-                  Text('SKU: ${item['sku']}', style: TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel.resolveFrom(context))),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Stok: ${item['balance_qty']} ${item['unit']}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: labelColor)),
-                      CupertinoButton(
-                        color: CupertinoColors.activeBlue,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                        minSize: 0,
-                        borderRadius: BorderRadius.circular(6),
-                        onPressed: () {
-                          onAdd({
-                            'type': 'inventory',
-                            'po_detail_id': null,
-                            'inventory_id': item['inventory_id'],
-                            'po_number': 'STOK GUDANG',
-                            'sku': item['sku'],
-                            'product_name': item['product_name'],
-                            'planned_qty': 1.0,
-                            'unit': item['unit'] ?? 'PCS',
-                          });
-                        },
-                        child: const Text('Tambah', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: CupertinoColors.white)),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+            final isAdded = manifestItems.any((x) => x['type'] == 'inventory' && x['inventory_id'] == item['inventory_id']);
+            return _AvailableInventoryCard(
+              item: item,
+              isAdded: isAdded,
+              onAdd: onAdd,
             );
           },
         );
@@ -1301,8 +1426,135 @@ class _AvailableInventoryView extends ConsumerWidget {
   }
 }
 
+class _AvailableInventoryCard extends StatefulWidget {
+  final Map<String, dynamic> item;
+  final bool isAdded;
+  final Function(Map<String, dynamic>) onAdd;
+
+  const _AvailableInventoryCard({
+    required this.item,
+    required this.isAdded,
+    required this.onAdd,
+  });
+
+  @override
+  State<_AvailableInventoryCard> createState() => _AvailableInventoryCardState();
+}
+
+class _AvailableInventoryCardState extends State<_AvailableInventoryCard> {
+  late TextEditingController _qtyController;
+
+  @override
+  void initState() {
+    super.initState();
+    final balanceQty = widget.item['balance_qty'] ?? 1.0;
+    _qtyController = TextEditingController(text: _formatQty(balanceQty));
+  }
+
+  String _formatQty(dynamic val) {
+    if (val == null) return '1';
+    final parsed = double.tryParse(val.toString());
+    if (parsed == null) return val.toString();
+    if (parsed == parsed.roundToDouble()) {
+      return parsed.round().toString();
+    }
+    return parsed.toString();
+  }
+
+  @override
+  void dispose() {
+    _qtyController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final separatorColor = CupertinoColors.separator.resolveFrom(context);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: separatorColor, width: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(widget.item['product_name'] ?? 'Item', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: labelColor)),
+          const SizedBox(height: 2),
+          Text('SKU: ${widget.item['sku']}', style: TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel.resolveFrom(context))),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Stok: ${widget.item['balance_qty']} ${widget.item['unit']}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: labelColor)),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!widget.isAdded) ...[
+                    Text('Qty: ', style: TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel.resolveFrom(context))),
+                    const SizedBox(width: 4),
+                    SizedBox(
+                      width: 60,
+                      height: 28,
+                      child: CupertinoTextField(
+                        controller: _qtyController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 12, color: labelColor, fontWeight: FontWeight.bold),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: separatorColor, width: 0.5),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  CupertinoButton(
+                    color: widget.isAdded ? CupertinoColors.inactiveGray : CupertinoColors.activeBlue,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    minSize: 0,
+                    borderRadius: BorderRadius.circular(6),
+                    onPressed: widget.isAdded
+                        ? null
+                        : () {
+                            final parsedQty = double.tryParse(_qtyController.text);
+                            if (parsedQty == null || parsedQty <= 0) {
+                              _showTopNotification(context, 'Kuantitas tidak valid', isError: true);
+                              return;
+                            }
+                            widget.onAdd({
+                              'type': 'inventory',
+                              'po_detail_id': null,
+                              'inventory_id': widget.item['inventory_id'],
+                              'po_number': 'STOK GUDANG',
+                              'sku': widget.item['sku'],
+                              'product_name': widget.item['product_name'],
+                              'planned_qty': parsedQty,
+                              'unit': widget.item['unit'] ?? 'PCS',
+                            });
+                          },
+                    child: Text(
+                      widget.isAdded ? 'Sudah Ditambah' : 'Tambah',
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: CupertinoColors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _CreateContainerDialog extends ConsumerStatefulWidget {
-  const _CreateContainerDialog();
+  final PackingList? container;
+  const _CreateContainerDialog({this.container});
 
   @override
   ConsumerState<_CreateContainerDialog> createState() => _CreateContainerDialogState();
@@ -1319,6 +1571,32 @@ class _CreateContainerDialogState extends ConsumerState<_CreateContainerDialog> 
   DateTime? _estimatedDeparture;
   DateTime? _closingDate;
   bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.container != null) {
+      _containerNumberController.text = widget.container!.containerNumber;
+      _carrierNameController.text = widget.container!.carrierName ?? '';
+      _plateNumberController.text = widget.container!.plateNumber ?? '';
+      _sourceWarehouseId = widget.container!.sourceWarehouseId;
+      _destinationWarehouseId = widget.container!.destinationWarehouseId;
+      _estimatedDeparture = widget.container!.estimatedDeparture;
+      _closingDate = widget.container!.closingDate;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        try {
+          final list = await ref.read(warehousesProvider.future);
+          final match = list.firstWhere((w) => w.id == _sourceWarehouseId);
+          if (mounted) {
+            setState(() {
+              _selectedCompanyId = match.companyId;
+            });
+          }
+        } catch (_) {}
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -1411,25 +1689,46 @@ class _CreateContainerDialogState extends ConsumerState<_CreateContainerDialog> 
 
     try {
       final repo = ref.read(packingListRepositoryProvider);
-      final newContainer = await repo.createPackingList(
-        containerNumber: _containerNumberController.text.trim(),
-        carrierName: _carrierNameController.text.trim(),
-        plateNumber: _plateNumberController.text.trim(),
-        sourceWarehouseId: _sourceWarehouseId!,
-        destinationWarehouseId: _destinationWarehouseId!,
-        estimatedDeparture: _estimatedDeparture,
-        closingDate: _closingDate,
-      );
+      if (widget.container != null) {
+        await repo.updatePackingList(
+          id: widget.container!.id,
+          containerNumber: _containerNumberController.text.trim(),
+          carrierName: _carrierNameController.text.trim(),
+          plateNumber: _plateNumberController.text.trim(),
+          sourceWarehouseId: _sourceWarehouseId!,
+          destinationWarehouseId: _destinationWarehouseId!,
+          estimatedDeparture: _estimatedDeparture,
+          closingDate: _closingDate,
+        );
 
-      ref.invalidate(packingListsProvider);
+        ref.invalidate(packingListDetailProvider(widget.container!.id));
+        ref.invalidate(packingListsProvider);
 
-      if (mounted) {
-        Navigator.pop(context, newContainer.id);
-        _showTopNotification(context, 'Kontainer berhasil dibuat');
+        if (mounted) {
+          Navigator.pop(context);
+          _showTopNotification(context, 'Kontainer berhasil diperbarui');
+        }
+      } else {
+        final newContainer = await repo.createPackingList(
+          containerNumber: _containerNumberController.text.trim(),
+          carrierName: _carrierNameController.text.trim(),
+          plateNumber: _plateNumberController.text.trim(),
+          sourceWarehouseId: _sourceWarehouseId!,
+          destinationWarehouseId: _destinationWarehouseId!,
+          estimatedDeparture: _estimatedDeparture,
+          closingDate: _closingDate,
+        );
+
+        ref.invalidate(packingListsProvider);
+
+        if (mounted) {
+          Navigator.pop(context, newContainer.id);
+          _showTopNotification(context, 'Kontainer berhasil dibuat');
+        }
       }
     } catch (e) {
       if (mounted) {
-        _showTopNotification(context, 'Gagal membuat kontainer: $e', isError: true);
+        _showTopNotification(context, 'Gagal menyimpan kontainer: ${_getErrorMessage(e)}', isError: true);
       }
     } finally {
       if (mounted) {
@@ -1445,11 +1744,12 @@ class _CreateContainerDialogState extends ConsumerState<_CreateContainerDialog> 
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
+    final isEditing = widget.container != null;
 
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
       navigationBar: CupertinoNavigationBar(
-        middle: const Text('Buat Daftar Packing / Kontainer'),
+        middle: Text(isEditing ? 'Edit Daftar Packing / Kontainer' : 'Buat Daftar Packing / Kontainer'),
         leading: CupertinoButton(
           padding: EdgeInsets.zero,
           child: const Text('Batal'),
@@ -1459,7 +1759,7 @@ class _CreateContainerDialogState extends ConsumerState<_CreateContainerDialog> 
             ? const CupertinoActivityIndicator()
             : CupertinoButton(
                 padding: EdgeInsets.zero,
-                child: const Text('Buat'),
+                child: Text(isEditing ? 'Simpan' : 'Buat'),
                 onPressed: _submit,
               ),
       ),
@@ -1777,73 +2077,25 @@ class _CreateContainerDialogState extends ConsumerState<_CreateContainerDialog> 
 }
 
 void _showTopNotification(BuildContext context, String message, {bool isError = false}) {
-  final overlay = Overlay.of(context);
-  late OverlayEntry entry;
+  if (isError) {
+    CupertinoGlassToast.showError(context, message);
+  } else {
+    CupertinoGlassToast.showSuccess(context, message);
+  }
+}
 
-  entry = OverlayEntry(
-    builder: (context) => Positioned(
-      top: MediaQuery.of(context).padding.top + 24,
-      left: 24,
-      right: 24,
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 450),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: isError ? CupertinoColors.destructiveRed : CupertinoColors.activeGreen,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x42000000),
-                  blurRadius: 12,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isError ? CupertinoIcons.exclamationmark_circle : CupertinoIcons.check_mark_circled,
-                  color: CupertinoColors.white,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    message,
-                    style: const TextStyle(
-                      color: CupertinoColors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      decoration: TextDecoration.none,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () {
-                    if (entry.mounted) {
-                      entry.remove();
-                    }
-                  },
-                  child: const Icon(CupertinoIcons.xmark, color: CupertinoColors.white, size: 18),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
-
-  overlay.insert(entry);
-
-  Future.delayed(const Duration(milliseconds: 2500), () {
-    if (entry.mounted) {
-      entry.remove();
+String _getErrorMessage(dynamic e) {
+  if (e is DioException) {
+    final responseData = e.response?.data;
+    if (responseData is Map) {
+      if (responseData['error'] != null) {
+        return responseData['error'].toString();
+      }
+      if (responseData['message'] != null) {
+        return responseData['message'].toString();
+      }
     }
-  });
+    return e.message ?? e.toString();
+  }
+  return e.toString();
 }

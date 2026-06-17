@@ -9,6 +9,10 @@ import '../../../core/config/menu_items.dart';
 import '../../../core/widgets/main_shell.dart';
 import '../../inventory/ui/barcode_lookup_bottom_sheet.dart';
 import '../../../core/providers/theme_provider.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
+import '../../../core/widgets/cupertino_glass_dialog.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -134,7 +138,7 @@ class DashboardScreen extends ConsumerWidget {
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.xl),
             sliver: SliverList(
               delegate: SliverChildListDelegate(
                 sections.map((section) {
@@ -154,11 +158,11 @@ class DashboardScreen extends ConsumerWidget {
                             } else {
                               showCupertinoDialog(
                                 context: context,
-                                builder: (context) => CupertinoAlertDialog(
+                                builder: (context) => CupertinoGlassDialog(
                                   title: const Text('Coming Soon'),
                                   content: Text(l10n.comingSoon),
                                   actions: [
-                                    CupertinoDialogAction(
+                                    CupertinoGlassDialogAction(
                                       child: const Text('OK'),
                                       onPressed: () => Navigator.pop(context),
                                     ),
@@ -199,8 +203,7 @@ class DashboardScreen extends ConsumerWidget {
           padding: const EdgeInsets.only(left: 4, bottom: 12),
           child: Text(
             title,
-            style: TextStyle(
-              fontSize: 18, 
+            style: context.title3.copyWith(
               fontWeight: FontWeight.bold,
               color: CupertinoColors.label.resolveFrom(context),
             ),
@@ -231,15 +234,9 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildMenuCard(BuildContext context, _MenuItem item) {
-    return Container(
-      decoration: BoxDecoration(
-        color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: CupertinoColors.separator.resolveFrom(context).withValues(alpha: 0.15),
-          width: 0.5,
-        ),
-      ),
+    return CupertinoGlassContainer(
+      borderRadius: CupertinoSpacing.cardRadius,
+      padding: EdgeInsets.zero,
       child: GestureDetector(
         onTap: item.onTap,
         behavior: HitTestBehavior.opaque,
@@ -264,8 +261,7 @@ class DashboardScreen extends ConsumerWidget {
               Text(
                 item.label,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12, 
+                style: context.caption1.copyWith(
                   fontWeight: FontWeight.w600,
                   color: CupertinoColors.label.resolveFrom(context),
                 ),

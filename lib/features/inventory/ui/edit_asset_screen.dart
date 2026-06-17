@@ -10,6 +10,10 @@ import '../../../core/providers/company_provider.dart';
 import '../../../core/models/company.dart';
 import '../../../core/config/app_config.dart';
 import '../../purchase_request/models/supplier.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
+import '../../../core/widgets/cupertino_glass_toast.dart';
 
 class EditAssetScreen extends ConsumerStatefulWidget {
   final int assetId;
@@ -138,7 +142,7 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
         });
       }
     } catch (e) {
-      _showNotification('Gagal mengambil gambar: $e', isError: true);
+      CupertinoGlassToast.showError(context, 'Gagal mengambil gambar: $e');
     }
   }
 
@@ -392,7 +396,7 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
     }
 
     if (hasError) {
-      _showNotification('Harap lengkapi semua kolom wajib.', isError: true);
+      CupertinoGlassToast.showError(context, 'Harap lengkapi semua kolom wajib.');
       return;
     }
 
@@ -420,7 +424,7 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
 
       await ref.read(assetRepositoryProvider).updateAsset(widget.assetId, data, photoFile: _photoFile);
 
-      _showNotification('Aset hardware berhasil diperbarui.');
+      CupertinoGlassToast.showSuccess(context, 'Aset hardware berhasil diperbarui.');
       ref.invalidate(assetDetailProvider(widget.assetId)); // Refresh detail
       ref.invalidate(assetListProvider); // Refresh list
       
@@ -428,104 +432,16 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
         context.pop();
       }
     } catch (e) {
-      _showNotification('Gagal memperbarui aset: $e', isError: true);
+      CupertinoGlassToast.showError(context, 'Gagal memperbarui aset: $e');
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
-  }
-
-  void _showNotification(String message, {bool isError = false}) {
-    if (!mounted) return;
-    
-    final overlay = Overlay.of(context);
-    late OverlayEntry entry;
-
-    entry = OverlayEntry(
-      builder: (context) => Positioned(
-        top: MediaQuery.of(context).padding.top + 24,
-        left: 24,
-        right: 24,
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 450),
-            child: DefaultTextStyle(
-              style: const TextStyle(color: CupertinoColors.white, fontFamily: '.SF Pro Text'),
-              child: TweenAnimationBuilder<double>(
-                duration: const Duration(milliseconds: 250),
-                tween: Tween(begin: 0.0, end: 1.0),
-                builder: (context, value, child) {
-                  return Opacity(
-                    opacity: value,
-                    child: Transform.translate(
-                      offset: Offset(0, (1 - value) * -20),
-                      child: child,
-                    ),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: isError ? CupertinoColors.systemRed : CupertinoColors.activeGreen,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: CupertinoColors.black,
-                        blurRadius: 12,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isError ? CupertinoIcons.exclamationmark_triangle : CupertinoIcons.check_mark_circled,
-                        color: CupertinoColors.white,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          message,
-                          style: const TextStyle(
-                            color: CupertinoColors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.none,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () {
-                          if (entry.mounted) entry.remove();
-                        },
-                        child: const Icon(CupertinoIcons.xmark, color: CupertinoColors.white, size: 18),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    overlay.insert(entry);
-    Future.delayed(const Duration(milliseconds: 3000), () {
-      if (entry.mounted) entry.remove();
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     final assetAsync = ref.watch(assetDetailProvider(widget.assetId));
     final companiesAsync = ref.watch(companiesProvider);
-
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
-    final separatorColor = CupertinoColors.separator.resolveFrom(context);
-    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
 
     return assetAsync.when(
       data: (asset) {
@@ -551,19 +467,14 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
               ),
               child: SafeArea(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // 1. Identification Section
                       _buildSectionTitle('Identifikasi Aset'),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: cardBg,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: separatorColor, width: 0.5),
-                        ),
-                        padding: const EdgeInsets.all(16),
+                      CupertinoGlassContainer(
+                        padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -574,10 +485,10 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
                               onTap: () => _showCompanyPicker(companies),
                             ),
                             if (_companyError != null) ...[
-                              const SizedBox(height: 4),
-                              Text(_companyError!, style: const TextStyle(color: CupertinoColors.destructiveRed, fontSize: 12)),
+                              const SizedBox(height: CupertinoSpacing.xs),
+                              Text(_companyError!, style: context.caption1.copyWith(color: CupertinoColors.destructiveRed)),
                             ],
-                            const SizedBox(height: 16),
+                            const SizedBox(height: CupertinoSpacing.l),
 
                             // Category Select Field
                             _buildSelectField(
@@ -586,14 +497,14 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
                               onTap: _showCategoryPicker,
                             ),
                             if (_categoryError != null) ...[
-                              const SizedBox(height: 4),
-                              Text(_categoryError!, style: const TextStyle(color: CupertinoColors.destructiveRed, fontSize: 12)),
+                              const SizedBox(height: CupertinoSpacing.xs),
+                              Text(_categoryError!, style: context.caption1.copyWith(color: CupertinoColors.destructiveRed)),
                             ],
-                            const SizedBox(height: 16),
+                            const SizedBox(height: CupertinoSpacing.l),
 
                             // Asset Name
-                            const Text('Nama Aset *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-                            const SizedBox(height: 6),
+                            Text('Nama Aset *', style: context.caption1.copyWith(fontWeight: FontWeight.w500)),
+                            const SizedBox(height: CupertinoSpacing.s),
                             CupertinoTextField(
                               controller: _nameController,
                               placeholder: 'Misal: MacBook Pro M3 Max 16"',
@@ -604,10 +515,10 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
                               },
                             ),
                             if (_nameError != null) ...[
-                              const SizedBox(height: 4),
-                              Text(_nameError!, style: const TextStyle(color: CupertinoColors.destructiveRed, fontSize: 12)),
+                              const SizedBox(height: CupertinoSpacing.xs),
+                              Text(_nameError!, style: context.caption1.copyWith(color: CupertinoColors.destructiveRed)),
                             ],
-                            const SizedBox(height: 16),
+                            const SizedBox(height: CupertinoSpacing.l),
 
                             // Brand & Model
                             Row(
@@ -616,8 +527,8 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text('Brand', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-                                      const SizedBox(height: 6),
+                                      Text('Brand', style: context.caption1.copyWith(fontWeight: FontWeight.w500)),
+                                      const SizedBox(height: CupertinoSpacing.s),
                                       CupertinoTextField(
                                         controller: _brandController,
                                         placeholder: 'Apple',
@@ -625,13 +536,13 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
                                     ],
                                   ),
                                 ),
-                                const SizedBox(width: 16),
+                                const SizedBox(width: CupertinoSpacing.l),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text('Model', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-                                      const SizedBox(height: 6),
+                                      Text('Model', style: context.caption1.copyWith(fontWeight: FontWeight.w500)),
+                                      const SizedBox(height: CupertinoSpacing.s),
                                       CupertinoTextField(
                                         controller: _modelController,
                                         placeholder: 'A2991',
@@ -641,11 +552,11 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: CupertinoSpacing.l),
 
                             // Serial Number
-                            const Text('Serial Number (S/N)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-                            const SizedBox(height: 6),
+                            Text('Serial Number (S/N)', style: context.caption1.copyWith(fontWeight: FontWeight.w500)),
+                            const SizedBox(height: CupertinoSpacing.s),
                             CupertinoTextField(
                               controller: _serialNumberController,
                               placeholder: 'C02XG8...',
@@ -653,17 +564,12 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: CupertinoSpacing.xl),
 
                       // 2. Acquisition Section
                       _buildSectionTitle('Pembelian & Garansi'),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: cardBg,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: separatorColor, width: 0.5),
-                        ),
-                        padding: const EdgeInsets.all(16),
+                      CupertinoGlassContainer(
+                        padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -675,11 +581,11 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
                                     _purchaseDate == null
                                         ? 'Tanggal Beli: Belum Dipilih'
                                         : 'Tanggal Beli: ${DateFormat('dd-MM-yyyy').format(_purchaseDate!)}',
-                                    style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                                    style: context.subhead.copyWith(fontWeight: FontWeight.w500),
                                   ),
                                 ),
                                 CupertinoButton(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
                                   child: const Text('Pilih', style: TextStyle(color: Color(0xFF6E56CF))),
                                   onPressed: () => _showCupertinoDatePicker(
                                     initialDate: _purchaseDate ?? DateTime.now(),
@@ -688,17 +594,17 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
                                 ),
                               ],
                             ),
-                            Container(height: 0.5, color: separatorColor, margin: const EdgeInsets.symmetric(vertical: 8)),
+                            const SizedBox(height: CupertinoSpacing.s),
                             
                             // Purchase Price
-                            const Text('Harga Beli (IDR)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-                            const SizedBox(height: 6),
+                            Text('Harga Beli (IDR)', style: context.caption1.copyWith(fontWeight: FontWeight.w500)),
+                            const SizedBox(height: CupertinoSpacing.s),
                             CupertinoTextField(
                               controller: _purchasePriceController,
                               placeholder: 'Misal: 15000000',
                               keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             ),
-                            Container(height: 0.5, color: separatorColor, margin: const EdgeInsets.symmetric(vertical: 16)),
+                            const SizedBox(height: CupertinoSpacing.l),
 
                             // Supplier Select Field
                             suppliersAsync.when(
@@ -710,7 +616,7 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
                               loading: () => const Center(child: CupertinoActivityIndicator()),
                               error: (err, _) => Text('Gagal memuat supplier: $err', style: const TextStyle(color: CupertinoColors.destructiveRed)),
                             ),
-                            Container(height: 0.5, color: separatorColor, margin: const EdgeInsets.symmetric(vertical: 8)),
+                            const SizedBox(height: CupertinoSpacing.l),
 
                             // Warranty Expiry Date
                             Row(
@@ -720,11 +626,11 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
                                     _warrantyExpiry == null
                                         ? 'Garansi Habis: Belum Dipilih'
                                         : 'Garansi Habis: ${DateFormat('dd-MM-yyyy').format(_warrantyExpiry!)}',
-                                    style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                                    style: context.subhead.copyWith(fontWeight: FontWeight.w500),
                                   ),
                                 ),
                                 CupertinoButton(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
                                   child: const Text('Pilih', style: TextStyle(color: Color(0xFF6E56CF))),
                                   onPressed: () => _showCupertinoDatePicker(
                                     initialDate: _warrantyExpiry ?? DateTime.now(),
@@ -736,17 +642,12 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: CupertinoSpacing.xl),
 
                       // 3. Deployment & Status Section
                       _buildSectionTitle('Penempatan & Status'),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: cardBg,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: separatorColor, width: 0.5),
-                        ),
-                        padding: const EdgeInsets.all(16),
+                      CupertinoGlassContainer(
+                        padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -756,7 +657,7 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
                               value: _statuses.firstWhere((s) => s['value'] == _status)['label'] ?? 'Available',
                               onTap: _showStatusPicker,
                             ),
-                            Container(height: 0.5, color: separatorColor, margin: const EdgeInsets.symmetric(vertical: 16)),
+                            const SizedBox(height: CupertinoSpacing.l),
 
                             // Office Select Field
                             officesAsync.when(
@@ -768,7 +669,7 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
                               loading: () => const Center(child: CupertinoActivityIndicator()),
                               error: (err, _) => Text('Gagal memuat kantor: $err', style: const TextStyle(color: CupertinoColors.destructiveRed)),
                             ),
-                            Container(height: 0.5, color: separatorColor, margin: const EdgeInsets.symmetric(vertical: 16)),
+                            const SizedBox(height: CupertinoSpacing.l),
 
                             // Employee Select Field
                             employeesAsync.when(
@@ -780,7 +681,7 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
                               loading: () => const Center(child: CupertinoActivityIndicator()),
                               error: (err, _) => Text('Gagal memuat karyawan: $err', style: const TextStyle(color: CupertinoColors.destructiveRed)),
                             ),
-                            Container(height: 0.5, color: separatorColor, margin: const EdgeInsets.symmetric(vertical: 8)),
+                            const SizedBox(height: CupertinoSpacing.l),
 
                             // Handover Date
                             Row(
@@ -790,11 +691,11 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
                                     _assignedDate == null
                                         ? 'Tanggal Serah: Belum Dipilih'
                                         : 'Tanggal Serah: ${DateFormat('dd-MM-yyyy').format(_assignedDate!)}',
-                                    style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                                    style: context.subhead.copyWith(fontWeight: FontWeight.w500),
                                   ),
                                 ),
                                 CupertinoButton(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
                                   child: const Text('Pilih', style: TextStyle(color: Color(0xFF6E56CF))),
                                   onPressed: () => _showCupertinoDatePicker(
                                     initialDate: _assignedDate ?? DateTime.now(),
@@ -806,31 +707,26 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: CupertinoSpacing.xl),
 
                       // 4. Detailed specs & notes Section
                       _buildSectionTitle('Spesifikasi & Catatan'),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: cardBg,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: separatorColor, width: 0.5),
-                        ),
-                        padding: const EdgeInsets.all(16),
+                      CupertinoGlassContainer(
+                        padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const Text('Spesifikasi Teknis', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-                            const SizedBox(height: 6),
+                            Text('Spesifikasi Teknis', style: context.caption1.copyWith(fontWeight: FontWeight.w500)),
+                            const SizedBox(height: CupertinoSpacing.s),
                             CupertinoTextField(
                               controller: _specificationsController,
                               placeholder: 'Misal: CPU 12-core, GPU 30-core, 36GB RAM, 1TB SSD',
                               maxLines: 4,
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: CupertinoSpacing.l),
 
-                            const Text('Catatan Internal', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-                            const SizedBox(height: 6),
+                            Text('Catatan Internal', style: context.caption1.copyWith(fontWeight: FontWeight.w500)),
+                            const SizedBox(height: CupertinoSpacing.s),
                             CupertinoTextField(
                               controller: _notesController,
                               placeholder: 'Misal: Kondisi bekas, mulus, ada sedikit goresan di bodi belakang',
@@ -839,17 +735,12 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: CupertinoSpacing.xl),
 
                       // 5. Photos / Attachments Section
                       _buildSectionTitle('Dokumentasi Foto Aset'),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: cardBg,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: separatorColor, width: 0.5),
-                        ),
-                        padding: const EdgeInsets.all(16),
+                      CupertinoGlassContainer(
+                        padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -858,19 +749,19 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
                                 height: 160,
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                  border: Border.all(color: separatorColor, width: 0.5),
+                                  border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 clipBehavior: Clip.antiAlias,
                                 child: Image.file(File(_photoFile!.path), fit: BoxFit.cover),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: CupertinoSpacing.m),
                             ] else if (asset.media.isNotEmpty) ...[
                               Container(
                                 height: 160,
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                  border: Border.all(color: separatorColor, width: 0.5),
+                                  border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 clipBehavior: Clip.antiAlias,
@@ -881,7 +772,7 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
                                   fit: BoxFit.cover,
                                 ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: CupertinoSpacing.m),
                             ],
                             SizedBox(
                               width: double.infinity,
@@ -893,10 +784,10 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     const Icon(CupertinoIcons.camera, color: Color(0xFF6E56CF), size: 20),
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: CupertinoSpacing.s),
                                     Text(
                                       _photoFile == null && asset.media.isEmpty ? 'Lampirkan Foto Aset' : 'Ganti Foto Terlampir',
-                                      style: const TextStyle(color: Color(0xFF6E56CF), fontWeight: FontWeight.w600, fontSize: 14),
+                                      style: context.subhead.copyWith(color: const Color(0xFF6E56CF), fontWeight: FontWeight.w600),
                                     ),
                                   ],
                                 ),
@@ -905,20 +796,19 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: CupertinoSpacing.xxxl),
 
                       // Submit Button
                       SizedBox(
                         width: double.infinity,
-                        height: 48,
                         child: CupertinoButton.filled(
                           onPressed: _isSubmitting ? null : _submit,
                           child: _isSubmitting
-                              ? const CupertinoActivityIndicator()
+                              ? const CupertinoActivityIndicator(color: CupertinoColors.white)
                               : const Text('Simpan Perubahan', style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: CupertinoSpacing.xxxl),
                     ],
                   ),
                 ),
@@ -949,13 +839,12 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
   Widget _buildSectionTitle(String title) {
     final labelColor = CupertinoColors.label.resolveFrom(context);
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      padding: const EdgeInsets.only(left: 4, bottom: CupertinoSpacing.s),
       child: Text(
         title,
-        style: TextStyle(
-          fontSize: 14,
+        style: context.subhead.copyWith(
           fontWeight: FontWeight.bold,
-          color: labelColor.withOpacity(0.8),
+          color: labelColor.withValues(alpha: 0.8),
         ),
       ),
     );
@@ -968,25 +857,23 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
   }) {
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
-    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.s),
         child: Row(
           children: [
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 6),
+                  Text(label, style: context.caption1.copyWith(fontWeight: FontWeight.w500)),
+                  const SizedBox(height: CupertinoSpacing.s),
                   Text(
                     value,
-                    style: TextStyle(
-                      fontSize: 15,
+                    style: context.subhead.copyWith(
                       fontWeight: FontWeight.w600,
                       color: value.startsWith('Pilih') || value.startsWith('Belum')
                           ? secondaryLabel

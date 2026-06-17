@@ -8,6 +8,10 @@ import '../models/transfer.dart';
 import '../providers/transfer_provider.dart';
 import '../providers/transfer_repository.dart';
 import '../../inventory/models/inventory.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
+import '../../../core/widgets/cupertino_glass_toast.dart';
 
 class TransferOutScreen extends ConsumerStatefulWidget {
   const TransferOutScreen({super.key});
@@ -72,26 +76,26 @@ class _TransferOutScreenState extends ConsumerState<TransferOutScreen> {
             color: navBarBg,
             child: CupertinoSlidingSegmentedControl<int>(
               groupValue: _selectedSegment,
-              children: const {
+              children: {
                 0: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(CupertinoIcons.paperplane, size: 16),
-                      SizedBox(width: 6),
-                      Text('Pengiriman Aktif', style: TextStyle(fontSize: 13)),
+                      const Icon(CupertinoIcons.paperplane, size: 16),
+                      const SizedBox(width: 6),
+                      Text('Pengiriman Aktif', style: context.footnote),
                     ],
                   ),
                 ),
                 1: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(CupertinoIcons.time, size: 16),
-                      SizedBox(width: 6),
-                      Text('Riwayat Pengiriman', style: TextStyle(fontSize: 13)),
+                      const Icon(CupertinoIcons.time, size: 16),
+                      const SizedBox(width: 6),
+                      Text('Riwayat Pengiriman', style: context.footnote),
                     ],
                   ),
                 ),
@@ -228,7 +232,6 @@ class _TransferOutScreenState extends ConsumerState<TransferOutScreen> {
     required String statusFilter,
   }) {
     final labelColor = CupertinoColors.label.resolveFrom(context);
-    final navBg = CupertinoColors.systemBackground.resolveFrom(context);
 
     return Column(
       children: [
@@ -239,7 +242,7 @@ class _TransferOutScreenState extends ConsumerState<TransferOutScreen> {
             children: [
               Text(
                 'Transfers Out',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
+                style: context.callout.copyWith(fontWeight: FontWeight.bold, color: labelColor),
               ),
               if (showCreateButton)
                 CupertinoButton(
@@ -253,11 +256,11 @@ class _TransferOutScreenState extends ConsumerState<TransferOutScreen> {
                       _selectedTransferId = null;
                     });
                   },
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(CupertinoIcons.add, size: 16, color: CupertinoColors.white),
-                      SizedBox(width: 4),
-                      Text('Kirim Baru', style: TextStyle(fontSize: 12, color: CupertinoColors.white)),
+                      const Icon(CupertinoIcons.add, size: 16, color: CupertinoColors.white),
+                      const SizedBox(width: 4),
+                      Text('Kirim Baru', style: context.caption1.copyWith(color: CupertinoColors.white)),
                     ],
                   ),
                 ),
@@ -274,7 +277,6 @@ class _TransferOutScreenState extends ConsumerState<TransferOutScreen> {
   Widget _buildTransfersListView(AsyncValue<List<WarehouseTransfer>> transfersAsync,
       ScrollController controller, bool isWide, String statusFilter) {
     final labelColor = CupertinoColors.label.resolveFrom(context);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return transfersAsync.when(
@@ -318,120 +320,109 @@ class _TransferOutScreenState extends ConsumerState<TransferOutScreen> {
                 statusColor = CupertinoColors.inactiveGray;
             }
 
-            return Container(
-              decoration: BoxDecoration(
-                color: cardBg,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isSelected && isWide
-                      ? CupertinoColors.activeBlue.resolveFrom(context)
-                      : separatorColor,
-                  width: isSelected && isWide ? 2.0 : 0.5,
-                ),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x0A0F0F0F),
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
+            final cardColor = isSelected && isWide
+                ? CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.08)
+                : CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+
+            return CupertinoGlassContainer(
+              backgroundColor: cardColor,
+              borderColor: isSelected && isWide
+                  ? CupertinoColors.activeBlue.resolveFrom(context)
+                  : separatorColor,
+              borderRadius: CupertinoSpacing.cardRadius,
+              padding: const EdgeInsets.all(CupertinoSpacing.l),
               child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: () {
                   setState(() {
                     _selectedTransferId = transfer.id;
                     _isCreating = false;
                   });
                 },
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            transfer.transferNumber,
-                            style: TextStyle(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          transfer.transferNumber,
+                          style: context.subhead.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: labelColor,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: statusColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: statusColor, width: 0.5),
+                          ),
+                          child: Text(
+                            transfer.status.toUpperCase(),
+                            style: context.caption2.copyWith(
                               fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: labelColor,
+                              color: statusColor,
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: statusColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: statusColor, width: 0.5),
-                            ),
-                            child: Text(
-                              transfer.status.toUpperCase(),
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: statusColor,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(CupertinoIcons.arrow_up_right, size: 14, color: CupertinoColors.destructiveRed),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Asal: ${transfer.sourceWarehouse?.name ?? "Gudang Asal"}',
+                            style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(CupertinoIcons.arrow_down_left, size: 14, color: CupertinoColors.activeGreen),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Tujuan: ${transfer.destinationWarehouse?.name ?? "Gudang Tujuan"}',
+                            style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Container(height: 0.5, color: separatorColor),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          transfer.transferDate,
+                          style: context.caption2.copyWith(color: CupertinoColors.placeholderText.resolveFrom(context)),
+                        ),
+                        if (transfer.driverName?.isNotEmpty == true)
+                          Row(
+                            children: [
+                              const Icon(CupertinoIcons.person, size: 12, color: CupertinoColors.inactiveGray),
+                              const SizedBox(width: 2),
+                              Text(
+                                transfer.driverName!,
+                                style: context.caption2.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                               ),
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Icon(CupertinoIcons.arrow_up_right, size: 14, color: CupertinoColors.destructiveRed),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              'Asal: ${transfer.sourceWarehouse?.name ?? "Gudang Asal"}',
-                              style: TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(CupertinoIcons.arrow_down_left, size: 14, color: CupertinoColors.activeGreen),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              'Tujuan: ${transfer.destinationWarehouse?.name ?? "Gudang Tujuan"}',
-                              style: TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Container(height: 0.5, color: separatorColor),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            transfer.transferDate,
-                            style: TextStyle(fontSize: 11, color: CupertinoColors.placeholderText.resolveFrom(context)),
-                          ),
-                          if (transfer.driverName?.isNotEmpty == true)
-                            Row(
-                              children: [
-                                const Icon(CupertinoIcons.person, size: 12, color: CupertinoColors.inactiveGray),
-                                const SizedBox(width: 2),
-                                Text(
-                                  transfer.driverName!,
-                                  style: TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
-                                ),
-                              ],
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             );
@@ -444,8 +435,6 @@ class _TransferOutScreenState extends ConsumerState<TransferOutScreen> {
   }
 
   Widget _buildRightPanel({required String statusFilter}) {
-    final labelColor = CupertinoColors.label.resolveFrom(context);
-
     if (_isCreating) {
       return _TransferCreateForm(
         onCancel: () {
@@ -487,8 +476,7 @@ class _TransferOutScreenState extends ConsumerState<TransferOutScreen> {
           Text(
             'Pilih pengiriman di sebelah kiri untuk melihat rincian,\natau klik "Kirim Baru" untuk mengirim barang.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
+            style: context.subhead.copyWith(
               color: CupertinoColors.secondaryLabel.resolveFrom(context),
               fontWeight: FontWeight.w500,
             ),
@@ -554,7 +542,7 @@ class _TransferCreateFormState extends ConsumerState<_TransferCreateForm> {
               const SizedBox(height: 12),
               Text(
                 'Silakan pilih perusahaan terlebih dahulu',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: labelColor),
+                style: context.callout.copyWith(fontWeight: FontWeight.bold, color: labelColor),
               ),
               const SizedBox(height: 8),
               const Text(
@@ -615,10 +603,10 @@ class _TransferCreateFormState extends ConsumerState<_TransferCreateForm> {
                       children: [
                         Text(
                           'Informasi Gudang',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: labelColor),
+                          style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                         ),
                         const SizedBox(height: 12),
-                        Text('Gudang Asal *', style: TextStyle(fontSize: 12, color: labelColor)),
+                        Text('Gudang Asal *', style: context.caption1.copyWith(color: labelColor)),
                         const SizedBox(height: 6),
                         GestureDetector(
                           onTap: () {
@@ -664,9 +652,8 @@ class _TransferCreateFormState extends ConsumerState<_TransferCreateForm> {
                                   _sourceWarehouseId != null
                                       ? companyWarehouses.firstWhere((w) => w.id == _sourceWarehouseId).name
                                       : 'Pilih Gudang Asal',
-                                  style: TextStyle(
+                                  style: context.subhead.copyWith(
                                     color: _sourceWarehouseId != null ? labelColor : CupertinoColors.placeholderText.resolveFrom(context),
-                                    fontSize: 14,
                                   ),
                                 ),
                                 const Icon(CupertinoIcons.chevron_down, size: 14, color: CupertinoColors.inactiveGray),
@@ -675,7 +662,7 @@ class _TransferCreateFormState extends ConsumerState<_TransferCreateForm> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        Text('Gudang Tujuan *', style: TextStyle(fontSize: 12, color: labelColor)),
+                        Text('Gudang Tujuan *', style: context.caption1.copyWith(color: labelColor)),
                         const SizedBox(height: 6),
                         GestureDetector(
                           onTap: () {
@@ -719,9 +706,8 @@ class _TransferCreateFormState extends ConsumerState<_TransferCreateForm> {
                                   _destWarehouseId != null
                                       ? companyWarehouses.firstWhere((w) => w.id == _destWarehouseId).name
                                       : 'Pilih Gudang Tujuan',
-                                  style: TextStyle(
+                                  style: context.subhead.copyWith(
                                     color: _destWarehouseId != null ? labelColor : CupertinoColors.placeholderText.resolveFrom(context),
-                                    fontSize: 14,
                                   ),
                                 ),
                                 const Icon(CupertinoIcons.chevron_down, size: 14, color: CupertinoColors.inactiveGray),
@@ -745,7 +731,7 @@ class _TransferCreateFormState extends ConsumerState<_TransferCreateForm> {
                       children: [
                         Text(
                           'Rincian Pengiriman',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: labelColor),
+                          style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                         ),
                         const SizedBox(height: 12),
                         Row(
@@ -754,7 +740,7 @@ class _TransferCreateFormState extends ConsumerState<_TransferCreateForm> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Nama Sopir', style: TextStyle(fontSize: 12, color: labelColor)),
+                                  Text('Nama Sopir', style: context.caption1.copyWith(color: labelColor)),
                                   const SizedBox(height: 6),
                                   CupertinoTextField(
                                     controller: _driverController,
@@ -768,7 +754,7 @@ class _TransferCreateFormState extends ConsumerState<_TransferCreateForm> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Nomor Polisi', style: TextStyle(fontSize: 12, color: labelColor)),
+                                  Text('Nomor Polisi', style: context.caption1.copyWith(color: labelColor)),
                                   const SizedBox(height: 6),
                                   CupertinoTextField(
                                     controller: _plateController,
@@ -780,7 +766,7 @@ class _TransferCreateFormState extends ConsumerState<_TransferCreateForm> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        Text('Catatan', style: TextStyle(fontSize: 12, color: labelColor)),
+                        Text('Catatan', style: context.caption1.copyWith(color: labelColor)),
                         const SizedBox(height: 6),
                         CupertinoTextField(
                           controller: _notesController,
@@ -796,7 +782,7 @@ class _TransferCreateFormState extends ConsumerState<_TransferCreateForm> {
                     children: [
                       Text(
                         'Daftar Barang yang Dikirim',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
+                        style: context.callout.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                       ),
                       if (_sourceWarehouseId != null)
                         Container(
@@ -818,9 +804,9 @@ class _TransferCreateFormState extends ConsumerState<_TransferCreateForm> {
                           ),
                         )
                       else
-                        const Text(
+                        Text(
                           'Pilih gudang asal untuk menambahkan barang',
-                          style: TextStyle(fontSize: 12, color: CupertinoColors.inactiveGray, fontStyle: FontStyle.italic),
+                          style: context.caption1.copyWith(color: CupertinoColors.inactiveGray, fontStyle: FontStyle.italic),
                         ),
                     ],
                   ),
@@ -850,13 +836,9 @@ class _TransferCreateFormState extends ConsumerState<_TransferCreateForm> {
                         final itemKey = _selectedItems.keys.elementAt(index);
                         final item = _selectedItems[itemKey]!;
 
-                        return Container(
+                        return CupertinoGlassContainer(
                           padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: cardBg,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: separatorColor, width: 0.5),
-                          ),
+                          borderRadius: CupertinoSpacing.cardRadius,
                           child: Row(
                             children: [
                               Expanded(
@@ -865,15 +847,15 @@ class _TransferCreateFormState extends ConsumerState<_TransferCreateForm> {
                                   children: [
                                     Text(
                                       item.inventory.productName ?? 'Produk Tidak Dikenal',
-                                      style: TextStyle(fontWeight: FontWeight.bold, color: labelColor),
+                                      style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                                     ),
                                     Text(
                                       'SKU: ${item.inventory.sku}',
-                                      style: TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                                      style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                                     ),
                                     Text(
                                       'Stok Tersedia: ${item.inventory.quantity} ${item.inventory.unit ?? "pcs"}',
-                                      style: const TextStyle(fontSize: 11, color: CupertinoColors.activeBlue),
+                                      style: context.caption2.copyWith(color: CupertinoColors.activeBlue),
                                     ),
                                   ],
                                 ),
@@ -903,7 +885,7 @@ class _TransferCreateFormState extends ConsumerState<_TransferCreateForm> {
                                           ),
                                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                         textAlign: TextAlign.center,
-                                        style: TextStyle(fontWeight: FontWeight.bold, color: labelColor),
+                                        style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                                         decoration: null,
                                         onChanged: (val) {
                                           final q = double.tryParse(val) ?? 0.0;
@@ -990,27 +972,27 @@ class _TransferCreateFormState extends ConsumerState<_TransferCreateForm> {
     if (_isSubmitting) return;
 
     if (_sourceWarehouseId == null) {
-      _showTopNotification(context, 'Gudang asal wajib dipilih', isError: true);
+      CupertinoGlassToast.showError(context, 'Gudang asal wajib dipilih');
       return;
     }
     if (_destWarehouseId == null) {
-      _showTopNotification(context, 'Gudang tujuan wajib dipilih', isError: true);
+      CupertinoGlassToast.showError(context, 'Gudang tujuan wajib dipilih');
       return;
     }
 
     if (_selectedItems.isEmpty) {
-      _showTopNotification(context, 'Silakan tambahkan minimal satu barang untuk dikirim', isError: true);
+      CupertinoGlassToast.showError(context, 'Silakan tambahkan minimal satu barang untuk dikirim');
       return;
     }
 
     // Validate quantities
     for (final e in _selectedItems.entries) {
       if (e.value.quantity <= 0) {
-        _showTopNotification(context, 'Jumlah barang ${e.value.inventory.productName} harus lebih dari 0', isError: true);
+        CupertinoGlassToast.showError(context, 'Jumlah barang ${e.value.inventory.productName} harus lebih dari 0');
         return;
       }
       if (e.value.quantity > e.value.inventory.quantity) {
-        _showTopNotification(context, 'Jumlah barang ${e.value.inventory.productName} melebihi stok tersedia', isError: true);
+        CupertinoGlassToast.showError(context, 'Jumlah barang ${e.value.inventory.productName} melebihi stok tersedia');
         return;
       }
     }
@@ -1038,10 +1020,14 @@ class _TransferCreateFormState extends ConsumerState<_TransferCreateForm> {
       final repo = ref.read(transferRepositoryProvider);
       await repo.shipTransfer(request);
 
-      _showTopNotification(context, 'Pengiriman keluar berhasil dibuat dan stok dipindahkan!');
+      if (mounted) {
+        CupertinoGlassToast.showSuccess(context, 'Pengiriman keluar berhasil dibuat dan stok dipindahkan!');
+      }
       widget.onSubmitSuccess();
     } catch (e) {
-      _showTopNotification(context, 'Gagal melakukan pengiriman transfer: $e', isError: true);
+      if (mounted) {
+        CupertinoGlassToast.showError(context, 'Gagal melakukan pengiriman transfer: $e');
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -1105,8 +1091,6 @@ class _AddItemSearchDialogState extends ConsumerState<_AddItemSearchDialog> {
       search: _searchQuery.isEmpty ? null : _searchQuery,
     ));
     final labelColor = CupertinoColors.label.resolveFrom(context);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
-    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
@@ -1144,14 +1128,14 @@ class _AddItemSearchDialogState extends ConsumerState<_AddItemSearchDialog> {
 
                     return ListView.separated(
                       itemCount: availableItems.length,
-                      separatorBuilder: (ctx, i) => Container(height: 0.5, color: separatorColor),
+                      separatorBuilder: (ctx, i) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
                         final item = availableItems[index];
                         return GestureDetector(
                           onTap: () => widget.onItemSelect(item),
-                          child: Container(
-                            color: cardBg,
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                          child: CupertinoGlassContainer(
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                            borderRadius: CupertinoSpacing.cardRadius,
                             child: Row(
                               children: [
                                 Expanded(
@@ -1160,19 +1144,19 @@ class _AddItemSearchDialogState extends ConsumerState<_AddItemSearchDialog> {
                                     children: [
                                       Text(
                                         item.productName ?? 'Produk Tidak Dikenal',
-                                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: labelColor),
+                                        style: context.subhead.copyWith(fontWeight: FontWeight.w600, color: labelColor),
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
                                         'SKU: ${item.sku}',
-                                        style: TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                                        style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                                       ),
                                     ],
                                   ),
                                 ),
                                 Text(
                                   '${item.quantity} ${item.unit ?? "pcs"}',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, color: CupertinoColors.activeBlue),
+                                  style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.activeBlue),
                                 ),
                               ],
                             ),
@@ -1209,8 +1193,6 @@ class _TransferDetailView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final detailAsync = ref.watch(transferDetailProvider(transferId));
     final labelColor = CupertinoColors.label.resolveFrom(context);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
-    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return detailAsync.when(
       data: (transfer) {
@@ -1258,13 +1240,9 @@ class _TransferDetailView extends ConsumerWidget {
               child: ListView(
                 padding: const EdgeInsets.all(16.0),
                 children: [
-                  Container(
+                  CupertinoGlassContainer(
                     padding: const EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      color: cardBg,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: separatorColor, width: 0.5),
-                    ),
+                    borderRadius: CupertinoSpacing.cardRadius,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1273,7 +1251,7 @@ class _TransferDetailView extends ConsumerWidget {
                           children: [
                             Text(
                               'Informasi Pengiriman',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: labelColor),
+                              style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -1284,8 +1262,7 @@ class _TransferDetailView extends ConsumerWidget {
                               ),
                               child: Text(
                                 transfer.status.toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: 11,
+                                style: context.caption2.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: statusColor,
                                 ),
@@ -1302,12 +1279,14 @@ class _TransferDetailView extends ConsumerWidget {
                         const SizedBox(height: 4),
                         _buildDetailRow(context, 'Tanggal Kirim', transfer.transferDate),
                         const SizedBox(height: 4),
-                        if (transfer.driverName?.isNotEmpty == true)
+                        if (transfer.driverName?.isNotEmpty == true) ...[
                           _buildDetailRow(context, 'Sopir', transfer.driverName!),
-                        const SizedBox(height: 4),
-                        if (transfer.vehiclePlate?.isNotEmpty == true)
+                          const SizedBox(height: 4),
+                        ],
+                        if (transfer.vehiclePlate?.isNotEmpty == true) ...[
                           _buildDetailRow(context, 'Nomor Polisi', transfer.vehiclePlate!),
-                        const SizedBox(height: 4),
+                          const SizedBox(height: 4),
+                        ],
                         if (transfer.notes?.isNotEmpty == true)
                           _buildDetailRow(context, 'Catatan', transfer.notes!),
                       ],
@@ -1316,7 +1295,7 @@ class _TransferDetailView extends ConsumerWidget {
                   const SizedBox(height: 16),
                   Text(
                     'Barang yang Dikirim',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
+                    style: context.callout.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                   ),
                   const SizedBox(height: 8),
                   if (transfer.items == null || transfer.items!.isEmpty)
@@ -1329,13 +1308,9 @@ class _TransferDetailView extends ConsumerWidget {
                       separatorBuilder: (ctx, i) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
                         final item = transfer.items![index];
-                        return Container(
+                        return CupertinoGlassContainer(
                           padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: cardBg,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: separatorColor, width: 0.5),
-                          ),
+                          borderRadius: CupertinoSpacing.cardRadius,
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -1345,11 +1320,11 @@ class _TransferDetailView extends ConsumerWidget {
                                   children: [
                                     Text(
                                       item.product?.name ?? 'Produk Tidak Dikenal',
-                                      style: TextStyle(fontWeight: FontWeight.bold, color: labelColor),
+                                      style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                                     ),
                                     Text(
                                       'SKU: ${item.product?.sku ?? "N/A"}',
-                                      style: TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                                      style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                                     ),
                                   ],
                                 ),
@@ -1359,12 +1334,12 @@ class _TransferDetailView extends ConsumerWidget {
                                 children: [
                                   Text(
                                     'Dikirim: ${item.qtySent}',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, color: CupertinoColors.activeBlue),
+                                    style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.activeBlue),
                                   ),
                                   if (item.qtyReceived != null)
                                     Text(
                                       'Diterima: ${item.qtyReceived}',
-                                      style: const TextStyle(fontWeight: FontWeight.bold, color: CupertinoColors.activeGreen),
+                                      style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.activeGreen),
                                     ),
                                 ],
                               ),
@@ -1394,13 +1369,13 @@ class _TransferDetailView extends ConsumerWidget {
             width: 140,
             child: Text(
               label,
-              style: TextStyle(color: CupertinoColors.secondaryLabel.resolveFrom(context), fontSize: 13, fontWeight: FontWeight.w500),
+              style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context), fontWeight: FontWeight.w500),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: CupertinoColors.label.resolveFrom(context)),
+              style: context.footnote.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.label.resolveFrom(context)),
             ),
           ),
         ],
@@ -1409,77 +1384,4 @@ class _TransferDetailView extends ConsumerWidget {
   }
 }
 
-// ----------------------------------------------------
-// TOP NOTIFICATION OVERLAY (HELPER)
-// ----------------------------------------------------
-void _showTopNotification(BuildContext context, String message, {bool isError = false}) {
-  final overlay = Overlay.of(context);
-  late OverlayEntry entry;
-
-  entry = OverlayEntry(
-    builder: (context) => Positioned(
-      top: MediaQuery.of(context).padding.top + 24,
-      left: 24,
-      right: 24,
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 450),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: isError ? CupertinoColors.destructiveRed : CupertinoColors.activeGreen,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x42000000),
-                  blurRadius: 12,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isError ? CupertinoIcons.exclamationmark_circle : CupertinoIcons.check_mark_circled,
-                  color: CupertinoColors.white,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    message,
-                    style: const TextStyle(
-                      color: CupertinoColors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      decoration: TextDecoration.none,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () {
-                    if (entry.mounted) {
-                      entry.remove();
-                    }
-                  },
-                  child: const Icon(CupertinoIcons.xmark, color: CupertinoColors.white, size: 18),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
-
-  overlay.insert(entry);
-
-  Future.delayed(const Duration(milliseconds: 2500), () {
-    if (entry.mounted) {
-      entry.remove();
-    }
-  });
-}
+// Deleted obsolete _showTopNotification method as it is now replaced by CupertinoGlassToast

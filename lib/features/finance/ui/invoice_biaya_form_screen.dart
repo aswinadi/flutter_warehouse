@@ -1,15 +1,17 @@
-import 'dart:io';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Colors, Divider, Icons, Navigator, showDatePicker, showDialog, Theme;
+import 'package:flutter/material.dart' show Divider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import '../models/invoice_biaya.dart';
 import '../providers/invoice_biaya_repository.dart';
 import '../../../core/providers/company_provider.dart';
 import '../../purchase_request/models/supplier.dart';
 import '../../inventory/providers/asset_repository.dart';
 import '../../../core/models/company.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
+import '../../../core/widgets/cupertino_glass_toast.dart';
 
 class InvoiceBiayaFormScreen extends ConsumerStatefulWidget {
   final int? invoiceBiayaId; // If provided, we are in Edit mode
@@ -37,7 +39,7 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
   DateTime _invoiceDate = DateTime.now();
   DateTime? _dueDate;
 
-  List<XFile> _selectedFiles = [];
+  final List<XFile> _selectedFiles = [];
   bool _isLoading = false;
   bool _isInit = false;
 
@@ -84,22 +86,8 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
 
     } catch (e) {
       if (mounted) {
-        showCupertinoDialog(
-          context: context,
-          builder: (context) => CupertinoAlertDialog(
-            title: const Text('Gagal Memuat'),
-            content: Text('Gagal memuat data invoice: $e'),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text('OK'),
-                onPressed: () {
-                  Navigator.pop(context);
-                  context.pop();
-                },
-              ),
-            ],
-          ),
-        );
+        CupertinoGlassToast.showError(context, 'Gagal memuat data invoice: $e');
+        context.pop();
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -269,22 +257,10 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
       }
 
       if (mounted) {
-        showCupertinoDialog(
-          context: context,
-          builder: (context) => CupertinoAlertDialog(
-            title: const Text('Sukses'),
-            content: Text(widget.invoiceBiayaId == null ? 'Invoice Biaya berhasil dibuat.' : 'Invoice Biaya berhasil disimpan.'),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text('OK'),
-                onPressed: () {
-                  Navigator.pop(context);
-                  context.pop();
-                },
-              ),
-            ],
-          ),
-        );
+        CupertinoGlassToast.showSuccess(context, widget.invoiceBiayaId == null ? 'Invoice Biaya berhasil dibuat.' : 'Invoice Biaya berhasil disimpan.');
+        Future.delayed(const Duration(milliseconds: 1500), () {
+          if (mounted) context.pop();
+        });
       }
     } catch (e) {
       _showError('Gagal menyimpan invoice: $e');
@@ -294,19 +270,9 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
   }
 
   void _showError(String message) {
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('Kesalahan'),
-        content: Text(message),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text('OK'),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ],
-      ),
-    );
+    if (mounted) {
+      CupertinoGlassToast.showError(context, message);
+    }
   }
 
   @override
@@ -337,16 +303,13 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
             : Form(
                 key: _formKey,
                 child: ListView(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                   children: [
-                    const Text('Informasi Invoice', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: CupertinoColors.secondaryLabel)),
-                    const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    Text('Informasi Invoice', style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.secondaryLabel.resolveFrom(context))),
+                    const SizedBox(height: CupertinoSpacing.s),
+                    CupertinoGlassContainer(
+                      borderRadius: CupertinoSpacing.cardRadius,
+                      padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
                       child: Column(
                         children: [
                           _buildPickerRow<Company>(
@@ -385,7 +348,7 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
                             child: CupertinoTextField(
                               controller: _vendorInvoiceNumberController,
                               placeholder: 'Contoh: INV/123/ABC',
-                              placeholderStyle: const TextStyle(color: CupertinoColors.placeholderText),
+                              placeholderStyle: context.subhead.copyWith(color: CupertinoColors.placeholderText.resolveFrom(context)),
                               decoration: null,
                               padding: EdgeInsets.zero,
                             ),
@@ -395,7 +358,7 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
                             label: 'Tanggal Invoice',
                             child: CupertinoButton(
                               padding: EdgeInsets.zero,
-                              minSize: 0,
+                              minimumSize: Size.zero,
                               onPressed: _selectInvoiceDate,
                               child: Text(
                                 '${_invoiceDate.day.toString().padLeft(2, '0')}-${_invoiceDate.month.toString().padLeft(2, '0')}-${_invoiceDate.year}',
@@ -408,7 +371,7 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
                             label: 'Tanggal Jatuh Tempo',
                             child: CupertinoButton(
                               padding: EdgeInsets.zero,
-                              minSize: 0,
+                              minimumSize: Size.zero,
                               onPressed: _selectDueDate,
                               child: Text(
                                 _dueDate == null
@@ -423,15 +386,12 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    const Text('Nilai & Mata Uang', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: CupertinoColors.secondaryLabel)),
-                    const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    const SizedBox(height: CupertinoSpacing.xl),
+                    Text('Nilai & Mata Uang', style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.secondaryLabel.resolveFrom(context))),
+                    const SizedBox(height: CupertinoSpacing.s),
+                    CupertinoGlassContainer(
+                      borderRadius: CupertinoSpacing.cardRadius,
+                      padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
                       child: Column(
                         children: [
                           _buildFormRow(
@@ -444,7 +404,7 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
                             child: CupertinoTextField(
                               controller: _amountController,
                               placeholder: '0.00',
-                              placeholderStyle: const TextStyle(color: CupertinoColors.placeholderText),
+                              placeholderStyle: context.subhead.copyWith(color: CupertinoColors.placeholderText.resolveFrom(context)),
                               keyboardType: const TextInputType.numberWithOptions(decimal: true),
                               decoration: null,
                               padding: EdgeInsets.zero,
@@ -456,7 +416,7 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
                             child: CupertinoTextField(
                               controller: _taxAmountController,
                               placeholder: '0.00',
-                              placeholderStyle: const TextStyle(color: CupertinoColors.placeholderText),
+                              placeholderStyle: context.subhead.copyWith(color: CupertinoColors.placeholderText.resolveFrom(context)),
                               keyboardType: const TextInputType.numberWithOptions(decimal: true),
                               decoration: null,
                               padding: EdgeInsets.zero,
@@ -465,15 +425,12 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    const Text('Informasi Tambahan', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: CupertinoColors.secondaryLabel)),
-                    const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    const SizedBox(height: CupertinoSpacing.xl),
+                    Text('Informasi Tambahan', style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.secondaryLabel.resolveFrom(context))),
+                    const SizedBox(height: CupertinoSpacing.s),
+                    CupertinoGlassContainer(
+                      borderRadius: CupertinoSpacing.cardRadius,
+                      padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
                       child: Column(
                         children: [
                           _buildFormRow(
@@ -481,7 +438,7 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
                             child: CupertinoTextField(
                               controller: _notesController,
                               placeholder: 'Tambahkan catatan jika ada...',
-                              placeholderStyle: const TextStyle(color: CupertinoColors.placeholderText),
+                              placeholderStyle: context.subhead.copyWith(color: CupertinoColors.placeholderText.resolveFrom(context)),
                               maxLines: 3,
                               decoration: null,
                               padding: EdgeInsets.zero,
@@ -490,36 +447,33 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    const Text('Lampiran Dokumen', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: CupertinoColors.secondaryLabel)),
-                    const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.all(12),
+                    const SizedBox(height: CupertinoSpacing.xl),
+                    Text('Lampiran Dokumen', style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.secondaryLabel.resolveFrom(context))),
+                    const SizedBox(height: CupertinoSpacing.s),
+                    CupertinoGlassContainer(
+                      borderRadius: CupertinoSpacing.cardRadius,
+                      padding: const EdgeInsets.all(CupertinoSpacing.m),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           CupertinoButton(
                             color: CupertinoColors.systemGrey5.resolveFrom(context),
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(CupertinoSpacing.m),
                             onPressed: _pickFiles,
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(CupertinoIcons.paperclip, color: CupertinoColors.label.resolveFrom(context), size: 18),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: CupertinoSpacing.s),
                                 Text('Pilih Foto/Dokumen', style: TextStyle(color: CupertinoColors.label.resolveFrom(context), fontWeight: FontWeight.bold)),
                               ],
                             ),
                           ),
                           if (_selectedFiles.isNotEmpty) ...[
-                            const SizedBox(height: 12),
+                            const SizedBox(height: CupertinoSpacing.m),
                             ..._selectedFiles.asMap().entries.map((entry) => Container(
-                                  margin: const EdgeInsets.only(bottom: 8),
-                                  padding: const EdgeInsets.all(8),
+                                  margin: const EdgeInsets.only(bottom: CupertinoSpacing.s),
+                                  padding: const EdgeInsets.all(CupertinoSpacing.s),
                                   decoration: BoxDecoration(
                                     color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
                                     borderRadius: BorderRadius.circular(6),
@@ -527,18 +481,18 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
                                   child: Row(
                                     children: [
                                       const Icon(CupertinoIcons.doc, size: 16),
-                                      const SizedBox(width: 8),
+                                      const SizedBox(width: CupertinoSpacing.s),
                                       Expanded(
                                         child: Text(
                                           entry.value.name,
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(fontSize: 13),
+                                          style: context.footnote,
                                         ),
                                       ),
                                       CupertinoButton(
                                         padding: EdgeInsets.zero,
-                                        minSize: 0,
+                                        minimumSize: Size.zero,
                                         child: const Icon(CupertinoIcons.minus_circle_fill, color: CupertinoColors.systemRed, size: 18),
                                         onPressed: () => _removeFile(entry.key),
                                       ),
@@ -558,7 +512,7 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
 
   Widget _buildFormRow({required String label, required Widget child}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.xs + 2),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -566,7 +520,7 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
             width: 140,
             child: Text(
               label,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              style: context.subhead.copyWith(fontWeight: FontWeight.w500),
             ),
           ),
           Expanded(child: child),
@@ -591,7 +545,7 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
           data: (items) {
             return CupertinoButton(
               padding: EdgeInsets.zero,
-              minSize: 0,
+              minimumSize: Size.zero,
               onPressed: onSelected == null
                   ? null
                   : () {

@@ -1,9 +1,13 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Divider, Colors;
+import 'package:flutter/material.dart' show Divider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/payment_transaction.dart';
 import '../providers/payment_transaction_provider.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
+import '../../../core/widgets/cupertino_glass_toast.dart';
 
 class PaymentTransactionDetailScreen extends StatelessWidget {
   final int transactionId;
@@ -21,7 +25,7 @@ class PaymentTransactionDetailScreen extends StatelessWidget {
         backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
         middle: Text(
           'Detail Pembayaran',
-          style: TextStyle(color: CupertinoColors.label.resolveFrom(context)),
+          style: context.headline.copyWith(color: CupertinoColors.label.resolveFrom(context)),
         ),
       ),
       child: SafeArea(
@@ -118,19 +122,7 @@ class _PaymentTransactionDetailWidgetState
       await repository.uploadProof(transactionId, pickedFile.path);
 
       if (mounted) {
-        showCupertinoDialog(
-          context: context,
-          builder: (context) => CupertinoAlertDialog(
-            title: const Text('Sukses'),
-            content: const Text('Bukti transfer berhasil diunggah.'),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text('OK'),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-        );
+        CupertinoGlassToast.showSuccess(context, 'Bukti transfer berhasil diunggah.');
         ref.invalidate(paymentTransactionDetailsProvider(transactionId));
         widget.onUploadSuccess?.call();
       }
@@ -139,19 +131,7 @@ class _PaymentTransactionDetailWidgetState
         setState(() {
           _uploadError = e.toString();
         });
-        showCupertinoDialog(
-          context: context,
-          builder: (context) => CupertinoAlertDialog(
-            title: const Text('Gagal'),
-            content: Text('Gagal mengunggah: $e'),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text('OK'),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-        );
+        CupertinoGlassToast.showError(context, 'Gagal mengunggah: $e');
       }
     } finally {
       if (mounted) {
@@ -165,19 +145,18 @@ class _PaymentTransactionDetailWidgetState
   @override
   Widget build(BuildContext context) {
     final detailAsync = ref.watch(paymentTransactionDetailsProvider(widget.transactionId));
-    final secondaryLabelColor = CupertinoColors.secondaryLabel.resolveFrom(context);
 
     return detailAsync.when(
       data: (trx) {
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildMainDetailsCard(trx),
-              const SizedBox(height: 16),
+              const SizedBox(height: CupertinoSpacing.l),
               _buildProofUploadSection(trx),
-              const SizedBox(height: 16),
+              const SizedBox(height: CupertinoSpacing.l),
               _buildInvoicesSection(trx),
             ],
           ),
@@ -186,18 +165,18 @@ class _PaymentTransactionDetailWidgetState
       loading: () => const Center(child: CupertinoActivityIndicator()),
       error: (err, stack) => Center(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(CupertinoSpacing.xxxl),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(CupertinoIcons.exclamationmark_triangle, color: CupertinoColors.systemRed, size: 48),
-              const SizedBox(height: 12),
+              const SizedBox(height: CupertinoSpacing.m),
               Text(
                 'Gagal memuat detail transaksi: $err',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: CupertinoColors.systemRed),
+                style: context.subhead.copyWith(color: CupertinoColors.systemRed),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: CupertinoSpacing.m),
               CupertinoButton.filled(
                 onPressed: () {
                   ref.invalidate(paymentTransactionDetailsProvider(widget.transactionId));
@@ -215,98 +194,89 @@ class _PaymentTransactionDetailWidgetState
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabelColor = CupertinoColors.secondaryLabel.resolveFrom(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: CupertinoColors.activeBlue.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    CupertinoIcons.creditcard_fill,
-                    color: CupertinoColors.activeBlue,
-                  ),
+    return CupertinoGlassContainer(
+      borderRadius: CupertinoSpacing.cardRadius + 2,
+      padding: const EdgeInsets.all(CupertinoSpacing.xl),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(CupertinoSpacing.s),
+                decoration: BoxDecoration(
+                  color: CupertinoColors.activeBlue.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        trx.transactionNumber,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: labelColor,
-                        ),
-                      ),
-                      Text(
-                        'Tanggal: ${trx.transactionDate}',
-                        style: TextStyle(color: secondaryLabelColor, fontSize: 13),
-                      ),
-                    ],
-                  ),
+                child: const Icon(
+                  CupertinoIcons.creditcard_fill,
+                  color: CupertinoColors.activeBlue,
                 ),
-              ],
-            ),
-            const Divider(height: 32),
-            _buildDetailRow(CupertinoIcons.building_2_fill, 'Pemasok', trx.supplierName ?? '-'),
-            const SizedBox(height: 12),
-            _buildDetailRow(
-              CupertinoIcons.house_fill,
-              'Bank Sumber',
-              trx.bankName != null
-                  ? '${trx.bankName} - ${trx.bankAccount}'
-                  : 'Tidak Ada Rekening Bank',
-            ),
-            if (trx.transferReference != null && trx.transferReference!.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              _buildDetailRow(
-                CupertinoIcons.doc_text,
-                'Referensi Transfer',
-                trx.transferReference!,
+              ),
+              const SizedBox(width: CupertinoSpacing.m),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      trx.transactionNumber,
+                      style: context.title3.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: labelColor,
+                      ),
+                    ),
+                    Text(
+                      'Tanggal: ${trx.transactionDate}',
+                      style: context.footnote.copyWith(color: secondaryLabelColor),
+                    ),
+                  ],
+                ),
               ),
             ],
-            if (trx.notes != null && trx.notes!.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              _buildDetailRow(CupertinoIcons.doc, 'Catatan', trx.notes!),
-            ],
-            const Divider(height: 32),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Total Bayar',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: secondaryLabelColor,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                Text(
-                  _formatCurrency(trx.totalAmount),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                    color: CupertinoColors.activeBlue,
-                  ),
-                ),
-              ],
+          ),
+          const Divider(height: CupertinoSpacing.xxxl),
+          _buildDetailRow(CupertinoIcons.building_2_fill, 'Pemasok', trx.supplierName ?? '-'),
+          const SizedBox(height: CupertinoSpacing.m),
+          _buildDetailRow(
+            CupertinoIcons.house_fill,
+            'Bank Sumber',
+            trx.bankName != null
+                ? '${trx.bankName} - ${trx.bankAccount}'
+                : 'Tidak Ada Rekening Bank',
+          ),
+          if (trx.transferReference != null && trx.transferReference!.isNotEmpty) ...[
+            const SizedBox(height: CupertinoSpacing.m),
+            _buildDetailRow(
+              CupertinoIcons.doc_text,
+              'Referensi Transfer',
+              trx.transferReference!,
             ),
           ],
-        ),
+          if (trx.notes != null && trx.notes!.isNotEmpty) ...[
+            const SizedBox(height: CupertinoSpacing.m),
+            _buildDetailRow(CupertinoIcons.doc, 'Catatan', trx.notes!),
+          ],
+          const Divider(height: CupertinoSpacing.xxxl),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Total Bayar',
+                style: context.subhead.copyWith(
+                  color: secondaryLabelColor,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                _formatCurrency(trx.totalAmount),
+                style: context.title3.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: CupertinoColors.activeBlue,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -318,23 +288,21 @@ class _PaymentTransactionDetailWidgetState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, size: 18, color: secondaryLabelColor),
-        const SizedBox(width: 10),
+        const SizedBox(width: CupertinoSpacing.m),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 12,
+                style: context.caption1.copyWith(
                   color: secondaryLabelColor,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: CupertinoSpacing.xs - 2),
               Text(
                 value,
-                style: TextStyle(
-                  fontSize: 14,
+                style: context.subhead.copyWith(
                   fontWeight: FontWeight.w500,
                   color: labelColor,
                 ),
@@ -351,167 +319,158 @@ class _PaymentTransactionDetailWidgetState
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabelColor = CupertinoColors.secondaryLabel.resolveFrom(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Bukti Transfer',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: labelColor,
-              ),
+    return CupertinoGlassContainer(
+      borderRadius: CupertinoSpacing.cardRadius + 2,
+      padding: const EdgeInsets.all(CupertinoSpacing.xl),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Bukti Transfer',
+            style: context.callout.copyWith(
+              fontWeight: FontWeight.bold,
+              color: labelColor,
             ),
-            const SizedBox(height: 16),
-            if (_isUploading)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 24.0),
-                  child: Column(
-                    children: [
-                      const CupertinoActivityIndicator(radius: 14),
-                      const SizedBox(height: 12),
-                      Text('Mengunggah bukti transfer...', style: TextStyle(color: secondaryLabelColor)),
-                    ],
-                  ),
+          ),
+          const SizedBox(height: CupertinoSpacing.l),
+          if (_isUploading)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.screenMargin),
+                child: Column(
+                  children: [
+                    const CupertinoActivityIndicator(radius: 14),
+                    const SizedBox(height: CupertinoSpacing.m),
+                    Text('Mengunggah bukti transfer...', style: TextStyle(color: secondaryLabelColor)),
+                  ],
                 ),
-              )
-            else if (hasProof)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    height: 200,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: CupertinoColors.separator.resolveFrom(context)),
-                      borderRadius: BorderRadius.circular(12),
-                      color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: trx.receiptUrl!.toLowerCase().endsWith('.pdf')
-                        ? Center(
+              ),
+            )
+          else if (hasProof)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 200,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: CupertinoColors.separator.resolveFrom(context)),
+                    borderRadius: BorderRadius.circular(12),
+                    color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: trx.receiptUrl!.toLowerCase().endsWith('.pdf')
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(CupertinoIcons.doc_text, size: 64, color: CupertinoColors.systemRed),
+                              const SizedBox(height: CupertinoSpacing.s),
+                              Text(
+                                'Dokumen PDF Bukti Transfer',
+                                style: context.footnote.copyWith(color: secondaryLabelColor),
+                              ),
+                            ],
+                          ),
+                        )
+                      : Image.network(
+                          trx.receiptUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(CupertinoIcons.doc_text, size: 64, color: CupertinoColors.systemRed),
-                                const SizedBox(height: 8),
+                                Icon(CupertinoIcons.exclamationmark_triangle, size: 48, color: secondaryLabelColor),
+                                const SizedBox(height: CupertinoSpacing.s),
                                 Text(
-                                  'Dokumen PDF Bukti Transfer',
-                                  style: TextStyle(color: secondaryLabelColor, fontSize: 13),
+                                  'Gagal menampilkan gambar bukti',
+                                  style: context.footnote.copyWith(color: secondaryLabelColor),
                                 ),
                               ],
                             ),
-                          )
-                        : Image.network(
-                            trx.receiptUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(CupertinoIcons.exclamationmark_triangle, size: 48, color: secondaryLabelColor),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Gagal menampilkan gambar bukti',
-                                    style: TextStyle(color: secondaryLabelColor, fontSize: 13),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: CupertinoButton(
-                          padding: EdgeInsets.zero,
-                          color: CupertinoColors.activeBlue,
-                          onPressed: () => _pickAndUploadProof(trx.id),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(CupertinoIcons.arrow_clockwise),
-                              SizedBox(width: 8),
-                              Text('Unggah Ulang Bukti'),
-                            ],
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
-              )
-            else
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
-                decoration: BoxDecoration(
-                  color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
-                  border: Border.all(
-                    color: CupertinoColors.separator.resolveFrom(context),
-                  ),
-                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Column(
+                const SizedBox(height: CupertinoSpacing.l),
+                Row(
                   children: [
-                    Icon(
-                      CupertinoIcons.cloud_upload,
-                      size: 48,
-                      color: secondaryLabelColor,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Belum Ada Bukti Transfer',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: labelColor,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Harap unggah bukti transfer pembayaran ini',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: secondaryLabelColor,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    CupertinoButton.filled(
-                      onPressed: () => _pickAndUploadProof(trx.id),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(CupertinoIcons.cloud_upload),
-                          SizedBox(width: 8),
-                          Text('Unggah Bukti'),
-                        ],
+                    Expanded(
+                      child: CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        color: CupertinoColors.activeBlue,
+                        onPressed: () => _pickAndUploadProof(trx.id),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(CupertinoIcons.arrow_clockwise),
+                            SizedBox(width: CupertinoSpacing.s),
+                            Text('Unggah Ulang Bukti'),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
+              ],
+            )
+          else
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.xxxl, horizontal: CupertinoSpacing.screenMargin),
+              decoration: BoxDecoration(
+                color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+                border: Border.all(
+                  color: CupertinoColors.separator.resolveFrom(context),
+                ),
+                borderRadius: BorderRadius.circular(12),
               ),
-            if (_uploadError != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                _uploadError!,
-                style: const TextStyle(color: CupertinoColors.destructiveRed, fontSize: 12),
+              child: Column(
+                children: [
+                  Icon(
+                    CupertinoIcons.cloud_upload,
+                    size: 48,
+                    color: secondaryLabelColor,
+                  ),
+                  const SizedBox(height: CupertinoSpacing.m),
+                  Text(
+                    'Belum Ada Bukti Transfer',
+                    style: context.subhead.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: labelColor,
+                    ),
+                  ),
+                  const SizedBox(height: CupertinoSpacing.xs),
+                  Text(
+                    'Harap unggah bukti transfer pembayaran ini',
+                    style: context.caption1.copyWith(
+                      color: secondaryLabelColor,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: CupertinoSpacing.l),
+                  CupertinoButton.filled(
+                    onPressed: () => _pickAndUploadProof(trx.id),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(CupertinoIcons.cloud_upload),
+                        SizedBox(width: CupertinoSpacing.s),
+                        Text('Unggah Bukti'),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
+          if (_uploadError != null) ...[
+            const SizedBox(height: CupertinoSpacing.s),
+            Text(
+              _uploadError!,
+              style: context.caption1.copyWith(color: CupertinoColors.destructiveRed),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -521,75 +480,65 @@ class _PaymentTransactionDetailWidgetState
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabelColor = CupertinoColors.secondaryLabel.resolveFrom(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Invoice yang Dibayar',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: labelColor,
-              ),
+    return CupertinoGlassContainer(
+      borderRadius: CupertinoSpacing.cardRadius + 2,
+      padding: const EdgeInsets.all(CupertinoSpacing.xl),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Invoice yang Dibayar',
+            style: context.callout.copyWith(
+              fontWeight: FontWeight.bold,
+              color: labelColor,
             ),
-            const SizedBox(height: 12),
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: trx.invoices.length,
-              separatorBuilder: (context, index) =>
-                  Divider(color: CupertinoColors.separator.resolveFrom(context)),
-              itemBuilder: (context, index) {
-                final item = trx.invoices[index];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+          ),
+          const SizedBox(height: CupertinoSpacing.m),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: trx.invoices.length,
+            separatorBuilder: (context, index) =>
+                Divider(color: CupertinoColors.separator.resolveFrom(context)),
+            itemBuilder: (context, index) {
+              final item = trx.invoices[index];
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.xs),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.invoiceNumber,
+                          style: context.subhead.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: labelColor,
+                          ),
+                        ),
+                        if (item.invoiceDate != null)
                           Text(
-                            item.invoiceNumber,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: labelColor,
+                            'Tanggal: ${item.invoiceDate}',
+                            style: context.caption1.copyWith(
+                              color: secondaryLabelColor,
                             ),
                           ),
-                          if (item.invoiceDate != null)
-                            Text(
-                              'Tanggal: ${item.invoiceDate}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: secondaryLabelColor,
-                              ),
-                            ),
-                        ],
+                      ],
+                    ),
+                    Text(
+                      _formatCurrency(item.amountPaid),
+                      style: context.subhead.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: labelColor,
                       ),
-                      Text(
-                        _formatCurrency(item.amountPaid),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                          color: labelColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

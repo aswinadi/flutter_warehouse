@@ -2,6 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
+import '../../../core/widgets/cupertino_glass_toast.dart';
 import '../providers/aquaculture_crud_config.dart';
 import '../providers/aquaculture_crud_provider.dart';
 
@@ -172,86 +176,11 @@ class _AquacultureCrudFormScreenState extends ConsumerState<AquacultureCrudFormS
 
   void _showNotification(String message, {bool isError = false}) {
     if (!mounted) return;
-    
-    final overlay = Overlay.of(context);
-    late OverlayEntry entry;
-
-    entry = OverlayEntry(
-      builder: (context) => Positioned(
-        top: MediaQuery.of(context).padding.top + 24,
-        left: 24,
-        right: 24,
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 450),
-            child: DefaultTextStyle(
-              style: const TextStyle(color: CupertinoColors.white, fontFamily: '.SF Pro Text'),
-              child: TweenAnimationBuilder<double>(
-                duration: const Duration(milliseconds: 250),
-                tween: Tween(begin: 0.0, end: 1.0),
-                builder: (context, value, child) {
-                  return Opacity(
-                    opacity: value,
-                    child: Transform.translate(
-                      offset: Offset(0, (1 - value) * -20),
-                      child: child,
-                    ),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: isError ? CupertinoColors.systemRed : CupertinoColors.activeGreen,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x33000000),
-                        blurRadius: 12,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isError ? CupertinoIcons.exclamationmark_triangle : CupertinoIcons.check_mark_circled,
-                        color: CupertinoColors.white,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          message,
-                          style: const TextStyle(
-                            color: CupertinoColors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.none,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () {
-                          if (entry.mounted) entry.remove();
-                        },
-                        child: const Icon(CupertinoIcons.xmark, color: CupertinoColors.white, size: 18),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    overlay.insert(entry);
-    Future.delayed(const Duration(milliseconds: 3000), () {
-      if (entry.mounted) entry.remove();
-    });
+    if (isError) {
+      CupertinoGlassToast.showError(context, message);
+    } else {
+      CupertinoGlassToast.showSuccess(context, message);
+    }
   }
 
   void _showCupertinoDatePicker(String fieldName) {
@@ -405,36 +334,33 @@ class _AquacultureCrudFormScreenState extends ConsumerState<AquacultureCrudFormS
   }) {
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
-    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 14,
+          style: context.subhead.copyWith(
             fontWeight: FontWeight.w600,
             color: labelColor,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: CupertinoSpacing.xs),
         GestureDetector(
           onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            decoration: BoxDecoration(
-              color: CupertinoColors.systemBackground.resolveFrom(context),
-              border: Border.all(color: separatorColor, width: 0.5),
-              borderRadius: BorderRadius.circular(8),
+          child: CupertinoGlassContainer(
+            padding: const EdgeInsets.symmetric(
+              horizontal: CupertinoSpacing.m,
+              vertical: CupertinoSpacing.m,
             ),
+            borderRadius: CupertinoSpacing.buttonRadius,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Text(
                     value,
-                    style: TextStyle(fontSize: 15, color: labelColor),
+                    style: context.subhead.copyWith(color: labelColor),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -459,20 +385,23 @@ class _AquacultureCrudFormScreenState extends ConsumerState<AquacultureCrudFormS
           children: [
             Text(
               field.label + (field.required ? ' *' : ''),
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: labelColor),
+              style: context.subhead.copyWith(fontWeight: FontWeight.w600, color: labelColor),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: CupertinoSpacing.xs),
             CupertinoTextField(
               controller: _getController(field.name, _formData[field.name]),
               placeholder: field.placeholder,
               keyboardType: field.type == FieldType.number
                   ? const TextInputType.numberWithOptions(decimal: true)
                   : TextInputType.text,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              padding: const EdgeInsets.symmetric(
+                horizontal: CupertinoSpacing.m,
+                vertical: CupertinoSpacing.m,
+              ),
               decoration: BoxDecoration(
                 color: CupertinoColors.systemBackground.resolveFrom(context),
                 border: Border.all(color: borderCol, width: 0.5),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
               ),
               onChanged: (val) => _formData[field.name] = val,
             ),
@@ -481,19 +410,18 @@ class _AquacultureCrudFormScreenState extends ConsumerState<AquacultureCrudFormS
 
       case FieldType.boolean:
         final bool currentValue = _formData[field.name] == true;
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          decoration: BoxDecoration(
-            color: CupertinoColors.systemBackground.resolveFrom(context),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: borderCol, width: 0.5),
+        return CupertinoGlassContainer(
+          padding: const EdgeInsets.symmetric(
+            horizontal: CupertinoSpacing.m,
+            vertical: CupertinoSpacing.m,
           ),
+          borderRadius: CupertinoSpacing.buttonRadius,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 field.label,
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: labelColor),
+                style: context.subhead.copyWith(fontWeight: FontWeight.w600, color: labelColor),
               ),
               CupertinoSwitch(
                 value: currentValue,
@@ -620,7 +548,7 @@ class _AquacultureCrudFormScreenState extends ConsumerState<AquacultureCrudFormS
       return _isLoading
           ? const Center(child: CupertinoActivityIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -630,7 +558,7 @@ class _AquacultureCrudFormScreenState extends ConsumerState<AquacultureCrudFormS
                       Expanded(
                         child: Text(
                           actionText,
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: labelColor),
+                          style: context.title3.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                         ),
                       ),
                       if (widget.onCancel != null)
@@ -641,15 +569,15 @@ class _AquacultureCrudFormScreenState extends ConsumerState<AquacultureCrudFormS
                         ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: CupertinoSpacing.l),
                   if (config != null)
                     ...config.formFields.map((field) {
                       return Padding(
-                        padding: const EdgeInsets.only(bottom: 16.0),
+                        padding: const EdgeInsets.only(bottom: CupertinoSpacing.l),
                         child: _buildFieldInput(field),
                       );
                     }),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: CupertinoSpacing.xl),
                   Row(
                     children: [
                       if (widget.onCancel != null) ...[
@@ -660,21 +588,21 @@ class _AquacultureCrudFormScreenState extends ConsumerState<AquacultureCrudFormS
                               color: Color(0xFFE5E5EA),
                               darkColor: Color(0xFF2C2C2E),
                             ).resolveFrom(context),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            borderRadius: BorderRadius.circular(8),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
                             child: Text(
                               'BATAL',
                               style: TextStyle(color: labelColor, fontWeight: FontWeight.bold),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: CupertinoSpacing.m),
                       ],
                       Expanded(
                         child: CupertinoButton.filled(
                           onPressed: _isSaving ? null : _saveForm,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          borderRadius: BorderRadius.circular(8),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
                           child: _isSaving
                               ? const CupertinoActivityIndicator(color: CupertinoColors.white)
                               : const Text('SIMPAN', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -708,21 +636,22 @@ class _AquacultureCrudFormScreenState extends ConsumerState<AquacultureCrudFormS
         child: _isLoading
             ? const Center(child: CupertinoActivityIndicator())
             : SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                 child: Column(
                   children: [
                     if (config != null)
                       ...config.formFields.map((field) {
                         return Padding(
-                          padding: const EdgeInsets.only(bottom: 16.0),
+                          padding: const EdgeInsets.only(bottom: CupertinoSpacing.l),
                           child: _buildFieldInput(field),
                         );
                       }),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: CupertinoSpacing.xxl),
                     SizedBox(
                       width: double.infinity,
                       child: CupertinoButton.filled(
                         onPressed: _isSaving ? null : _saveForm,
+                        borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
                         child: _isSaving
                             ? const CupertinoActivityIndicator(color: CupertinoColors.white)
                             : const Text('SIMPAN'),

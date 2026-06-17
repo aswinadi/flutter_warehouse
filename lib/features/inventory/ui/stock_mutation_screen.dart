@@ -9,6 +9,9 @@ import '../../../core/models/company.dart';
 import '../../../core/models/warehouse.dart';
 import '../models/stock_mutation.dart';
 import '../providers/stock_mutation_provider.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
 
 class StockMutationScreen extends ConsumerStatefulWidget {
   const StockMutationScreen({super.key});
@@ -23,7 +26,6 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   int _selectedSegment = 0; // 0 for Summary, 1 for Detail (used in mobile view)
-  String _searchQuery = '';
   String? _selectedSku;
   String? _selectedProductName;
   String? _selectedProductUnit;
@@ -183,7 +185,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
             _buildFilterPanel(filteredWarehouses, warehouse, dateRange),
             if (!isWide)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
                 child: SizedBox(
                   width: double.infinity,
                   child: CupertinoSlidingSegmentedControl<int>(
@@ -230,14 +232,13 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
                                       Icon(
                                         CupertinoIcons.square_stack_3d_down_right,
                                         size: 48,
-                                        color: CupertinoColors.secondaryLabel.resolveFrom(context).withOpacity(0.5),
+                                        color: CupertinoColors.secondaryLabel.resolveFrom(context).withValues(alpha: 0.5),
                                       ),
-                                      const SizedBox(height: 16),
+                                      const SizedBox(height: CupertinoSpacing.screenMargin),
                                       Text(
                                         'Pilih produk dari ringkasan mutasi di panel kiri untuk melihat Kartu Stok',
-                                        style: TextStyle(
+                                        style: context.subhead.copyWith(
                                           color: CupertinoColors.secondaryLabel.resolveFrom(context),
-                                          fontSize: 15,
                                         ),
                                         textAlign: TextAlign.center,
                                       ),
@@ -255,21 +256,20 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
                             ? _buildDetailCardView(isWide: false)
                             : Center(
                                 child: Padding(
-                                  padding: const EdgeInsets.all(24.0),
+                                  padding: const EdgeInsets.all(CupertinoSpacing.xxl),
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Icon(
                                         CupertinoIcons.list_bullet,
                                         size: 48,
-                                        color: CupertinoColors.secondaryLabel.resolveFrom(context).withOpacity(0.5),
+                                        color: CupertinoColors.secondaryLabel.resolveFrom(context).withValues(alpha: 0.5),
                                       ),
-                                      const SizedBox(height: 16),
+                                      const SizedBox(height: CupertinoSpacing.screenMargin),
                                       Text(
                                         'Harap pilih produk dari tab Ringkasan Mutasi terlebih dahulu',
-                                        style: TextStyle(
+                                        style: context.subhead.copyWith(
                                           color: CupertinoColors.secondaryLabel.resolveFrom(context),
-                                          fontSize: 15,
                                         ),
                                         textAlign: TextAlign.center,
                                       ),
@@ -302,14 +302,13 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
             range.start.isAfter(now.subtract(const Duration(days: 31))) &&
             range.end.day == now.day;
 
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
-    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      color: cardBg,
+    return CupertinoGlassContainer(
+      borderRadius: 0,
+      padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -319,7 +318,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
                 child: GestureDetector(
                   onTap: company == null ? null : () => _showWarehousePicker(context, warehouses),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.m),
                     decoration: BoxDecoration(
                       color: company == null
                           ? CupertinoColors.tertiarySystemFill.resolveFrom(context)
@@ -335,8 +334,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
                             company == null
                                 ? 'Pilih Perusahaan Terlebih Dahulu'
                                 : (selectedWarehouse != null ? selectedWarehouse.name : 'Pilih Gudang'),
-                            style: TextStyle(
-                              fontSize: 13,
+                            style: context.footnote.copyWith(
                               color: company == null ? secondaryLabel : labelColor,
                               fontWeight: selectedWarehouse != null ? FontWeight.w500 : FontWeight.normal,
                             ),
@@ -349,12 +347,12 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: CupertinoSpacing.m),
               Expanded(
                 child: GestureDetector(
                   onTap: _selectDateRange,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.m),
                     decoration: BoxDecoration(
                       color: CupertinoColors.systemBackground.resolveFrom(context),
                       border: Border.all(color: separatorColor, width: 0.5),
@@ -366,7 +364,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
                         Expanded(
                           child: Text(
                             'Periode: ${_formatDate(range.start)} - ${_formatDate(range.end)}',
-                            style: TextStyle(fontSize: 12, color: labelColor, fontWeight: FontWeight.w500),
+                            style: context.caption1.copyWith(color: labelColor, fontWeight: FontWeight.w500),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -378,17 +376,17 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: CupertinoSpacing.m),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
                 _buildPresetChip('Hari Ini', isToday, () => _selectPresetRange('today')),
-                const SizedBox(width: 8),
+                const SizedBox(width: CupertinoSpacing.s),
                 _buildPresetChip('Bulan Ini', isThisMonth, () => _selectPresetRange('month')),
-                const SizedBox(width: 8),
+                const SizedBox(width: CupertinoSpacing.s),
                 _buildPresetChip('30 Hari Terakhir', isLast30Days, () => _selectPresetRange('30days')),
-                const SizedBox(width: 8),
+                const SizedBox(width: CupertinoSpacing.s),
                 _buildPresetChip('Rentang Kustom...', !isToday && !isThisMonth && !isLast30Days, _selectDateRange),
               ],
             ),
@@ -409,16 +407,15 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.s),
         decoration: BoxDecoration(
           color: contextResolvedBg,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Text(
           label,
-          style: TextStyle(
+          style: context.caption1.copyWith(
             color: labelColor,
-            fontSize: 12,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -430,7 +427,6 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
     final listAsync = ref.watch(stockMutationSummaryListProvider);
     final company = ref.watch(selectedCompanyProvider);
     final warehouse = ref.watch(selectedWarehouseProvider);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
@@ -438,14 +434,11 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
           child: CupertinoSearchTextField(
             controller: _searchController,
             placeholder: 'Cari SKU atau nama produk...',
             onChanged: (val) {
-              setState(() {
-                _searchQuery = val;
-              });
               ref.read(stockMutationSearchQueryProvider.notifier).setQuery(val);
             },
           ),
@@ -456,30 +449,28 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
               if (company == null || warehouse == null) {
                 return Center(
                   child: Padding(
-                    padding: const EdgeInsets.all(24.0),
+                    padding: const EdgeInsets.all(CupertinoSpacing.xxl),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
                           CupertinoIcons.building_2_fill,
                           size: 64,
-                          color: secondaryLabel.withOpacity(0.5),
+                          color: secondaryLabel.withValues(alpha: 0.5),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: CupertinoSpacing.screenMargin),
                         Text(
                           'Pilih Perusahaan & Gudang Terlebih Dahulu',
-                          style: TextStyle(
-                            fontSize: 16,
+                          style: context.headline.copyWith(
                             fontWeight: FontWeight.bold,
                             color: labelColor,
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: CupertinoSpacing.s),
                         Text(
                           'Untuk melihat laporan mutasi dan kartu stok, silakan pilih perusahaan dan gudang pada filter di atas.',
-                          style: TextStyle(
-                            fontSize: 13,
+                          style: context.footnote.copyWith(
                             color: secondaryLabel,
                           ),
                           textAlign: TextAlign.center,
@@ -494,7 +485,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
                 return Center(
                   child: Text(
                     'Tidak ada data mutasi untuk periode/kriteria ini',
-                    style: TextStyle(color: secondaryLabel),
+                    style: context.body.copyWith(color: secondaryLabel),
                   ),
                 );
               }
@@ -503,14 +494,14 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
 
               return ListView.separated(
                 controller: _summaryScrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
                 itemCount: items.length + (hasMore ? 1 : 0),
-                separatorBuilder: (context, index) => const SizedBox(height: 10),
+                separatorBuilder: (context, index) => const SizedBox(height: CupertinoSpacing.s),
                 itemBuilder: (context, index) {
                   if (index == items.length) {
                     return const Center(
                       child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16),
+                        padding: EdgeInsets.symmetric(vertical: CupertinoSpacing.screenMargin),
                         child: CupertinoActivityIndicator(),
                       ),
                     );
@@ -519,17 +510,9 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
                   final item = items[index];
                   final isSelected = item.sku == _selectedSku;
 
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: cardBg,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isSelected
-                            ? const Color(0xFF6E56CF)
-                            : separatorColor,
-                        width: isSelected ? 1.5 : 0.5,
-                      ),
-                    ),
+                  return CupertinoGlassContainer(
+                    borderColor: isSelected ? const Color(0xFF6E56CF) : null,
+                    padding: EdgeInsets.zero,
                     child: GestureDetector(
                       onTap: () {
                         setState(() {
@@ -542,23 +525,23 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
                         });
                       },
                       child: Padding(
-                        padding: const EdgeInsets.all(16.0),
+                        padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               item.productName,
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: labelColor),
+                              style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: CupertinoSpacing.xs),
                             Text(
                               'SKU: ${item.sku}',
-                              style: TextStyle(color: secondaryLabel, fontSize: 12),
+                              style: context.caption1.copyWith(color: secondaryLabel),
                             ),
                             Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8.0),
+                              padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.halfScreenMargin),
                               child: Container(height: 0.5, color: separatorColor),
                             ),
                             Row(
@@ -581,7 +564,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
             loading: () => const Center(child: CupertinoActivityIndicator()),
             error: (err, stack) => Center(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                 child: Text(
                   'Gagal memuat ringkasan mutasi: $err',
                   style: const TextStyle(color: CupertinoColors.destructiveRed),
@@ -603,13 +586,12 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
       children: [
         Text(
           label,
-          style: TextStyle(fontSize: 10, color: secondaryLabel),
+          style: context.caption2.copyWith(color: secondaryLabel),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: CupertinoSpacing.xs),
         Text(
           '$value $unit',
-          style: TextStyle(
-            fontSize: 12,
+          style: context.caption1.copyWith(
             fontWeight: bold ? FontWeight.bold : FontWeight.w600,
             color: color ?? labelColor,
           ),
@@ -637,20 +619,20 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
                   ? Center(
                       child: Text(
                         'Tidak ada riwayat transaksi mutasi untuk produk ini dalam periode terpilih',
-                        style: TextStyle(color: secondaryLabel),
+                        style: context.subhead.copyWith(color: secondaryLabel),
                         textAlign: TextAlign.center,
                       ),
                     )
                   : ListView.separated(
                       controller: _detailScrollController,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
                       itemCount: logs.length + (detailsNotifier.hasMore ? 1 : 0),
                       separatorBuilder: (context, index) => Container(height: 0.5, color: separatorColor),
                       itemBuilder: (context, index) {
                         if (index == logs.length) {
                           return const Center(
                             child: Padding(
-                              padding: EdgeInsets.symmetric(vertical: 16),
+                              padding: EdgeInsets.symmetric(vertical: CupertinoSpacing.screenMargin),
                               child: CupertinoActivityIndicator(),
                             ),
                           );
@@ -660,7 +642,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
                         final isIncoming = log.inQty > 0;
 
                         return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12.0),
+                          padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.m),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -669,20 +651,19 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
                                 children: [
                                   Text(
                                     log.date,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                    style: context.footnote.copyWith(fontWeight: FontWeight.bold),
                                   ),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.halfScreenMargin, vertical: CupertinoSpacing.xs),
                                     decoration: BoxDecoration(
                                       color: isIncoming
-                                          ? CupertinoColors.activeGreen.withOpacity(0.1)
-                                          : CupertinoColors.destructiveRed.withOpacity(0.1),
+                                          ? CupertinoColors.activeGreen.withValues(alpha: 0.1)
+                                          : CupertinoColors.destructiveRed.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Text(
                                       log.type.toUpperCase(),
-                                      style: TextStyle(
-                                        fontSize: 10,
+                                      style: context.caption2.copyWith(
                                         fontWeight: FontWeight.bold,
                                         color: isIncoming ? CupertinoColors.activeGreen : CupertinoColors.destructiveRed,
                                       ),
@@ -690,7 +671,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: CupertinoSpacing.s),
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -700,14 +681,13 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
                                       children: [
                                         Text(
                                           log.description ?? 'Tanpa keterangan',
-                                          style: const TextStyle(fontSize: 13),
+                                          style: context.footnote,
                                         ),
                                         if (log.refNumber != null) ...[
                                           const SizedBox(height: 2),
                                           Text(
                                             'Ref: ${log.refNumber}',
-                                            style: TextStyle(
-                                              fontSize: 11,
+                                            style: context.caption2.copyWith(
                                               color: secondaryLabel,
                                             ),
                                           ),
@@ -715,7 +695,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
                                       ],
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: CupertinoSpacing.m),
                                   Text(
                                     isIncoming
                                         ? '+${log.inQty.toStringAsFixed(0)} ${_selectedProductUnit ?? ""}'
@@ -739,7 +719,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
       loading: () => const Center(child: CupertinoActivityIndicator()),
       error: (err, stack) => Center(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(CupertinoSpacing.xxl),
           child: Text(
             'Gagal memuat detail kartu stok: $err',
             style: const TextStyle(color: CupertinoColors.destructiveRed),
@@ -751,36 +731,29 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
   }
 
   Widget _buildDetailHeaderWidget(StockMutationHeader? header) {
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
-    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: separatorColor, width: 0.5),
-      ),
+    return CupertinoGlassContainer(
+      margin: const EdgeInsets.all(CupertinoSpacing.screenMargin),
+      padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             _selectedProductName ?? 'Detail Kartu Stok',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: labelColor),
+            style: context.headline.copyWith(fontWeight: FontWeight.bold, color: labelColor),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: CupertinoSpacing.xs),
           Text(
             'SKU: $_selectedSku',
-            style: TextStyle(color: secondaryLabel, fontSize: 13),
+            style: context.footnote.copyWith(color: secondaryLabel),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12.0),
+            padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.m),
             child: Container(height: 0.5, color: separatorColor),
           ),
           if (header != null)
@@ -796,7 +769,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
           else
             const Center(
               child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 8.0),
+                padding: EdgeInsets.symmetric(vertical: CupertinoSpacing.halfScreenMargin),
                 child: CupertinoActivityIndicator(),
               ),
             ),
@@ -812,13 +785,12 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
       children: [
         Text(
           label,
-          style: TextStyle(fontSize: 12, color: secondaryLabel),
+          style: context.caption1.copyWith(color: secondaryLabel),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: CupertinoSpacing.xs),
         Text(
           '$value',
-          style: TextStyle(
-            fontSize: 16,
+          style: context.headline.copyWith(
             fontWeight: bold ? FontWeight.bold : FontWeight.w600,
             color: color ?? labelColor,
           ),
@@ -827,7 +799,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
           const SizedBox(height: 2),
           Text(
             _selectedProductUnit!,
-            style: TextStyle(fontSize: 10, color: secondaryLabel.withOpacity(0.6)),
+            style: context.caption2.copyWith(color: secondaryLabel.withValues(alpha: 0.6)),
           ),
         ],
       ],

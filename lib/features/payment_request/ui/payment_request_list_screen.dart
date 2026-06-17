@@ -7,6 +7,9 @@ import '../models/payment_request.dart';
 import 'payment_request_detail_screen.dart';
 import '../../../core/widgets/company_switcher.dart';
 import '../../../core/utils/currency_utils.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
 
 class PaymentRequestListScreen extends ConsumerStatefulWidget {
   const PaymentRequestListScreen({super.key});
@@ -58,7 +61,7 @@ class _PaymentRequestListScreenState extends ConsumerState<PaymentRequestListScr
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.s),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF6E56CF) : CupertinoColors.systemGroupedBackground.resolveFrom(context),
           borderRadius: BorderRadius.circular(16),
@@ -68,9 +71,8 @@ class _PaymentRequestListScreenState extends ConsumerState<PaymentRequestListScr
         ),
         child: Text(
           label,
-          style: TextStyle(
+          style: context.caption1.copyWith(
             color: isSelected ? CupertinoColors.white : CupertinoColors.label.resolveFrom(context),
-            fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -82,6 +84,7 @@ class _PaymentRequestListScreenState extends ConsumerState<PaymentRequestListScr
   Widget build(BuildContext context) {
     final listAsync = ref.watch(paymentRequestsProvider(status: _selectedStatus));
     final isWide = MediaQuery.of(context).size.width > 900;
+    final labelColor = CupertinoColors.label.resolveFrom(context);
 
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
@@ -89,7 +92,7 @@ class _PaymentRequestListScreenState extends ConsumerState<PaymentRequestListScr
         backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
         middle: Text(
           'Permintaan Pembayaran',
-          style: TextStyle(color: CupertinoColors.label.resolveFrom(context)),
+          style: TextStyle(color: labelColor),
         ),
       ),
       child: SafeArea(
@@ -97,21 +100,21 @@ class _PaymentRequestListScreenState extends ConsumerState<PaymentRequestListScr
           children: [
             const CompanySwitcher(),
             Container(
-              height: 48,
+              height: CupertinoSpacing.primaryButtonHeight,
               color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.s),
                 child: Row(
                   children: [
                     _buildFilterChip('Semua', null),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: CupertinoSpacing.s),
                     _buildFilterChip('Pending', 'pending'),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: CupertinoSpacing.s),
                     _buildFilterChip('Approved', 'approved'),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: CupertinoSpacing.s),
                     _buildFilterChip('Completed / Paid', 'completed'),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: CupertinoSpacing.s),
                     _buildFilterChip('Rejected', 'rejected'),
                   ],
                 ),
@@ -121,10 +124,10 @@ class _PaymentRequestListScreenState extends ConsumerState<PaymentRequestListScr
               child: listAsync.when(
                 data: (items) {
                   if (items.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Text(
                         'Tidak ada permintaan pembayaran',
-                        style: TextStyle(color: CupertinoColors.secondaryLabel, fontSize: 15),
+                        style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel),
                       ),
                     );
                   }
@@ -148,13 +151,13 @@ class _PaymentRequestListScreenState extends ConsumerState<PaymentRequestListScr
                     behavior: _InvoiceWebScrollBehavior(),
                     child: ListView.separated(
                       controller: _scrollController,
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                       itemCount: items.length + (showLoader ? 1 : 0),
-                      separatorBuilder: (context, index) => const SizedBox(height: 12),
+                      separatorBuilder: (context, index) => const SizedBox(height: CupertinoSpacing.m),
                       itemBuilder: (context, index) {
                         if (index == items.length) {
                           return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 16),
+                            padding: EdgeInsets.symmetric(vertical: CupertinoSpacing.screenMargin),
                             child: Center(child: CupertinoActivityIndicator()),
                           );
                         }
@@ -196,10 +199,10 @@ class _PaymentRequestListScreenState extends ConsumerState<PaymentRequestListScr
                                     isEmbedded: true,
                                   ),
                                 )
-                              : const Center(
+                              : Center(
                                   child: Text(
                                     'Pilih Permintaan Pembayaran untuk detail',
-                                    style: TextStyle(color: CupertinoColors.secondaryLabel),
+                                    style: context.body.copyWith(color: CupertinoColors.secondaryLabel),
                                   ),
                                 ),
                         ),
@@ -252,18 +255,14 @@ class _PaymentRequestCard extends StatelessWidget {
         statusColor = CupertinoColors.systemGrey;
     }
 
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF6E56CF) : CupertinoColors.separator.resolveFrom(context),
-            width: isSelected ? 2.0 : 0.5,
-          ),
-        ),
-        padding: const EdgeInsets.all(16),
+      child: CupertinoGlassContainer(
+        borderColor: isSelected ? const Color(0xFF6E56CF) : null,
+        borderRadius: CupertinoSpacing.cardRadius,
+        padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -272,46 +271,44 @@ class _PaymentRequestCard extends StatelessWidget {
               children: [
                 Text(
                   pr.requestNumber,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  style: context.subhead.copyWith(fontWeight: FontWeight.bold),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.s, vertical: CupertinoSpacing.xs),
                   decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.1),
+                    color: statusColor.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: statusColor, width: 0.5),
                   ),
                   child: Text(
                     pr.status.toUpperCase(),
-                    style: TextStyle(
+                    style: context.caption2.copyWith(
                       color: statusColor,
-                      fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 6),
-            _buildInfoRow('Pengaju', pr.requestorName),
-            _buildInfoRow('Pemasok', pr.supplierNames ?? '-'),
-            _buildInfoRow('Tanggal', pr.requestDate),
+            const SizedBox(height: CupertinoSpacing.s),
+            _buildInfoRow(context, 'Pengaju', pr.requestorName),
+            _buildInfoRow(context, 'Pemasok', pr.supplierNames ?? '-'),
+            _buildInfoRow(context, 'Tanggal', pr.requestDate),
             if (pr.dueDate != null) ...[
-              _buildInfoRow('Tempo Terdekat', pr.dueDate!),
+              _buildInfoRow(context, 'Tempo Terdekat', pr.dueDate!),
             ],
-            const Divider(color: CupertinoColors.separator, height: 16),
+            Divider(color: CupertinoColors.separator.resolveFrom(context), height: CupertinoSpacing.l),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Total Tagihan',
-                  style: TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel),
+                  style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel),
                 ),
                 Text(
                   formatWithCurrency(pr.totalAmount, pr.currency),
-                  style: const TextStyle(
+                  style: context.subhead.copyWith(
                     fontWeight: FontWeight.bold,
-                    fontSize: 15,
                   ),
                 ),
               ],
@@ -322,20 +319,20 @@ class _PaymentRequestCard extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(BuildContext context, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.xs),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel)),
+          Text(label, style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel)),
           Expanded(
             child: Text(
               value,
               textAlign: TextAlign.end,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+              style: context.caption1.copyWith(fontWeight: FontWeight.w500),
             ),
           ),
         ],

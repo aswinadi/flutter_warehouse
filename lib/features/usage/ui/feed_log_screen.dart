@@ -1,7 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
 import '../../../core/widgets/company_switcher.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
+import '../../../core/widgets/cupertino_glass_dialog.dart';
+import '../../../core/widgets/cupertino_glass_toast.dart';
 import '../models/feed_log.dart';
 import '../providers/feed_log_provider.dart';
 import 'package:flutter_app/l10n/app_localizations.dart';
@@ -224,86 +229,11 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
 
   void _showNotification(String message, {bool isError = false}) {
     if (!mounted) return;
-    
-    final overlay = Overlay.of(context);
-    late OverlayEntry entry;
-
-    entry = OverlayEntry(
-      builder: (context) => Positioned(
-        top: MediaQuery.of(context).padding.top + 24,
-        left: 24,
-        right: 24,
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 450),
-            child: DefaultTextStyle(
-              style: const TextStyle(color: CupertinoColors.white, fontFamily: '.SF Pro Text'),
-              child: TweenAnimationBuilder<double>(
-                duration: const Duration(milliseconds: 250),
-                tween: Tween(begin: 0.0, end: 1.0),
-                builder: (context, value, child) {
-                  return Opacity(
-                    opacity: value,
-                    child: Transform.translate(
-                      offset: Offset(0, (1 - value) * -20),
-                      child: child,
-                    ),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: isError ? CupertinoColors.systemRed : CupertinoColors.activeGreen,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x33000000),
-                        blurRadius: 12,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isError ? CupertinoIcons.exclamationmark_triangle : CupertinoIcons.check_mark_circled,
-                        color: CupertinoColors.white,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          message,
-                          style: const TextStyle(
-                            color: CupertinoColors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.none,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () {
-                          if (entry.mounted) entry.remove();
-                        },
-                        child: const Icon(CupertinoIcons.xmark, color: CupertinoColors.white, size: 18),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    overlay.insert(entry);
-    Future.delayed(const Duration(milliseconds: 3000), () {
-      if (entry.mounted) entry.remove();
-    });
+    if (isError) {
+      CupertinoGlassToast.showError(context, message);
+    } else {
+      CupertinoGlassToast.showSuccess(context, message);
+    }
   }
 
   void _resetForm() {
@@ -410,16 +340,16 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
   Future<void> _deleteLog(int id) async {
     final confirm = await showCupertinoDialog<bool>(
       context: context,
-      builder: (ctx) => CupertinoAlertDialog(
+      builder: (ctx) => CupertinoGlassDialog(
         title: const Text('Hapus Log Pakan'),
         content: const Text('Apakah Anda yakin ingin menghapus data log pakan ini?'),
         actions: [
-          CupertinoDialogAction(
+          CupertinoGlassDialogAction(
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Batal'),
           ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
+          CupertinoGlassDialogAction(
+            isDestructive: true,
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Hapus'),
           ),
@@ -445,36 +375,33 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
   }) {
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
-    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 14,
+          style: context.subhead.copyWith(
             fontWeight: FontWeight.w600,
             color: labelColor,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: CupertinoSpacing.xs),
         GestureDetector(
           onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            decoration: BoxDecoration(
-              color: CupertinoColors.systemBackground.resolveFrom(context),
-              border: Border.all(color: separatorColor, width: 0.5),
-              borderRadius: BorderRadius.circular(8),
+          child: CupertinoGlassContainer(
+            padding: const EdgeInsets.symmetric(
+              horizontal: CupertinoSpacing.m,
+              vertical: CupertinoSpacing.m,
             ),
+            borderRadius: CupertinoSpacing.buttonRadius,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Text(
                     value,
-                    style: TextStyle(fontSize: 15, color: labelColor),
+                    style: context.subhead.copyWith(color: labelColor),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -585,29 +512,23 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final borderCol = CupertinoColors.separator.resolveFrom(context);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             _editingLog != null ? 'Ubah Catatan Pakan' : l10n.addFeedLog,
-            style: TextStyle(
-              fontSize: 20,
+            style: context.title3.copyWith(
               fontWeight: FontWeight.bold,
               color: labelColor,
             ),
           ),
-          const SizedBox(height: 16),
-          Container(
-            decoration: BoxDecoration(
-              color: cardBg,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: borderCol, width: 0.5),
-            ),
-            padding: const EdgeInsets.all(16.0),
+          const SizedBox(height: CupertinoSpacing.l),
+          CupertinoGlassContainer(
+            borderRadius: CupertinoSpacing.cardRadius,
+            padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -617,7 +538,7 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
                   value: _selectedCycle != null ? _selectedCycle!.name : 'Pilih Siklus',
                   onTap: () => _showCyclePicker(cycles),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: CupertinoSpacing.l),
 
                 // Pond
                 _buildSelectField(
@@ -627,7 +548,7 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
                       : 'Pilih Kolam',
                   onTap: () => _showPondPicker(ponds),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: CupertinoSpacing.l),
 
                 // Date
                 _buildSelectField(
@@ -643,98 +564,98 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
                     },
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: CupertinoSpacing.l),
 
                 // Feed Code
                 Text(
                   l10n.feedCode,
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: labelColor),
+                  style: context.subhead.copyWith(fontWeight: FontWeight.w600, color: labelColor),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: CupertinoSpacing.xs),
                 CupertinoTextField(
                   controller: _feedCodeController,
                   placeholder: 'Masukkan Kode Pakan',
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.m),
                   decoration: BoxDecoration(
                     color: CupertinoColors.systemBackground.resolveFrom(context),
                     border: Border.all(color: borderCol, width: 0.5),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: CupertinoSpacing.l),
 
                 // Amount
                 Text(
                   l10n.amountKg,
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: labelColor),
+                  style: context.subhead.copyWith(fontWeight: FontWeight.w600, color: labelColor),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: CupertinoSpacing.xs),
                 CupertinoTextField(
                   controller: _amountController,
                   placeholder: '0.0',
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   suffix: Padding(
                     padding: const EdgeInsets.only(right: 12),
-                    child: Text('kg', style: TextStyle(color: secondaryLabel)),
+                    child: Text('kg', style: context.subhead.copyWith(color: secondaryLabel)),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.m),
                   decoration: BoxDecoration(
                     color: CupertinoColors.systemBackground.resolveFrom(context),
                     border: Border.all(color: borderCol, width: 0.5),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: CupertinoSpacing.l),
 
                 // DOC
                 Text(
                   l10n.doc,
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: labelColor),
+                  style: context.subhead.copyWith(fontWeight: FontWeight.w600, color: labelColor),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: CupertinoSpacing.xs),
                 CupertinoTextField(
                   controller: _docController,
                   placeholder: 'Masukkan DOC',
                   keyboardType: TextInputType.number,
                   suffix: Padding(
                     padding: const EdgeInsets.only(right: 12),
-                    child: Text('Hari', style: TextStyle(color: secondaryLabel)),
+                    child: Text('Hari', style: context.subhead.copyWith(color: secondaryLabel)),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.m),
                   decoration: BoxDecoration(
                     color: CupertinoColors.systemBackground.resolveFrom(context),
                     border: Border.all(color: borderCol, width: 0.5),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: CupertinoSpacing.xs),
                 Text(
                   'Terisi otomatis jika Siklus & Tanggal dipilih',
-                  style: TextStyle(fontSize: 12, color: secondaryLabel),
+                  style: context.caption1.copyWith(color: secondaryLabel),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: CupertinoSpacing.l),
 
                 // Notes
                 Text(
                   'Catatan',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: labelColor),
+                  style: context.subhead.copyWith(fontWeight: FontWeight.w600, color: labelColor),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: CupertinoSpacing.xs),
                 CupertinoTextField(
                   controller: _notesController,
                   placeholder: 'Tambahkan catatan jika ada',
                   maxLines: 3,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.m),
                   decoration: BoxDecoration(
                     color: CupertinoColors.systemBackground.resolveFrom(context),
                     border: Border.all(color: borderCol, width: 0.5),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: CupertinoSpacing.xl),
           Row(
             children: [
               if (_editingLog != null) ...[
@@ -745,8 +666,8 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
                       color: Color(0xFFE5E5EA),
                       darkColor: Color(0xFF2C2C2E),
                     ).resolveFrom(context),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    borderRadius: BorderRadius.circular(10),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
                     child: Text(
                       'BATAL',
                       style: TextStyle(
@@ -756,13 +677,13 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: CupertinoSpacing.m),
               ],
               Expanded(
                 child: CupertinoButton.filled(
                   onPressed: _isSubmitting ? null : () => _submitForm(isWide),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  borderRadius: BorderRadius.circular(10),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
                   child: _isSubmitting
                       ? const CupertinoActivityIndicator(color: CupertinoColors.white)
                       : Text(
@@ -790,7 +711,6 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
           : null,
     ));
 
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
     final borderCol = CupertinoColors.separator.resolveFrom(context);
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
@@ -804,10 +724,10 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
               if (items.isEmpty) {
                 return Center(
                   child: Padding(
-                    padding: const EdgeInsets.all(24.0),
+                    padding: const EdgeInsets.all(CupertinoSpacing.xxl),
                     child: Text(
                       'Tidak ada data log pakan untuk kriteria filter ini.',
-                      style: TextStyle(color: CupertinoColors.inactiveGray.resolveFrom(context)),
+                      style: context.subhead.copyWith(color: CupertinoColors.inactiveGray.resolveFrom(context)),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -833,14 +753,14 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
                     onRefresh: () => notifier.refresh(),
                   ),
                   SliverPadding(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(CupertinoSpacing.m),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
                           if (index == items.length) {
                             return const Center(
                               child: Padding(
-                                padding: EdgeInsets.symmetric(vertical: 16),
+                                padding: EdgeInsets.symmetric(vertical: CupertinoSpacing.l),
                                 child: CupertinoActivityIndicator(),
                               ),
                             );
@@ -849,26 +769,20 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
                           final item = items[index];
                           final pondName = item.pondName;
 
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            decoration: BoxDecoration(
-                              color: cardBg,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: _editingLog?.id == item.id
-                                    ? CupertinoColors.activeBlue.resolveFrom(context)
-                                    : borderCol,
-                                width: _editingLog?.id == item.id ? 1.5 : 0.5,
-                              ),
-                            ),
-                            padding: const EdgeInsets.all(12.0),
+                          return CupertinoGlassContainer(
+                            margin: const EdgeInsets.only(bottom: CupertinoSpacing.s),
+                            borderRadius: CupertinoSpacing.cardRadius,
+                            borderColor: _editingLog?.id == item.id
+                                ? CupertinoColors.activeBlue.resolveFrom(context)
+                                : borderCol,
+                            padding: const EdgeInsets.all(CupertinoSpacing.m),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: CupertinoColors.activeBlue.withOpacity(0.1),
+                                    color: CupertinoColors.activeBlue.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Icon(
@@ -876,7 +790,7 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
                                     color: CupertinoColors.activeBlue,
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: CupertinoSpacing.m),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -896,27 +810,26 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
                                                         : pondName)
                                                     : null
                                               ].where((s) => s != null && s.isNotEmpty).join(' - '),
-                                              style: TextStyle(
+                                              style: context.subhead.copyWith(
                                                 fontWeight: FontWeight.bold,
-                                                fontSize: 15,
                                                 color: labelColor,
                                               ),
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          const SizedBox(width: 8),
+                                          const SizedBox(width: CupertinoSpacing.s),
                                           Text(
                                             item.date,
-                                            style: TextStyle(color: secondaryLabel, fontSize: 12),
+                                            style: context.caption1.copyWith(color: secondaryLabel),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 4),
+                                      const SizedBox(height: CupertinoSpacing.xs),
                                       Text(
                                         'Siklus: ${item.cycleName ?? "-"}',
-                                        style: TextStyle(color: labelColor.withOpacity(0.8), fontSize: 13),
+                                        style: context.footnote.copyWith(color: labelColor.withValues(alpha: 0.8)),
                                       ),
-                                      const SizedBox(height: 4),
+                                      const SizedBox(height: CupertinoSpacing.xs),
                                       Row(
                                         children: [
                                           if (item.feedCode != null) ...[
@@ -932,16 +845,15 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
                                               ),
                                               child: Text(
                                                 'Pakan: ${item.feedCode}',
-                                                style: TextStyle(fontSize: 11, color: labelColor),
+                                                style: context.caption2.copyWith(color: labelColor),
                                               ),
                                             ),
-                                            const SizedBox(width: 8),
+                                            const SizedBox(width: CupertinoSpacing.s),
                                           ],
                                           if (item.doc != null)
                                             Text(
                                               'DOC: ${item.doc} Hari',
-                                              style: TextStyle(
-                                                fontSize: 12,
+                                              style: context.caption1.copyWith(
                                                 fontWeight: FontWeight.w500,
                                                 color: labelColor,
                                               ),
@@ -949,11 +861,10 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
                                         ],
                                       ),
                                       if (item.notes != null) ...[
-                                        const SizedBox(height: 6),
+                                        const SizedBox(height: CupertinoSpacing.xs),
                                         Text(
                                           'Ket: ${item.notes}',
-                                          style: TextStyle(
-                                            fontSize: 12,
+                                          style: context.caption1.copyWith(
                                             fontStyle: FontStyle.italic,
                                             color: secondaryLabel,
                                           ),
@@ -962,19 +873,18 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
                                     ],
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: CupertinoSpacing.m),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
                                     Text(
                                       '${item.amountKg.toStringAsFixed(1)} kg',
-                                      style: const TextStyle(
+                                      style: context.subhead.copyWith(
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 15,
                                         color: CupertinoColors.activeBlue,
                                       ),
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: CupertinoSpacing.s),
                                     Row(
                                       children: [
                                         CupertinoButton(
@@ -990,7 +900,7 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
                                           },
                                           child: const Icon(CupertinoIcons.pencil, size: 20, color: CupertinoColors.inactiveGray),
                                         ),
-                                        const SizedBox(width: 4),
+                                        const SizedBox(width: CupertinoSpacing.xs),
                                         CupertinoButton(
                                           padding: EdgeInsets.zero,
                                           onPressed: () => _deleteLog(item.id),
@@ -1014,7 +924,7 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
             loading: () => const Center(child: CupertinoActivityIndicator()),
             error: (err, _) => Center(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
                 child: Text(
                   'Gagal memuat riwayat pakan: $err',
                   style: const TextStyle(color: CupertinoColors.destructiveRed),
@@ -1029,13 +939,11 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
   }
 
   Widget _buildFilterBar(List<AquacultureCycle> cycles, List<AquaculturePond> ponds) {
-    final borderCol = CupertinoColors.separator.resolveFrom(context);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
 
     return Container(
       color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.m),
       child: Column(
         children: [
           Row(
@@ -1048,7 +956,7 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
                   onTap: () => _showCyclePicker(cycles, isFilter: true),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: CupertinoSpacing.s),
 
               // Pond filter
               Expanded(
@@ -1062,7 +970,7 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: CupertinoSpacing.s),
           Row(
             children: [
               Expanded(
@@ -1075,13 +983,9 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
                       });
                     },
                   ),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: cardBg,
-                      border: Border.all(color: borderCol, width: 0.5),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                  child: CupertinoGlassContainer(
+                    padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.s, vertical: CupertinoSpacing.m),
+                    borderRadius: CupertinoSpacing.buttonRadius,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -1089,7 +993,7 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
                           _filterStartDate == null
                               ? 'Tgl Mulai'
                               : DateFormat('dd/MM/yy').format(_filterStartDate!),
-                          style: TextStyle(fontSize: 13, color: CupertinoColors.label.resolveFrom(context)),
+                          style: context.subhead.copyWith(color: CupertinoColors.label.resolveFrom(context)),
                         ),
                         Icon(CupertinoIcons.calendar, size: 14, color: secondaryLabel),
                       ],
@@ -1097,7 +1001,7 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: CupertinoSpacing.s),
               Expanded(
                 child: GestureDetector(
                   onTap: () => _showCupertinoDatePicker(
@@ -1108,13 +1012,9 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
                       });
                     },
                   ),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: cardBg,
-                      border: Border.all(color: borderCol, width: 0.5),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                  child: CupertinoGlassContainer(
+                    padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.s, vertical: CupertinoSpacing.m),
+                    borderRadius: CupertinoSpacing.buttonRadius,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -1122,7 +1022,7 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
                           _filterEndDate == null
                               ? 'Tgl Selesai'
                               : DateFormat('dd/MM/yy').format(_filterEndDate!),
-                          style: TextStyle(fontSize: 13, color: CupertinoColors.label.resolveFrom(context)),
+                          style: context.subhead.copyWith(color: CupertinoColors.label.resolveFrom(context)),
                         ),
                         Icon(CupertinoIcons.calendar, size: 14, color: secondaryLabel),
                       ],
@@ -1131,7 +1031,7 @@ class _FeedLogScreenState extends ConsumerState<FeedLogScreen> {
                 ),
               ),
               if (_filterCycle != null || _filterPond != null || _filterStartDate != null || _filterEndDate != null) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: CupertinoSpacing.s),
                 CupertinoButton(
                   padding: EdgeInsets.zero,
                   child: const Icon(CupertinoIcons.clear_circled_solid, color: CupertinoColors.destructiveRed, size: 28),

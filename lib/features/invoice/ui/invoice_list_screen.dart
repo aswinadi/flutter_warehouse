@@ -9,6 +9,9 @@ import '../models/invoice.dart';
 import 'invoice_approval_screen.dart';
 import '../../../core/widgets/company_switcher.dart';
 import '../../../core/utils/currency_utils.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
 
 // Enables mouse + trackpad drag scrolling on Flutter Web.
 class _WebScrollBehavior extends MaterialScrollBehavior {
@@ -194,8 +197,7 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> {
         ),
         child: Text(
           label,
-          style: TextStyle(
-            fontSize: 13,
+          style: context.footnote.copyWith(
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             color: isSelected 
                 ? CupertinoColors.white 
@@ -257,7 +259,7 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> {
                     const SizedBox(width: 8),
                     Text(
                       'Periode:',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: labelColor),
+                      style: context.footnote.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -266,13 +268,13 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> {
                         _datePreset == '30days' ? '30 Hari Terakhir' :
                         _datePreset == 'thisMonth' ? 'Bulan Ini' :
                         _datePreset == '90days' ? '3 Bulan Terakhir' : 'Kustom...',
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: CupertinoColors.activeBlue),
+                        style: context.footnote.copyWith(fontWeight: FontWeight.w600, color: CupertinoColors.activeBlue),
                       ),
                     ),
                     if (_startDate != null && _endDate != null) ...[
                       Text(
                         '${_startDate!.day}/${_startDate!.month}/${_startDate!.year} - ${_endDate!.day}/${_endDate!.month}/${_endDate!.year}',
-                        style: TextStyle(fontSize: 12, color: secondaryLabelColor, fontWeight: FontWeight.w500),
+                        style: context.caption1.copyWith(color: secondaryLabelColor, fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(width: 8),
                     ],
@@ -338,7 +340,7 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> {
                     return Center(
                       child: Text(
                         'Tidak ada invoice yang ditemukan',
-                        style: TextStyle(color: secondaryLabelColor, fontSize: 15),
+                        style: context.subhead.copyWith(color: secondaryLabelColor),
                       ),
                     );
                   }
@@ -500,106 +502,96 @@ class _InvoiceCard extends StatelessWidget {
         ? CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.08)
         : CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isSelected 
-              ? CupertinoColors.activeBlue.resolveFrom(context) 
-              : CupertinoColors.separator.resolveFrom(context),
-          width: isSelected ? 2.0 : 0.5,
-        ),
-      ),
+    return CupertinoGlassContainer(
+      backgroundColor: cardColor,
+      borderColor: isSelected 
+          ? CupertinoColors.activeBlue.resolveFrom(context) 
+          : CupertinoColors.separator.resolveFrom(context),
+      borderRadius: CupertinoSpacing.cardRadius,
+      padding: const EdgeInsets.all(CupertinoSpacing.l),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    invoice.invoiceNumber,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: labelColor,
-                    ),
-                  ),
-                  _StatusBadge(status: invoice.status),
-                ],
-              ),
-              if (invoice.receivingNumber != null && invoice.receivingNumber!.isNotEmpty) ...[
-                const SizedBox(height: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
                 Text(
-                  'No. Penerimaan: ${invoice.receivingNumber}',
-                  style: const TextStyle(
+                  invoice.invoiceNumber,
+                  style: context.callout.copyWith(
                     fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    color: CupertinoColors.activeBlue,
+                    color: labelColor,
                   ),
                 ),
+                _StatusBadge(status: invoice.status),
               ],
-              const SizedBox(height: 8),
+            ),
+            if (invoice.receivingNumber != null && invoice.receivingNumber!.isNotEmpty) ...[
+              const SizedBox(height: CupertinoSpacing.xs),
               Text(
-                invoice.supplierName ?? 'Internal',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  color: labelColor,
+                'No. Penerimaan: ${invoice.receivingNumber}',
+                style: context.footnote.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: CupertinoColors.activeBlue,
                 ),
-              ),
-              const SizedBox(height: 4),
-              if (invoice.vendorInvoiceNumber != null && invoice.vendorInvoiceNumber!.isNotEmpty) ...[
-                Text(
-                  'No. Invoice Vendor: ${invoice.vendorInvoiceNumber}',
-                  style: TextStyle(fontSize: 13, color: secondaryLabelColor),
-                ),
-                const SizedBox(height: 4),
-              ],
-              Row(
-                children: [
-                  Icon(CupertinoIcons.calendar, size: 14, color: secondaryLabelColor),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Tanggal: ${_formatDate(invoice.invoiceDate)}',
-                    style: TextStyle(color: secondaryLabelColor, fontSize: 13),
-                  ),
-                  if (invoice.dueDate != null) ...[
-                    const SizedBox(width: 12),
-                    Icon(CupertinoIcons.exclamationmark_shield_fill, size: 14, color: secondaryLabelColor),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Tempo: ${_formatDate(invoice.dueDate)}',
-                      style: TextStyle(color: secondaryLabelColor, fontSize: 13),
-                    ),
-                  ],
-                ],
-              ),
-              const Divider(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Total Tagihan',
-                    style: TextStyle(fontSize: 12, color: secondaryLabelColor),
-                  ),
-                  Text(
-                    formatWithCurrency(invoice.totalAmount, invoice.currency),
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: labelColor,
-                    ),
-                  ),
-                ],
               ),
             ],
-          ),
+            const SizedBox(height: CupertinoSpacing.s),
+            Text(
+              invoice.supplierName ?? 'Internal',
+              style: context.subhead.copyWith(
+                fontWeight: FontWeight.w600,
+                color: labelColor,
+              ),
+            ),
+            const SizedBox(height: CupertinoSpacing.xs),
+            if (invoice.vendorInvoiceNumber != null && invoice.vendorInvoiceNumber!.isNotEmpty) ...[
+              Text(
+                'No. Invoice Vendor: ${invoice.vendorInvoiceNumber}',
+                style: context.footnote.copyWith(color: secondaryLabelColor),
+              ),
+              const SizedBox(height: CupertinoSpacing.xs),
+            ],
+            Row(
+              children: [
+                Icon(CupertinoIcons.calendar, size: 14, color: secondaryLabelColor),
+                const SizedBox(width: CupertinoSpacing.xs),
+                Text(
+                  'Tanggal: ${_formatDate(invoice.invoiceDate)}',
+                  style: context.footnote.copyWith(color: secondaryLabelColor),
+                ),
+                if (invoice.dueDate != null) ...[
+                  const SizedBox(width: CupertinoSpacing.m),
+                  Icon(CupertinoIcons.exclamationmark_shield_fill, size: 14, color: secondaryLabelColor),
+                  const SizedBox(width: CupertinoSpacing.xs),
+                  Text(
+                    'Tempo: ${_formatDate(invoice.dueDate)}',
+                    style: context.footnote.copyWith(color: secondaryLabelColor),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
+            ),
+            const Divider(height: CupertinoSpacing.xxl),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Total Tagihan',
+                  style: context.caption1.copyWith(color: secondaryLabelColor),
+                ),
+                Text(
+                  formatWithCurrency(invoice.totalAmount, invoice.currency),
+                  style: context.callout.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: labelColor,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -641,9 +633,8 @@ class _StatusBadge extends StatelessWidget {
       ),
       child: Text(
         status.toUpperCase(),
-        style: TextStyle(
+        style: context.caption2.copyWith(
           color: color.resolveFrom(context),
-          fontSize: 10,
           fontWeight: FontWeight.bold,
         ),
       ),

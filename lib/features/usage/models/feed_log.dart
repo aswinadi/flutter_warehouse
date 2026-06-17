@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import '../../../core/utils/json_utils.dart';
 
 part 'feed_log.freezed.dart';
 part 'feed_log.g.dart';
@@ -23,9 +24,9 @@ class AquaculturePond with _$AquaculturePond {
     required int id,
     required String name,
     String? code,
-    double? length,
-    double? width,
-    double? depth,
+    @JsonKey(fromJson: doubleOrNullFromJson) double? length,
+    @JsonKey(fromJson: doubleOrNullFromJson) double? width,
+    @JsonKey(fromJson: doubleOrNullFromJson) double? depth,
     @JsonKey(name: 'modul_id') int? modulId,
   }) = _AquaculturePond;
 
@@ -46,7 +47,7 @@ class FeedLog with _$FeedLog {
     @JsonKey(name: 'modul_name') String? modulName,
     required String date,
     @JsonKey(name: 'feed_code') String? feedCode,
-    @JsonKey(name: 'amount_kg') required double amountKg,
+    @JsonKey(name: 'amount_kg', fromJson: doubleFromJson) required double amountKg,
     int? doc,
     String? notes,
     @JsonKey(name: 'created_at') String? createdAt,

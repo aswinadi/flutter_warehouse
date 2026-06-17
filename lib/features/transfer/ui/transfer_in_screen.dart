@@ -4,6 +4,10 @@ import '../../../core/widgets/company_switcher.dart';
 import '../models/transfer.dart';
 import '../providers/transfer_provider.dart';
 import '../providers/transfer_repository.dart';
+import '../../../core/theme/cupertino_theme_extensions.dart';
+import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/widgets/cupertino_glass_container.dart';
+import '../../../core/widgets/cupertino_glass_toast.dart';
 
 class TransferInScreen extends ConsumerStatefulWidget {
   const TransferInScreen({super.key});
@@ -68,26 +72,26 @@ class _TransferInScreenState extends ConsumerState<TransferInScreen> {
             color: navBarBg,
             child: CupertinoSlidingSegmentedControl<int>(
               groupValue: _selectedSegment,
-              children: const {
+              children: {
                 0: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(CupertinoIcons.bus, size: 16),
-                      SizedBox(width: 6),
-                      Text('Dalam Perjalanan', style: TextStyle(fontSize: 13)),
+                      const Icon(CupertinoIcons.bus, size: 16),
+                      const SizedBox(width: 6),
+                      Text('Dalam Perjalanan', style: context.footnote),
                     ],
                   ),
                 ),
                 1: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(CupertinoIcons.time, size: 16),
-                      SizedBox(width: 6),
-                      Text('Riwayat Penerimaan', style: TextStyle(fontSize: 13)),
+                      const Icon(CupertinoIcons.time, size: 16),
+                      const SizedBox(width: 6),
+                      Text('Riwayat Penerimaan', style: context.footnote),
                     ],
                   ),
                 ),
@@ -282,7 +286,6 @@ class _TransferInScreenState extends ConsumerState<TransferInScreen> {
   Widget _buildTransfersList(
       AsyncValue<List<WarehouseTransfer>> transfersAsync, ScrollController controller, bool isWide) {
     final labelColor = CupertinoColors.label.resolveFrom(context);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return transfersAsync.when(
@@ -326,111 +329,102 @@ class _TransferInScreenState extends ConsumerState<TransferInScreen> {
                 statusColor = CupertinoColors.inactiveGray;
             }
 
-            return Container(
-              decoration: BoxDecoration(
-                color: cardBg,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isSelected && isWide
-                      ? CupertinoColors.activeBlue.resolveFrom(context)
-                      : separatorColor,
-                  width: isSelected && isWide ? 2.0 : 0.5,
-                ),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x0A0F0F0F),
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
+            final cardColor = isSelected && isWide
+                ? CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.08)
+                : CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+
+            return CupertinoGlassContainer(
+              backgroundColor: cardColor,
+              borderColor: isSelected && isWide
+                  ? CupertinoColors.activeBlue.resolveFrom(context)
+                  : separatorColor,
+              borderRadius: CupertinoSpacing.cardRadius,
+              padding: const EdgeInsets.all(CupertinoSpacing.l),
               child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: () {
                   setState(() {
                     _selectedTransferId = transfer.id;
                   });
                 },
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            transfer.transferNumber,
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: labelColor),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          transfer.transferNumber,
+                          style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: labelColor),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: statusColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: statusColor, width: 0.5),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: statusColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: statusColor, width: 0.5),
-                            ),
-                            child: Text(
-                              transfer.status.toUpperCase(),
-                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: statusColor),
-                            ),
+                          child: Text(
+                            transfer.status.toUpperCase(),
+                            style: context.caption2.copyWith(fontWeight: FontWeight.bold, color: statusColor),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Icon(CupertinoIcons.arrow_up_right, size: 14, color: CupertinoColors.destructiveRed),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              'Asal: ${transfer.sourceWarehouse?.name ?? "Gudang Asal"}',
-                              style: TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(CupertinoIcons.arrow_up_right, size: 14, color: CupertinoColors.destructiveRed),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Asal: ${transfer.sourceWarehouse?.name ?? "Gudang Asal"}',
+                            style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(CupertinoIcons.arrow_down_left, size: 14, color: CupertinoColors.activeGreen),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              'Tujuan: ${transfer.destinationWarehouse?.name ?? "Gudang Tujuan"}',
-                              style: TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(CupertinoIcons.arrow_down_left, size: 14, color: CupertinoColors.activeGreen),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Tujuan: ${transfer.destinationWarehouse?.name ?? "Gudang Tujuan"}',
+                            style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Container(height: 0.5, color: separatorColor),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            transfer.transferDate,
-                            style: TextStyle(fontSize: 11, color: CupertinoColors.placeholderText.resolveFrom(context)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Container(height: 0.5, color: separatorColor),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          transfer.transferDate,
+                          style: context.caption2.copyWith(color: CupertinoColors.placeholderText.resolveFrom(context)),
+                        ),
+                        if (transfer.driverName?.isNotEmpty == true)
+                          Row(
+                            children: [
+                              const Icon(CupertinoIcons.person, size: 12, color: CupertinoColors.inactiveGray),
+                              const SizedBox(width: 2),
+                              Text(
+                                transfer.driverName!,
+                                style: context.caption2.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                              ),
+                            ],
                           ),
-                          if (transfer.driverName?.isNotEmpty == true)
-                            Row(
-                              children: [
-                                const Icon(CupertinoIcons.person, size: 12, color: CupertinoColors.inactiveGray),
-                                const SizedBox(width: 2),
-                                Text(
-                                  transfer.driverName!,
-                                  style: TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
-                                ),
-                              ],
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             );
@@ -481,8 +475,6 @@ class _TransferReceiveFormState extends ConsumerState<_TransferReceiveForm> {
   Widget build(BuildContext context) {
     final detailAsync = ref.watch(transferDetailProvider(widget.transferId));
     final labelColor = CupertinoColors.label.resolveFrom(context);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
-    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return detailAsync.when(
       data: (transfer) {
@@ -512,19 +504,15 @@ class _TransferReceiveFormState extends ConsumerState<_TransferReceiveForm> {
               child: ListView(
                 padding: const EdgeInsets.all(16.0),
                 children: [
-                  Container(
+                  CupertinoGlassContainer(
                     padding: const EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      color: cardBg,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: separatorColor, width: 0.5),
-                    ),
+                    borderRadius: CupertinoSpacing.cardRadius,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Detail Pengiriman',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: labelColor),
+                          style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                         ),
                         const SizedBox(height: 12),
                         _buildDetailRow('Gudang Asal', transfer.sourceWarehouse?.name ?? 'N/A'),
@@ -542,7 +530,7 @@ class _TransferReceiveFormState extends ConsumerState<_TransferReceiveForm> {
                   const SizedBox(height: 24),
                   Text(
                     'Masukkan Jumlah Diterima',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
+                    style: context.callout.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                   ),
                   const SizedBox(height: 8),
                   if (transfer.items == null || transfer.items!.isEmpty)
@@ -551,14 +539,9 @@ class _TransferReceiveFormState extends ConsumerState<_TransferReceiveForm> {
                     ...transfer.items!.map((item) {
                       final currentQty = _receivedQuantities[item.id] ?? item.qtySent;
 
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
+                      return CupertinoGlassContainer(
                         padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: cardBg,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: separatorColor, width: 0.5),
-                        ),
+                        borderRadius: CupertinoSpacing.cardRadius,
                         child: Row(
                           children: [
                             Expanded(
@@ -567,16 +550,16 @@ class _TransferReceiveFormState extends ConsumerState<_TransferReceiveForm> {
                                 children: [
                                   Text(
                                     item.product?.name ?? 'Unknown Product',
-                                    style: TextStyle(fontWeight: FontWeight.bold, color: labelColor),
+                                    style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                                   ),
                                   Text(
                                     'SKU: ${item.product?.sku ?? "N/A"}',
-                                    style: TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                                    style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     'Dikirim: ${item.qtySent} ${item.product?.unit ?? "pcs"}',
-                                    style: const TextStyle(color: CupertinoColors.activeBlue, fontSize: 12, fontWeight: FontWeight.w600),
+                                    style: context.caption1.copyWith(color: CupertinoColors.activeBlue, fontWeight: FontWeight.w600),
                                   ),
                                 ],
                               ),
@@ -606,7 +589,7 @@ class _TransferReceiveFormState extends ConsumerState<_TransferReceiveForm> {
                                         ),
                                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                       textAlign: TextAlign.center,
-                                      style: TextStyle(fontWeight: FontWeight.bold, color: labelColor),
+                                      style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                                       decoration: null,
                                       onChanged: (val) {
                                         final q = double.tryParse(val) ?? 0.0;
@@ -652,13 +635,13 @@ class _TransferReceiveFormState extends ConsumerState<_TransferReceiveForm> {
             width: 120,
             child: Text(
               label,
-              style: TextStyle(color: CupertinoColors.secondaryLabel.resolveFrom(context), fontSize: 13),
+              style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: CupertinoColors.label.resolveFrom(context)),
+              style: context.footnote.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.label.resolveFrom(context)),
             ),
           ),
         ],
@@ -672,7 +655,7 @@ class _TransferReceiveFormState extends ConsumerState<_TransferReceiveForm> {
     // Validate quantites
     for (final e in _receivedQuantities.entries) {
       if (e.value < 0) {
-        _showTopNotification(context, 'Jumlah diterima tidak boleh kurang dari 0', isError: true);
+        CupertinoGlassToast.showError(context, 'Jumlah diterima tidak boleh kurang dari 0');
         return;
       }
     }
@@ -694,10 +677,14 @@ class _TransferReceiveFormState extends ConsumerState<_TransferReceiveForm> {
       final repo = ref.read(transferRepositoryProvider);
       await repo.receiveTransfer(widget.transferId, request);
 
-      _showTopNotification(context, 'Transfer diterima dan stok berhasil ditambahkan!');
+      if (mounted) {
+        CupertinoGlassToast.showSuccess(context, 'Transfer diterima dan stok berhasil ditambahkan!');
+      }
       widget.onSubmitSuccess();
     } catch (e) {
-      _showTopNotification(context, 'Gagal menerima transfer: $e', isError: true);
+      if (mounted) {
+        CupertinoGlassToast.showError(context, 'Gagal menerima transfer: $e');
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -725,8 +712,6 @@ class _TransferHistoryDetailView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final detailAsync = ref.watch(transferDetailProvider(transferId));
     final labelColor = CupertinoColors.label.resolveFrom(context);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
-    final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return detailAsync.when(
       data: (transfer) {
@@ -747,13 +732,9 @@ class _TransferHistoryDetailView extends ConsumerWidget {
               child: ListView(
                 padding: const EdgeInsets.all(16.0),
                 children: [
-                  Container(
+                  CupertinoGlassContainer(
                     padding: const EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      color: cardBg,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: separatorColor, width: 0.5),
-                    ),
+                    borderRadius: CupertinoSpacing.cardRadius,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -762,7 +743,7 @@ class _TransferHistoryDetailView extends ConsumerWidget {
                           children: [
                             Text(
                               'Informasi Penerimaan',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: labelColor),
+                              style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -773,7 +754,7 @@ class _TransferHistoryDetailView extends ConsumerWidget {
                               ),
                               child: Text(
                                 transfer.status.toUpperCase(),
-                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: CupertinoColors.activeGreen),
+                                style: context.caption2.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.activeGreen),
                               ),
                             ),
                           ],
@@ -787,12 +768,14 @@ class _TransferHistoryDetailView extends ConsumerWidget {
                         const SizedBox(height: 4),
                         _buildDetailRow(context, 'Tanggal Kirim', transfer.transferDate),
                         const SizedBox(height: 4),
-                        if (transfer.driverName?.isNotEmpty == true)
+                        if (transfer.driverName?.isNotEmpty == true) ...[
                           _buildDetailRow(context, 'Sopir', transfer.driverName!),
-                        const SizedBox(height: 4),
-                        if (transfer.vehiclePlate?.isNotEmpty == true)
+                          const SizedBox(height: 4),
+                        ],
+                        if (transfer.vehiclePlate?.isNotEmpty == true) ...[
                           _buildDetailRow(context, 'Nomor Polisi', transfer.vehiclePlate!),
-                        const SizedBox(height: 4),
+                          const SizedBox(height: 4),
+                        ],
                         if (transfer.receivedAt?.isNotEmpty == true)
                           _buildDetailRow(context, 'Diterima Tanggal', transfer.receivedAt!.split('T').first),
                       ],
@@ -801,7 +784,7 @@ class _TransferHistoryDetailView extends ConsumerWidget {
                   const SizedBox(height: 16),
                   Text(
                     'Daftar Item',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: labelColor),
+                    style: context.callout.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                   ),
                   const SizedBox(height: 8),
                   if (transfer.items == null || transfer.items!.isEmpty)
@@ -814,13 +797,9 @@ class _TransferHistoryDetailView extends ConsumerWidget {
                       separatorBuilder: (ctx, i) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
                         final item = transfer.items![index];
-                        return Container(
+                        return CupertinoGlassContainer(
                           padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: cardBg,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: separatorColor, width: 0.5),
-                          ),
+                          borderRadius: CupertinoSpacing.cardRadius,
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -830,11 +809,11 @@ class _TransferHistoryDetailView extends ConsumerWidget {
                                   children: [
                                     Text(
                                       item.product?.name ?? 'Unknown Product',
-                                      style: TextStyle(fontWeight: FontWeight.bold, color: labelColor),
+                                      style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                                     ),
                                     Text(
                                       'SKU: ${item.product?.sku ?? "N/A"}',
-                                      style: TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                                      style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                                     ),
                                   ],
                                 ),
@@ -844,11 +823,11 @@ class _TransferHistoryDetailView extends ConsumerWidget {
                                 children: [
                                   Text(
                                     'Dikirim: ${item.qtySent}',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, color: CupertinoColors.activeBlue),
+                                    style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.activeBlue),
                                   ),
                                   Text(
                                     'Diterima: ${item.qtyReceived ?? 0.0}',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, color: CupertinoColors.activeGreen),
+                                    style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.activeGreen),
                                   ),
                                 ],
                               ),
@@ -878,13 +857,13 @@ class _TransferHistoryDetailView extends ConsumerWidget {
             width: 140,
             child: Text(
               label,
-              style: TextStyle(color: CupertinoColors.secondaryLabel.resolveFrom(context), fontSize: 13, fontWeight: FontWeight.w500),
+              style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context), fontWeight: FontWeight.w500),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: CupertinoColors.label.resolveFrom(context)),
+              style: context.footnote.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.label.resolveFrom(context)),
             ),
           ),
         ],
@@ -893,77 +872,4 @@ class _TransferHistoryDetailView extends ConsumerWidget {
   }
 }
 
-// ----------------------------------------------------
-// TOP NOTIFICATION OVERLAY (HELPER)
-// ----------------------------------------------------
-void _showTopNotification(BuildContext context, String message, {bool isError = false}) {
-  final overlay = Overlay.of(context);
-  late OverlayEntry entry;
-
-  entry = OverlayEntry(
-    builder: (context) => Positioned(
-      top: MediaQuery.of(context).padding.top + 24,
-      left: 24,
-      right: 24,
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 450),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: isError ? CupertinoColors.destructiveRed : CupertinoColors.activeGreen,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x42000000),
-                  blurRadius: 12,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isError ? CupertinoIcons.exclamationmark_circle : CupertinoIcons.check_mark_circled,
-                  color: CupertinoColors.white,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    message,
-                    style: const TextStyle(
-                      color: CupertinoColors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      decoration: TextDecoration.none,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () {
-                    if (entry.mounted) {
-                      entry.remove();
-                    }
-                  },
-                  child: const Icon(CupertinoIcons.xmark, color: CupertinoColors.white, size: 18),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
-
-  overlay.insert(entry);
-
-  Future.delayed(const Duration(milliseconds: 2500), () {
-    if (entry.mounted) {
-      entry.remove();
-    }
-  });
-}
+// Deleted obsolete _showTopNotification method as it is now replaced by CupertinoGlassToast

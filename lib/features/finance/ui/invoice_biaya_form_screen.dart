@@ -351,34 +351,41 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
                               placeholderStyle: context.subhead.copyWith(color: CupertinoColors.placeholderText.resolveFrom(context)),
                               decoration: null,
                               padding: EdgeInsets.zero,
+                              textAlign: TextAlign.right,
                             ),
                           ),
                           const Divider(color: CupertinoColors.separator, height: 16),
                           _buildFormRow(
                             label: 'Tanggal Invoice',
-                            child: CupertinoButton(
-                              padding: EdgeInsets.zero,
-                              minimumSize: Size.zero,
-                              onPressed: _selectInvoiceDate,
-                              child: Text(
-                                '${_invoiceDate.day.toString().padLeft(2, '0')}-${_invoiceDate.month.toString().padLeft(2, '0')}-${_invoiceDate.year}',
-                                style: TextStyle(color: CupertinoColors.label.resolveFrom(context)),
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: CupertinoButton(
+                                padding: EdgeInsets.zero,
+                                minimumSize: Size.zero,
+                                onPressed: _selectInvoiceDate,
+                                child: Text(
+                                  '${_invoiceDate.day.toString().padLeft(2, '0')}-${_invoiceDate.month.toString().padLeft(2, '0')}-${_invoiceDate.year}',
+                                  style: TextStyle(color: CupertinoColors.label.resolveFrom(context)),
+                                ),
                               ),
                             ),
                           ),
                           const Divider(color: CupertinoColors.separator, height: 16),
                           _buildFormRow(
                             label: 'Tanggal Jatuh Tempo',
-                            child: CupertinoButton(
-                              padding: EdgeInsets.zero,
-                              minimumSize: Size.zero,
-                              onPressed: _selectDueDate,
-                              child: Text(
-                                _dueDate == null
-                                    ? 'Pilih Tanggal...'
-                                    : '${_dueDate!.day.toString().padLeft(2, '0')}-${_dueDate!.month.toString().padLeft(2, '0')}-${_dueDate!.year}',
-                                style: TextStyle(
-                                  color: _dueDate == null ? CupertinoColors.placeholderText : CupertinoColors.label.resolveFrom(context),
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: CupertinoButton(
+                                padding: EdgeInsets.zero,
+                                minimumSize: Size.zero,
+                                onPressed: _selectDueDate,
+                                child: Text(
+                                  _dueDate == null
+                                      ? 'Pilih Tanggal...'
+                                      : '${_dueDate!.day.toString().padLeft(2, '0')}-${_dueDate!.month.toString().padLeft(2, '0')}-${_dueDate!.year}',
+                                  style: TextStyle(
+                                    color: _dueDate == null ? CupertinoColors.placeholderText : CupertinoColors.label.resolveFrom(context),
+                                  ),
                                 ),
                               ),
                             ),
@@ -396,7 +403,10 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
                         children: [
                           _buildFormRow(
                             label: 'Mata Uang',
-                            child: const Text('IDR', style: TextStyle(fontWeight: FontWeight.bold)),
+                            child: const Align(
+                              alignment: Alignment.centerRight,
+                              child: Text('IDR', style: TextStyle(fontWeight: FontWeight.bold)),
+                            ),
                           ),
                           const Divider(color: CupertinoColors.separator, height: 16),
                           _buildFormRow(
@@ -408,6 +418,7 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
                               keyboardType: const TextInputType.numberWithOptions(decimal: true),
                               decoration: null,
                               padding: EdgeInsets.zero,
+                              textAlign: TextAlign.right,
                             ),
                           ),
                           const Divider(color: CupertinoColors.separator, height: 16),
@@ -420,6 +431,7 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
                               keyboardType: const TextInputType.numberWithOptions(decimal: true),
                               decoration: null,
                               padding: EdgeInsets.zero,
+                              textAlign: TextAlign.right,
                             ),
                           ),
                         ],

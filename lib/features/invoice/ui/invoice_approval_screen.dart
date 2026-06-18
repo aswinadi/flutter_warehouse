@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show Divider, Colors, InteractiveViewer;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../providers/invoice_repository.dart';
@@ -69,7 +70,7 @@ class _InvoiceApprovalScreenState extends ConsumerState<InvoiceApprovalScreen> {
       }
     } catch (e) {
       if (mounted) {
-        CupertinoGlassToast.showError(context, 'Gagal menyetujui: $e');
+        CupertinoGlassToast.showError(context, 'Gagal menyetujui: ${_getErrorMessage(e)}');
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -139,7 +140,7 @@ class _InvoiceApprovalScreenState extends ConsumerState<InvoiceApprovalScreen> {
         }
       } catch (e) {
         if (mounted) {
-          CupertinoGlassToast.showError(context, 'Gagal menolak: $e');
+          CupertinoGlassToast.showError(context, 'Gagal menolak: ${_getErrorMessage(e)}');
         }
       } finally {
         if (mounted) setState(() => _isSubmitting = false);
@@ -187,11 +188,37 @@ class _InvoiceApprovalScreenState extends ConsumerState<InvoiceApprovalScreen> {
       }
     } catch (e) {
       if (mounted) {
-        CupertinoGlassToast.showError(context, 'Gagal menyimpan verifikasi: $e');
+        CupertinoGlassToast.showError(context, 'Gagal menyimpan verifikasi: ${_getErrorMessage(e)}');
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
+  }
+
+  String _getErrorMessage(dynamic e) {
+    if (e is DioException) {
+      final responseData = e.response?.data;
+      if (responseData is Map) {
+        if (responseData['errors'] != null && responseData['errors'] is Map) {
+          final errors = responseData['errors'] as Map;
+          if (errors.isNotEmpty) {
+            final firstErrorVal = errors.values.first;
+            if (firstErrorVal is List && firstErrorVal.isNotEmpty) {
+              return firstErrorVal.first.toString();
+            }
+            return firstErrorVal.toString();
+          }
+        }
+        if (responseData['message'] != null) {
+          return responseData['message'].toString();
+        }
+        if (responseData['error'] != null) {
+          return responseData['error'].toString();
+        }
+      }
+      return e.message ?? e.toString();
+    }
+    return e.toString();
   }
 
   @override

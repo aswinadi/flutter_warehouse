@@ -17,6 +17,7 @@ import '../../features/usage/ui/feed_log_screen.dart';
 import '../../features/usage/ui/aquaculture_crud_list_screen.dart';
 import '../../features/usage/ui/aquaculture_crud_form_screen.dart';
 import '../../features/usage/ui/shrimp_price_calculator_screen.dart';
+import '../../features/usage/ui/item_usage_screen.dart';
 import '../../features/dashboard/ui/dashboard_screen.dart';
 import '../../features/approvals/ui/approvals_screen.dart';
 import '../../features/purchase_request/ui/pr_vendor_approval_screen.dart';
@@ -44,6 +45,9 @@ import '../../features/inventory/ui/inventory_adjustment_screen.dart';
 import '../../features/inventory/ui/stock_opname_list_screen.dart';
 import '../../features/inventory/ui/stock_opname_session_screen.dart';
 import '../../features/inventory/models/inventory.dart';
+import '../../features/inventory/ui/landed_cost_list_screen.dart';
+import '../../features/inventory/ui/landed_cost_form_screen.dart';
+import '../../features/inventory/ui/landed_cost_detail_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -231,7 +235,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/inventory-adjustments',
             builder: (context, state) {
               final item = state.extra as Inventory?;
-              return InventoryAdjustmentScreen(prefilledItem: item);
+              return InventoryAdjustmentScreen(prefilledItem: item, isUsageMode: false);
+            },
+          ),
+          GoRoute(
+            path: '/inventory-usages',
+            builder: (context, state) {
+              final item = state.extra as Inventory?;
+              return ItemUsageScreen(prefilledItem: item);
             },
           ),
           GoRoute(
@@ -329,6 +340,30 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) {
                   final id = int.parse(state.pathParameters['id']!);
                   return EditAssetScreen(assetId: id);
+                },
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/landed-costs',
+            builder: (context, state) => const LandedCostListScreen(),
+            routes: [
+              GoRoute(
+                path: 'create',
+                builder: (context, state) => const LandedCostFormScreen(),
+              ),
+              GoRoute(
+                path: ':id',
+                builder: (context, state) {
+                  final id = int.parse(state.pathParameters['id']!);
+                  return LandedCostDetailScreen(landedCostId: id);
+                },
+              ),
+              GoRoute(
+                path: ':id/edit',
+                builder: (context, state) {
+                  final id = int.parse(state.pathParameters['id']!);
+                  return LandedCostFormScreen(landedCostId: id);
                 },
               ),
             ],

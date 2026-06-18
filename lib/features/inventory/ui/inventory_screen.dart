@@ -298,35 +298,68 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                   const SizedBox(height: CupertinoSpacing.m),
                                   SizedBox(
                                     width: double.infinity,
-                                    child: CupertinoButton.filled(
-                                      padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin),
-                                      onPressed: () {
-                                        Navigator.pop(context); // Close bottom sheet
-                                        final firstWh = breakdown.onHand.isNotEmpty ? breakdown.onHand.first : null;
-                                        final firstLoc = (firstWh != null && firstWh.locations.isNotEmpty) ? firstWh.locations.first : null;
-                                        final item = Inventory(
-                                          id: firstLoc?.inventoryId ?? 0,
-                                          sku: breakdown.sku,
-                                          productName: breakdown.productName,
-                                          quantity: totalOnHand,
-                                          status: 'available',
-                                          warehouseName: firstWh?.warehouseName,
-                                          locationCode: firstLoc?.locationCode,
-                                          unit: breakdown.unit,
-                                        );
-                                        context.push('/inventory-adjustments', extra: item);
-                                      },
-                                      child: const Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(CupertinoIcons.arrow_2_circlepath, size: 16),
-                                          SizedBox(width: CupertinoSpacing.s),
-                                          Text(
-                                            'Sesuaikan / Pakai Stok',
-                                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: CupertinoButton.filled(
+                                            padding: EdgeInsets.zero,
+                                            onPressed: () {
+                                              Navigator.pop(context); // Close bottom sheet
+                                              final firstWh = breakdown.onHand.isNotEmpty ? breakdown.onHand.first : null;
+                                              final firstLoc = (firstWh != null && firstWh.locations.isNotEmpty) ? firstWh.locations.first : null;
+                                              final item = Inventory(
+                                                id: firstLoc?.inventoryId ?? 0,
+                                                sku: breakdown.sku,
+                                                productName: breakdown.productName,
+                                                quantity: totalOnHand,
+                                                status: 'available',
+                                                warehouseName: firstWh?.warehouseName,
+                                                locationCode: firstLoc?.locationCode,
+                                                unit: breakdown.unit,
+                                              );
+                                              context.push('/inventory-adjustments', extra: item);
+                                            },
+                                            child: const Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Icon(CupertinoIcons.arrow_2_circlepath, size: 14),
+                                                SizedBox(width: 4),
+                                                Text('Sesuaikan', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                                              ],
+                                            ),
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                        const SizedBox(width: CupertinoSpacing.s),
+                                        Expanded(
+                                          child: CupertinoButton.filled(
+                                            padding: EdgeInsets.zero,
+                                            onPressed: () {
+                                              Navigator.pop(context); // Close bottom sheet
+                                              final firstWh = breakdown.onHand.isNotEmpty ? breakdown.onHand.first : null;
+                                              final firstLoc = (firstWh != null && firstWh.locations.isNotEmpty) ? firstWh.locations.first : null;
+                                              final item = Inventory(
+                                                id: firstLoc?.inventoryId ?? 0,
+                                                sku: breakdown.sku,
+                                                productName: breakdown.productName,
+                                                quantity: totalOnHand,
+                                                status: 'available',
+                                                warehouseName: firstWh?.warehouseName,
+                                                locationCode: firstLoc?.locationCode,
+                                                unit: breakdown.unit,
+                                              );
+                                              context.push('/inventory-usages', extra: item);
+                                            },
+                                            child: const Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Icon(CupertinoIcons.minus_circle, size: 14),
+                                                SizedBox(width: 4),
+                                                Text('Pakai Stok', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
@@ -567,34 +600,66 @@ class StockDetailPane extends ConsumerWidget {
                     const SizedBox(height: CupertinoSpacing.m),
                     SizedBox(
                       width: double.infinity,
-                      child: CupertinoButton.filled(
-                        padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin),
-                        onPressed: () {
-                          final firstWh = breakdown.onHand.isNotEmpty ? breakdown.onHand.first : null;
-                          final firstLoc = (firstWh != null && firstWh.locations.isNotEmpty) ? firstWh.locations.first : null;
-                          final item = Inventory(
-                            id: firstLoc?.inventoryId ?? 0,
-                            sku: breakdown.sku,
-                            productName: breakdown.productName,
-                            quantity: totalOnHand,
-                            status: 'available',
-                            warehouseName: firstWh?.warehouseName,
-                            locationCode: firstLoc?.locationCode,
-                            unit: breakdown.unit,
-                          );
-                          context.push('/inventory-adjustments', extra: item);
-                        },
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(CupertinoIcons.arrow_2_circlepath, size: 16),
-                            SizedBox(width: CupertinoSpacing.s),
-                            Text(
-                              'Sesuaikan / Pakai Stok',
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: CupertinoButton.filled(
+                              padding: EdgeInsets.zero,
+                              onPressed: () {
+                                final firstWh = breakdown.onHand.isNotEmpty ? breakdown.onHand.first : null;
+                                final firstLoc = (firstWh != null && firstWh.locations.isNotEmpty) ? firstWh.locations.first : null;
+                                final item = Inventory(
+                                  id: firstLoc?.inventoryId ?? 0,
+                                  sku: breakdown.sku,
+                                  productName: breakdown.productName,
+                                  quantity: totalOnHand,
+                                  status: 'available',
+                                  warehouseName: firstWh?.warehouseName,
+                                  locationCode: firstLoc?.locationCode,
+                                  unit: breakdown.unit,
+                                );
+                                context.push('/inventory-adjustments', extra: item);
+                              },
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(CupertinoIcons.arrow_2_circlepath, size: 14),
+                                  SizedBox(width: 4),
+                                  Text('Sesuaikan', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: CupertinoSpacing.s),
+                          Expanded(
+                            child: CupertinoButton.filled(
+                              padding: EdgeInsets.zero,
+                              onPressed: () {
+                                final firstWh = breakdown.onHand.isNotEmpty ? breakdown.onHand.first : null;
+                                final firstLoc = (firstWh != null && firstWh.locations.isNotEmpty) ? firstWh.locations.first : null;
+                                final item = Inventory(
+                                  id: firstLoc?.inventoryId ?? 0,
+                                  sku: breakdown.sku,
+                                  productName: breakdown.productName,
+                                  quantity: totalOnHand,
+                                  status: 'available',
+                                  warehouseName: firstWh?.warehouseName,
+                                  locationCode: firstLoc?.locationCode,
+                                  unit: breakdown.unit,
+                                );
+                                context.push('/inventory-usages', extra: item);
+                              },
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(CupertinoIcons.minus_circle, size: 14),
+                                  SizedBox(width: 4),
+                                  Text('Pakai Stok', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],

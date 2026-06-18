@@ -14,6 +14,8 @@ class InventoryAdjustmentRepository {
     required int inventoryId,
     required double quantity,
     required String reasonType,
+    required String adjustmentMode,
+    double? unitCost,
     String? notes,
     XFile? photoFile,
   }) async {
@@ -23,6 +25,8 @@ class InventoryAdjustmentRepository {
       MapEntry('inventory_id', inventoryId.toString()),
       MapEntry('quantity', quantity.toString()),
       MapEntry('reason_type', reasonType),
+      MapEntry('adjustment_mode', adjustmentMode),
+      if (unitCost != null) MapEntry('unit_cost', unitCost.toString()),
       if (notes != null && notes.isNotEmpty) MapEntry('notes', notes),
     ]);
 

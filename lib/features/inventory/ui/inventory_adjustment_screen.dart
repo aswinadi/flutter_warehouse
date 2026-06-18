@@ -16,8 +16,13 @@ import '../../../core/widgets/cupertino_glass_toast.dart';
 
 class InventoryAdjustmentScreen extends ConsumerStatefulWidget {
   final Inventory? prefilledItem;
+  final bool isUsageMode;
 
-  const InventoryAdjustmentScreen({super.key, this.prefilledItem});
+  const InventoryAdjustmentScreen({
+    super.key,
+    this.prefilledItem,
+    required this.isUsageMode,
+  });
 
   @override
   ConsumerState<InventoryAdjustmentScreen> createState() => _InventoryAdjustmentScreenState();
@@ -27,20 +32,25 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
   final _qtyController = TextEditingController();
   final _notesController = TextEditingController();
   final _searchController = TextEditingController();
+  final _unitCostController = TextEditingController();
 
   Inventory? _selectedItem;
   String _reasonType = 'usage'; // default to Pemakaian
+  String _adjustmentAction = 'out'; // 'out', 'in', 'value_only'
+  String _adjustmentMode = 'qty_only'; // 'qty_only', 'qty_and_value'
   XFile? _photoFile;
   bool _isLoadingItem = false;
   bool _isSubmitting = false;
   String? _itemErrorMessage;
   String? _qtyErrorMessage;
+  String? _unitCostErrorMessage;
 
   final Map<String, String> _reasons = {
     'usage': 'Pemakaian Umum (General Usage)',
     'lost': 'Kehilangan (Lost)',
     'breakage': 'Kerusakan (Breakage)',
     'dispose': 'Pembuangan (Dispose)',
+    'correction': 'Koreksi Stok (Correction)',
   };
 
   @override
@@ -49,6 +59,15 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
     if (widget.prefilledItem != null) {
       _selectedItem = widget.prefilledItem;
     }
+    if (widget.isUsageMode) {
+      _reasonType = 'usage';
+      _adjustmentAction = 'out';
+      _adjustmentMode = 'qty_only';
+    } else {
+      _reasonType = 'lost';
+      _adjustmentAction = 'out';
+      _adjustmentMode = 'qty_only';
+    }
   }
 
   @override
@@ -56,11 +75,56 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
     _qtyController.dispose();
     _notesController.dispose();
     _searchController.dispose();
+    _unitCostController.dispose();
     super.dispose();
   }
 
+  void _showItemSelectionSheet(List<Inventory> items) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Pilih Barang yang Sesuai'),
+        message: Text('Ditemukan ${items.length} barang cocok.'),
+        actions: items.map((item) {
+          return CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() {
+                _selectedItem = item;
+                _qtyController.clear();
+                _qtyErrorMessage = null;
+                _unitCostController.clear();
+                _unitCostErrorMessage = null;
+              });
+              Navigator.pop(context);
+            },
+            child: Column(
+              children: [
+                Text(
+                  item.productName ?? 'Unknown Product',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'SKU: ${item.sku} • Stok: ${item.quantity.toStringAsFixed(1)} ${item.unit ?? "PCS"}',
+                  style: const TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+      ),
+    );
+  }
+
   Future<void> _lookupItem(String barcodeCode) async {
-    if (barcodeCode.trim().isEmpty) return;
+    final cleanQuery = barcodeCode.trim();
+    if (cleanQuery.isEmpty) return;
+    
     setState(() {
       _isLoadingItem = true;
       _itemErrorMessage = null;
@@ -68,12 +132,38 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
 
     try {
       final repository = ref.read(inventoryRepositoryProvider);
-      final item = await repository.getInventoryByBarcode(barcodeCode.trim());
-      setState(() {
-        _selectedItem = item;
-        _qtyController.clear();
-        _qtyErrorMessage = null;
-      });
+      
+      // Search using getInventory (covers SKU, barcode, and Name)
+      final paginated = await repository.getInventory(search: cleanQuery);
+      final items = paginated.data;
+
+      if (items.length == 1) {
+        setState(() {
+          _selectedItem = items.first;
+          _qtyController.clear();
+          _qtyErrorMessage = null;
+          _unitCostController.clear();
+          _unitCostErrorMessage = null;
+        });
+      } else if (items.length > 1) {
+        _showItemSelectionSheet(items);
+      } else {
+        // Fallback to exact barcode lookup
+        try {
+          final item = await repository.getInventoryByBarcode(cleanQuery);
+          setState(() {
+            _selectedItem = item;
+            _qtyController.clear();
+            _qtyErrorMessage = null;
+            _unitCostController.clear();
+            _unitCostErrorMessage = null;
+          });
+        } catch (barcodeError) {
+          setState(() {
+            _itemErrorMessage = 'Barang tidak ditemukan untuk pencarian: "$cleanQuery"';
+          });
+        }
+      }
     } catch (e) {
       String message = e.toString();
       if (e is DioException) {
@@ -86,7 +176,7 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
         }
       }
       setState(() {
-        _itemErrorMessage = 'Barang tidak ditemukan: $message';
+        _itemErrorMessage = 'Gagal memproses pencarian: $message';
       });
     } finally {
       setState(() {
@@ -167,11 +257,19 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
   }
 
   void _showReasonPicker() {
+    final reasons = widget.isUsageMode
+        ? {'usage': 'Pemakaian Umum (General Usage)'}
+        : {
+            'lost': 'Kehilangan (Lost)',
+            'breakage': 'Kerusakan (Breakage)',
+            'dispose': 'Pembuangan (Dispose)',
+            'correction': 'Koreksi Stok (Correction)',
+          };
     showCupertinoModalPopup(
       context: context,
       builder: (context) => CupertinoActionSheet(
         title: const Text('Pilih Tipe Penyesuaian'),
-        actions: _reasons.entries.map((entry) {
+        actions: reasons.entries.map((entry) {
           return CupertinoActionSheetAction(
             onPressed: () {
               setState(() {
@@ -197,38 +295,73 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
       return;
     }
 
-    final qtyText = _qtyController.text.trim();
-    if (qtyText.isEmpty) {
-      setState(() {
-        _qtyErrorMessage = 'Jumlah wajib diisi';
-      });
-      return;
+    double parsedQty = 0;
+    double? parsedUnitCost;
+    String finalAdjustmentMode = _adjustmentMode;
+
+    if (_adjustmentAction != 'value_only') {
+      final qtyText = _qtyController.text.trim();
+      if (qtyText.isEmpty) {
+        setState(() {
+          _qtyErrorMessage = 'Jumlah wajib diisi';
+        });
+        return;
+      }
+
+      final parsed = double.tryParse(qtyText);
+      if (parsed == null) {
+        setState(() {
+          _qtyErrorMessage = 'Masukkan angka desimal yang valid';
+        });
+        return;
+      }
+
+      if (parsed <= 0) {
+        setState(() {
+          _qtyErrorMessage = 'Jumlah harus lebih besar dari 0';
+        });
+        return;
+      }
+
+      if (_adjustmentAction == 'out') {
+        if (parsed > _selectedItem!.quantity) {
+          setState(() {
+            _qtyErrorMessage = 'Jumlah melebihi stok yang tersedia (${_selectedItem!.quantity.toStringAsFixed(1)})';
+          });
+          return;
+        }
+        parsedQty = -parsed;
+      } else {
+        parsedQty = parsed;
+      }
+    } else {
+      parsedQty = 0;
+      finalAdjustmentMode = 'value_only';
     }
 
-    final parsedQty = double.tryParse(qtyText);
-    if (parsedQty == null) {
-      setState(() {
-        _qtyErrorMessage = 'Masukkan angka desimal yang valid';
-      });
-      return;
-    }
+    final needsUnitCost = _adjustmentAction == 'value_only' || _adjustmentMode == 'qty_and_value';
+    if (needsUnitCost) {
+      final unitCostText = _unitCostController.text.trim();
+      if (unitCostText.isEmpty) {
+        setState(() {
+          _unitCostErrorMessage = 'Harga perolehan / HPP wajib diisi';
+        });
+        return;
+      }
 
-    if (parsedQty <= 0) {
-      setState(() {
-        _qtyErrorMessage = 'Jumlah harus lebih besar dari 0';
-      });
-      return;
-    }
-
-    if (parsedQty > _selectedItem!.quantity) {
-      setState(() {
-        _qtyErrorMessage = 'Jumlah melebihi stok yang tersedia (${_selectedItem!.quantity.toStringAsFixed(1)})';
-      });
-      return;
+      final parsedCost = double.tryParse(unitCostText);
+      if (parsedCost == null || parsedCost < 0) {
+        setState(() {
+          _unitCostErrorMessage = 'Masukkan harga perolehan yang valid';
+        });
+        return;
+      }
+      parsedUnitCost = parsedCost;
     }
 
     setState(() {
       _qtyErrorMessage = null;
+      _unitCostErrorMessage = null;
       _isSubmitting = true;
     });
 
@@ -239,6 +372,8 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
         inventoryId: _selectedItem!.id,
         quantity: parsedQty,
         reasonType: _reasonType,
+        adjustmentMode: finalAdjustmentMode,
+        unitCost: parsedUnitCost,
         notes: _notesController.text.trim(),
         photoFile: _photoFile,
       );
@@ -254,8 +389,10 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
             _selectedItem = null;
             _qtyController.clear();
             _notesController.clear();
+            _unitCostController.clear();
             _photoFile = null;
             _qtyErrorMessage = null;
+            _unitCostErrorMessage = null;
           });
         }
       }
@@ -286,8 +423,19 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
 
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
-      navigationBar: const CupertinoNavigationBar(
-        middle: Text('Penyesuaian & Pemakaian'),
+      navigationBar: CupertinoNavigationBar(
+        middle: Text(widget.isUsageMode ? 'Pemakaian Barang' : 'Penyesuaian Barang'),
+        leading: CupertinoButton(
+          padding: EdgeInsets.zero,
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/');
+            }
+          },
+          child: const Icon(CupertinoIcons.back, color: Color(0xFF6E56CF)),
+        ),
       ),
       child: SafeArea(
         child: Center(
@@ -320,9 +468,9 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
                         onPressed: _isSubmitting ? null : _submit,
                         child: _isSubmitting
                             ? const CupertinoActivityIndicator(color: CupertinoColors.white)
-                            : const Text(
-                                'Kirim Penyesuaian Stok',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                            : Text(
+                                widget.isUsageMode ? 'Kirim Pemakaian Barang' : 'Kirim Penyesuaian Stok',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                       ),
                     ),
@@ -382,31 +530,29 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
             if (isMobileNarrow) ...[
               CupertinoTextField(
                 controller: _searchController,
-                placeholder: 'Masukkan Barcode atau SKU...',
+                placeholder: 'Cari nama barang, SKU, atau barcode...',
                 onSubmitted: (val) => _lookupItem(val),
               ),
               const SizedBox(height: CupertinoSpacing.m),
-              CupertinoButton(
-                color: CupertinoColors.activeBlue,
+              CupertinoButton.filled(
                 onPressed: _isLoadingItem ? null : () => _lookupItem(_searchController.text),
                 child: _isLoadingItem
                     ? const CupertinoActivityIndicator(color: CupertinoColors.white)
                     : const Text('Cari'),
               ),
             ] else ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: CupertinoTextField(
-                      controller: _searchController,
-                      placeholder: 'Masukkan Barcode atau SKU...',
-                      onSubmitted: (val) => _lookupItem(val),
-                    ),
-                  ),
+               Row(
+                 children: [
+                   Expanded(
+                     child: CupertinoTextField(
+                       controller: _searchController,
+                       placeholder: 'Cari nama barang, SKU, atau barcode...',
+                       onSubmitted: (val) => _lookupItem(val),
+                     ),
+                   ),
                   const SizedBox(width: CupertinoSpacing.m),
-                  CupertinoButton(
+                  CupertinoButton.filled(
                     padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.xxl),
-                    color: CupertinoColors.activeBlue,
                     onPressed: _isLoadingItem ? null : () => _lookupItem(_searchController.text),
                     child: _isLoadingItem
                         ? const CupertinoActivityIndicator(color: CupertinoColors.white)
@@ -489,6 +635,8 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
+    final showHppInput = _adjustmentAction == 'value_only' || _adjustmentMode == 'qty_and_value';
+
     return CupertinoGlassContainer(
       padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
       child: Column(
@@ -500,51 +648,156 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
           ),
           const SizedBox(height: CupertinoSpacing.l),
           
-          // Reason Type Selector
-          Text('Tipe Penyesuaian / Pemakaian *', style: context.caption1.copyWith(fontWeight: FontWeight.w500)),
-          const SizedBox(height: CupertinoSpacing.s),
-          GestureDetector(
-            onTap: _showReasonPicker,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.m),
-              decoration: BoxDecoration(
-                color: CupertinoColors.systemBackground.resolveFrom(context),
-                border: Border.all(color: separatorColor, width: 0.5),
-                borderRadius: BorderRadius.circular(8),
+          // 1. Selection for Action
+          if (!widget.isUsageMode) ...[
+            Text('Aksi Penyesuaian *', style: context.caption1.copyWith(fontWeight: FontWeight.w500)),
+            const SizedBox(height: CupertinoSpacing.s),
+            SizedBox(
+              width: double.infinity,
+              child: CupertinoSlidingSegmentedControl<String>(
+                groupValue: _adjustmentAction,
+                children: const {
+                  'out': Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                    child: Text('Kurangi Stok', style: TextStyle(fontSize: 12)),
+                  ),
+                  'in': Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                    child: Text('Tambah Stok', style: TextStyle(fontSize: 12)),
+                  ),
+                  'value_only': Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                    child: Text('Koreksi HPP', style: TextStyle(fontSize: 12)),
+                  ),
+                },
+                onValueChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _adjustmentAction = value;
+                      if (value == 'value_only') {
+                        _reasonType = 'correction';
+                      } else if (_reasonType == 'correction') {
+                        _reasonType = 'usage';
+                      }
+                    });
+                  }
+                },
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(_reasons[_reasonType] ?? '', style: context.subhead.copyWith(color: labelColor)),
-                  Icon(CupertinoIcons.chevron_down, size: 14, color: secondaryLabel),
-                ],
-              ),
             ),
-          ),
-          const SizedBox(height: CupertinoSpacing.l),
-
-          // Quantity Input
-          Text('Jumlah yang Disesuaikan *', style: context.caption1.copyWith(fontWeight: FontWeight.w500)),
-          const SizedBox(height: CupertinoSpacing.s),
-          CupertinoTextField(
-            controller: _qtyController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            placeholder: 'Contoh: 10',
-            suffix: Padding(
-              padding: const EdgeInsets.only(right: CupertinoSpacing.m),
-              child: Text(unit, style: TextStyle(color: secondaryLabel)),
-            ),
-          ),
-          if (_qtyErrorMessage != null) ...[
-            const SizedBox(height: CupertinoSpacing.xs),
-            Text(
-              _qtyErrorMessage!,
-              style: context.caption1.copyWith(color: CupertinoColors.destructiveRed),
-            ),
+            const SizedBox(height: CupertinoSpacing.l),
           ],
+
+          // 2. Selection for Mode (only if not value_only)
+          if (!widget.isUsageMode && _adjustmentAction != 'value_only') ...[
+            Text('Mode Penyesuaian *', style: context.caption1.copyWith(fontWeight: FontWeight.w500)),
+            const SizedBox(height: CupertinoSpacing.s),
+            SizedBox(
+              width: double.infinity,
+              child: CupertinoSlidingSegmentedControl<String>(
+                groupValue: _adjustmentMode,
+                children: const {
+                  'qty_only': Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                    child: Text('Koreksi Qty Saja', style: TextStyle(fontSize: 12)),
+                  ),
+                  'qty_and_value': Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                    child: Text('Koreksi Qty & HPP', style: TextStyle(fontSize: 12)),
+                  ),
+                },
+                onValueChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _adjustmentMode = value;
+                    });
+                  }
+                },
+              ),
+            ),
+            const SizedBox(height: CupertinoSpacing.l),
+          ],
+
+          // 3. Quantity Input (only if not value_only)
+          if (_adjustmentAction != 'value_only') ...[
+            Text(widget.isUsageMode ? 'Jumlah yang Dipakai *' : 'Jumlah yang Disesuaikan *', style: context.caption1.copyWith(fontWeight: FontWeight.w500)),
+            const SizedBox(height: CupertinoSpacing.s),
+            CupertinoTextField(
+              controller: _qtyController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              placeholder: 'Contoh: 10',
+              suffix: Padding(
+                padding: const EdgeInsets.only(right: CupertinoSpacing.m),
+                child: Text(unit, style: TextStyle(color: secondaryLabel)),
+              ),
+            ),
+            if (_qtyErrorMessage != null) ...[
+              const SizedBox(height: CupertinoSpacing.xs),
+              Text(
+                _qtyErrorMessage!,
+                style: context.caption1.copyWith(color: CupertinoColors.destructiveRed),
+              ),
+            ],
+            const SizedBox(height: CupertinoSpacing.l),
+          ],
+
+          // 4. HPP Input (if qty_and_value or value_only)
+          if (showHppInput) ...[
+            Text(
+              _adjustmentAction == 'value_only' 
+                  ? 'Harga Perolehan Baru (HPP Target) *' 
+                  : 'Harga Perolehan / Unit Cost (Rp) *', 
+              style: context.caption1.copyWith(fontWeight: FontWeight.w500)
+            ),
+            const SizedBox(height: CupertinoSpacing.s),
+            CupertinoTextField(
+              controller: _unitCostController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              placeholder: 'Contoh: 50000',
+              prefix: const Padding(
+                padding: EdgeInsets.only(left: CupertinoSpacing.m),
+                child: Text('Rp', style: TextStyle(color: CupertinoColors.placeholderText)),
+              ),
+            ),
+            if (_unitCostErrorMessage != null) ...[
+              const SizedBox(height: CupertinoSpacing.xs),
+              Text(
+                _unitCostErrorMessage!,
+                style: context.caption1.copyWith(color: CupertinoColors.destructiveRed),
+              ),
+            ],
+            const SizedBox(height: CupertinoSpacing.l),
+          ],
+
+          // 5. Warning / Info Banner based on selection
+          _buildInfoBanner(),
           const SizedBox(height: CupertinoSpacing.l),
 
-          // Notes Input
+          // 6. Reason Type Selector
+          if (!widget.isUsageMode) ...[
+            Text('Alasan Penyesuaian *', style: context.caption1.copyWith(fontWeight: FontWeight.w500)),
+            const SizedBox(height: CupertinoSpacing.s),
+            GestureDetector(
+              onTap: _showReasonPicker,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.m),
+                decoration: BoxDecoration(
+                  color: CupertinoColors.systemBackground.resolveFrom(context),
+                  border: Border.all(color: separatorColor, width: 0.5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(_reasons[_reasonType] ?? '', style: context.subhead.copyWith(color: labelColor)),
+                    Icon(CupertinoIcons.chevron_down, size: 14, color: secondaryLabel),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: CupertinoSpacing.l),
+          ],
+
+          // 7. Notes Input
           Text('Keterangan / Notes', style: context.caption1.copyWith(fontWeight: FontWeight.w500)),
           const SizedBox(height: CupertinoSpacing.s),
           CupertinoTextField(
@@ -554,8 +807,55 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
           ),
           const SizedBox(height: CupertinoSpacing.l),
 
-          // Photo Picker Section
+          // 8. Photo Picker Section
           _buildPhotoPickerSection(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoBanner() {
+    if (widget.isUsageMode) return const SizedBox.shrink();
+    String text = '';
+    Color color = CupertinoColors.activeBlue;
+
+    if (_adjustmentAction == 'value_only') {
+      text = 'Koreksi Nilai: Transaksi ini HANYA akan mengubah rata-rata HPP tanpa mempengaruhi jumlah kuantitas stok fisik.';
+      color = CupertinoColors.activeOrange;
+    } else if (_adjustmentAction == 'in') {
+      if (_adjustmentMode == 'qty_and_value') {
+        text = 'Tambah & Rekalkulasi: Menambah stok sekaligus menghitung ulang HPP rata-rata berjalan menggunakan harga perolehan baru yang Anda masukkan.';
+        color = CupertinoColors.activeGreen;
+      } else {
+        text = 'Tambah Qty Saja: Menambah stok baru menggunakan harga HPP berjalan saat ini.';
+      }
+    } else if (_adjustmentAction == 'out') {
+      if (_adjustmentMode == 'qty_and_value') {
+        text = 'Kurang & Rekalkulasi: Mengurangi stok sekaligus mengkoreksi sisa nilai HPP barang yang tersisa di gudang.';
+        color = CupertinoColors.destructiveRed;
+      } else {
+        text = 'Kurang Qty Saja: Pengurangan stok biasa dengan HPP berjalan. HPP per unit tidak akan berubah.';
+      }
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(CupertinoSpacing.m),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.3), width: 0.5),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(CupertinoIcons.info_circle_fill, color: color, size: 16),
+          const SizedBox(width: CupertinoSpacing.s),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 11, color: color, height: 1.3),
+            ),
+          ),
         ],
       ),
     );

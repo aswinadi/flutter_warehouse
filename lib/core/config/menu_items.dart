@@ -100,8 +100,14 @@ final List<NavItemConfig> menuConfig = [
       ),
       NavItemConfig(
         icon: CupertinoIcons.arrow_counterclockwise,
-        labelBuilder: (l10n) => 'Penyesuaian & Pemakaian',
+        labelBuilder: (l10n) => 'Penyesuaian Barang',
         path: '/inventory-adjustments',
+        requiredPermissions: ['view_inventory'],
+      ),
+      NavItemConfig(
+        icon: CupertinoIcons.minus_circle,
+        labelBuilder: (l10n) => 'Pemakaian Barang',
+        path: '/inventory-usages',
         requiredPermissions: ['view_inventory'],
       ),
       NavItemConfig(
@@ -216,6 +222,12 @@ final List<NavItemConfig> menuConfig = [
         icon: CupertinoIcons.chart_bar_square,
         labelBuilder: (l10n) => 'Valuasi Inventaris',
         path: '/inventory-valuation',
+        requiredPermissions: ['view_payments'],
+      ),
+      NavItemConfig(
+        icon: CupertinoIcons.tag,
+        labelBuilder: (l10n) => 'Landed Cost (Biaya Tambahan)',
+        path: '/landed-costs',
         requiredPermissions: ['view_payments'],
       ),
     ],

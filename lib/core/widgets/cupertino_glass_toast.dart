@@ -16,6 +16,11 @@ class CupertinoGlassToast {
     _show(context, message, CupertinoIcons.exclamationmark_circle_fill, CupertinoColors.destructiveRed);
   }
 
+  /// Show an info/neutral capsule at the top of the screen.
+  static void showInfo(BuildContext context, String message) {
+    _show(context, message, CupertinoIcons.info_circle_fill, CupertinoColors.activeBlue);
+  }
+
   static void _show(BuildContext context, String message, IconData icon, Color iconColor) {
     final overlayState = Overlay.of(context);
     late OverlayEntry overlayEntry;

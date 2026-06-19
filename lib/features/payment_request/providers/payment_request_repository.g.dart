@@ -178,6 +178,157 @@ class _AvailableInvoicesProviderElement
   int get companyId => (origin as AvailableInvoicesProvider).companyId;
 }
 
+String _$invoiceDetailPreviewHash() =>
+    r'db3e5f606e4896513c1c797fc043d882ee2e7082';
+
+/// See also [invoiceDetailPreview].
+@ProviderFor(invoiceDetailPreview)
+const invoiceDetailPreviewProvider = InvoiceDetailPreviewFamily();
+
+/// See also [invoiceDetailPreview].
+class InvoiceDetailPreviewFamily
+    extends Family<AsyncValue<Map<String, dynamic>>> {
+  /// See also [invoiceDetailPreview].
+  const InvoiceDetailPreviewFamily();
+
+  /// See also [invoiceDetailPreview].
+  InvoiceDetailPreviewProvider call({
+    required int id,
+    required String type,
+  }) {
+    return InvoiceDetailPreviewProvider(
+      id: id,
+      type: type,
+    );
+  }
+
+  @override
+  InvoiceDetailPreviewProvider getProviderOverride(
+    covariant InvoiceDetailPreviewProvider provider,
+  ) {
+    return call(
+      id: provider.id,
+      type: provider.type,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'invoiceDetailPreviewProvider';
+}
+
+/// See also [invoiceDetailPreview].
+class InvoiceDetailPreviewProvider
+    extends AutoDisposeFutureProvider<Map<String, dynamic>> {
+  /// See also [invoiceDetailPreview].
+  InvoiceDetailPreviewProvider({
+    required int id,
+    required String type,
+  }) : this._internal(
+          (ref) => invoiceDetailPreview(
+            ref as InvoiceDetailPreviewRef,
+            id: id,
+            type: type,
+          ),
+          from: invoiceDetailPreviewProvider,
+          name: r'invoiceDetailPreviewProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$invoiceDetailPreviewHash,
+          dependencies: InvoiceDetailPreviewFamily._dependencies,
+          allTransitiveDependencies:
+              InvoiceDetailPreviewFamily._allTransitiveDependencies,
+          id: id,
+          type: type,
+        );
+
+  InvoiceDetailPreviewProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.id,
+    required this.type,
+  }) : super.internal();
+
+  final int id;
+  final String type;
+
+  @override
+  Override overrideWith(
+    FutureOr<Map<String, dynamic>> Function(InvoiceDetailPreviewRef provider)
+        create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: InvoiceDetailPreviewProvider._internal(
+        (ref) => create(ref as InvoiceDetailPreviewRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        id: id,
+        type: type,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<Map<String, dynamic>> createElement() {
+    return _InvoiceDetailPreviewProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is InvoiceDetailPreviewProvider &&
+        other.id == id &&
+        other.type == type;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, id.hashCode);
+    hash = _SystemHash.combine(hash, type.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin InvoiceDetailPreviewRef
+    on AutoDisposeFutureProviderRef<Map<String, dynamic>> {
+  /// The parameter `id` of this provider.
+  int get id;
+
+  /// The parameter `type` of this provider.
+  String get type;
+}
+
+class _InvoiceDetailPreviewProviderElement
+    extends AutoDisposeFutureProviderElement<Map<String, dynamic>>
+    with InvoiceDetailPreviewRef {
+  _InvoiceDetailPreviewProviderElement(super.provider);
+
+  @override
+  int get id => (origin as InvoiceDetailPreviewProvider).id;
+  @override
+  String get type => (origin as InvoiceDetailPreviewProvider).type;
+}
+
 String _$paymentRequestDetailHash() =>
     r'fe0e6907323eba2fb98b22a65157bbd03811da74';
 

@@ -19,8 +19,8 @@ class PaymentRequestRepository {
   }) async {
     final response = await dio.get('wh/payment-requests', queryParameters: {
       'page': page,
-      if (status != null) 'status': status,
-      if (companyId != null) 'company_id': companyId,
+      'status': ?status,
+      'company_id': ?companyId,
     });
 
     return PaginatedResponse.fromJson(
@@ -36,14 +36,14 @@ class PaymentRequestRepository {
 
   Future<void> approvePaymentRequest(int id, {String? notes}) async {
     await dio.post('wh/payment-requests/$id/approve', data: {
-      if (notes != null) 'notes': notes,
+      'notes': ?notes,
     });
   }
 
   Future<void> rejectPaymentRequest(int id, String reason, {String? notes}) async {
     await dio.post('wh/payment-requests/$id/reject', data: {
       'reason': reason,
-      if (notes != null) 'notes': notes,
+      'notes': ?notes,
     });
   }
 
@@ -99,7 +99,7 @@ class PaymentRequestRepository {
     await dio.post('wh/payment-requests', data: {
       'invoices': invoices,
       'request_date': requestDate,
-      if (description != null) 'description': description,
+      'description': ?description,
     });
   }
 

@@ -506,6 +506,7 @@ mixin _$PaymentRequestInvoice {
   @JsonKey(name: 'payment_status')
   String get paymentStatus => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
+  Map<String, dynamic>? get supplier => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -531,7 +532,8 @@ abstract class $PaymentRequestInvoiceCopyWith<$Res> {
       @JsonKey(name: 'tax_amount', fromJson: doubleFromJson) double taxAmount,
       @JsonKey(name: 'paid_amount', fromJson: doubleFromJson) double paidAmount,
       @JsonKey(name: 'payment_status') String paymentStatus,
-      String? description});
+      String? description,
+      Map<String, dynamic>? supplier});
 }
 
 /// @nodoc
@@ -560,6 +562,7 @@ class _$PaymentRequestInvoiceCopyWithImpl<$Res,
     Object? paidAmount = null,
     Object? paymentStatus = null,
     Object? description = freezed,
+    Object? supplier = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -610,6 +613,10 @@ class _$PaymentRequestInvoiceCopyWithImpl<$Res,
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String?,
+      supplier: freezed == supplier
+          ? _value.supplier
+          : supplier // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
     ) as $Val);
   }
 }
@@ -635,7 +642,8 @@ abstract class _$$PaymentRequestInvoiceImplCopyWith<$Res>
       @JsonKey(name: 'tax_amount', fromJson: doubleFromJson) double taxAmount,
       @JsonKey(name: 'paid_amount', fromJson: doubleFromJson) double paidAmount,
       @JsonKey(name: 'payment_status') String paymentStatus,
-      String? description});
+      String? description,
+      Map<String, dynamic>? supplier});
 }
 
 /// @nodoc
@@ -662,6 +670,7 @@ class __$$PaymentRequestInvoiceImplCopyWithImpl<$Res>
     Object? paidAmount = null,
     Object? paymentStatus = null,
     Object? description = freezed,
+    Object? supplier = freezed,
   }) {
     return _then(_$PaymentRequestInvoiceImpl(
       id: null == id
@@ -712,6 +721,10 @@ class __$$PaymentRequestInvoiceImplCopyWithImpl<$Res>
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String?,
+      supplier: freezed == supplier
+          ? _value._supplier
+          : supplier // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
     ));
   }
 }
@@ -733,7 +746,9 @@ class _$PaymentRequestInvoiceImpl implements _PaymentRequestInvoice {
       @JsonKey(name: 'paid_amount', fromJson: doubleFromJson)
       required this.paidAmount,
       @JsonKey(name: 'payment_status') required this.paymentStatus,
-      this.description});
+      this.description,
+      final Map<String, dynamic>? supplier})
+      : _supplier = supplier;
 
   factory _$PaymentRequestInvoiceImpl.fromJson(Map<String, dynamic> json) =>
       _$$PaymentRequestInvoiceImplFromJson(json);
@@ -771,10 +786,19 @@ class _$PaymentRequestInvoiceImpl implements _PaymentRequestInvoice {
   final String paymentStatus;
   @override
   final String? description;
+  final Map<String, dynamic>? _supplier;
+  @override
+  Map<String, dynamic>? get supplier {
+    final value = _supplier;
+    if (value == null) return null;
+    if (_supplier is EqualUnmodifiableMapView) return _supplier;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
 
   @override
   String toString() {
-    return 'PaymentRequestInvoice(id: $id, paymentRequestId: $paymentRequestId, type: $type, invoiceNumber: $invoiceNumber, invoiceDate: $invoiceDate, dueDate: $dueDate, supplierName: $supplierName, amount: $amount, taxAmount: $taxAmount, paidAmount: $paidAmount, paymentStatus: $paymentStatus, description: $description)';
+    return 'PaymentRequestInvoice(id: $id, paymentRequestId: $paymentRequestId, type: $type, invoiceNumber: $invoiceNumber, invoiceDate: $invoiceDate, dueDate: $dueDate, supplierName: $supplierName, amount: $amount, taxAmount: $taxAmount, paidAmount: $paidAmount, paymentStatus: $paymentStatus, description: $description, supplier: $supplier)';
   }
 
   @override
@@ -801,7 +825,8 @@ class _$PaymentRequestInvoiceImpl implements _PaymentRequestInvoice {
             (identical(other.paymentStatus, paymentStatus) ||
                 other.paymentStatus == paymentStatus) &&
             (identical(other.description, description) ||
-                other.description == description));
+                other.description == description) &&
+            const DeepCollectionEquality().equals(other._supplier, _supplier));
   }
 
   @JsonKey(ignore: true)
@@ -819,7 +844,8 @@ class _$PaymentRequestInvoiceImpl implements _PaymentRequestInvoice {
       taxAmount,
       paidAmount,
       paymentStatus,
-      description);
+      description,
+      const DeepCollectionEquality().hash(_supplier));
 
   @JsonKey(ignore: true)
   @override
@@ -851,7 +877,8 @@ abstract class _PaymentRequestInvoice implements PaymentRequestInvoice {
       @JsonKey(name: 'paid_amount', fromJson: doubleFromJson)
       required final double paidAmount,
       @JsonKey(name: 'payment_status') required final String paymentStatus,
-      final String? description}) = _$PaymentRequestInvoiceImpl;
+      final String? description,
+      final Map<String, dynamic>? supplier}) = _$PaymentRequestInvoiceImpl;
 
   factory _PaymentRequestInvoice.fromJson(Map<String, dynamic> json) =
       _$PaymentRequestInvoiceImpl.fromJson;
@@ -889,6 +916,8 @@ abstract class _PaymentRequestInvoice implements PaymentRequestInvoice {
   String get paymentStatus;
   @override
   String? get description;
+  @override
+  Map<String, dynamic>? get supplier;
   @override
   @JsonKey(ignore: true)
   _$$PaymentRequestInvoiceImplCopyWith<_$PaymentRequestInvoiceImpl>

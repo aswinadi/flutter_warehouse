@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/payment_request.dart';
+import '../../finance/models/company_bank_account.dart';
 import '../../../core/api/dio_client.dart';
 import '../../../core/api/paginated_response.dart';
 import '../../../core/providers/company_provider.dart';
@@ -20,9 +21,9 @@ class PaymentRequestRepository {
   }) async {
     final response = await dio.get('wh/payment-requests', queryParameters: {
       'page': page,
-      'status': ?status,
-      'company_id': ?companyId,
-      'per_page': ?perPage,
+      if (status != null) 'status': status,
+      if (companyId != null) 'company_id': companyId,
+      if (perPage != null) 'per_page': perPage,
     });
 
     return PaginatedResponse.fromJson(
@@ -38,14 +39,14 @@ class PaymentRequestRepository {
 
   Future<void> approvePaymentRequest(int id, {String? notes}) async {
     await dio.post('wh/payment-requests/$id/approve', data: {
-      'notes': ?notes,
+      if (notes != null) 'notes': notes,
     });
   }
 
   Future<void> rejectPaymentRequest(int id, String reason, {String? notes}) async {
     await dio.post('wh/payment-requests/$id/reject', data: {
       'reason': reason,
-      'notes': ?notes,
+      if (notes != null) 'notes': notes,
     });
   }
 
@@ -101,7 +102,7 @@ class PaymentRequestRepository {
     await dio.post('wh/payment-requests', data: {
       'invoices': invoices,
       'request_date': requestDate,
-      'description': ?description,
+      if (description != null) 'description': description,
     });
   }
 
@@ -115,10 +116,10 @@ class PaymentRequestRepository {
   }) async {
     await dio.post('wh/payment-requests/$id/pay', data: {
       'invoices': invoices,
-      'bank_name': ?bankName,
-      'bank_account': ?bankAccount,
-      'transfer_reference': ?transferReference,
-      'notes': ?notes,
+      if (bankName != null) 'bank_name': bankName,
+      if (bankAccount != null) 'bank_account': bankAccount,
+      if (transferReference != null) 'transfer_reference': transferReference,
+      if (notes != null) 'notes': notes,
     });
   }
 
@@ -210,4 +211,14 @@ class PaymentRequests extends _$PaymentRequests {
 @riverpod
 Future<PaymentRequest> paymentRequestDetail(PaymentRequestDetailRef ref, int id) async {
   return ref.watch(paymentRequestRepositoryProvider).getPaymentRequestDetail(id);
+}
+
+@riverpod
+Future<List<CompanyBankAccount>> companyBankAccounts(CompanyBankAccountsRef ref, {required int companyId}) async {
+  final dio = ref.watch(dioProvider);
+  final response = await dio.get('wh/company-bank-accounts', queryParameters: {
+    'company_id': companyId,
+  });
+  final data = response.data['data'] as List<dynamic>;
+  return data.map((json) => CompanyBankAccount.fromJson(json as Map<String, dynamic>)).toList();
 }

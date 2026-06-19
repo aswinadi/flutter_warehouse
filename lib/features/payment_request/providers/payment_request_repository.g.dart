@@ -460,6 +460,140 @@ class _PaymentRequestDetailProviderElement
   int get id => (origin as PaymentRequestDetailProvider).id;
 }
 
+String _$companyBankAccountsHash() =>
+    r'5632cb06d7636dba3d6fb5b630436dfb579ae764';
+
+/// See also [companyBankAccounts].
+@ProviderFor(companyBankAccounts)
+const companyBankAccountsProvider = CompanyBankAccountsFamily();
+
+/// See also [companyBankAccounts].
+class CompanyBankAccountsFamily
+    extends Family<AsyncValue<List<CompanyBankAccount>>> {
+  /// See also [companyBankAccounts].
+  const CompanyBankAccountsFamily();
+
+  /// See also [companyBankAccounts].
+  CompanyBankAccountsProvider call({
+    required int companyId,
+  }) {
+    return CompanyBankAccountsProvider(
+      companyId: companyId,
+    );
+  }
+
+  @override
+  CompanyBankAccountsProvider getProviderOverride(
+    covariant CompanyBankAccountsProvider provider,
+  ) {
+    return call(
+      companyId: provider.companyId,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'companyBankAccountsProvider';
+}
+
+/// See also [companyBankAccounts].
+class CompanyBankAccountsProvider
+    extends AutoDisposeFutureProvider<List<CompanyBankAccount>> {
+  /// See also [companyBankAccounts].
+  CompanyBankAccountsProvider({
+    required int companyId,
+  }) : this._internal(
+          (ref) => companyBankAccounts(
+            ref as CompanyBankAccountsRef,
+            companyId: companyId,
+          ),
+          from: companyBankAccountsProvider,
+          name: r'companyBankAccountsProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$companyBankAccountsHash,
+          dependencies: CompanyBankAccountsFamily._dependencies,
+          allTransitiveDependencies:
+              CompanyBankAccountsFamily._allTransitiveDependencies,
+          companyId: companyId,
+        );
+
+  CompanyBankAccountsProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.companyId,
+  }) : super.internal();
+
+  final int companyId;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<CompanyBankAccount>> Function(CompanyBankAccountsRef provider)
+        create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: CompanyBankAccountsProvider._internal(
+        (ref) => create(ref as CompanyBankAccountsRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        companyId: companyId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<CompanyBankAccount>> createElement() {
+    return _CompanyBankAccountsProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CompanyBankAccountsProvider && other.companyId == companyId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, companyId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin CompanyBankAccountsRef
+    on AutoDisposeFutureProviderRef<List<CompanyBankAccount>> {
+  /// The parameter `companyId` of this provider.
+  int get companyId;
+}
+
+class _CompanyBankAccountsProviderElement
+    extends AutoDisposeFutureProviderElement<List<CompanyBankAccount>>
+    with CompanyBankAccountsRef {
+  _CompanyBankAccountsProviderElement(super.provider);
+
+  @override
+  int get companyId => (origin as CompanyBankAccountsProvider).companyId;
+}
+
 String _$paymentRequestsHash() => r'9f5b2b6579bf7b21d16c0ce7c2da29ba01af1c54';
 
 abstract class _$PaymentRequests

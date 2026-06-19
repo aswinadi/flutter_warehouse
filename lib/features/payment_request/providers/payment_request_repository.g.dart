@@ -594,6 +594,151 @@ class _CompanyBankAccountsProviderElement
   int get companyId => (origin as CompanyBankAccountsProvider).companyId;
 }
 
+String _$supplierByNameHash() => r'd9f9fce7e9ffd10ed03090bea1b6f2d0769801a2';
+
+/// See also [supplierByName].
+@ProviderFor(supplierByName)
+const supplierByNameProvider = SupplierByNameFamily();
+
+/// See also [supplierByName].
+class SupplierByNameFamily extends Family<AsyncValue<Supplier?>> {
+  /// See also [supplierByName].
+  const SupplierByNameFamily();
+
+  /// See also [supplierByName].
+  SupplierByNameProvider call({
+    required String name,
+    required int companyId,
+  }) {
+    return SupplierByNameProvider(
+      name: name,
+      companyId: companyId,
+    );
+  }
+
+  @override
+  SupplierByNameProvider getProviderOverride(
+    covariant SupplierByNameProvider provider,
+  ) {
+    return call(
+      name: provider.name,
+      companyId: provider.companyId,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'supplierByNameProvider';
+}
+
+/// See also [supplierByName].
+class SupplierByNameProvider extends AutoDisposeFutureProvider<Supplier?> {
+  /// See also [supplierByName].
+  SupplierByNameProvider({
+    required String name,
+    required int companyId,
+  }) : this._internal(
+          (ref) => supplierByName(
+            ref as SupplierByNameRef,
+            name: name,
+            companyId: companyId,
+          ),
+          from: supplierByNameProvider,
+          name: r'supplierByNameProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$supplierByNameHash,
+          dependencies: SupplierByNameFamily._dependencies,
+          allTransitiveDependencies:
+              SupplierByNameFamily._allTransitiveDependencies,
+          name: name,
+          companyId: companyId,
+        );
+
+  SupplierByNameProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.name,
+    required this.companyId,
+  }) : super.internal();
+
+  final String name;
+  final int companyId;
+
+  @override
+  Override overrideWith(
+    FutureOr<Supplier?> Function(SupplierByNameRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: SupplierByNameProvider._internal(
+        (ref) => create(ref as SupplierByNameRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        name: name,
+        companyId: companyId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<Supplier?> createElement() {
+    return _SupplierByNameProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is SupplierByNameProvider &&
+        other.name == name &&
+        other.companyId == companyId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, name.hashCode);
+    hash = _SystemHash.combine(hash, companyId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin SupplierByNameRef on AutoDisposeFutureProviderRef<Supplier?> {
+  /// The parameter `name` of this provider.
+  String get name;
+
+  /// The parameter `companyId` of this provider.
+  int get companyId;
+}
+
+class _SupplierByNameProviderElement
+    extends AutoDisposeFutureProviderElement<Supplier?> with SupplierByNameRef {
+  _SupplierByNameProviderElement(super.provider);
+
+  @override
+  String get name => (origin as SupplierByNameProvider).name;
+  @override
+  int get companyId => (origin as SupplierByNameProvider).companyId;
+}
+
 String _$paymentRequestsHash() => r'9f5b2b6579bf7b21d16c0ce7c2da29ba01af1c54';
 
 abstract class _$PaymentRequests

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/payment_request.dart';
 import '../../finance/models/company_bank_account.dart';
+import '../../purchase_request/models/supplier.dart';
 import '../../../core/api/dio_client.dart';
 import '../../../core/api/paginated_response.dart';
 import '../../../core/providers/company_provider.dart';
@@ -221,4 +222,20 @@ Future<List<CompanyBankAccount>> companyBankAccounts(CompanyBankAccountsRef ref,
   });
   final data = response.data['data'] as List<dynamic>;
   return data.map((json) => CompanyBankAccount.fromJson(json as Map<String, dynamic>)).toList();
+}
+
+@riverpod
+Future<Supplier?> supplierByName(SupplierByNameRef ref, {required String name, required int companyId}) async {
+  final dio = ref.watch(dioProvider);
+  final response = await dio.get('wh/suppliers', queryParameters: {
+    'search': name,
+    'company_id': companyId,
+  });
+  final data = response.data['data'] as List<dynamic>;
+  if (data.isEmpty) return null;
+  final list = data.map((json) => Supplier.fromJson(json as Map<String, dynamic>)).toList();
+  return list.firstWhere(
+    (s) => s.name.toLowerCase() == name.toLowerCase(),
+    orElse: () => list.first,
+  );
 }

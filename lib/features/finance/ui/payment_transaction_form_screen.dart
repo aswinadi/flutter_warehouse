@@ -502,18 +502,10 @@ class _PaymentTransactionFormScreenState extends ConsumerState<PaymentTransactio
     final isWide = MediaQuery.of(context).size.width > 900;
     final company = ref.watch(selectedCompanyProvider);
     final companyBankAccountsAsync = ref.watch(companyBankAccountsProvider(companyId: company?.id ?? 0));
-
-    // Try to find supplier bank details from invoices
-    Map<String, dynamic>? supplierData;
-    for (final inv in invoices) {
-      if (inv.supplier != null) {
-        supplierData = inv.supplier;
-        break;
-      }
-    }
-    final vendorBankName = supplierData?['bank_name']?.toString();
-    final vendorBankAccount = supplierData?['bank_account']?.toString();
-    final vendorBankAccountName = supplierData?['bank_account_name']?.toString();
+    final supplierAsync = ref.watch(supplierByNameProvider(
+      name: _selectedSupplier!,
+      companyId: company?.id ?? 0,
+    ));
     
     // Sort invoices by due date
     invoices.sort((a, b) {
@@ -584,44 +576,57 @@ class _PaymentTransactionFormScreenState extends ConsumerState<PaymentTransactio
             child: ListView(
               padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
               children: [
-                // Vendor Bank Details Card
-                if (vendorBankName != null && vendorBankAccount != null) ...[
-                  CupertinoGlassContainer(
-                    margin: const EdgeInsets.only(bottom: CupertinoSpacing.l),
-                    padding: const EdgeInsets.all(CupertinoSpacing.m),
-                    backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(CupertinoIcons.info_circle_fill, size: 16, color: CupertinoColors.activeBlue.resolveFrom(context)),
-                            const SizedBox(width: CupertinoSpacing.s),
-                            Text(
-                              'Rekening Bank Vendor/Supplier',
-                              style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: labelColor),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: CupertinoSpacing.s),
-                        Text(
-                          'Bank: $vendorBankName',
-                          style: context.body.copyWith(color: labelColor),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'No. Rekening: $vendorBankAccount',
-                          style: context.body.copyWith(fontWeight: FontWeight.bold, color: labelColor),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Nama Penerima: ${vendorBankAccountName ?? "-"}',
-                          style: context.body.copyWith(color: labelColor),
-                        ),
-                      ],
+                // Vendor Bank Details Card (fetched from Master Supplier)
+                supplierAsync.when(
+                  data: (supplier) {
+                    if (supplier == null || supplier.bankName == null || supplier.bankAccount == null) {
+                      return const SizedBox.shrink();
+                    }
+                    
+                    return CupertinoGlassContainer(
+                      margin: const EdgeInsets.only(bottom: CupertinoSpacing.l),
+                      padding: const EdgeInsets.all(CupertinoSpacing.m),
+                      backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(CupertinoIcons.info_circle_fill, size: 16, color: CupertinoColors.activeBlue.resolveFrom(context)),
+                              const SizedBox(width: CupertinoSpacing.s),
+                              Text(
+                                'Rekening Bank Vendor/Supplier',
+                                style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: labelColor),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: CupertinoSpacing.s),
+                          Text(
+                            'Bank: ${supplier.bankName}',
+                            style: context.body.copyWith(color: labelColor),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'No. Rekening: ${supplier.bankAccount}',
+                            style: context.body.copyWith(fontWeight: FontWeight.bold, color: labelColor),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Nama Penerima: ${supplier.bankAccountName ?? "-"}',
+                            style: context.body.copyWith(color: labelColor),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  loading: () => const Center(
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: CupertinoSpacing.l),
+                      child: CupertinoActivityIndicator(),
                     ),
                   ),
-                ],
+                  error: (err, stack) => const SizedBox.shrink(),
+                ),
 
                 Text(
                   'Pilih Invoice Yang Akan Dibayar',

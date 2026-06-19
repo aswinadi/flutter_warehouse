@@ -596,7 +596,7 @@ class _PaymentTransactionFormScreenState extends ConsumerState<PaymentTransactio
                             Row(
                               children: [
                                 Icon(
-                                  CupertinoIcons.warning_fill,
+                                  CupertinoIcons.exclamationmark_triangle_fill,
                                   size: 16,
                                   color: CupertinoColors.systemOrange.resolveFrom(context),
                                 ),

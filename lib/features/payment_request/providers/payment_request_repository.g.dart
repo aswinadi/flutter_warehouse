@@ -594,7 +594,7 @@ class _CompanyBankAccountsProviderElement
   int get companyId => (origin as CompanyBankAccountsProvider).companyId;
 }
 
-String _$supplierByNameHash() => r'd9f9fce7e9ffd10ed03090bea1b6f2d0769801a2';
+String _$supplierByNameHash() => r'e266661d72697f59e2e234bbbef759481802b4ff';
 
 /// See also [supplierByName].
 @ProviderFor(supplierByName)
@@ -607,11 +607,11 @@ class SupplierByNameFamily extends Family<AsyncValue<Supplier?>> {
 
   /// See also [supplierByName].
   SupplierByNameProvider call({
-    required String name,
+    required String supplierName,
     required int companyId,
   }) {
     return SupplierByNameProvider(
-      name: name,
+      supplierName: supplierName,
       companyId: companyId,
     );
   }
@@ -621,7 +621,7 @@ class SupplierByNameFamily extends Family<AsyncValue<Supplier?>> {
     covariant SupplierByNameProvider provider,
   ) {
     return call(
-      name: provider.name,
+      supplierName: provider.supplierName,
       companyId: provider.companyId,
     );
   }
@@ -645,12 +645,12 @@ class SupplierByNameFamily extends Family<AsyncValue<Supplier?>> {
 class SupplierByNameProvider extends AutoDisposeFutureProvider<Supplier?> {
   /// See also [supplierByName].
   SupplierByNameProvider({
-    required String name,
+    required String supplierName,
     required int companyId,
   }) : this._internal(
           (ref) => supplierByName(
             ref as SupplierByNameRef,
-            name: name,
+            supplierName: supplierName,
             companyId: companyId,
           ),
           from: supplierByNameProvider,
@@ -662,7 +662,7 @@ class SupplierByNameProvider extends AutoDisposeFutureProvider<Supplier?> {
           dependencies: SupplierByNameFamily._dependencies,
           allTransitiveDependencies:
               SupplierByNameFamily._allTransitiveDependencies,
-          name: name,
+          supplierName: supplierName,
           companyId: companyId,
         );
 
@@ -673,11 +673,11 @@ class SupplierByNameProvider extends AutoDisposeFutureProvider<Supplier?> {
     required super.allTransitiveDependencies,
     required super.debugGetCreateSourceHash,
     required super.from,
-    required this.name,
+    required this.supplierName,
     required this.companyId,
   }) : super.internal();
 
-  final String name;
+  final String supplierName;
   final int companyId;
 
   @override
@@ -693,7 +693,7 @@ class SupplierByNameProvider extends AutoDisposeFutureProvider<Supplier?> {
         dependencies: null,
         allTransitiveDependencies: null,
         debugGetCreateSourceHash: null,
-        name: name,
+        supplierName: supplierName,
         companyId: companyId,
       ),
     );
@@ -707,14 +707,14 @@ class SupplierByNameProvider extends AutoDisposeFutureProvider<Supplier?> {
   @override
   bool operator ==(Object other) {
     return other is SupplierByNameProvider &&
-        other.name == name &&
+        other.supplierName == supplierName &&
         other.companyId == companyId;
   }
 
   @override
   int get hashCode {
     var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, name.hashCode);
+    hash = _SystemHash.combine(hash, supplierName.hashCode);
     hash = _SystemHash.combine(hash, companyId.hashCode);
 
     return _SystemHash.finish(hash);
@@ -722,8 +722,8 @@ class SupplierByNameProvider extends AutoDisposeFutureProvider<Supplier?> {
 }
 
 mixin SupplierByNameRef on AutoDisposeFutureProviderRef<Supplier?> {
-  /// The parameter `name` of this provider.
-  String get name;
+  /// The parameter `supplierName` of this provider.
+  String get supplierName;
 
   /// The parameter `companyId` of this provider.
   int get companyId;
@@ -734,7 +734,7 @@ class _SupplierByNameProviderElement
   _SupplierByNameProviderElement(super.provider);
 
   @override
-  String get name => (origin as SupplierByNameProvider).name;
+  String get supplierName => (origin as SupplierByNameProvider).supplierName;
   @override
   int get companyId => (origin as SupplierByNameProvider).companyId;
 }

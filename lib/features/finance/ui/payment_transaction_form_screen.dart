@@ -503,7 +503,7 @@ class _PaymentTransactionFormScreenState extends ConsumerState<PaymentTransactio
     final company = ref.watch(selectedCompanyProvider);
     final companyBankAccountsAsync = ref.watch(companyBankAccountsProvider(companyId: company?.id ?? 0));
     final supplierAsync = ref.watch(supplierByNameProvider(
-      name: _selectedSupplier!,
+      supplierName: _selectedSupplier!,
       companyId: company?.id ?? 0,
     ));
     

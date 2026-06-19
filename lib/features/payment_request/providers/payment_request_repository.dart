@@ -225,17 +225,17 @@ Future<List<CompanyBankAccount>> companyBankAccounts(CompanyBankAccountsRef ref,
 }
 
 @riverpod
-Future<Supplier?> supplierByName(SupplierByNameRef ref, {required String name, required int companyId}) async {
+Future<Supplier?> supplierByName(SupplierByNameRef ref, {required String supplierName, required int companyId}) async {
   final dio = ref.watch(dioProvider);
   final response = await dio.get('wh/suppliers', queryParameters: {
-    'search': name,
+    'search': supplierName,
     'company_id': companyId,
   });
   final data = response.data['data'] as List<dynamic>;
   if (data.isEmpty) return null;
   final list = data.map((json) => Supplier.fromJson(json as Map<String, dynamic>)).toList();
   return list.firstWhere(
-    (s) => s.name.toLowerCase() == name.toLowerCase(),
+    (s) => s.name.toLowerCase() == supplierName.toLowerCase(),
     orElse: () => list.first,
   );
 }

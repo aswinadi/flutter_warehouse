@@ -102,6 +102,16 @@ class PaymentRequestRepository {
       if (description != null) 'description': description,
     });
   }
+
+  Future<Map<String, dynamic>> getInvoiceDetailRaw(int id, String type) async {
+    final endpoint = type == 'supplier'
+        ? 'wh/invoices/$id'
+        : type == 'biaya'
+            ? 'wh/invoice-biaya/$id'
+            : 'wh/landed-costs/$id';
+    final response = await dio.get(endpoint);
+    return response.data['data'] as Map<String, dynamic>;
+  }
 }
 
 @riverpod
@@ -112,6 +122,11 @@ PaymentRequestRepository paymentRequestRepository(PaymentRequestRepositoryRef re
 @riverpod
 Future<List<AvailableInvoice>> availableInvoices(AvailableInvoicesRef ref, {required int companyId}) async {
   return ref.watch(paymentRequestRepositoryProvider).getAvailableInvoices(companyId: companyId);
+}
+
+@riverpod
+Future<Map<String, dynamic>> invoiceDetailPreview(InvoiceDetailPreviewRef ref, {required int id, required String type}) async {
+  return ref.watch(paymentRequestRepositoryProvider).getInvoiceDetailRaw(id, type);
 }
 
 @riverpod

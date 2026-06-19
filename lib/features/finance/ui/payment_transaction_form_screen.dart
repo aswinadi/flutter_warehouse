@@ -9,6 +9,7 @@ import '../../../core/theme/cupertino_theme_extensions.dart';
 import '../../../core/widgets/cupertino_glass_container.dart';
 import '../../payment_request/models/payment_request.dart';
 import '../../payment_request/providers/payment_request_repository.dart';
+import '../models/company_bank_account.dart';
 
 class PaymentTransactionFormScreen extends ConsumerStatefulWidget {
   const PaymentTransactionFormScreen({super.key});
@@ -29,6 +30,46 @@ class _PaymentTransactionFormScreenState extends ConsumerState<PaymentTransactio
   String? _selectedSupplier;
   final Set<PaymentRequestInvoice> _selectedInvoices = {};
   bool _isSubmitting = false;
+  CompanyBankAccount? _selectedCompanyBankAccount;
+
+  void _selectSupplier(String supplier, List<PaymentRequestInvoice> invoices) {
+    setState(() {
+      _selectedSupplier = supplier;
+      _selectedInvoices.clear();
+      _selectedInvoices.addAll(invoices);
+      _selectedCompanyBankAccount = null;
+      _bankNameController.clear();
+      _bankAccountController.clear();
+      _transferRefController.clear();
+      _notesController.clear();
+    });
+  }
+
+  void _showCompanyBankAccountPicker(List<CompanyBankAccount> accounts) {
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (BuildContext context) => CupertinoActionSheet(
+        title: const Text('Pilih Rekening Bank Asal'),
+        actions: accounts.map((account) {
+          return CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() {
+                _selectedCompanyBankAccount = account;
+                _bankNameController.text = account.bankName;
+                _bankAccountController.text = account.accountNumber;
+              });
+              Navigator.pop(context);
+            },
+            child: Text('${account.bankName} - ${account.accountNumber} (${account.accountName})'),
+          );
+        }).toList(),
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -258,6 +299,7 @@ class _PaymentTransactionFormScreenState extends ConsumerState<PaymentTransactio
     final approvedPrsAsync = ref.watch(paymentRequestsProvider(status: 'approved'));
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final bgColor = CupertinoColors.systemGroupedBackground.resolveFrom(context);
+    final isWide = MediaQuery.of(context).size.width > 900;
 
     return CupertinoPageScaffold(
       backgroundColor: bgColor,
@@ -290,11 +332,52 @@ class _PaymentTransactionFormScreenState extends ConsumerState<PaymentTransactio
                     groupedSuppliers.putIfAbsent(name, () => []).add(inv);
                   }
 
-                  if (_selectedSupplier == null) {
-                    return _buildSupplierList(groupedSuppliers, labelColor);
+                  if (isWide) {
+                    return Row(
+                      children: [
+                        SizedBox(
+                          width: 380,
+                          child: _buildSupplierList(groupedSuppliers, labelColor),
+                        ),
+                        Container(
+                          width: 1,
+                          color: CupertinoColors.separator.resolveFrom(context),
+                        ),
+                        Expanded(
+                          child: _selectedSupplier != null
+                              ? _buildInvoiceChecklist(
+                                  groupedSuppliers[_selectedSupplier!] ?? [],
+                                  labelColor,
+                                )
+                              : Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        CupertinoIcons.square_list_fill,
+                                        size: 48,
+                                        color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                                      ),
+                                      const SizedBox(height: CupertinoSpacing.l),
+                                      Text(
+                                        'Pilih supplier di panel kiri untuk memproses pembayaran',
+                                        style: context.callout.copyWith(
+                                          color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                        ),
+                      ],
+                    );
                   } else {
-                    final supplierInvoices = groupedSuppliers[_selectedSupplier!] ?? [];
-                    return _buildInvoiceChecklist(supplierInvoices, labelColor);
+                    if (_selectedSupplier == null) {
+                      return _buildSupplierList(groupedSuppliers, labelColor);
+                    } else {
+                      final supplierInvoices = groupedSuppliers[_selectedSupplier!] ?? [];
+                      return _buildInvoiceChecklist(supplierInvoices, labelColor);
+                    }
                   }
                 },
               ),
@@ -359,12 +442,7 @@ class _PaymentTransactionFormScreenState extends ConsumerState<PaymentTransactio
 
                 return GestureDetector(
                   onTap: () {
-                    setState(() {
-                      _selectedSupplier = supplier;
-                      _selectedInvoices.clear();
-                      // Auto check all invoices by default
-                      _selectedInvoices.addAll(invoices);
-                    });
+                    _selectSupplier(supplier, invoices);
                   },
                   child: CupertinoGlassContainer(
                     margin: const EdgeInsets.only(bottom: CupertinoSpacing.s),
@@ -421,6 +499,21 @@ class _PaymentTransactionFormScreenState extends ConsumerState<PaymentTransactio
   Widget _buildInvoiceChecklist(List<PaymentRequestInvoice> invoices, Color labelColor) {
     final secondaryBgColor = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
     final secondaryLabelColor = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final isWide = MediaQuery.of(context).size.width > 900;
+    final company = ref.watch(selectedCompanyProvider);
+    final companyBankAccountsAsync = ref.watch(companyBankAccountsProvider(companyId: company?.id ?? 0));
+
+    // Try to find supplier bank details from invoices
+    Map<String, dynamic>? supplierData;
+    for (final inv in invoices) {
+      if (inv.supplier != null) {
+        supplierData = inv.supplier;
+        break;
+      }
+    }
+    final vendorBankName = supplierData?['bank_name']?.toString();
+    final vendorBankAccount = supplierData?['bank_account']?.toString();
+    final vendorBankAccountName = supplierData?['bank_account_name']?.toString();
     
     // Sort invoices by due date
     invoices.sort((a, b) {
@@ -459,25 +552,26 @@ class _PaymentTransactionFormScreenState extends ConsumerState<PaymentTransactio
                   ],
                 ),
               ),
-              CupertinoButton(
-                padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m),
-                color: CupertinoColors.systemFill,
-                minSize: 32,
-                borderRadius: BorderRadius.circular(16),
-                onPressed: () {
-                  setState(() {
-                    _selectedSupplier = null;
-                    _selectedInvoices.clear();
-                  });
-                },
-                child: Text(
-                  'Ubah',
-                  style: context.footnote.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: labelColor,
+              if (!isWide)
+                CupertinoButton(
+                  padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m),
+                  color: CupertinoColors.systemFill,
+                  minSize: 32,
+                  borderRadius: BorderRadius.circular(16),
+                  onPressed: () {
+                    setState(() {
+                      _selectedSupplier = null;
+                      _selectedInvoices.clear();
+                    });
+                  },
+                  child: Text(
+                    'Ubah',
+                    style: context.footnote.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: labelColor,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ),
@@ -490,6 +584,45 @@ class _PaymentTransactionFormScreenState extends ConsumerState<PaymentTransactio
             child: ListView(
               padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
               children: [
+                // Vendor Bank Details Card
+                if (vendorBankName != null && vendorBankAccount != null) ...[
+                  CupertinoGlassContainer(
+                    margin: const EdgeInsets.only(bottom: CupertinoSpacing.l),
+                    padding: const EdgeInsets.all(CupertinoSpacing.m),
+                    backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(CupertinoIcons.info_circle_fill, size: 16, color: CupertinoColors.activeBlue.resolveFrom(context)),
+                            const SizedBox(width: CupertinoSpacing.s),
+                            Text(
+                              'Rekening Bank Vendor/Supplier',
+                              style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: labelColor),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: CupertinoSpacing.s),
+                        Text(
+                          'Bank: $vendorBankName',
+                          style: context.body.copyWith(color: labelColor),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'No. Rekening: $vendorBankAccount',
+                          style: context.body.copyWith(fontWeight: FontWeight.bold, color: labelColor),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Nama Penerima: ${vendorBankAccountName ?? "-"}',
+                          style: context.body.copyWith(color: labelColor),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
                 Text(
                   'Pilih Invoice Yang Akan Dibayar',
                   style: context.headline.copyWith(fontWeight: FontWeight.bold, color: labelColor),
@@ -580,6 +713,57 @@ class _PaymentTransactionFormScreenState extends ConsumerState<PaymentTransactio
                 Text(
                   'Detail Transaksi Transfer Bank',
                   style: context.headline.copyWith(fontWeight: FontWeight.bold, color: labelColor),
+                ),
+                const SizedBox(height: CupertinoSpacing.m),
+
+                // Company Bank Account Selector Dropdown Row
+                Text('Pilih Rekening Bank Asal', style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: labelColor)),
+                const SizedBox(height: CupertinoSpacing.s),
+                companyBankAccountsAsync.when(
+                  loading: () => const CupertinoActivityIndicator(),
+                  error: (err, stack) => Text('Gagal memuat rekening bank: $err', style: const TextStyle(color: CupertinoColors.systemRed)),
+                  data: (accounts) {
+                    if (accounts.isEmpty) {
+                      return Text(
+                        'Tidak ada rekening bank terdaftar untuk perusahaan ini.',
+                        style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                      );
+                    }
+                    
+                    return GestureDetector(
+                      onTap: () => _showCompanyBankAccountPicker(accounts),
+                      child: Container(
+                        padding: const EdgeInsets.all(CupertinoSpacing.m),
+                        decoration: BoxDecoration(
+                          color: secondaryBgColor,
+                          border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
+                          borderRadius: BorderRadius.circular(CupertinoSpacing.cardRadius),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _selectedCompanyBankAccount != null
+                                    ? '${_selectedCompanyBankAccount!.bankName} - ${_selectedCompanyBankAccount!.accountNumber} (${_selectedCompanyBankAccount!.accountName})'
+                                    : 'Pilih Rekening Bank Perusahaan...',
+                                style: TextStyle(
+                                  color: _selectedCompanyBankAccount != null
+                                      ? labelColor
+                                      : CupertinoColors.placeholderText.resolveFrom(context),
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              CupertinoIcons.chevron_down,
+                              size: 16,
+                              color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: CupertinoSpacing.m),
 

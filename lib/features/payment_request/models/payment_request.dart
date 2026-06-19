@@ -42,6 +42,7 @@ class PaymentRequestInvoice with _$PaymentRequestInvoice {
     @JsonKey(name: 'paid_amount', fromJson: doubleFromJson) required double paidAmount,
     @JsonKey(name: 'payment_status') required String paymentStatus,
     String? description,
+    Map<String, dynamic>? supplier,
   }) = _PaymentRequestInvoice;
 
   factory PaymentRequestInvoice.fromJson(Map<String, dynamic> json) =>

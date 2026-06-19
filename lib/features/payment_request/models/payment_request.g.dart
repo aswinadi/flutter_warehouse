@@ -62,6 +62,7 @@ _$PaymentRequestInvoiceImpl _$$PaymentRequestInvoiceImplFromJson(
       paidAmount: doubleFromJson(json['paid_amount']),
       paymentStatus: json['payment_status'] as String,
       description: json['description'] as String?,
+      supplier: json['supplier'] as Map<String, dynamic>?,
     );
 
 Map<String, dynamic> _$$PaymentRequestInvoiceImplToJson(
@@ -79,6 +80,7 @@ Map<String, dynamic> _$$PaymentRequestInvoiceImplToJson(
       'paid_amount': instance.paidAmount,
       'payment_status': instance.paymentStatus,
       'description': instance.description,
+      'supplier': instance.supplier,
     };
 
 _$AvailableInvoiceImpl _$$AvailableInvoiceImplFromJson(

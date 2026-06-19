@@ -8,6 +8,9 @@ class Supplier {
   final String? email;
   final String? paymentTerms;
   final bool isActive;
+  final String? bankName;
+  final String? bankAccount;
+  final String? bankAccountName;
 
   const Supplier({
     required this.id,
@@ -18,6 +21,9 @@ class Supplier {
     this.email,
     this.paymentTerms,
     this.isActive = true,
+    this.bankName,
+    this.bankAccount,
+    this.bankAccountName,
   });
 
   factory Supplier.fromJson(Map<String, dynamic> json) {
@@ -32,6 +38,9 @@ class Supplier {
       isActive: json['is_active'] is bool
           ? json['is_active'] as bool
           : (json['is_active']?.toString() == 'true' || json['is_active']?.toString() == '1' || json['is_active'] == null),
+      bankName: json['bank_name']?.toString(),
+      bankAccount: json['bank_account']?.toString(),
+      bankAccountName: json['bank_account_name']?.toString(),
     );
   }
 }

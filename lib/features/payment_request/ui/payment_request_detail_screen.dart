@@ -1,9 +1,8 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Colors, Divider, Icons, Navigator, showDialog;
+import 'package:flutter/material.dart' show Divider, Navigator;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/payment_request_repository.dart';
-import '../models/payment_request.dart';
 import '../../../core/utils/currency_utils.dart';
 import '../../../core/theme/cupertino_theme_extensions.dart';
 import '../../../core/theme/cupertino_spacing.dart';

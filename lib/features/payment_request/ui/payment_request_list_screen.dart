@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Colors, Divider, VerticalDivider, Scrollbar;
+import 'package:flutter/material.dart' show Divider, VerticalDivider, Scrollbar;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/payment_request_repository.dart';
@@ -93,6 +93,11 @@ class _PaymentRequestListScreenState extends ConsumerState<PaymentRequestListScr
         middle: Text(
           'Permintaan Pembayaran',
           style: TextStyle(color: labelColor),
+        ),
+        trailing: CupertinoButton(
+          padding: EdgeInsets.zero,
+          child: const Icon(CupertinoIcons.add, size: 22),
+          onPressed: () => context.push('/payment-requests/new'),
         ),
       ),
       child: SafeArea(

@@ -24,8 +24,7 @@ final paymentRequestRepositoryProvider =
 
 typedef PaymentRequestRepositoryRef
     = AutoDisposeProviderRef<PaymentRequestRepository>;
-String _$paymentRequestDetailHash() =>
-    r'fe0e6907323eba2fb98b22a65157bbd03811da74';
+String _$availableInvoicesHash() => r'f7cec460f7f59f7375d72f2d6e9c05e0632786eb';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -47,6 +46,140 @@ class _SystemHash {
     return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
   }
 }
+
+/// See also [availableInvoices].
+@ProviderFor(availableInvoices)
+const availableInvoicesProvider = AvailableInvoicesFamily();
+
+/// See also [availableInvoices].
+class AvailableInvoicesFamily
+    extends Family<AsyncValue<List<AvailableInvoice>>> {
+  /// See also [availableInvoices].
+  const AvailableInvoicesFamily();
+
+  /// See also [availableInvoices].
+  AvailableInvoicesProvider call({
+    required int companyId,
+  }) {
+    return AvailableInvoicesProvider(
+      companyId: companyId,
+    );
+  }
+
+  @override
+  AvailableInvoicesProvider getProviderOverride(
+    covariant AvailableInvoicesProvider provider,
+  ) {
+    return call(
+      companyId: provider.companyId,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'availableInvoicesProvider';
+}
+
+/// See also [availableInvoices].
+class AvailableInvoicesProvider
+    extends AutoDisposeFutureProvider<List<AvailableInvoice>> {
+  /// See also [availableInvoices].
+  AvailableInvoicesProvider({
+    required int companyId,
+  }) : this._internal(
+          (ref) => availableInvoices(
+            ref as AvailableInvoicesRef,
+            companyId: companyId,
+          ),
+          from: availableInvoicesProvider,
+          name: r'availableInvoicesProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$availableInvoicesHash,
+          dependencies: AvailableInvoicesFamily._dependencies,
+          allTransitiveDependencies:
+              AvailableInvoicesFamily._allTransitiveDependencies,
+          companyId: companyId,
+        );
+
+  AvailableInvoicesProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.companyId,
+  }) : super.internal();
+
+  final int companyId;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<AvailableInvoice>> Function(AvailableInvoicesRef provider)
+        create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: AvailableInvoicesProvider._internal(
+        (ref) => create(ref as AvailableInvoicesRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        companyId: companyId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<AvailableInvoice>> createElement() {
+    return _AvailableInvoicesProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AvailableInvoicesProvider && other.companyId == companyId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, companyId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin AvailableInvoicesRef
+    on AutoDisposeFutureProviderRef<List<AvailableInvoice>> {
+  /// The parameter `companyId` of this provider.
+  int get companyId;
+}
+
+class _AvailableInvoicesProviderElement
+    extends AutoDisposeFutureProviderElement<List<AvailableInvoice>>
+    with AvailableInvoicesRef {
+  _AvailableInvoicesProviderElement(super.provider);
+
+  @override
+  int get companyId => (origin as AvailableInvoicesProvider).companyId;
+}
+
+String _$paymentRequestDetailHash() =>
+    r'fe0e6907323eba2fb98b22a65157bbd03811da74';
 
 /// See also [paymentRequestDetail].
 @ProviderFor(paymentRequestDetail)

@@ -16,11 +16,13 @@ class PaymentRequestRepository {
     int page = 1,
     String? status,
     int? companyId,
+    int? perPage,
   }) async {
     final response = await dio.get('wh/payment-requests', queryParameters: {
       'page': page,
       'status': ?status,
       'company_id': ?companyId,
+      'per_page': ?perPage,
     });
 
     return PaginatedResponse.fromJson(
@@ -100,6 +102,23 @@ class PaymentRequestRepository {
       'invoices': invoices,
       'request_date': requestDate,
       'description': ?description,
+    });
+  }
+
+  Future<void> payPaymentRequest(
+    int id, {
+    required List<Map<String, dynamic>> invoices,
+    String? bankName,
+    String? bankAccount,
+    String? transferReference,
+    String? notes,
+  }) async {
+    await dio.post('wh/payment-requests/$id/pay', data: {
+      'invoices': invoices,
+      'bank_name': ?bankName,
+      'bank_account': ?bankAccount,
+      'transfer_reference': ?transferReference,
+      'notes': ?notes,
     });
   }
 

@@ -260,8 +260,6 @@ class _PaymentRequestCard extends StatelessWidget {
         statusColor = CupertinoColors.systemGrey;
     }
 
-    final labelColor = CupertinoColors.label.resolveFrom(context);
-
     return GestureDetector(
       onTap: onTap,
       child: CupertinoGlassContainer(
@@ -281,7 +279,7 @@ class _PaymentRequestCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.s, vertical: CupertinoSpacing.xs),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.12),
+                    color: statusColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: statusColor, width: 0.5),
                   ),

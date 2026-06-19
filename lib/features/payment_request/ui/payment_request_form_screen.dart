@@ -260,11 +260,11 @@ class _PaymentRequestFormScreenState extends ConsumerState<PaymentRequestFormScr
     if (isOverdue) {
       final days = today.difference(targetDate).inDays;
       text = 'JATUH TEMPO ($days hari lalu)';
-      color = const Color(0xFFFF3B30).withOpacity(0.15);
+      color = const Color(0xFFFF3B30).withValues(alpha: 0.15);
       textColor = const Color(0xFFFF3B30);
     } else if (difference <= 7) {
       text = 'AKAN JATUH TEMPO ($difference hari)';
-      color = const Color(0xFFFF9500).withOpacity(0.15);
+      color = const Color(0xFFFF9500).withValues(alpha: 0.15);
       textColor = const Color(0xFFFF9500);
     } else {
       text = 'Jatuh Tempo: ${DateFormat('dd MMM yyyy').format(parsedDate)}';
@@ -430,7 +430,7 @@ class _PaymentRequestFormScreenState extends ConsumerState<PaymentRequestFormScr
                             color: isPreviewed
                                 ? const Color(0xFF6E56CF)
                                 : isSelected
-                                    ? const Color(0xFF6E56CF).withOpacity(0.5)
+                                    ? const Color(0xFF6E56CF).withValues(alpha: 0.5)
                                     : CupertinoColors.separator.resolveFrom(context),
                             width: isPreviewed ? 2.0 : (isSelected ? 1.5 : 0.5),
                           ),
@@ -488,7 +488,7 @@ class _PaymentRequestFormScreenState extends ConsumerState<PaymentRequestFormScr
                                 padding: const EdgeInsets.all(CupertinoSpacing.s),
                                 decoration: BoxDecoration(
                                   color: isPreviewed
-                                      ? const Color(0xFF6E56CF).withOpacity(0.1)
+                                      ? const Color(0xFF6E56CF).withValues(alpha: 0.1)
                                       : CupertinoColors.systemFill.resolveFrom(context),
                                   borderRadius: BorderRadius.circular(16),
                                 ),
@@ -605,7 +605,7 @@ class _PaymentRequestFormScreenState extends ConsumerState<PaymentRequestFormScr
                 height: CupertinoSpacing.primaryButtonHeight,
                 child: CupertinoButton(
                   color: const Color(0xFF6E56CF),
-                  disabledColor: CupertinoColors.inactiveGray.withOpacity(0.5),
+                  disabledColor: CupertinoColors.inactiveGray.withValues(alpha: 0.5),
                   padding: EdgeInsets.zero,
                   onPressed: _selectedInvoices.isEmpty || _isSubmitting ? null : _submit,
                   child: _isSubmitting

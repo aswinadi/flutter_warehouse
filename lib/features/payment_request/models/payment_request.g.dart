@@ -80,3 +80,29 @@ Map<String, dynamic> _$$PaymentRequestInvoiceImplToJson(
       'payment_status': instance.paymentStatus,
       'description': instance.description,
     };
+
+_$AvailableInvoiceImpl _$$AvailableInvoiceImplFromJson(
+        Map<String, dynamic> json) =>
+    _$AvailableInvoiceImpl(
+      id: (json['id'] as num).toInt(),
+      invoiceNumber: json['invoice_number'] as String,
+      invoiceDate: json['invoice_date'] as String,
+      dueDate: json['due_date'] as String?,
+      supplierId: (json['supplier_id'] as num?)?.toInt(),
+      supplierName: json['supplier_name'] as String,
+      amount: doubleFromJson(json['amount']),
+      type: json['type'] as String,
+    );
+
+Map<String, dynamic> _$$AvailableInvoiceImplToJson(
+        _$AvailableInvoiceImpl instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'invoice_number': instance.invoiceNumber,
+      'invoice_date': instance.invoiceDate,
+      'due_date': instance.dueDate,
+      'supplier_id': instance.supplierId,
+      'supplier_name': instance.supplierName,
+      'amount': instance.amount,
+      'type': instance.type,
+    };

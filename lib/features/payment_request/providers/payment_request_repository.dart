@@ -46,11 +46,72 @@ class PaymentRequestRepository {
       if (notes != null) 'notes': notes,
     });
   }
+
+  Future<List<AvailableInvoice>> getAvailableInvoices({required int companyId}) async {
+    final futures = await Future.wait([
+      dio.get('wh/invoices', queryParameters: {
+        'unpaid_only': true,
+        'company_id': companyId,
+        'per_page': 200,
+      }),
+      dio.get('wh/invoice-biaya', queryParameters: {
+        'unpaid_only': true,
+        'company_id': companyId,
+        'per_page': 200,
+      }),
+      dio.get('wh/landed-costs', queryParameters: {
+        'unpaid_only': true,
+        'company_id': companyId,
+        'per_page': 200,
+      }),
+    ]);
+
+    final List<dynamic> supplierList = futures[0].data['data'] ?? [];
+    final List<dynamic> biayaList = futures[1].data['data'] ?? [];
+    final List<dynamic> landedList = futures[2].data['data'] ?? [];
+
+    final list = <AvailableInvoice>[];
+    for (final item in supplierList) {
+      list.add(AvailableInvoice.fromSupplierInvoice(item as Map<String, dynamic>));
+    }
+    for (final item in biayaList) {
+      list.add(AvailableInvoice.fromBiayaInvoice(item as Map<String, dynamic>));
+    }
+    for (final item in landedList) {
+      list.add(AvailableInvoice.fromLandedCost(item as Map<String, dynamic>));
+    }
+
+    // Sort by due date (closest/overdue first)
+    list.sort((a, b) {
+      final aDate = a.dueDate ?? a.invoiceDate;
+      final bDate = b.dueDate ?? b.invoiceDate;
+      return aDate.compareTo(bDate);
+    });
+
+    return list;
+  }
+
+  Future<void> createPaymentRequest({
+    required List<Map<String, dynamic>> invoices,
+    required String requestDate,
+    String? description,
+  }) async {
+    await dio.post('wh/payment-requests', data: {
+      'invoices': invoices,
+      'request_date': requestDate,
+      if (description != null) 'description': description,
+    });
+  }
 }
 
 @riverpod
 PaymentRequestRepository paymentRequestRepository(PaymentRequestRepositoryRef ref) {
   return PaymentRequestRepository(ref.watch(dioProvider));
+}
+
+@riverpod
+Future<List<AvailableInvoice>> availableInvoices(AvailableInvoicesRef ref, {required int companyId}) async {
+  return ref.watch(paymentRequestRepositoryProvider).getAvailableInvoices(companyId: companyId);
 }
 
 @riverpod

@@ -37,6 +37,7 @@ import '../../features/finance/ui/invoice_biaya_detail_screen.dart';
 import '../../features/finance/ui/invoice_biaya_form_screen.dart';
 import '../../features/payment_request/ui/payment_request_list_screen.dart';
 import '../../features/payment_request/ui/payment_request_detail_screen.dart';
+import '../../features/payment_request/ui/payment_request_form_screen.dart';
 import '../../features/inventory/ui/asset_list_screen.dart';
 import '../../features/inventory/ui/asset_detail_screen.dart';
 import '../../features/inventory/ui/add_asset_screen.dart';
@@ -281,6 +282,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/payment-requests',
             builder: (context, state) => const PaymentRequestListScreen(),
             routes: [
+              GoRoute(
+                path: 'new',
+                builder: (context, state) => const PaymentRequestFormScreen(),
+              ),
               GoRoute(
                 path: ':id',
                 builder: (context, state) {

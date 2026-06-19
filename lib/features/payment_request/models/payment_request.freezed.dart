@@ -894,3 +894,307 @@ abstract class _PaymentRequestInvoice implements PaymentRequestInvoice {
   _$$PaymentRequestInvoiceImplCopyWith<_$PaymentRequestInvoiceImpl>
       get copyWith => throw _privateConstructorUsedError;
 }
+
+AvailableInvoice _$AvailableInvoiceFromJson(Map<String, dynamic> json) {
+  return _AvailableInvoice.fromJson(json);
+}
+
+/// @nodoc
+mixin _$AvailableInvoice {
+  int get id => throw _privateConstructorUsedError;
+  @JsonKey(name: 'invoice_number')
+  String get invoiceNumber => throw _privateConstructorUsedError;
+  @JsonKey(name: 'invoice_date')
+  String get invoiceDate => throw _privateConstructorUsedError;
+  @JsonKey(name: 'due_date')
+  String? get dueDate => throw _privateConstructorUsedError;
+  @JsonKey(name: 'supplier_id')
+  int? get supplierId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'supplier_name')
+  String get supplierName => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: doubleFromJson)
+  double get amount => throw _privateConstructorUsedError;
+  String get type => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $AvailableInvoiceCopyWith<AvailableInvoice> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $AvailableInvoiceCopyWith<$Res> {
+  factory $AvailableInvoiceCopyWith(
+          AvailableInvoice value, $Res Function(AvailableInvoice) then) =
+      _$AvailableInvoiceCopyWithImpl<$Res, AvailableInvoice>;
+  @useResult
+  $Res call(
+      {int id,
+      @JsonKey(name: 'invoice_number') String invoiceNumber,
+      @JsonKey(name: 'invoice_date') String invoiceDate,
+      @JsonKey(name: 'due_date') String? dueDate,
+      @JsonKey(name: 'supplier_id') int? supplierId,
+      @JsonKey(name: 'supplier_name') String supplierName,
+      @JsonKey(fromJson: doubleFromJson) double amount,
+      String type});
+}
+
+/// @nodoc
+class _$AvailableInvoiceCopyWithImpl<$Res, $Val extends AvailableInvoice>
+    implements $AvailableInvoiceCopyWith<$Res> {
+  _$AvailableInvoiceCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? invoiceNumber = null,
+    Object? invoiceDate = null,
+    Object? dueDate = freezed,
+    Object? supplierId = freezed,
+    Object? supplierName = null,
+    Object? amount = null,
+    Object? type = null,
+  }) {
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      invoiceNumber: null == invoiceNumber
+          ? _value.invoiceNumber
+          : invoiceNumber // ignore: cast_nullable_to_non_nullable
+              as String,
+      invoiceDate: null == invoiceDate
+          ? _value.invoiceDate
+          : invoiceDate // ignore: cast_nullable_to_non_nullable
+              as String,
+      dueDate: freezed == dueDate
+          ? _value.dueDate
+          : dueDate // ignore: cast_nullable_to_non_nullable
+              as String?,
+      supplierId: freezed == supplierId
+          ? _value.supplierId
+          : supplierId // ignore: cast_nullable_to_non_nullable
+              as int?,
+      supplierName: null == supplierName
+          ? _value.supplierName
+          : supplierName // ignore: cast_nullable_to_non_nullable
+              as String,
+      amount: null == amount
+          ? _value.amount
+          : amount // ignore: cast_nullable_to_non_nullable
+              as double,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$AvailableInvoiceImplCopyWith<$Res>
+    implements $AvailableInvoiceCopyWith<$Res> {
+  factory _$$AvailableInvoiceImplCopyWith(_$AvailableInvoiceImpl value,
+          $Res Function(_$AvailableInvoiceImpl) then) =
+      __$$AvailableInvoiceImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {int id,
+      @JsonKey(name: 'invoice_number') String invoiceNumber,
+      @JsonKey(name: 'invoice_date') String invoiceDate,
+      @JsonKey(name: 'due_date') String? dueDate,
+      @JsonKey(name: 'supplier_id') int? supplierId,
+      @JsonKey(name: 'supplier_name') String supplierName,
+      @JsonKey(fromJson: doubleFromJson) double amount,
+      String type});
+}
+
+/// @nodoc
+class __$$AvailableInvoiceImplCopyWithImpl<$Res>
+    extends _$AvailableInvoiceCopyWithImpl<$Res, _$AvailableInvoiceImpl>
+    implements _$$AvailableInvoiceImplCopyWith<$Res> {
+  __$$AvailableInvoiceImplCopyWithImpl(_$AvailableInvoiceImpl _value,
+      $Res Function(_$AvailableInvoiceImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? invoiceNumber = null,
+    Object? invoiceDate = null,
+    Object? dueDate = freezed,
+    Object? supplierId = freezed,
+    Object? supplierName = null,
+    Object? amount = null,
+    Object? type = null,
+  }) {
+    return _then(_$AvailableInvoiceImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      invoiceNumber: null == invoiceNumber
+          ? _value.invoiceNumber
+          : invoiceNumber // ignore: cast_nullable_to_non_nullable
+              as String,
+      invoiceDate: null == invoiceDate
+          ? _value.invoiceDate
+          : invoiceDate // ignore: cast_nullable_to_non_nullable
+              as String,
+      dueDate: freezed == dueDate
+          ? _value.dueDate
+          : dueDate // ignore: cast_nullable_to_non_nullable
+              as String?,
+      supplierId: freezed == supplierId
+          ? _value.supplierId
+          : supplierId // ignore: cast_nullable_to_non_nullable
+              as int?,
+      supplierName: null == supplierName
+          ? _value.supplierName
+          : supplierName // ignore: cast_nullable_to_non_nullable
+              as String,
+      amount: null == amount
+          ? _value.amount
+          : amount // ignore: cast_nullable_to_non_nullable
+              as double,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$AvailableInvoiceImpl implements _AvailableInvoice {
+  const _$AvailableInvoiceImpl(
+      {required this.id,
+      @JsonKey(name: 'invoice_number') required this.invoiceNumber,
+      @JsonKey(name: 'invoice_date') required this.invoiceDate,
+      @JsonKey(name: 'due_date') this.dueDate,
+      @JsonKey(name: 'supplier_id') this.supplierId,
+      @JsonKey(name: 'supplier_name') required this.supplierName,
+      @JsonKey(fromJson: doubleFromJson) required this.amount,
+      required this.type});
+
+  factory _$AvailableInvoiceImpl.fromJson(Map<String, dynamic> json) =>
+      _$$AvailableInvoiceImplFromJson(json);
+
+  @override
+  final int id;
+  @override
+  @JsonKey(name: 'invoice_number')
+  final String invoiceNumber;
+  @override
+  @JsonKey(name: 'invoice_date')
+  final String invoiceDate;
+  @override
+  @JsonKey(name: 'due_date')
+  final String? dueDate;
+  @override
+  @JsonKey(name: 'supplier_id')
+  final int? supplierId;
+  @override
+  @JsonKey(name: 'supplier_name')
+  final String supplierName;
+  @override
+  @JsonKey(fromJson: doubleFromJson)
+  final double amount;
+  @override
+  final String type;
+
+  @override
+  String toString() {
+    return 'AvailableInvoice(id: $id, invoiceNumber: $invoiceNumber, invoiceDate: $invoiceDate, dueDate: $dueDate, supplierId: $supplierId, supplierName: $supplierName, amount: $amount, type: $type)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$AvailableInvoiceImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.invoiceNumber, invoiceNumber) ||
+                other.invoiceNumber == invoiceNumber) &&
+            (identical(other.invoiceDate, invoiceDate) ||
+                other.invoiceDate == invoiceDate) &&
+            (identical(other.dueDate, dueDate) || other.dueDate == dueDate) &&
+            (identical(other.supplierId, supplierId) ||
+                other.supplierId == supplierId) &&
+            (identical(other.supplierName, supplierName) ||
+                other.supplierName == supplierName) &&
+            (identical(other.amount, amount) || other.amount == amount) &&
+            (identical(other.type, type) || other.type == type));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(runtimeType, id, invoiceNumber, invoiceDate,
+      dueDate, supplierId, supplierName, amount, type);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$AvailableInvoiceImplCopyWith<_$AvailableInvoiceImpl> get copyWith =>
+      __$$AvailableInvoiceImplCopyWithImpl<_$AvailableInvoiceImpl>(
+          this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$AvailableInvoiceImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _AvailableInvoice implements AvailableInvoice {
+  const factory _AvailableInvoice(
+      {required final int id,
+      @JsonKey(name: 'invoice_number') required final String invoiceNumber,
+      @JsonKey(name: 'invoice_date') required final String invoiceDate,
+      @JsonKey(name: 'due_date') final String? dueDate,
+      @JsonKey(name: 'supplier_id') final int? supplierId,
+      @JsonKey(name: 'supplier_name') required final String supplierName,
+      @JsonKey(fromJson: doubleFromJson) required final double amount,
+      required final String type}) = _$AvailableInvoiceImpl;
+
+  factory _AvailableInvoice.fromJson(Map<String, dynamic> json) =
+      _$AvailableInvoiceImpl.fromJson;
+
+  @override
+  int get id;
+  @override
+  @JsonKey(name: 'invoice_number')
+  String get invoiceNumber;
+  @override
+  @JsonKey(name: 'invoice_date')
+  String get invoiceDate;
+  @override
+  @JsonKey(name: 'due_date')
+  String? get dueDate;
+  @override
+  @JsonKey(name: 'supplier_id')
+  int? get supplierId;
+  @override
+  @JsonKey(name: 'supplier_name')
+  String get supplierName;
+  @override
+  @JsonKey(fromJson: doubleFromJson)
+  double get amount;
+  @override
+  String get type;
+  @override
+  @JsonKey(ignore: true)
+  _$$AvailableInvoiceImplCopyWith<_$AvailableInvoiceImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}

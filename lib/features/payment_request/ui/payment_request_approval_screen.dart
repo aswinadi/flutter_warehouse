@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Divider, Colors;
+import 'package:flutter/material.dart' show Divider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/payment_request_repository.dart';
@@ -8,7 +8,6 @@ import '../../../core/theme/cupertino_theme_extensions.dart';
 import '../../../core/theme/cupertino_spacing.dart';
 import '../../../core/widgets/cupertino_glass_container.dart';
 import '../../../core/widgets/cupertino_glass_dialog.dart';
-import '../../../core/widgets/cupertino_glass_toast.dart';
 
 class PaymentRequestApprovalScreen extends ConsumerStatefulWidget {
   final int prId;

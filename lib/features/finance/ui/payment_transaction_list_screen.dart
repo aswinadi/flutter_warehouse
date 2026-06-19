@@ -86,6 +86,19 @@ class _PaymentTransactionListScreenState extends ConsumerState<PaymentTransactio
           'Transaksi Pembayaran Supplier',
           style: context.headline.copyWith(color: labelColor),
         ),
+        trailing: CupertinoButton(
+          padding: EdgeInsets.zero,
+          onPressed: () async {
+            final refreshed = await context.push<bool>('/payment-transactions/new');
+            if (refreshed == true && mounted) {
+              ref.invalidate(paymentTransactionsListProvider(
+                hasProof: _selectedSegment == 0 ? false : null,
+                search: _searchQuery,
+              ));
+            }
+          },
+          child: const Icon(CupertinoIcons.add, size: 24),
+        ),
       ),
       child: SafeArea(
         child: Column(

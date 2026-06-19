@@ -28,6 +28,7 @@ import '../../features/transfer/ui/transfer_out_screen.dart';
 import '../../features/transfer/ui/transfer_in_screen.dart';
 import '../../features/finance/ui/payment_transaction_list_screen.dart';
 import '../../features/finance/ui/payment_transaction_detail_screen.dart';
+import '../../features/finance/ui/payment_transaction_form_screen.dart';
 import '../../features/purchase_order/ui/po_approval_screen.dart';
 import '../../features/notifications/ui/notification_inbox_screen.dart';
 import '../widgets/pdf_preview_screen.dart';
@@ -299,6 +300,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/payment-transactions',
             builder: (context, state) => const PaymentTransactionListScreen(),
             routes: [
+              GoRoute(
+                path: 'new',
+                builder: (context, state) => const PaymentTransactionFormScreen(),
+              ),
               GoRoute(
                 path: ':id',
                 builder: (context, state) {

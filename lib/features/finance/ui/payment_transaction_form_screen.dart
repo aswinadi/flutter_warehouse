@@ -579,8 +579,42 @@ class _PaymentTransactionFormScreenState extends ConsumerState<PaymentTransactio
                 // Vendor Bank Details Card (fetched from Master Supplier)
                 supplierAsync.when(
                   data: (supplier) {
-                    if (supplier == null || supplier.bankName == null || supplier.bankAccount == null) {
-                      return const SizedBox.shrink();
+                    final hasBankInfo = supplier != null &&
+                        supplier.bankName != null &&
+                        supplier.bankName!.trim().isNotEmpty &&
+                        supplier.bankAccount != null &&
+                        supplier.bankAccount!.trim().isNotEmpty;
+
+                    if (!hasBankInfo) {
+                      return CupertinoGlassContainer(
+                        margin: const EdgeInsets.only(bottom: CupertinoSpacing.l),
+                        padding: const EdgeInsets.all(CupertinoSpacing.m),
+                        backgroundColor: CupertinoColors.systemOrange.resolveFrom(context).withValues(alpha: 0.1),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  CupertinoIcons.warning_fill,
+                                  size: 16,
+                                  color: CupertinoColors.systemOrange.resolveFrom(context),
+                                ),
+                                const SizedBox(width: CupertinoSpacing.s),
+                                Text(
+                                  'Rekening Bank Vendor/Supplier',
+                                  style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: labelColor),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: CupertinoSpacing.s),
+                            Text(
+                              'Informasi rekening bank belum diisi di Master Supplier untuk supplier ini.',
+                              style: context.body.copyWith(color: labelColor, fontSize: 13),
+                            ),
+                          ],
+                        ),
+                      );
                     }
                     
                     return CupertinoGlassContainer(

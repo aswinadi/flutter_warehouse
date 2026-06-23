@@ -2,6 +2,12 @@
 
 All notable changes to the Maxmar Warehouse Flutter project will be documented in this file.
 
+## [1.6.1] - 2026-06-23
+
+### Fixed
+- **Payment Request Form Error Handling**:
+  - Imported `package:dio/dio.dart` in `payment_request_form_screen.dart` and implemented the `_getErrorMessage` helper method to extract and display actual error messages sent from the server. This replaces the generic `DioException` dialog content with user-friendly errors, such as indicating if an invoice is not in the correct status.
+
 ## [1.6.0] - 2026-06-11
 
 ### Added

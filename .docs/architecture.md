@@ -16,22 +16,33 @@
 lib/
 ├── core/
 │   ├── api/          # Dio Client, Interceptors, Router
-│   ├── services/     # Printer, Reporting, Barcode Utils
-│   └── widgets/      # MainShell (Adaptive UI)
+│   ├── config/       # Navigation items configuration (menu_items.dart)
+│   ├── providers/    # Theme and Company Providers
+│   ├── services/     # Printer, Reporting, Barcode Utils, Auto-Updater
+│   ├── theme/        # Spacing and Theme extensions
+│   └── widgets/      # MainShell (Adaptive UI), Company Switcher, PDF Preview
 ├── features/
+│   ├── approvals/    # BOD Purchase Request approval workflows
 │   ├── auth/         # Login & Session Management
-│   ├── purchase_request/ # PR List, Approval, Rejection
-│   ├── purchase_order/   # PO List & Progress Tracking
-│   ├── receiving/        # Scan-to-Receive & QR detection
-│   ├── inventory/        # Stock View & Search
-│   └── usage/            # Farm (Tambak) Usage Logs
-└── main.dart         # Entry point & Theme
+│   ├── dashboard/    # Main navigation hub and summary cards
+│   ├── finance/      # Inventory Valuation reports
+│   ├── inventory/    # Stock view, Adjustments, Assets, and Stock Opname (Physical Count)
+│   ├── invoice/      # Purchase Invoices (Faktur) and Expense Invoices
+│   ├── notifications/# Push and in-app notifications
+│   ├── packing_list/ # Branch packing lists & Container manifests
+│   ├── payment_request/ # Payment Request creation & details
+│   ├── purchase_order/ # PO tracking & progress
+│   ├── purchase_request/ # PR listing, details, and creations
+│   ├── receiving/    # Standard Supplier PO receiving & Container Depot receiving (Depo Sync)
+│   ├── transfer/     # Inter-depot Transfer Out and Transfer In
+│   └── usage/        # Aquaculture CRUDs (Tambak, Blok, Modul, Ponds, Cycles, Contracts) and Shrimp Price Calculator
+└── main.dart         # Entry point & Cupertino theme setup
 ```
 
 ## State Management Pattern
 We use **Riverpod Generator**. 
 - Async data is handled via `FutureProvider` or `AsyncNotifier`.
-- Global state (Auth, Company ID) is injected via Dio Interceptors.
+- Authentication bearer tokens are injected automatically via the Dio Interceptor, whereas the active `company_id` is watched manually from `selectedCompanyProvider` and passed as required by repositories.
 
 ## Responsive Design
 We use `responsive_framework` with standard breakpoints:

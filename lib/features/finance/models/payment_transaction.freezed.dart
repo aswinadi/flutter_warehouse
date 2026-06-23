@@ -49,6 +49,12 @@ mixin _$PaymentTransaction {
   String? get receiptPath => throw _privateConstructorUsedError;
   @JsonKey(name: 'receipt_url')
   String? get receiptUrl => throw _privateConstructorUsedError;
+  @JsonKey(name: 'supplier_bank_name')
+  String? get supplierBankName => throw _privateConstructorUsedError;
+  @JsonKey(name: 'supplier_bank_account')
+  String? get supplierBankAccount => throw _privateConstructorUsedError;
+  @JsonKey(name: 'supplier_bank_account_name')
+  String? get supplierBankAccountName => throw _privateConstructorUsedError;
   String? get notes => throw _privateConstructorUsedError;
   @JsonKey(name: 'paid_by')
   int? get paidBy => throw _privateConstructorUsedError;
@@ -87,6 +93,10 @@ abstract class $PaymentTransactionCopyWith<$Res> {
       @JsonKey(name: 'transfer_reference') String? transferReference,
       @JsonKey(name: 'receipt_path') String? receiptPath,
       @JsonKey(name: 'receipt_url') String? receiptUrl,
+      @JsonKey(name: 'supplier_bank_name') String? supplierBankName,
+      @JsonKey(name: 'supplier_bank_account') String? supplierBankAccount,
+      @JsonKey(name: 'supplier_bank_account_name')
+      String? supplierBankAccountName,
       String? notes,
       @JsonKey(name: 'paid_by') int? paidBy,
       @JsonKey(name: 'paid_by_name') String? paidByName,
@@ -122,6 +132,9 @@ class _$PaymentTransactionCopyWithImpl<$Res, $Val extends PaymentTransaction>
     Object? transferReference = freezed,
     Object? receiptPath = freezed,
     Object? receiptUrl = freezed,
+    Object? supplierBankName = freezed,
+    Object? supplierBankAccount = freezed,
+    Object? supplierBankAccountName = freezed,
     Object? notes = freezed,
     Object? paidBy = freezed,
     Object? paidByName = freezed,
@@ -188,6 +201,18 @@ class _$PaymentTransactionCopyWithImpl<$Res, $Val extends PaymentTransaction>
           ? _value.receiptUrl
           : receiptUrl // ignore: cast_nullable_to_non_nullable
               as String?,
+      supplierBankName: freezed == supplierBankName
+          ? _value.supplierBankName
+          : supplierBankName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      supplierBankAccount: freezed == supplierBankAccount
+          ? _value.supplierBankAccount
+          : supplierBankAccount // ignore: cast_nullable_to_non_nullable
+              as String?,
+      supplierBankAccountName: freezed == supplierBankAccountName
+          ? _value.supplierBankAccountName
+          : supplierBankAccountName // ignore: cast_nullable_to_non_nullable
+              as String?,
       notes: freezed == notes
           ? _value.notes
           : notes // ignore: cast_nullable_to_non_nullable
@@ -233,6 +258,10 @@ abstract class _$$PaymentTransactionImplCopyWith<$Res>
       @JsonKey(name: 'transfer_reference') String? transferReference,
       @JsonKey(name: 'receipt_path') String? receiptPath,
       @JsonKey(name: 'receipt_url') String? receiptUrl,
+      @JsonKey(name: 'supplier_bank_name') String? supplierBankName,
+      @JsonKey(name: 'supplier_bank_account') String? supplierBankAccount,
+      @JsonKey(name: 'supplier_bank_account_name')
+      String? supplierBankAccountName,
       String? notes,
       @JsonKey(name: 'paid_by') int? paidBy,
       @JsonKey(name: 'paid_by_name') String? paidByName,
@@ -266,6 +295,9 @@ class __$$PaymentTransactionImplCopyWithImpl<$Res>
     Object? transferReference = freezed,
     Object? receiptPath = freezed,
     Object? receiptUrl = freezed,
+    Object? supplierBankName = freezed,
+    Object? supplierBankAccount = freezed,
+    Object? supplierBankAccountName = freezed,
     Object? notes = freezed,
     Object? paidBy = freezed,
     Object? paidByName = freezed,
@@ -332,6 +364,18 @@ class __$$PaymentTransactionImplCopyWithImpl<$Res>
           ? _value.receiptUrl
           : receiptUrl // ignore: cast_nullable_to_non_nullable
               as String?,
+      supplierBankName: freezed == supplierBankName
+          ? _value.supplierBankName
+          : supplierBankName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      supplierBankAccount: freezed == supplierBankAccount
+          ? _value.supplierBankAccount
+          : supplierBankAccount // ignore: cast_nullable_to_non_nullable
+              as String?,
+      supplierBankAccountName: freezed == supplierBankAccountName
+          ? _value.supplierBankAccountName
+          : supplierBankAccountName // ignore: cast_nullable_to_non_nullable
+              as String?,
       notes: freezed == notes
           ? _value.notes
           : notes // ignore: cast_nullable_to_non_nullable
@@ -372,6 +416,9 @@ class _$PaymentTransactionImpl implements _PaymentTransaction {
       @JsonKey(name: 'transfer_reference') this.transferReference,
       @JsonKey(name: 'receipt_path') this.receiptPath,
       @JsonKey(name: 'receipt_url') this.receiptUrl,
+      @JsonKey(name: 'supplier_bank_name') this.supplierBankName,
+      @JsonKey(name: 'supplier_bank_account') this.supplierBankAccount,
+      @JsonKey(name: 'supplier_bank_account_name') this.supplierBankAccountName,
       this.notes,
       @JsonKey(name: 'paid_by') this.paidBy,
       @JsonKey(name: 'paid_by_name') this.paidByName,
@@ -427,6 +474,15 @@ class _$PaymentTransactionImpl implements _PaymentTransaction {
   @JsonKey(name: 'receipt_url')
   final String? receiptUrl;
   @override
+  @JsonKey(name: 'supplier_bank_name')
+  final String? supplierBankName;
+  @override
+  @JsonKey(name: 'supplier_bank_account')
+  final String? supplierBankAccount;
+  @override
+  @JsonKey(name: 'supplier_bank_account_name')
+  final String? supplierBankAccountName;
+  @override
   final String? notes;
   @override
   @JsonKey(name: 'paid_by')
@@ -445,7 +501,7 @@ class _$PaymentTransactionImpl implements _PaymentTransaction {
 
   @override
   String toString() {
-    return 'PaymentTransaction(id: $id, companyId: $companyId, companyName: $companyName, supplierId: $supplierId, supplierName: $supplierName, companyBankAccountId: $companyBankAccountId, paymentRequestId: $paymentRequestId, transactionNumber: $transactionNumber, transactionDate: $transactionDate, totalAmount: $totalAmount, bankName: $bankName, bankAccount: $bankAccount, transferReference: $transferReference, receiptPath: $receiptPath, receiptUrl: $receiptUrl, notes: $notes, paidBy: $paidBy, paidByName: $paidByName, invoices: $invoices)';
+    return 'PaymentTransaction(id: $id, companyId: $companyId, companyName: $companyName, supplierId: $supplierId, supplierName: $supplierName, companyBankAccountId: $companyBankAccountId, paymentRequestId: $paymentRequestId, transactionNumber: $transactionNumber, transactionDate: $transactionDate, totalAmount: $totalAmount, bankName: $bankName, bankAccount: $bankAccount, transferReference: $transferReference, receiptPath: $receiptPath, receiptUrl: $receiptUrl, supplierBankName: $supplierBankName, supplierBankAccount: $supplierBankAccount, supplierBankAccountName: $supplierBankAccountName, notes: $notes, paidBy: $paidBy, paidByName: $paidByName, invoices: $invoices)';
   }
 
   @override
@@ -482,6 +538,13 @@ class _$PaymentTransactionImpl implements _PaymentTransaction {
                 other.receiptPath == receiptPath) &&
             (identical(other.receiptUrl, receiptUrl) ||
                 other.receiptUrl == receiptUrl) &&
+            (identical(other.supplierBankName, supplierBankName) ||
+                other.supplierBankName == supplierBankName) &&
+            (identical(other.supplierBankAccount, supplierBankAccount) ||
+                other.supplierBankAccount == supplierBankAccount) &&
+            (identical(
+                    other.supplierBankAccountName, supplierBankAccountName) ||
+                other.supplierBankAccountName == supplierBankAccountName) &&
             (identical(other.notes, notes) || other.notes == notes) &&
             (identical(other.paidBy, paidBy) || other.paidBy == paidBy) &&
             (identical(other.paidByName, paidByName) ||
@@ -508,6 +571,9 @@ class _$PaymentTransactionImpl implements _PaymentTransaction {
         transferReference,
         receiptPath,
         receiptUrl,
+        supplierBankName,
+        supplierBankAccount,
+        supplierBankAccountName,
         notes,
         paidBy,
         paidByName,
@@ -548,6 +614,10 @@ abstract class _PaymentTransaction implements PaymentTransaction {
       @JsonKey(name: 'transfer_reference') final String? transferReference,
       @JsonKey(name: 'receipt_path') final String? receiptPath,
       @JsonKey(name: 'receipt_url') final String? receiptUrl,
+      @JsonKey(name: 'supplier_bank_name') final String? supplierBankName,
+      @JsonKey(name: 'supplier_bank_account') final String? supplierBankAccount,
+      @JsonKey(name: 'supplier_bank_account_name')
+      final String? supplierBankAccountName,
       final String? notes,
       @JsonKey(name: 'paid_by') final int? paidBy,
       @JsonKey(name: 'paid_by_name') final String? paidByName,
@@ -602,6 +672,15 @@ abstract class _PaymentTransaction implements PaymentTransaction {
   @override
   @JsonKey(name: 'receipt_url')
   String? get receiptUrl;
+  @override
+  @JsonKey(name: 'supplier_bank_name')
+  String? get supplierBankName;
+  @override
+  @JsonKey(name: 'supplier_bank_account')
+  String? get supplierBankAccount;
+  @override
+  @JsonKey(name: 'supplier_bank_account_name')
+  String? get supplierBankAccountName;
   @override
   String? get notes;
   @override

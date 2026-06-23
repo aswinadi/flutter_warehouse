@@ -238,6 +238,14 @@ class _PaymentTransactionDetailWidgetState
           _buildDetailRow(CupertinoIcons.building_2_fill, 'Pemasok', trx.supplierName ?? '-'),
           const SizedBox(height: CupertinoSpacing.m),
           _buildDetailRow(
+            CupertinoIcons.creditcard,
+            'Rekening Bank Pemasok',
+            trx.supplierBankAccount != null && trx.supplierBankAccount!.isNotEmpty
+                ? '${trx.supplierBankName ?? ''} - ${trx.supplierBankAccount} (${trx.supplierBankAccountName ?? ''})'
+                : '-',
+          ),
+          const SizedBox(height: CupertinoSpacing.m),
+          _buildDetailRow(
             CupertinoIcons.house_fill,
             'Bank Sumber',
             trx.bankName != null

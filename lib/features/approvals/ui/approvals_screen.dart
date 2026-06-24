@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Scrollbar, Colors;
+import 'package:flutter/material.dart' show Scrollbar, Colors, showDateRangePicker, DateTimeRange, Theme, ThemeData, ColorScheme;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../purchase_request/providers/purchase_request_provider.dart';
 import '../../invoice/providers/invoice_repository.dart';
 import '../../payment_request/providers/payment_request_repository.dart';
@@ -16,7 +17,6 @@ import '../../payment_request/ui/payment_request_approval_screen.dart';
 import '../../../core/theme/cupertino_theme_extensions.dart';
 import '../../../core/theme/cupertino_spacing.dart';
 import '../../../core/widgets/cupertino_glass_container.dart';
-import '../../../core/widgets/cupertino_glass_dialog.dart';
 import '../../../core/widgets/cupertino_glass_toast.dart';
 
 class CupertinoCheckbox extends StatelessWidget {
@@ -57,6 +57,45 @@ class CupertinoCheckbox extends StatelessWidget {
   }
 }
 
+class StatusBadge extends StatelessWidget {
+  final String status;
+  const StatusBadge({super.key, required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final isApproved = status.toLowerCase() == 'approved' || status.toLowerCase() == 'vendor_approved' || status.toLowerCase() == 'po_created';
+    final isRejected = status.toLowerCase() == 'rejected';
+    final color = isApproved
+        ? CupertinoColors.activeGreen
+        : isRejected
+            ? CupertinoColors.destructiveRed
+            : CupertinoColors.activeOrange;
+    final label = isApproved
+        ? 'Disetujui'
+        : isRejected
+            ? 'Ditolak'
+            : status.toUpperCase();
+
+    return Container(
+      margin: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color, width: 0.5),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
 class ApprovalsScreen extends ConsumerStatefulWidget {
   const ApprovalsScreen({super.key});
 
@@ -66,6 +105,148 @@ class ApprovalsScreen extends ConsumerStatefulWidget {
 
 class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen> {
   int _selectedSegment = 0;
+  int _activeModeSegment = 0; // 0: Menunggu, 1: Riwayat
+  DateTime? _startDate;
+  DateTime? _endDate;
+  String _datePreset = 'all';
+
+  String? get _startDateStr => _startDate != null
+      ? '${_startDate!.day.toString().padLeft(2, '0')}/${_startDate!.month.toString().padLeft(2, '0')}/${_startDate!.year}'
+      : null;
+
+  String? get _endDateStr => _endDate != null
+      ? '${_endDate!.day.toString().padLeft(2, '0')}/${_endDate!.month.toString().padLeft(2, '0')}/${_endDate!.year}'
+      : null;
+
+  void _updateDatePreset(String preset) {
+    setState(() {
+      _datePreset = preset;
+      if (preset == 'all') {
+        _startDate = null;
+        _endDate = null;
+      } else if (preset == '30days') {
+        _endDate = DateTime.now();
+        _startDate = DateTime.now().subtract(const Duration(days: 30));
+      } else if (preset == 'thisMonth') {
+        _endDate = DateTime.now();
+        _startDate = DateTime(DateTime.now().year, DateTime.now().month, 1);
+      } else if (preset == '90days') {
+        _endDate = DateTime.now();
+        _startDate = DateTime.now().subtract(const Duration(days: 90));
+      }
+      _selectedPrQtyId = null;
+      _selectedPrQtyItemId = null;
+      _selectedPrVendorId = null;
+      _selectedPrVendorItemId = null;
+      _selectedInvoiceId = null;
+      _selectedPaymentRequestId = null;
+    });
+  }
+
+  Future<void> _selectCustomDateRange() async {
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+      initialDateRange: _startDate != null && _endDate != null
+          ? DateTimeRange(start: _startDate!, end: _endDate!)
+          : null,
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF6E56CF),
+              onPrimary: Colors.white,
+              onSurface: Color(0xFF1E293B),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _startDate = picked.start;
+        _endDate = picked.end;
+        _selectedPrQtyId = null;
+        _selectedPrQtyItemId = null;
+        _selectedPrVendorId = null;
+        _selectedPrVendorItemId = null;
+        _selectedInvoiceId = null;
+        _selectedPaymentRequestId = null;
+      });
+    }
+  }
+
+  void _showDatePresetPicker(BuildContext context) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Pilih Periode'),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _updateDatePreset('all');
+            },
+            child: const Text('Semua Waktu'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _updateDatePreset('30days');
+            },
+            child: const Text('30 Hari Terakhir'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _updateDatePreset('thisMonth');
+            },
+            child: const Text('Bulan Ini'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _updateDatePreset('90days');
+            },
+            child: const Text('3 Bulan Terakhir'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _updateDatePreset('custom');
+              _selectCustomDateRange();
+            },
+            child: const Text('Pilih Tanggal...'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+      ),
+    );
+  }
+
+  String _getDatePresetLabel(String preset) {
+    switch (preset) {
+      case 'all':
+        return 'Semua Waktu';
+      case '30days':
+        return '30 Hari Terakhir';
+      case 'thisMonth':
+        return 'Bulan Ini';
+      case '90days':
+        return '3 Bulan Terakhir';
+      case 'custom':
+        return 'Pilih Tanggal...';
+      default:
+        return preset;
+    }
+  }
 
   // Selected IDs for wide layout
   int? _selectedPrQtyId;
@@ -131,6 +312,102 @@ class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen> {
     final mainContent = Column(
       children: [
         const CompanySwitcher(),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          color: CupertinoColors.systemBackground.resolveFrom(context),
+          child: CupertinoSlidingSegmentedControl<int>(
+            groupValue: _activeModeSegment,
+            children: const {
+              0: Padding(
+                padding: EdgeInsets.symmetric(vertical: 4),
+                child: Text('Menunggu Persetujuan'),
+              ),
+              1: Padding(
+                padding: EdgeInsets.symmetric(vertical: 4),
+                child: Text('Riwayat'),
+              ),
+            },
+            onValueChanged: (value) {
+              if (value != null) {
+                setState(() {
+                  _activeModeSegment = value;
+                  _selectedPrQtyId = null;
+                  _selectedPrQtyItemId = null;
+                  _selectedPrVendorId = null;
+                  _selectedPrVendorItemId = null;
+                  _selectedInvoiceId = null;
+                  _selectedPaymentRequestId = null;
+                });
+              }
+            },
+          ),
+        ),
+        if (_activeModeSegment == 1)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
+              border: Border(bottom: BorderSide(color: separatorColor, width: 0.5)),
+            ),
+            child: Row(
+              children: [
+                const Icon(CupertinoIcons.calendar, size: 16, color: Color(0xFF6E56CF)),
+                const SizedBox(width: 8),
+                Text(
+                  'Periode:',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => _showDatePresetPicker(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.systemBackground.resolveFrom(context),
+                        border: Border.all(color: separatorColor, width: 0.5),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _getDatePresetLabel(_datePreset),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: labelColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Icon(CupertinoIcons.chevron_down, size: 14, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                if (_startDate != null && _endDate != null) ...[
+                  const SizedBox(width: 8),
+                  Text(
+                    '${_startDate!.day}/${_startDate!.month}/${_startDate!.year} - ${_endDate!.day}/${_endDate!.month}/${_endDate!.year}',
+                    style: TextStyle(fontSize: 12, color: CupertinoColors.secondaryLabel.resolveFrom(context), fontWeight: FontWeight.w500),
+                  ),
+                ],
+                if (_datePreset == 'custom') ...[
+                  const SizedBox(width: 8),
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size.zero,
+                    onPressed: _selectCustomDateRange,
+                    child: const Icon(CupertinoIcons.calendar_badge_plus, size: 20, color: Color(0xFF6E56CF)),
+                  ),
+                ],
+              ],
+            ),
+          ),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -213,6 +490,9 @@ class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen> {
             _selectedPrQtyId = prId;
             _selectedPrQtyItemId = itemId;
           }),
+          isHistoryMode: _activeModeSegment == 1,
+          startDate: _startDateStr,
+          endDate: _endDateStr,
         );
       case 1:
         return _PrVendorApprovalList(
@@ -223,18 +503,27 @@ class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen> {
             _selectedPrVendorId = prId;
             _selectedPrVendorItemId = itemId;
           }),
+          isHistoryMode: _activeModeSegment == 1,
+          startDate: _startDateStr,
+          endDate: _endDateStr,
         );
       case 2:
         return _InvoiceApprovalList(
           isWide: isWide,
           selectedId: _selectedInvoiceId,
           onSelected: (id) => setState(() => _selectedInvoiceId = id),
+          isHistoryMode: _activeModeSegment == 1,
+          startDate: _startDateStr,
+          endDate: _endDateStr,
         );
       case 3:
         return _PaymentRequestApprovalList(
           isWide: isWide,
           selectedId: _selectedPaymentRequestId,
           onSelected: (id) => setState(() => _selectedPaymentRequestId = id),
+          isHistoryMode: _activeModeSegment == 1,
+          startDate: _startDateStr,
+          endDate: _endDateStr,
         );
       default:
         return const SizedBox();
@@ -286,12 +575,18 @@ class _PrQtyApprovalList extends ConsumerStatefulWidget {
   final int? selectedPrId;
   final int? selectedItemId;
   final void Function(int? prId, int? itemId) onSelected;
+  final bool isHistoryMode;
+  final String? startDate;
+  final String? endDate;
 
   const _PrQtyApprovalList({
     required this.isWide,
     required this.selectedPrId,
     required this.selectedItemId,
     required this.onSelected,
+    this.isHistoryMode = false,
+    this.startDate,
+    this.endDate,
   });
 
   @override
@@ -329,14 +624,18 @@ class _PrQtyApprovalListState extends ConsumerState<_PrQtyApprovalList> {
     final maxScroll = _scrollController.position.maxScrollExtent;
     final currentScroll = _scrollController.position.pixels;
     if (currentScroll >= maxScroll * 0.9) {
-      ref.read(purchaseRequestsProvider(status: 'submitted').notifier).loadMore();
+      if (widget.isHistoryMode) {
+        ref.read(purchaseRequestsProvider(history: true, startDate: widget.startDate, endDate: widget.endDate).notifier).loadMore();
+      } else {
+        ref.read(purchaseRequestsProvider(status: 'submitted').notifier).loadMore();
+      }
     }
   }
 
   void _initializeQtyControllers(List<PurchaseRequestItem> items) {
     for (var item in items) {
       if (!_qtyControllers.containsKey(item.id)) {
-        _qtyControllers[item.id] = TextEditingController(text: item.qtyRequested.toString());
+        _qtyControllers[item.id] = TextEditingController(text: (item.approvedQty ?? item.qtyRequested).toString());
       }
     }
   }
@@ -406,13 +705,17 @@ class _PrQtyApprovalListState extends ConsumerState<_PrQtyApprovalList> {
 
   @override
   Widget build(BuildContext context) {
-    final listAsync = ref.watch(purchaseRequestsProvider(status: 'submitted'));
+    final listAsync = widget.isHistoryMode
+        ? ref.watch(purchaseRequestsProvider(history: true, startDate: widget.startDate, endDate: widget.endDate))
+        : ref.watch(purchaseRequestsProvider(status: 'submitted'));
 
     return listAsync.when(
       data: (prs) {
         final allItems = prs
-            .expand((pr) => pr.details.map((item) => item.copyWith(prId: item.prId ?? pr.id)))
-            .where((item) => item.canApprove)
+            .expand((pr) => pr.details.map((item) => item.copyWith(prId: item.prId ?? pr.id, companyName: item.companyName ?? pr.companyName, prCode: item.prCode ?? pr.code)))
+            .where((item) => widget.isHistoryMode
+                ? (item.status?.toLowerCase() == 'approved' || item.status?.toLowerCase() == 'rejected')
+                : item.canApprove)
             .toList();
 
         if (allItems.isEmpty) {
@@ -425,7 +728,9 @@ class _PrQtyApprovalListState extends ConsumerState<_PrQtyApprovalList> {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'Tidak ada item PR yang menunggu persetujuan Qty',
+                widget.isHistoryMode
+                    ? 'Tidak ada riwayat persetujuan Qty'
+                    : 'Tidak ada item PR yang menunggu persetujuan Qty',
                 textAlign: TextAlign.center,
                 style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel),
               ),
@@ -463,7 +768,9 @@ class _PrQtyApprovalListState extends ConsumerState<_PrQtyApprovalList> {
           }
         }
 
-        final hasMore = ref.watch(purchaseRequestsProvider(status: 'submitted').notifier).hasMore;
+        final hasMore = widget.isHistoryMode
+            ? ref.watch(purchaseRequestsProvider(history: true, startDate: widget.startDate, endDate: widget.endDate).notifier).hasMore
+            : ref.watch(purchaseRequestsProvider(status: 'submitted').notifier).hasMore;
         final showLoader = listAsync.isLoading && hasMore;
 
         return Column(
@@ -547,8 +854,8 @@ class _PrQtyApprovalListState extends ConsumerState<_PrQtyApprovalList> {
                               ),
                               child: _ApprovalItemRow(
                                 item: item,
-                                isSelected: isSelected,
-                                onChanged: (val) {
+                                isSelected: widget.isHistoryMode ? false : isSelected,
+                                onChanged: widget.isHistoryMode ? null : (val) {
                                   setState(() {
                                     if (val == true) {
                                       _selectedItemIds.add(item.id);
@@ -558,7 +865,7 @@ class _PrQtyApprovalListState extends ConsumerState<_PrQtyApprovalList> {
                                   });
                                 },
                                 qtyController: _qtyControllers[item.id]!,
-                                isReadOnly: false,
+                                isReadOnly: widget.isHistoryMode || !isSelected,
                               ),
                             ),
                           );
@@ -683,10 +990,13 @@ class _ApprovalItemRow extends StatelessWidget {
       padding: const EdgeInsets.all(CupertinoSpacing.m),
       child: Row(
         children: [
-          CupertinoCheckbox(
-            value: isSelected, 
-            onChanged: (val) => onChanged?.call(val),
-          ),
+          if (onChanged != null)
+            CupertinoCheckbox(
+              value: isSelected, 
+              onChanged: (val) => onChanged?.call(val),
+            )
+          else if (item.status != null)
+            StatusBadge(status: item.status!),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -810,6 +1120,11 @@ class _PrVendorItemCard extends StatelessWidget {
         ? CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.08)
         : CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
 
+    final showBadge = item.status != null && 
+        (item.status!.toLowerCase() == 'vendor_approved' || 
+         item.status!.toLowerCase() == 'po_created' || 
+         item.status!.toLowerCase() == 'rejected');
+
     return CupertinoGlassContainer(
       backgroundColor: cardColor,
       borderColor: isSelected 
@@ -853,6 +1168,10 @@ class _PrVendorItemCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                if (showBadge) ...[
+                  const SizedBox(width: 8),
+                  StatusBadge(status: item.status!),
+                ],
               ],
             ),
           ],
@@ -867,12 +1186,18 @@ class _PrVendorApprovalList extends ConsumerStatefulWidget {
   final int? selectedPrId;
   final int? selectedItemId;
   final void Function(int? prId, int? itemId) onSelected;
+  final bool isHistoryMode;
+  final String? startDate;
+  final String? endDate;
 
   const _PrVendorApprovalList({
     required this.isWide,
     required this.selectedPrId,
     required this.selectedItemId,
     required this.onSelected,
+    this.isHistoryMode = false,
+    this.startDate,
+    this.endDate,
   });
 
   @override
@@ -899,13 +1224,19 @@ class _PrVendorApprovalListState extends ConsumerState<_PrVendorApprovalList> {
     final maxScroll = _scrollController.position.maxScrollExtent;
     final currentScroll = _scrollController.position.pixels;
     if (currentScroll >= maxScroll * 0.9) {
-      ref.read(purchaseRequestsProvider(status: 'waiting_bod_approval').notifier).loadMore();
+      if (widget.isHistoryMode) {
+        ref.read(purchaseRequestsProvider(history: true, startDate: widget.startDate, endDate: widget.endDate).notifier).loadMore();
+      } else {
+        ref.read(purchaseRequestsProvider(status: 'waiting_bod_approval').notifier).loadMore();
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final listAsync = ref.watch(purchaseRequestsProvider(status: 'waiting_bod_approval'));
+    final listAsync = widget.isHistoryMode
+        ? ref.watch(purchaseRequestsProvider(history: true, startDate: widget.startDate, endDate: widget.endDate))
+        : ref.watch(purchaseRequestsProvider(status: 'waiting_bod_approval'));
 
     return listAsync.when(
       data: (items) {
@@ -915,7 +1246,9 @@ class _PrVendorApprovalListState extends ConsumerState<_PrVendorApprovalList> {
                   prCode: item.prCode ?? pr.code,
                   companyName: item.companyName ?? pr.companyName,
                 )))
-            .where((item) => item.status?.toLowerCase() == 'waiting_bod_approval')
+            .where((item) => widget.isHistoryMode
+                ? (item.status?.toLowerCase() == 'vendor_approved' || item.status?.toLowerCase() == 'po_created')
+                : item.status?.toLowerCase() == 'waiting_bod_approval')
             .toList();
 
         if (allItems.isEmpty) {
@@ -924,13 +1257,15 @@ class _PrVendorApprovalListState extends ConsumerState<_PrVendorApprovalList> {
               if (mounted) widget.onSelected(null, null);
             });
           }
-          return const Center(
+          return Center(
             child: Padding(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Text(
-                'Tidak ada item PR yang menunggu persetujuan Vendor',
+                widget.isHistoryMode
+                    ? 'Tidak ada riwayat persetujuan Vendor'
+                    : 'Tidak ada item PR yang menunggu persetujuan Vendor',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: CupertinoColors.secondaryLabel),
+                style: const TextStyle(color: CupertinoColors.secondaryLabel),
               ),
             ),
           );
@@ -947,7 +1282,9 @@ class _PrVendorApprovalListState extends ConsumerState<_PrVendorApprovalList> {
           }
         }
 
-        final hasMore = ref.watch(purchaseRequestsProvider(status: 'waiting_bod_approval').notifier).hasMore;
+        final hasMore = widget.isHistoryMode
+            ? ref.watch(purchaseRequestsProvider(history: true, startDate: widget.startDate, endDate: widget.endDate).notifier).hasMore
+            : ref.watch(purchaseRequestsProvider(status: 'waiting_bod_approval').notifier).hasMore;
         final showLoader = listAsync.isLoading && hasMore;
 
         return Scrollbar(
@@ -991,11 +1328,17 @@ class _InvoiceApprovalList extends ConsumerStatefulWidget {
   final bool isWide;
   final int? selectedId;
   final ValueChanged<int?> onSelected;
+  final bool isHistoryMode;
+  final String? startDate;
+  final String? endDate;
 
   const _InvoiceApprovalList({
     required this.isWide,
     required this.selectedId,
     required this.onSelected,
+    this.isHistoryMode = false,
+    this.startDate,
+    this.endDate,
   });
 
   @override
@@ -1022,13 +1365,19 @@ class _InvoiceApprovalListState extends ConsumerState<_InvoiceApprovalList> {
     final maxScroll = _scrollController.position.maxScrollExtent;
     final currentScroll = _scrollController.position.pixels;
     if (currentScroll >= maxScroll * 0.9) {
-      ref.read(invoicesProvider(status: 'draft').notifier).loadMore();
+      if (widget.isHistoryMode) {
+        ref.read(invoicesProvider(history: true, startDate: widget.startDate, endDate: widget.endDate).notifier).loadMore();
+      } else {
+        ref.read(invoicesProvider(status: 'draft').notifier).loadMore();
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final listAsync = ref.watch(invoicesProvider(status: 'draft'));
+    final listAsync = widget.isHistoryMode
+        ? ref.watch(invoicesProvider(history: true, startDate: widget.startDate, endDate: widget.endDate))
+        : ref.watch(invoicesProvider(status: 'draft'));
     final labelColor = CupertinoColors.label.resolveFrom(context);
 
     return listAsync.when(
@@ -1043,7 +1392,9 @@ class _InvoiceApprovalListState extends ConsumerState<_InvoiceApprovalList> {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'Tidak ada Invoice yang menunggu persetujuan',
+                widget.isHistoryMode
+                    ? 'Tidak ada riwayat persetujuan Invoice'
+                    : 'Tidak ada Invoice yang menunggu persetujuan',
                 textAlign: TextAlign.center,
                 style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel),
               ),
@@ -1061,7 +1412,9 @@ class _InvoiceApprovalListState extends ConsumerState<_InvoiceApprovalList> {
           }
         }
 
-        final hasMore = ref.watch(invoicesProvider(status: 'draft').notifier).hasMore;
+        final hasMore = widget.isHistoryMode
+            ? ref.watch(invoicesProvider(history: true, startDate: widget.startDate, endDate: widget.endDate).notifier).hasMore
+            : ref.watch(invoicesProvider(status: 'draft').notifier).hasMore;
         final showLoader = listAsync.isLoading && hasMore;
 
         return Scrollbar(
@@ -1083,6 +1436,15 @@ class _InvoiceApprovalListState extends ConsumerState<_InvoiceApprovalList> {
               final cardColor = isSelected
                   ? CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.08)
                   : CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+
+              final statusLower = item.status.toLowerCase();
+              final isApproved = statusLower == 'approved';
+              final isRejected = statusLower == 'rejected';
+              final badgeColor = isApproved
+                  ? CupertinoColors.activeGreen
+                  : isRejected
+                      ? CupertinoColors.destructiveRed
+                      : CupertinoColors.activeOrange;
 
               return CupertinoGlassContainer(
                 backgroundColor: cardColor,
@@ -1116,14 +1478,14 @@ class _InvoiceApprovalListState extends ConsumerState<_InvoiceApprovalList> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: CupertinoColors.activeOrange.withValues(alpha: 0.1),
+                              color: badgeColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: CupertinoColors.activeOrange, width: 0.5),
+                              border: Border.all(color: badgeColor, width: 0.5),
                             ),
                             child: Text(
-                              'DRAFT',
+                              item.status.toUpperCase(),
                               style: context.caption2.copyWith(
-                                color: CupertinoColors.activeOrange,
+                                color: badgeColor,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -1164,11 +1526,17 @@ class _PaymentRequestApprovalList extends ConsumerStatefulWidget {
   final bool isWide;
   final int? selectedId;
   final ValueChanged<int?> onSelected;
+  final bool isHistoryMode;
+  final String? startDate;
+  final String? endDate;
 
   const _PaymentRequestApprovalList({
     required this.isWide,
     required this.selectedId,
     required this.onSelected,
+    this.isHistoryMode = false,
+    this.startDate,
+    this.endDate,
   });
 
   @override
@@ -1195,13 +1563,19 @@ class _PaymentRequestApprovalListState extends ConsumerState<_PaymentRequestAppr
     final maxScroll = _scrollController.position.maxScrollExtent;
     final currentScroll = _scrollController.position.pixels;
     if (currentScroll >= maxScroll * 0.9) {
-      ref.read(paymentRequestsProvider(status: 'pending').notifier).loadMore();
+      if (widget.isHistoryMode) {
+        ref.read(paymentRequestsProvider(history: true, startDate: widget.startDate, endDate: widget.endDate).notifier).loadMore();
+      } else {
+        ref.read(paymentRequestsProvider(status: 'pending').notifier).loadMore();
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final listAsync = ref.watch(paymentRequestsProvider(status: 'pending'));
+    final listAsync = widget.isHistoryMode
+        ? ref.watch(paymentRequestsProvider(history: true, startDate: widget.startDate, endDate: widget.endDate))
+        : ref.watch(paymentRequestsProvider(status: 'pending'));
     final labelColor = CupertinoColors.label.resolveFrom(context);
 
     return listAsync.when(
@@ -1216,7 +1590,9 @@ class _PaymentRequestApprovalListState extends ConsumerState<_PaymentRequestAppr
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'Tidak ada Payment Request yang menunggu persetujuan',
+                widget.isHistoryMode
+                    ? 'Tidak ada riwayat persetujuan Payment Request'
+                    : 'Tidak ada Payment Request yang menunggu persetujuan',
                 textAlign: TextAlign.center,
                 style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel),
               ),
@@ -1234,7 +1610,9 @@ class _PaymentRequestApprovalListState extends ConsumerState<_PaymentRequestAppr
           }
         }
 
-        final hasMore = ref.watch(paymentRequestsProvider(status: 'pending').notifier).hasMore;
+        final hasMore = widget.isHistoryMode
+            ? ref.watch(paymentRequestsProvider(history: true, startDate: widget.startDate, endDate: widget.endDate).notifier).hasMore
+            : ref.watch(paymentRequestsProvider(status: 'pending').notifier).hasMore;
         final showLoader = listAsync.isLoading && hasMore;
 
         return Scrollbar(
@@ -1256,6 +1634,15 @@ class _PaymentRequestApprovalListState extends ConsumerState<_PaymentRequestAppr
               final cardColor = isSelected
                   ? CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.08)
                   : CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+
+              final statusLower = item.status.toLowerCase();
+              final isApproved = statusLower == 'approved';
+              final isRejected = statusLower == 'rejected';
+              final badgeColor = isApproved
+                  ? CupertinoColors.activeGreen
+                  : isRejected
+                      ? CupertinoColors.destructiveRed
+                      : CupertinoColors.activeOrange;
 
               return CupertinoGlassContainer(
                 backgroundColor: cardColor,
@@ -1289,14 +1676,14 @@ class _PaymentRequestApprovalListState extends ConsumerState<_PaymentRequestAppr
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: CupertinoColors.activeOrange.withValues(alpha: 0.1),
+                              color: badgeColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: CupertinoColors.activeOrange, width: 0.5),
+                              border: Border.all(color: badgeColor, width: 0.5),
                             ),
                             child: Text(
-                              'PENDING',
+                              item.status.toUpperCase(),
                               style: context.caption2.copyWith(
-                                color: CupertinoColors.activeOrange,
+                                color: badgeColor,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),

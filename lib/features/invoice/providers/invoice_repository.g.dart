@@ -171,18 +171,20 @@ class _InvoiceDetailProviderElement
   int get id => (origin as InvoiceDetailProvider).id;
 }
 
-String _$invoicesHash() => r'f43188918fa7e57f1d2c6d6cb4abebaf60c17141';
+String _$invoicesHash() => r'1a04b15d002d48c48a4db4f18834f1504ceb1feb';
 
 abstract class _$Invoices
     extends BuildlessAutoDisposeAsyncNotifier<List<Invoice>> {
   late final String? status;
   late final String? startDate;
   late final String? endDate;
+  late final bool history;
 
   FutureOr<List<Invoice>> build({
     String? status,
     String? startDate,
     String? endDate,
+    bool history = false,
   });
 }
 
@@ -200,11 +202,13 @@ class InvoicesFamily extends Family<AsyncValue<List<Invoice>>> {
     String? status,
     String? startDate,
     String? endDate,
+    bool history = false,
   }) {
     return InvoicesProvider(
       status: status,
       startDate: startDate,
       endDate: endDate,
+      history: history,
     );
   }
 
@@ -216,6 +220,7 @@ class InvoicesFamily extends Family<AsyncValue<List<Invoice>>> {
       status: provider.status,
       startDate: provider.startDate,
       endDate: provider.endDate,
+      history: provider.history,
     );
   }
 
@@ -242,11 +247,13 @@ class InvoicesProvider
     String? status,
     String? startDate,
     String? endDate,
+    bool history = false,
   }) : this._internal(
           () => Invoices()
             ..status = status
             ..startDate = startDate
-            ..endDate = endDate,
+            ..endDate = endDate
+            ..history = history,
           from: invoicesProvider,
           name: r'invoicesProvider',
           debugGetCreateSourceHash:
@@ -258,6 +265,7 @@ class InvoicesProvider
           status: status,
           startDate: startDate,
           endDate: endDate,
+          history: history,
         );
 
   InvoicesProvider._internal(
@@ -270,11 +278,13 @@ class InvoicesProvider
     required this.status,
     required this.startDate,
     required this.endDate,
+    required this.history,
   }) : super.internal();
 
   final String? status;
   final String? startDate;
   final String? endDate;
+  final bool history;
 
   @override
   FutureOr<List<Invoice>> runNotifierBuild(
@@ -284,6 +294,7 @@ class InvoicesProvider
       status: status,
       startDate: startDate,
       endDate: endDate,
+      history: history,
     );
   }
 
@@ -295,7 +306,8 @@ class InvoicesProvider
         () => create()
           ..status = status
           ..startDate = startDate
-          ..endDate = endDate,
+          ..endDate = endDate
+          ..history = history,
         from: from,
         name: null,
         dependencies: null,
@@ -304,6 +316,7 @@ class InvoicesProvider
         status: status,
         startDate: startDate,
         endDate: endDate,
+        history: history,
       ),
     );
   }
@@ -319,7 +332,8 @@ class InvoicesProvider
     return other is InvoicesProvider &&
         other.status == status &&
         other.startDate == startDate &&
-        other.endDate == endDate;
+        other.endDate == endDate &&
+        other.history == history;
   }
 
   @override
@@ -328,6 +342,7 @@ class InvoicesProvider
     hash = _SystemHash.combine(hash, status.hashCode);
     hash = _SystemHash.combine(hash, startDate.hashCode);
     hash = _SystemHash.combine(hash, endDate.hashCode);
+    hash = _SystemHash.combine(hash, history.hashCode);
 
     return _SystemHash.finish(hash);
   }
@@ -342,6 +357,9 @@ mixin InvoicesRef on AutoDisposeAsyncNotifierProviderRef<List<Invoice>> {
 
   /// The parameter `endDate` of this provider.
   String? get endDate;
+
+  /// The parameter `history` of this provider.
+  bool get history;
 }
 
 class _InvoicesProviderElement
@@ -355,6 +373,8 @@ class _InvoicesProviderElement
   String? get startDate => (origin as InvoicesProvider).startDate;
   @override
   String? get endDate => (origin as InvoicesProvider).endDate;
+  @override
+  bool get history => (origin as InvoicesProvider).history;
 }
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

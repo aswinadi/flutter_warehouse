@@ -20,6 +20,7 @@ class InvoiceRepository {
     int? companyId,
     String? startDate,
     String? endDate,
+    bool history = false,
   }) async {
     final response = await dio.get('wh/invoices', queryParameters: {
       'page': page,
@@ -27,6 +28,7 @@ class InvoiceRepository {
       if (companyId != null) 'company_id': companyId,
       if (startDate != null) 'start_date': startDate,
       if (endDate != null) 'end_date': endDate,
+      if (history) 'history': 1,
     });
 
     return PaginatedResponse.fromJson(
@@ -88,6 +90,7 @@ class Invoices extends _$Invoices {
     String? status,
     String? startDate,
     String? endDate,
+    bool history = false,
   }) async {
     ref.watch(invoiceRepositoryProvider);
     ref.watch(selectedCompanyProvider);
@@ -108,6 +111,7 @@ class Invoices extends _$Invoices {
       companyId: selectedCompany?.id,
       startDate: startDate,
       endDate: endDate,
+      history: history,
     );
 
     if (response.meta != null) {

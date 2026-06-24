@@ -26,6 +26,7 @@ class PurchaseRequests extends _$PurchaseRequests {
     String? search,
     String? startDate,
     String? endDate,
+    bool history = false,
   }) async {
     ref.watch(purchaseRequestRepositoryProvider);
     ref.watch(selectedCompanyProvider);
@@ -47,6 +48,7 @@ class PurchaseRequests extends _$PurchaseRequests {
       companyId: selectedCompany?.id,
       startDate: startDate,
       endDate: endDate,
+      history: history,
     );
 
     if (response.meta != null) {

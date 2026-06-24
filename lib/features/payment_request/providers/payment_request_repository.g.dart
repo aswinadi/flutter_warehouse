@@ -739,14 +739,20 @@ class _SupplierByNameProviderElement
   int get companyId => (origin as SupplierByNameProvider).companyId;
 }
 
-String _$paymentRequestsHash() => r'9f5b2b6579bf7b21d16c0ce7c2da29ba01af1c54';
+String _$paymentRequestsHash() => r'ca7bb19683aba6ff9ad9c5c209d5db739265ae51';
 
 abstract class _$PaymentRequests
     extends BuildlessAutoDisposeAsyncNotifier<List<PaymentRequest>> {
   late final String? status;
+  late final String? startDate;
+  late final String? endDate;
+  late final bool history;
 
   FutureOr<List<PaymentRequest>> build({
     String? status,
+    String? startDate,
+    String? endDate,
+    bool history = false,
   });
 }
 
@@ -762,9 +768,15 @@ class PaymentRequestsFamily extends Family<AsyncValue<List<PaymentRequest>>> {
   /// See also [PaymentRequests].
   PaymentRequestsProvider call({
     String? status,
+    String? startDate,
+    String? endDate,
+    bool history = false,
   }) {
     return PaymentRequestsProvider(
       status: status,
+      startDate: startDate,
+      endDate: endDate,
+      history: history,
     );
   }
 
@@ -774,6 +786,9 @@ class PaymentRequestsFamily extends Family<AsyncValue<List<PaymentRequest>>> {
   ) {
     return call(
       status: provider.status,
+      startDate: provider.startDate,
+      endDate: provider.endDate,
+      history: provider.history,
     );
   }
 
@@ -798,8 +813,15 @@ class PaymentRequestsProvider extends AutoDisposeAsyncNotifierProviderImpl<
   /// See also [PaymentRequests].
   PaymentRequestsProvider({
     String? status,
+    String? startDate,
+    String? endDate,
+    bool history = false,
   }) : this._internal(
-          () => PaymentRequests()..status = status,
+          () => PaymentRequests()
+            ..status = status
+            ..startDate = startDate
+            ..endDate = endDate
+            ..history = history,
           from: paymentRequestsProvider,
           name: r'paymentRequestsProvider',
           debugGetCreateSourceHash:
@@ -810,6 +832,9 @@ class PaymentRequestsProvider extends AutoDisposeAsyncNotifierProviderImpl<
           allTransitiveDependencies:
               PaymentRequestsFamily._allTransitiveDependencies,
           status: status,
+          startDate: startDate,
+          endDate: endDate,
+          history: history,
         );
 
   PaymentRequestsProvider._internal(
@@ -820,9 +845,15 @@ class PaymentRequestsProvider extends AutoDisposeAsyncNotifierProviderImpl<
     required super.debugGetCreateSourceHash,
     required super.from,
     required this.status,
+    required this.startDate,
+    required this.endDate,
+    required this.history,
   }) : super.internal();
 
   final String? status;
+  final String? startDate;
+  final String? endDate;
+  final bool history;
 
   @override
   FutureOr<List<PaymentRequest>> runNotifierBuild(
@@ -830,6 +861,9 @@ class PaymentRequestsProvider extends AutoDisposeAsyncNotifierProviderImpl<
   ) {
     return notifier.build(
       status: status,
+      startDate: startDate,
+      endDate: endDate,
+      history: history,
     );
   }
 
@@ -838,13 +872,20 @@ class PaymentRequestsProvider extends AutoDisposeAsyncNotifierProviderImpl<
     return ProviderOverride(
       origin: this,
       override: PaymentRequestsProvider._internal(
-        () => create()..status = status,
+        () => create()
+          ..status = status
+          ..startDate = startDate
+          ..endDate = endDate
+          ..history = history,
         from: from,
         name: null,
         dependencies: null,
         allTransitiveDependencies: null,
         debugGetCreateSourceHash: null,
         status: status,
+        startDate: startDate,
+        endDate: endDate,
+        history: history,
       ),
     );
   }
@@ -857,13 +898,20 @@ class PaymentRequestsProvider extends AutoDisposeAsyncNotifierProviderImpl<
 
   @override
   bool operator ==(Object other) {
-    return other is PaymentRequestsProvider && other.status == status;
+    return other is PaymentRequestsProvider &&
+        other.status == status &&
+        other.startDate == startDate &&
+        other.endDate == endDate &&
+        other.history == history;
   }
 
   @override
   int get hashCode {
     var hash = _SystemHash.combine(0, runtimeType.hashCode);
     hash = _SystemHash.combine(hash, status.hashCode);
+    hash = _SystemHash.combine(hash, startDate.hashCode);
+    hash = _SystemHash.combine(hash, endDate.hashCode);
+    hash = _SystemHash.combine(hash, history.hashCode);
 
     return _SystemHash.finish(hash);
   }
@@ -873,6 +921,15 @@ mixin PaymentRequestsRef
     on AutoDisposeAsyncNotifierProviderRef<List<PaymentRequest>> {
   /// The parameter `status` of this provider.
   String? get status;
+
+  /// The parameter `startDate` of this provider.
+  String? get startDate;
+
+  /// The parameter `endDate` of this provider.
+  String? get endDate;
+
+  /// The parameter `history` of this provider.
+  bool get history;
 }
 
 class _PaymentRequestsProviderElement
@@ -882,6 +939,12 @@ class _PaymentRequestsProviderElement
 
   @override
   String? get status => (origin as PaymentRequestsProvider).status;
+  @override
+  String? get startDate => (origin as PaymentRequestsProvider).startDate;
+  @override
+  String? get endDate => (origin as PaymentRequestsProvider).endDate;
+  @override
+  bool get history => (origin as PaymentRequestsProvider).history;
 }
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

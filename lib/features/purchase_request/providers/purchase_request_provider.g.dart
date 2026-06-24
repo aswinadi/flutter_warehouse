@@ -24,7 +24,7 @@ final purchaseRequestRepositoryProvider =
 
 typedef PurchaseRequestRepositoryRef
     = AutoDisposeProviderRef<PurchaseRequestRepository>;
-String _$purchaseRequestsHash() => r'e7d27fa0f43378735f53c290bfca2f456dbffb9d';
+String _$purchaseRequestsHash() => r'01a158a390d962a535cf26a497dd4e43c7d5586f';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -53,12 +53,14 @@ abstract class _$PurchaseRequests
   late final String? search;
   late final String? startDate;
   late final String? endDate;
+  late final bool history;
 
   FutureOr<List<PurchaseRequest>> build({
     String? status,
     String? search,
     String? startDate,
     String? endDate,
+    bool history = false,
   });
 }
 
@@ -77,12 +79,14 @@ class PurchaseRequestsFamily extends Family<AsyncValue<List<PurchaseRequest>>> {
     String? search,
     String? startDate,
     String? endDate,
+    bool history = false,
   }) {
     return PurchaseRequestsProvider(
       status: status,
       search: search,
       startDate: startDate,
       endDate: endDate,
+      history: history,
     );
   }
 
@@ -95,6 +99,7 @@ class PurchaseRequestsFamily extends Family<AsyncValue<List<PurchaseRequest>>> {
       search: provider.search,
       startDate: provider.startDate,
       endDate: provider.endDate,
+      history: provider.history,
     );
   }
 
@@ -122,12 +127,14 @@ class PurchaseRequestsProvider extends AutoDisposeAsyncNotifierProviderImpl<
     String? search,
     String? startDate,
     String? endDate,
+    bool history = false,
   }) : this._internal(
           () => PurchaseRequests()
             ..status = status
             ..search = search
             ..startDate = startDate
-            ..endDate = endDate,
+            ..endDate = endDate
+            ..history = history,
           from: purchaseRequestsProvider,
           name: r'purchaseRequestsProvider',
           debugGetCreateSourceHash:
@@ -141,6 +148,7 @@ class PurchaseRequestsProvider extends AutoDisposeAsyncNotifierProviderImpl<
           search: search,
           startDate: startDate,
           endDate: endDate,
+          history: history,
         );
 
   PurchaseRequestsProvider._internal(
@@ -154,12 +162,14 @@ class PurchaseRequestsProvider extends AutoDisposeAsyncNotifierProviderImpl<
     required this.search,
     required this.startDate,
     required this.endDate,
+    required this.history,
   }) : super.internal();
 
   final String? status;
   final String? search;
   final String? startDate;
   final String? endDate;
+  final bool history;
 
   @override
   FutureOr<List<PurchaseRequest>> runNotifierBuild(
@@ -170,6 +180,7 @@ class PurchaseRequestsProvider extends AutoDisposeAsyncNotifierProviderImpl<
       search: search,
       startDate: startDate,
       endDate: endDate,
+      history: history,
     );
   }
 
@@ -182,7 +193,8 @@ class PurchaseRequestsProvider extends AutoDisposeAsyncNotifierProviderImpl<
           ..status = status
           ..search = search
           ..startDate = startDate
-          ..endDate = endDate,
+          ..endDate = endDate
+          ..history = history,
         from: from,
         name: null,
         dependencies: null,
@@ -192,6 +204,7 @@ class PurchaseRequestsProvider extends AutoDisposeAsyncNotifierProviderImpl<
         search: search,
         startDate: startDate,
         endDate: endDate,
+        history: history,
       ),
     );
   }
@@ -208,7 +221,8 @@ class PurchaseRequestsProvider extends AutoDisposeAsyncNotifierProviderImpl<
         other.status == status &&
         other.search == search &&
         other.startDate == startDate &&
-        other.endDate == endDate;
+        other.endDate == endDate &&
+        other.history == history;
   }
 
   @override
@@ -218,6 +232,7 @@ class PurchaseRequestsProvider extends AutoDisposeAsyncNotifierProviderImpl<
     hash = _SystemHash.combine(hash, search.hashCode);
     hash = _SystemHash.combine(hash, startDate.hashCode);
     hash = _SystemHash.combine(hash, endDate.hashCode);
+    hash = _SystemHash.combine(hash, history.hashCode);
 
     return _SystemHash.finish(hash);
   }
@@ -236,6 +251,9 @@ mixin PurchaseRequestsRef
 
   /// The parameter `endDate` of this provider.
   String? get endDate;
+
+  /// The parameter `history` of this provider.
+  bool get history;
 }
 
 class _PurchaseRequestsProviderElement
@@ -251,6 +269,8 @@ class _PurchaseRequestsProviderElement
   String? get startDate => (origin as PurchaseRequestsProvider).startDate;
   @override
   String? get endDate => (origin as PurchaseRequestsProvider).endDate;
+  @override
+  bool get history => (origin as PurchaseRequestsProvider).history;
 }
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

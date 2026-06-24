@@ -19,12 +19,18 @@ class PaymentRequestRepository {
     String? status,
     int? companyId,
     int? perPage,
+    String? startDate,
+    String? endDate,
+    bool history = false,
   }) async {
     final response = await dio.get('wh/payment-requests', queryParameters: {
       'page': page,
       if (status != null) 'status': status,
       if (companyId != null) 'company_id': companyId,
       if (perPage != null) 'per_page': perPage,
+      if (startDate != null) 'start_date': startDate,
+      if (endDate != null) 'end_date': endDate,
+      if (history) 'history': 1,
     });
 
     return PaginatedResponse.fromJson(
@@ -159,7 +165,12 @@ class PaymentRequests extends _$PaymentRequests {
   bool get hasMore => _hasMore;
 
   @override
-  Future<List<PaymentRequest>> build({String? status}) async {
+  Future<List<PaymentRequest>> build({
+    String? status,
+    String? startDate,
+    String? endDate,
+    bool history = false,
+  }) async {
     ref.watch(paymentRequestRepositoryProvider);
     ref.watch(selectedCompanyProvider);
 
@@ -177,6 +188,9 @@ class PaymentRequests extends _$PaymentRequests {
       page: page,
       status: status,
       companyId: selectedCompany?.id,
+      startDate: startDate,
+      endDate: endDate,
+      history: history,
     );
 
     if (response.meta != null) {

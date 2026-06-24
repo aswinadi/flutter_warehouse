@@ -48,6 +48,7 @@ class PurchaseRequestRepository {
     int? companyId,
     String? startDate,
     String? endDate,
+    bool history = false,
   }) async {
     final response = await dio.get('wh/purchase-requests', queryParameters: {
       'page': page,
@@ -56,6 +57,7 @@ class PurchaseRequestRepository {
       if (companyId != null) 'company_id': companyId,
       if (startDate != null) 'start_date': startDate,
       if (endDate != null) 'end_date': endDate,
+      if (history) 'history': 1,
     });
 
     return PaginatedResponse.fromJson(

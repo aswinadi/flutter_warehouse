@@ -56,3 +56,19 @@ When a new cycle (siklus) data is saved via the Flutter application or the admin
 * **Cost Center Structure**:
   1. **Parent Cost Center**: Formats a code like `[COMPANY_CODE].[BLOK][MODUL]00.[YEAR].[CYCLE_NAME]` for the entire module.
   2. **Child Cost Centers**: Creates child codes like `[COMPANY_CODE].[BLOK][MODUL][PADDED_POND_NAME].[YEAR].[CYCLE_NAME]` for each pond under the module, auto-mapping `luas` and `luas_m2`.
+
+---
+
+## 5. Shrimp Price Calculator
+
+The application includes a specialized calculator screen (`/aquaculture/calculator`) that calculates the buying/selling price per kilogram of shrimp dynamically based on active contracts and brackets:
+
+*   **Contract Lookup**: Matches the selected company to its active contracts (`wh_contracts`) and reads the configured bracket ranges (`min_size` and `max_size`).
+*   **Bracket Matching**: Identifies the correct bracket based on the input size: `min_size <= input_size <= max_size`.
+*   **Price Calculation Rules**:
+    *   *Size* represents the number of shrimps per kilogram (larger size = smaller shrimp).
+    *   **Base Price**: If `input_size == base_size`, the price equals `base_price`.
+    *   **Price Reduction (Decrement)**: If `input_size > base_size` (smaller shrimp), a decrement is applied:
+        $$\text{Final Price} = \text{base\_price} - (\text{input\_size} - \text{base\_size}) \times \text{price\_decrement}$$
+    *   **Price Bonus (Increment)**: If `input_size < base_size` (larger shrimp), an increment is applied:
+        $$\text{Final Price} = \text{base\_price} + (\text{base\_size} - \text{input\_size}) \times \text{price\_increment}$$

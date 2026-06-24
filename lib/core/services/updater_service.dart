@@ -19,6 +19,7 @@ class UpdaterService {
   UpdaterService(this._dio);
 
   Future<void> checkForUpdates(BuildContext context) async {
+    if (kIsWeb) return; // Web users always run the latest deployed version; disable updater prompt.
     if (AppConfig.isDev) return;
     try {
       // 1. Fetch latest metadata from backend

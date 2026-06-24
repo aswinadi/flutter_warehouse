@@ -5,7 +5,8 @@ The application features an integrated, self-hosted auto-update system that auto
 ## Overview
 The update system uses a hybrid strategy tailored to each target platform:
 - **Android**: Downloads the APK file in the background (showing download progress notifications) and launches the native package installer directly from the app.
-- **Desktop (Windows/macOS)** & **Web**: Prompts the user to update and opens the browser/download client pointing to the latest desktop installer setup executable (e.g. `setup.exe`).
+- **Desktop (Windows/macOS)**: Prompts the user to update and opens the browser/download client pointing to the latest desktop installer setup executable (e.g. `setup.exe`).
+- **Web**: Excluded from update checks. Web users automatically load the latest deployed version upon reloading the page.
 
 ---
 

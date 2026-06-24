@@ -3,6 +3,7 @@ import 'package:flutter/material.dart' show Divider, Scrollbar, VerticalDivider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:dio/dio.dart';
 import '../providers/payment_request_repository.dart';
 import '../models/payment_request.dart';
 import '../../../core/providers/company_provider.dart';
@@ -186,7 +187,7 @@ class _PaymentRequestFormScreenState extends ConsumerState<PaymentRequestFormScr
           context: context,
           builder: (context) => CupertinoAlertDialog(
             title: const Text('Gagal'),
-            content: Text('Gagal membuat permintaan pembayaran: $e'),
+            content: Text('Gagal membuat permintaan pembayaran: ${_getErrorMessage(e)}'),
             actions: [
               CupertinoDialogAction(
                 child: const Text('OK'),
@@ -201,6 +202,32 @@ class _PaymentRequestFormScreenState extends ConsumerState<PaymentRequestFormScr
         setState(() => _isSubmitting = false);
       }
     }
+  }
+
+  String _getErrorMessage(dynamic e) {
+    if (e is DioException) {
+      final responseData = e.response?.data;
+      if (responseData is Map) {
+        if (responseData['errors'] != null && responseData['errors'] is Map) {
+          final errors = responseData['errors'] as Map;
+          if (errors.isNotEmpty) {
+            final firstErrorVal = errors.values.first;
+            if (firstErrorVal is List && firstErrorVal.isNotEmpty) {
+              return firstErrorVal.first.toString();
+            }
+            return firstErrorVal.toString();
+          }
+        }
+        if (responseData['message'] != null) {
+          return responseData['message'].toString();
+        }
+        if (responseData['error'] != null) {
+          return responseData['error'].toString();
+        }
+      }
+      return e.message ?? e.toString();
+    }
+    return e.toString();
   }
 
   Widget _buildTypeBadge(String type) {

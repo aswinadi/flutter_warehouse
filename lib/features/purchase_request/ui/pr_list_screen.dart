@@ -1249,13 +1249,39 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
       }
     } catch (e) {
       if (mounted) {
-        _showNotification(context, 'Gagal membuat PO: $e', isError: true);
+        _showNotification(context, 'Gagal membuat PO: ${_getErrorMessage(e)}', isError: true);
       }
     } finally {
       if (mounted) {
         setState(() => _isGeneratingPos = false);
       }
     }
+  }
+
+  String _getErrorMessage(dynamic e) {
+    if (e is DioException) {
+      final responseData = e.response?.data;
+      if (responseData is Map) {
+        if (responseData['errors'] != null && responseData['errors'] is Map) {
+          final errors = responseData['errors'] as Map;
+          if (errors.isNotEmpty) {
+            final firstErrorVal = errors.values.first;
+            if (firstErrorVal is List && firstErrorVal.isNotEmpty) {
+              return firstErrorVal.first.toString();
+            }
+            return firstErrorVal.toString();
+          }
+        }
+        if (responseData['message'] != null) {
+          return responseData['message'].toString();
+        }
+        if (responseData['error'] != null) {
+          return responseData['error'].toString();
+        }
+      }
+      return e.message ?? e.toString();
+    }
+    return e.toString();
   }
 
   Future<void> _downloadAndPrintPdf(BuildContext context, String url, String fileName) async {

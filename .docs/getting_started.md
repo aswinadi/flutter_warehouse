@@ -38,7 +38,10 @@ flutter build windows --release --build-name=1.2.0 --build-number=2
 *Note: In Android, `--build-name` maps to `versionName` and `--build-number` maps to `versionCode`. In Windows, `--build-name` maps to major/minor/patch versions and `--build-number` maps to build suffix.*
 
 ## Deployment
-1. Ensure the `baseUrl` in `core/api/dio_client.dart` points to the production Laravel API before building.
-2. Build the target platform artifacts with the updated `--build-number`.
-3. Upload the compiled APK/EXE files to the shared hosting web server download folder.
-4. Update the JSON manifest on the server (`/api/v1/wh/app-version`) with the corresponding `build_number` and URLs.
+- **Mobile (Android/iOS) & Desktop (Windows)**:
+  1. Ensure the `baseUrl` in `core/api/dio_client.dart` points to the production Laravel API before building.
+  2. Build the target platform artifacts with the updated `--build-number`.
+  3. Upload the compiled APK/EXE files to the shared hosting web server download folder.
+  4. Update the JSON manifest on the server (`/api/v1/wh/app-version`) with the corresponding `build_number` and URLs.
+- **Web (Shared Hosting)**:
+  - For step-by-step instructions on deploying the web application to shared hosting (e.g. at `warehouse.maxmar.net/user`), see the [deployment_shared_hosting.md](deployment_shared_hosting.md) guide.

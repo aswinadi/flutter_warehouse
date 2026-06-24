@@ -82,6 +82,52 @@ class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen> {
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
     final isWide = MediaQuery.of(context).size.width > 900;
 
+    final authState = ref.watch(authProvider);
+    final user = authState.valueOrNull?.maybeWhen(
+      authenticated: (user, _) => user,
+      orElse: () => null,
+    );
+
+    final isSuperAdmin = user?.roles.contains('super_admin') ?? false;
+    final effective = user?.effectivePermissions ?? [];
+
+    final bool hasPr = isSuperAdmin || effective.contains('approve_pr');
+    final bool hasVendor = isSuperAdmin || effective.contains('approve_vendor_pr') || effective.contains('approve_pr');
+    final bool hasInvoice = isSuperAdmin || effective.contains('approve_invoice');
+    final bool hasPayReq = isSuperAdmin || 
+                     effective.contains('approve_payment_request_l1') ||
+                     effective.contains('approve_payment_request_l2') ||
+                     effective.contains('approve_payment_request_l3') ||
+                     effective.contains('process_payment');
+
+    final List<int> visibleIndices = [];
+    if (hasPr) visibleIndices.add(0);
+    if (hasVendor) visibleIndices.add(1);
+    if (hasInvoice) visibleIndices.add(2);
+    if (hasPayReq) visibleIndices.add(3);
+
+    if (visibleIndices.isEmpty) {
+      return CupertinoPageScaffold(
+        backgroundColor: bgColor,
+        navigationBar: CupertinoNavigationBar(
+          backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
+          middle: Text(
+            'Workspace Persetujuan',
+            style: TextStyle(color: labelColor),
+          ),
+        ),
+        child: const SafeArea(
+          child: Center(
+            child: Text('Anda tidak memiliki izin untuk melakukan persetujuan.'),
+          ),
+        ),
+      );
+    }
+
+    final activeSegment = visibleIndices.contains(_selectedSegment) 
+        ? _selectedSegment 
+        : visibleIndices.first;
+
     final mainContent = Column(
       children: [
         const CompanySwitcher(),
@@ -90,21 +136,21 @@ class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           color: CupertinoColors.systemBackground.resolveFrom(context),
           child: CupertinoSlidingSegmentedControl<int>(
-            groupValue: _selectedSegment,
+            groupValue: activeSegment,
             children: {
-              0: Padding(
+              if (hasPr) 0: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Text('Qty PR', style: context.footnote),
               ),
-              1: Padding(
+              if (hasVendor) 1: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Text('Vendor PR', style: context.footnote),
               ),
-              2: Padding(
+              if (hasInvoice) 2: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Text('Invoice', style: context.footnote),
               ),
-              3: Padding(
+              if (hasPayReq) 3: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Text('Pay Req', style: context.footnote),
               ),
@@ -119,7 +165,7 @@ class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen> {
           ),
         ),
         Expanded(
-          child: _buildActiveList(isWide),
+          child: _buildActiveList(isWide, activeSegment),
         ),
       ],
     );
@@ -146,7 +192,7 @@ class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen> {
                   Expanded(
                     child: Container(
                       color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
-                      child: _buildDetailPane(),
+                      child: _buildDetailPane(activeSegment),
                     ),
                   ),
                 ],
@@ -156,8 +202,8 @@ class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen> {
     );
   }
 
-  Widget _buildActiveList(bool isWide) {
-    switch (_selectedSegment) {
+  Widget _buildActiveList(bool isWide, int activeSegment) {
+    switch (activeSegment) {
       case 0:
         return _PrQtyApprovalList(
           isWide: isWide,
@@ -195,8 +241,8 @@ class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen> {
     }
   }
 
-  Widget? _buildDetailPane() {
-    switch (_selectedSegment) {
+  Widget? _buildDetailPane(int activeSegment) {
+    switch (activeSegment) {
       case 0:
         if (_selectedPrQtyId == null) return const Center(child: Text('Pilih PR untuk melihat detail'));
         return KeyedSubtree(

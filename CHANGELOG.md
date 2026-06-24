@@ -12,6 +12,8 @@ All notable changes to the Maxmar Warehouse Flutter project will be documented i
   - Added [deployment_shared_hosting.md](file:///c:/Projects/flutter_warehouse/.docs/deployment_shared_hosting.md) documentation and the `deploy.ps1` PowerShell script to automate web compilation, `.htaccess` injection, and force-pushing static assets to a dedicated `release-web` branch.
 
 ### Fixed
+- **Purchase Order Generation Error Handling**:
+  - Added a `_getErrorMessage` helper in `pr_list_screen.dart` and `pr_approval_screen.dart` to parse and display detailed, user-friendly API error responses (like validation or logic errors) instead of showing raw, generic `DioException` stack traces.
 - **In-App Auto-Update System (Web Platform)**:
   - Modified [updater_service.dart](file:///c:/Projects/flutter_warehouse/lib/core/services/updater_service.dart) to skip version checks on the Web platform. Web users run the latest assets on reload, eliminating the redundant update pop-up on shared hosting deployments.
 

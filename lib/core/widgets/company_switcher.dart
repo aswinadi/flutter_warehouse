@@ -15,6 +15,14 @@ class CompanySwitcher extends ConsumerWidget {
       data: (companies) {
         if (companies.isEmpty) return const SizedBox.shrink();
 
+        if (companies.length == 1 && selectedCompany == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ref.read(selectedCompanyProvider.notifier).selectCompany(companies.first);
+          });
+        }
+
+        if (companies.length <= 1) return const SizedBox.shrink();
+
         return Material(
           type: MaterialType.transparency,
           child: Container(

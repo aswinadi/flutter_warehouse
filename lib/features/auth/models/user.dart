@@ -41,8 +41,23 @@ class User with _$User {
       }
     }
 
-    if (approvalTypes.isNotEmpty) {
-      list.add('approve_pr');
+    // Map dynamic backend approvalTypes from wh_approval_rules to specific permissions
+    for (final type in approvalTypes) {
+      if (type == 'PR') {
+        list.add('approve_pr');
+      } else if (type == 'VENDOR_APPROVAL') {
+        list.addAll(['approve_pr', 'approve_vendor_pr']);
+      } else if (type == 'PO') {
+        list.add('approve_po');
+      } else if (type == 'INVOICE') {
+        list.add('approve_invoice');
+      } else if (type == 'PAYMENT_REQUEST') {
+        list.addAll([
+          'approve_payment_request_l1',
+          'approve_payment_request_l2',
+          'approve_payment_request_l3',
+        ]);
+      }
     }
     return list;
   }

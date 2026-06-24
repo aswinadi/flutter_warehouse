@@ -36,7 +36,7 @@ final List<NavItemConfig> menuConfig = [
         icon: CupertinoIcons.checkmark_seal,
         labelBuilder: (l10n) => l10n.approvals,
         path: '/approvals',
-        requiredPermissions: ['approve_pr'],
+        requiredPermissions: ['approve_pr', 'approve_po', 'approve_invoice'],
       ),
     ],
   ),

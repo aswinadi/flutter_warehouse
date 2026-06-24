@@ -124,25 +124,43 @@
 
   <script>
     // Remove the loading screen from the DOM as soon as Flutter renders the app
+    const hideLoader = () => {
+      const loadingEl = document.getElementById('loading');
+      if (loadingEl) {
+        // Fade out smoothly and then remove
+        loadingEl.style.opacity = '0';
+        setTimeout(() => loadingEl.remove(), 500);
+      }
+    };
+
+    // 1. Listen for Flutter's official first-frame rendering event
+    window.addEventListener('flutter-first-frame', hideLoader);
+    document.addEventListener('flutter-first-frame', hideLoader);
+
+    // 2. Observe DOM changes for any Flutter elements (fallback)
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         if (mutation.addedNodes) {
           for (const node of mutation.addedNodes) {
-            if (node.tagName === 'FLT-GLASS-PANE') {
-              const loadingEl = document.getElementById('loading');
-              if (loadingEl) {
-                // Fade out smoothly and then remove
-                loadingEl.style.opacity = '0';
-                setTimeout(() => loadingEl.remove(), 500);
+            if (node.nodeType === 1) { // Element node
+              const tagName = node.tagName.toUpperCase();
+              if (tagName.startsWith('FLT-') || node.id === 'flutter_host') {
+                hideLoader();
+                observer.disconnect();
+                return;
               }
-              observer.disconnect();
-              return;
             }
           }
         }
       }
     });
     observer.observe(document.body, { childList: true });
+
+    // 3. If Flutter elements are already present when this script executes
+    if (document.querySelector('flt-glass-pane') || document.querySelector('flt-view') || document.querySelector('[id*="flutter"]')) {
+      hideLoader();
+      observer.disconnect();
+    }
   </script>
 
   <!--

@@ -2,6 +2,19 @@
 
 All notable changes to the Maxmar Warehouse Flutter project will be documented in this file.
 
+## [1.6.2] - 2026-06-24
+
+### Added
+- **Web Deployment Configuration**:
+  - Implemented a premium dark-themed loading screen with double-ring glowing animations in `web/index.html`.
+  - Added a MutationObserver and window event listener to automatically hide and remove the loading screen as soon as the Flutter framework initializes and renders.
+  - Replaced the default Flutter favicon with the official Maxmar logo (`web/favicon.png`).
+  - Added [deployment_shared_hosting.md](file:///c:/Projects/flutter_warehouse/.docs/deployment_shared_hosting.md) documentation and the `deploy.ps1` PowerShell script to automate web compilation, `.htaccess` injection, and force-pushing static assets to a dedicated `release-web` branch.
+
+### Fixed
+- **In-App Auto-Update System (Web Platform)**:
+  - Modified [updater_service.dart](file:///c:/Projects/flutter_warehouse/lib/core/services/updater_service.dart) to skip version checks on the Web platform. Web users run the latest assets on reload, eliminating the redundant update pop-up on shared hosting deployments.
+
 ## [1.6.1] - 2026-06-23
 
 ### Fixed

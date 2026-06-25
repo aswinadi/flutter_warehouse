@@ -358,7 +358,7 @@ class _PaymentRequestDetailScreenState extends ConsumerState<PaymentRequestDetai
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel)),
+          Text(label, style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context))),
           Expanded(
             child: Text(
               value,

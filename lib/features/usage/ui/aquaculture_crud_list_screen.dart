@@ -114,6 +114,7 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
 
   Widget _buildCardContent(dynamic item) {
     final res = widget.resource;
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
 
     if (res == 'tambaks') {
       return Column(
@@ -126,7 +127,7 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
           const SizedBox(height: CupertinoSpacing.xs),
           Text(
             'Perusahaan: ${item['company']?['company_name'] ?? '-'}',
-            style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel),
+            style: context.subhead.copyWith(color: secondaryLabel),
           ),
         ],
       );
@@ -159,7 +160,7 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
           const SizedBox(height: CupertinoSpacing.xs),
           Text(
             'Tambak: ${item['tambak']?['name'] ?? '-'} (${item['tambak']?['company']?['company_name'] ?? ''})',
-            style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel),
+            style: context.subhead.copyWith(color: secondaryLabel),
           ),
         ],
       );
@@ -192,7 +193,7 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
           const SizedBox(height: CupertinoSpacing.xs),
           Text(
             'Blok: ${item['blok']?['name'] ?? '-'} | Tambak: ${item['blok']?['tambak']?['name'] ?? '-'}',
-            style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel),
+            style: context.subhead.copyWith(color: secondaryLabel),
           ),
         ],
       );
@@ -225,13 +226,13 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
           const SizedBox(height: CupertinoSpacing.s),
           Text(
             'Modul: ${item['modul']?['name'] ?? '-'} | Blok: ${item['modul']?['blok']?['name'] ?? '-'} | Tambak: ${item['modul']?['blok']?['tambak']?['name'] ?? '-'}',
-            style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel),
+            style: context.footnote.copyWith(color: secondaryLabel),
           ),
           if (item['length'] != null || item['width'] != null || item['depth'] != null) ...[
             const SizedBox(height: CupertinoSpacing.xs),
             Text(
               'Dimensi: ${item['length'] ?? '-'}m x ${item['width'] ?? '-'}m | Kedalaman: ${item['depth'] ?? '-'}m',
-              style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel),
+              style: context.footnote.copyWith(color: secondaryLabel),
             ),
           ],
         ],
@@ -258,7 +259,7 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
                   isActive ? 'Aktif' : 'Selesai',
                   style: context.caption1.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: isActive ? CupertinoColors.activeGreen : CupertinoColors.secondaryLabel,
+                    color: isActive ? CupertinoColors.activeGreen : secondaryLabel,
                   ),
                 ),
               ),
@@ -267,12 +268,12 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
           const SizedBox(height: CupertinoSpacing.s),
           Text(
             'Modul: ${item['modul']?['name'] ?? '-'} | Tambak: ${item['modul']?['blok']?['tambak']?['name'] ?? '-'}',
-            style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel),
+            style: context.footnote.copyWith(color: secondaryLabel),
           ),
           const SizedBox(height: CupertinoSpacing.xs),
           Text(
             'Mulai Tebar: ${_formatDate(item['stocking_date'])}',
-            style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel),
+            style: context.footnote.copyWith(color: secondaryLabel),
           ),
         ],
       );
@@ -298,7 +299,7 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
                   isActive ? 'Aktif' : 'Mati',
                   style: context.caption1.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: isActive ? CupertinoColors.activeGreen : CupertinoColors.secondaryLabel,
+                    color: isActive ? CupertinoColors.activeGreen : secondaryLabel,
                   ),
                 ),
               ),
@@ -307,17 +308,17 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
           const SizedBox(height: CupertinoSpacing.s),
           Text(
             'No. Kontrak: ${item['contract_number'] ?? '-'}',
-            style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel),
+            style: context.footnote.copyWith(color: secondaryLabel),
           ),
           const SizedBox(height: CupertinoSpacing.xs),
           Text(
             'Pembeli: ${item['buyer_name'] ?? '-'} | Penjual: ${item['seller_name'] ?? '-'}',
-            style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel),
+            style: context.footnote.copyWith(color: secondaryLabel),
           ),
           const SizedBox(height: CupertinoSpacing.xs),
           Text(
             'Tanggal Kontrak: ${_formatDate(item['contract_date'])}',
-            style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel),
+            style: context.footnote.copyWith(color: secondaryLabel),
           ),
         ],
       );
@@ -341,12 +342,12 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
           const SizedBox(height: CupertinoSpacing.s),
           Text(
             'Petak: ${item['pond']?['name'] ?? '-'} | Siklus: ${item['cycle']?['name'] ?? '-'}',
-            style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel),
+            style: context.footnote.copyWith(color: secondaryLabel),
           ),
           const SizedBox(height: CupertinoSpacing.xs),
           Text(
             'Tanggal Penggunaan: ${_formatDate(item['date'])}',
-            style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel),
+            style: context.footnote.copyWith(color: secondaryLabel),
           ),
         ],
       );
@@ -372,7 +373,7 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
                   isActive ? 'Aktif' : 'Nonaktif',
                   style: context.caption2.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: isActive ? CupertinoColors.activeGreen : CupertinoColors.secondaryLabel,
+                    color: isActive ? CupertinoColors.activeGreen : secondaryLabel,
                   ),
                 ),
               ),
@@ -387,13 +388,13 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
             const SizedBox(height: CupertinoSpacing.xs),
             Text(
               'Induk: ${item['parent_code']}',
-              style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel),
+              style: context.footnote.copyWith(color: secondaryLabel),
             ),
           ],
           const SizedBox(height: CupertinoSpacing.xs),
           Text(
             'Perusahaan: ${item['company']?['company_name'] ?? '-'}',
-            style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel),
+            style: context.footnote.copyWith(color: secondaryLabel),
           ),
         ],
       );
@@ -431,7 +432,7 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
             child: Text(
               label,
               style: context.subhead.copyWith(
-                color: CupertinoColors.secondaryLabel,
+                color: CupertinoColors.secondaryLabel.resolveFrom(context),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -441,7 +442,7 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
             child: Text(
               value,
               style: context.subhead.copyWith(
-                color: CupertinoColors.label,
+                color: CupertinoColors.label.resolveFrom(context),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -584,7 +585,7 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
               padding: const EdgeInsets.all(CupertinoSpacing.s),
               child: Text(
                 'Tidak ada size brackets untuk kontrak ini.',
-                style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel, fontStyle: FontStyle.italic),
+                style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context), fontStyle: FontStyle.italic),
               ),
             )
           else
@@ -622,7 +623,7 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
                         const SizedBox(height: CupertinoSpacing.xs),
                         Text(
                           'Increment: ${_formatRupiah(inc)} | Decrement: ${_formatRupiah(dec)}',
-                          style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel),
+                          style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                         ),
                       ],
                     ),
@@ -679,7 +680,7 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
       return Center(
         child: Text(
           'Pilih item untuk melihat detail.',
-          style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel),
+          style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
         ),
       );
     }
@@ -767,7 +768,7 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
                 return Center(
                   child: Text(
                     'Tidak ada data ditemukan.',
-                    style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel),
+                    style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                   ),
                 );
               }

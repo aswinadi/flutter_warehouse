@@ -132,7 +132,7 @@ class _PaymentRequestListScreenState extends ConsumerState<PaymentRequestListScr
                     return Center(
                       child: Text(
                         'Tidak ada permintaan pembayaran',
-                        style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel),
+                        style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                       ),
                     );
                   }
@@ -207,7 +207,7 @@ class _PaymentRequestListScreenState extends ConsumerState<PaymentRequestListScr
                               : Center(
                                   child: Text(
                                     'Pilih Permintaan Pembayaran untuk detail',
-                                    style: context.body.copyWith(color: CupertinoColors.secondaryLabel),
+                                    style: context.body.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                                   ),
                                 ),
                         ),
@@ -306,7 +306,7 @@ class _PaymentRequestCard extends StatelessWidget {
               children: [
                 Text(
                   'Total Tagihan',
-                  style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel),
+                  style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                 ),
                 Text(
                   formatWithCurrency(pr.totalAmount, pr.currency),
@@ -328,7 +328,7 @@ class _PaymentRequestCard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel)),
+          Text(label, style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context))),
           Expanded(
             child: Text(
               value,

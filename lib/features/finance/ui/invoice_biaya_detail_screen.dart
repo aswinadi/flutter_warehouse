@@ -283,7 +283,7 @@ class _InvoiceBiayaDetailScreenState extends ConsumerState<InvoiceBiayaDetailScr
                             },
                             child: Row(
                               children: [
-                                const Icon(CupertinoIcons.doc_text, color: Color(0xFF6E56CF), size: 20),
+                                const Icon(CupertinoIcons.doc_text, color: CupertinoColors.activeBlue, size: 20),
                                 const SizedBox(width: CupertinoSpacing.m),
                                 Expanded(
                                   child: Text(
@@ -346,7 +346,7 @@ class _InvoiceBiayaDetailScreenState extends ConsumerState<InvoiceBiayaDetailScr
                           flex: 2,
                           child: CupertinoButton(
                             padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.m),
-                            color: const Color(0xFF6E56CF),
+                            color: CupertinoColors.activeBlue,
                             borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
                             minimumSize: Size.zero,
                             onPressed: _isSubmitting ? null : _markPending,
@@ -360,7 +360,7 @@ class _InvoiceBiayaDetailScreenState extends ConsumerState<InvoiceBiayaDetailScr
                         Expanded(
                           child: CupertinoButton(
                             padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.m),
-                            color: const Color(0xFF6E56CF),
+                            color: CupertinoColors.activeBlue,
                             borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
                             minimumSize: Size.zero,
                             onPressed: _isSubmitting ? null : _submitPaymentRequest,

@@ -185,7 +185,7 @@ class _BarcodeLookupBottomSheetState extends ConsumerState<BarcodeLookupBottomSh
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(color: Color(0xFF6E56CF)),
+            CircularProgressIndicator(color: const Color(0xFF007AFF)),
             SizedBox(height: 16),
             Text(
               'Mencari data barang...',
@@ -265,7 +265,7 @@ class _BarcodeLookupBottomSheetState extends ConsumerState<BarcodeLookupBottomSh
                 width: scanSize,
                 height: scanSize,
                 decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFF6E56CF), width: 2),
+                  border: Border.all(color: const Color(0xFF007AFF), width: 2),
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
@@ -528,7 +528,7 @@ class _BarcodeLookupBottomSheetState extends ConsumerState<BarcodeLookupBottomSh
                 child: ElevatedButton(
                   onPressed: _resetScanner,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6E56CF), // Notion Purple
+                    backgroundColor: const Color(0xFF007AFF), // Notion Purple
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -644,7 +644,7 @@ class _BarcodeLookupBottomSheetState extends ConsumerState<BarcodeLookupBottomSh
                 child: ElevatedButton(
                   onPressed: _resetScanner,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6E56CF),
+                    backgroundColor: const Color(0xFF007AFF),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -774,7 +774,7 @@ class _BarcodeLookupBottomSheetState extends ConsumerState<BarcodeLookupBottomSh
                     context.push('/assets/${asset.id}');
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6E56CF),
+                    backgroundColor: const Color(0xFF007AFF),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

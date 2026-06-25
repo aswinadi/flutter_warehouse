@@ -31,8 +31,6 @@ class CupertinoGlassSearchField extends StatelessWidget {
           placeholder: placeholder,
           onChanged: onChanged,
           onSubmitted: onSubmitted,
-          backgroundColor: defaultBg,
-          borderRadius: BorderRadius.circular(9999.0),
           placeholderStyle: TextStyle(
             color: isDark ? const Color(0x99FFFFFF) : const Color(0x993C3C43),
             fontSize: 15.0,
@@ -42,6 +40,7 @@ class CupertinoGlassSearchField extends StatelessWidget {
             fontSize: 15.0,
           ),
           decoration: BoxDecoration(
+            color: defaultBg,
             borderRadius: BorderRadius.circular(9999.0),
             border: Border.all(
               color: defaultBorder,

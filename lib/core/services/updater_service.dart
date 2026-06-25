@@ -98,7 +98,7 @@ class UpdaterService {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6E56CF),
+              backgroundColor: const Color(0xFF007AFF),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),

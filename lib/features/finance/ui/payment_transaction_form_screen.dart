@@ -473,7 +473,7 @@ class _PaymentTransactionFormScreenState extends ConsumerState<PaymentTransactio
                               _formatCurrency(totalAmount),
                               style: context.body.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: const Color(0xFF6E56CF),
+                                color: CupertinoColors.activeBlue,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -686,12 +686,12 @@ class _PaymentTransactionFormScreenState extends ConsumerState<PaymentTransactio
                     child: CupertinoGlassContainer(
                       margin: const EdgeInsets.only(bottom: CupertinoSpacing.s),
                       padding: const EdgeInsets.all(CupertinoSpacing.m),
-                      borderColor: isSelected ? const Color(0xFF6E56CF) : null,
+                      borderColor: isSelected ? CupertinoColors.activeBlue : null,
                       child: Row(
                         children: [
                           Icon(
                             isSelected ? CupertinoIcons.check_mark_circled_solid : CupertinoIcons.circle,
-                            color: isSelected ? const Color(0xFF6E56CF) : CupertinoColors.secondaryLabel,
+                            color: isSelected ? CupertinoColors.activeBlue : CupertinoColors.secondaryLabel,
                             size: 22,
                           ),
                           const SizedBox(width: CupertinoSpacing.m),
@@ -898,7 +898,7 @@ class _PaymentTransactionFormScreenState extends ConsumerState<PaymentTransactio
                       _formatCurrency(totalSelectedAmount),
                       style: context.title3.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF6E56CF),
+                        color: CupertinoColors.activeBlue,
                       ),
                     ),
                   ],
@@ -907,7 +907,7 @@ class _PaymentTransactionFormScreenState extends ConsumerState<PaymentTransactio
                   width: 180,
                   height: CupertinoSpacing.primaryButtonHeight,
                   child: CupertinoButton(
-                    color: const Color(0xFF6E56CF),
+                    color: CupertinoColors.activeBlue,
                     disabledColor: CupertinoColors.inactiveGray.withValues(alpha: 0.5),
                     padding: EdgeInsets.zero,
                     onPressed: _selectedInvoices.isEmpty || _isSubmitting ? null : _submit,

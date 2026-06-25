@@ -338,7 +338,7 @@ class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen> {
             ),
             child: Row(
               children: [
-                const Icon(CupertinoIcons.calendar, size: 16, color: Color(0xFF6E56CF)),
+                const Icon(CupertinoIcons.calendar, size: 16, color: CupertinoColors.activeBlue),
                 const SizedBox(width: 8),
                 Text(
                   'Periode:',
@@ -393,7 +393,7 @@ class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen> {
                         await _selectDate(false);
                       }
                     },
-                    child: const Icon(CupertinoIcons.calendar_badge_plus, size: 20, color: Color(0xFF6E56CF)),
+                    child: const Icon(CupertinoIcons.calendar_badge_plus, size: 20, color: CupertinoColors.activeBlue),
                   ),
                 ],
               ],
@@ -837,7 +837,7 @@ class _PrQtyApprovalListState extends ConsumerState<_PrQtyApprovalList> {
                               decoration: BoxDecoration(
                                 border: Border.all(
                                   color: isRowSelected
-                                      ? const Color(0xFF6E56CF)
+                                      ? CupertinoColors.activeBlue
                                       : CupertinoColors.transparent,
                                   width: isRowSelected ? 1.5 : 0.0,
                                 ),

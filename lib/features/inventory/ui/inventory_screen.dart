@@ -53,7 +53,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
-    const primaryAccent = Color(0xFF6E56CF);
+    const primaryAccent = CupertinoColors.activeBlue;
 
     Widget buildLeftPane() {
       return Column(

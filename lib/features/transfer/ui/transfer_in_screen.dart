@@ -337,7 +337,7 @@ class _TransferInScreenState extends ConsumerState<TransferInScreen> {
               backgroundColor: cardColor,
               borderColor: isSelected && isWide
                   ? CupertinoColors.activeBlue.resolveFrom(context)
-                  : separatorColor,
+                  : null,
               borderRadius: CupertinoSpacing.cardRadius,
               padding: const EdgeInsets.all(CupertinoSpacing.l),
               child: GestureDetector(

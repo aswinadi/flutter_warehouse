@@ -813,7 +813,10 @@ class _AquacultureCrudListScreenState extends ConsumerState<AquacultureCrudListS
                             borderRadius: CupertinoSpacing.cardRadius,
                             borderColor: isSelected
                                 ? CupertinoColors.activeBlue.resolveFrom(context)
-                                : borderCol,
+                                : null,
+                            backgroundColor: isSelected
+                                ? CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.08)
+                                : null,
                             child: GestureDetector(
                               behavior: HitTestBehavior.opaque,
                               onTap: () {

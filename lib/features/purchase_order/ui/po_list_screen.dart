@@ -67,7 +67,7 @@ class _POListScreenState extends ConsumerState<POListScreen> {
         return Theme(
           data: ThemeData.light().copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF6E56CF),
+              primary: CupertinoColors.activeBlue,
               onPrimary: Colors.white,
               onSurface: Color(0xFF1E293B),
             ),
@@ -273,7 +273,7 @@ class _POListScreenState extends ConsumerState<POListScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(CupertinoIcons.calendar, size: 16, color: Color(0xFF6E56CF)),
+                  const Icon(CupertinoIcons.calendar, size: 16, color: CupertinoColors.activeBlue),
                   const SizedBox(width: 8),
                   Text(
                     'Periode:',
@@ -335,7 +335,7 @@ class _POListScreenState extends ConsumerState<POListScreen> {
                       padding: EdgeInsets.zero,
                       minimumSize: Size.zero,
                       onPressed: _selectCustomDateRange,
-                      child: const Icon(CupertinoIcons.calendar_badge_plus, size: 20, color: Color(0xFF6E56CF)),
+                      child: const Icon(CupertinoIcons.calendar_badge_plus, size: 20, color: CupertinoColors.activeBlue),
                     ),
                   ],
                 ],
@@ -434,8 +434,8 @@ class _POCard extends StatelessWidget {
 
     return CupertinoGlassContainer(
       borderRadius: CupertinoSpacing.cardRadius,
-      borderColor: isSelected ? const Color(0xFF6E56CF) : null,
-      backgroundColor: isSelected ? const Color(0xFF6E56CF).withValues(alpha: 0.08) : null,
+      borderColor: isSelected ? CupertinoColors.activeBlue : null,
+      backgroundColor: isSelected ? CupertinoColors.activeBlue.withValues(alpha: 0.08) : null,
       padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,

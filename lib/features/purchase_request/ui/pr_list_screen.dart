@@ -319,7 +319,7 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(CupertinoIcons.calendar, size: 16, color: Color(0xFF6E56CF)),
+                  const Icon(CupertinoIcons.calendar, size: 16, color: CupertinoColors.activeBlue),
                   const SizedBox(width: 8),
                   Text(
                     'Periode:',
@@ -374,7 +374,7 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
                           await _selectDate(false);
                         }
                       },
-                      child: const Icon(CupertinoIcons.calendar_badge_plus, size: 20, color: Color(0xFF6E56CF)),
+                      child: const Icon(CupertinoIcons.calendar_badge_plus, size: 20, color: CupertinoColors.activeBlue),
                     ),
                   ],
                 ],
@@ -512,7 +512,7 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
                           );
                         }
                         final entry = allItems[index];
-                        final isSelected = _selectedItem?.item.id == entry.item.id;
+                        final isSelected = isWide && _selectedItem?.item.id == entry.item.id;
                         return _ApprovedItemCard(
                           item: entry.item,
                           pr: entry.pr,
@@ -583,7 +583,7 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
                         );
                       }
                       final pr = requests[index];
-                      final isSelected = pr.id == _selectedPrId;
+                      final isSelected = isWide && pr.id == _selectedPrId;
                       return PRCard(
                         pr: pr,
                         isSelected: isSelected,
@@ -638,7 +638,7 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
   Widget _buildFilterChip(String label, String? value) {
     final isSelected = _selectedStatus == value;
     final contextResolvedBg = isSelected
-        ? const Color(0xFF6E56CF)
+        ? CupertinoColors.activeBlue
         : CupertinoColors.tertiarySystemFill.resolveFrom(context);
     final labelColor = isSelected
         ? CupertinoColors.white
@@ -736,7 +736,7 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
           );
         }
         final entry = allItems[index];
-        final isSelected = _selectedItem?.item.id == entry.item.id;
+        final isSelected = isWide && _selectedItem?.item.id == entry.item.id;
         final vendorCount = entry.pr.comparisons
             .where((c) => c.details.any((d) => d.purchaseRequestDetailId == entry.item.id))
             .length;
@@ -862,7 +862,7 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
           );
         }
         final entry = allItems[index];
-        final isSelected = _selectedItem?.item.id == entry.item.id;
+        final isSelected = isWide && _selectedItem?.item.id == entry.item.id;
         final vendorCount = entry.pr.comparisons
             .where((c) => c.details.any((d) => d.purchaseRequestDetailId == entry.item.id))
             .length;
@@ -1100,7 +1100,7 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
         }
         final group = groupedList[index];
         final key = "${group.supplierId}|${group.warehouseCode}";
-        final isSelected = _selectedGroupKey == key;
+        final isSelected = isWide && _selectedGroupKey == key;
 
         return VendorWarehouseGroupCard(
           group: group,
@@ -1236,7 +1236,7 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
                           padding: const EdgeInsets.all(CupertinoSpacing.s),
                           child: Row(
                             children: [
-                              const Icon(CupertinoIcons.doc_text, size: 18, color: Color(0xFF6E56CF)),
+                              const Icon(CupertinoIcons.doc_text, size: 18, color: CupertinoColors.activeBlue),
                               const SizedBox(width: CupertinoSpacing.s),
                               Expanded(
                                 child: Column(
@@ -1466,7 +1466,8 @@ class _ComparisonItemCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: CupertinoGlassContainer(
-        borderColor: isSelected ? const Color(0xFF6E56CF) : separatorColor,
+        borderColor: isSelected ? CupertinoColors.activeBlue : null,
+        backgroundColor: isSelected ? CupertinoColors.activeBlue.withValues(alpha: 0.08) : null,
         borderRadius: CupertinoSpacing.cardRadius,
         padding: EdgeInsets.zero,
         child: Padding(
@@ -1530,14 +1531,14 @@ class _ComparisonItemCard extends StatelessWidget {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(CupertinoIcons.doc_text, size: 13, color: Color(0xFF6E56CF)),
+                  const Icon(CupertinoIcons.doc_text, size: 13, color: CupertinoColors.activeBlue),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       '${pr.code}  •  ${pr.companyName ?? "Unknown"}',
                       style: const TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF6E56CF),
+                        color: CupertinoColors.activeBlue,
                         fontWeight: FontWeight.w600,
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -1634,16 +1635,16 @@ class _ComparisonItemCard extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF6E56CF).withOpacity(0.08),
+                    color: CupertinoColors.activeBlue.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: const Row(
                     children: [
-                      Icon(CupertinoIcons.hand_point_right, size: 13, color: Color(0xFF6E56CF)),
+                      Icon(CupertinoIcons.hand_point_right, size: 13, color: CupertinoColors.activeBlue),
                       SizedBox(width: 6),
                       Text(
                         'Tap to assign a vendor',
-                        style: TextStyle(fontSize: 11, color: Color(0xFF6E56CF)),
+                        style: TextStyle(fontSize: 11, color: CupertinoColors.activeBlue),
                       ),
                     ],
                   ),
@@ -1785,14 +1786,14 @@ class _ComparisonItemDetailViewState
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    const Icon(CupertinoIcons.doc_text, size: 16, color: Color(0xFF6E56CF)),
+                    const Icon(CupertinoIcons.doc_text, size: 16, color: CupertinoColors.activeBlue),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         '${pr.code}  •  ${pr.companyName ?? "Unknown"}',
                         style: const TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF6E56CF),
+                          color: CupertinoColors.activeBlue,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -1921,7 +1922,7 @@ class _ComparisonItemDetailViewState
                   children: [
                     Row(
                       children: [
-                        const Icon(CupertinoIcons.home, size: 16, color: Color(0xFF6E56CF)),
+                        const Icon(CupertinoIcons.home, size: 16, color: CupertinoColors.activeBlue),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -2064,7 +2065,7 @@ class _AssignVendorButton extends StatelessWidget {
     return CupertinoButton(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       minSize: 0,
-      color: const Color(0xFF6E56CF),
+      color: CupertinoColors.activeBlue,
       borderRadius: BorderRadius.circular(8),
       onPressed: () {
         showCupertinoModalPopup(
@@ -2192,7 +2193,7 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet> {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Row(
             children: [
-              const Icon(CupertinoIcons.plus_app, color: Color(0xFF6E56CF), size: 22),
+              const Icon(CupertinoIcons.plus_app, color: CupertinoColors.activeBlue, size: 22),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -2296,7 +2297,7 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet> {
                     : null,
                 leadTimeDays: lastVendor['lead_time_days'] as int? ?? 7,
                 date: lastVendor['last_purchased_at'] as String?,
-                accentColor: const Color(0xFF6E56CF),
+                accentColor: CupertinoColors.activeBlue,
                 isSubmitting: _isSubmitting,
                 onAssign: (price, leadTime) => _submitAssignment(
                   supplierId: lastVendor['supplier_id'] as int,
@@ -2721,7 +2722,7 @@ class _SupplierTile extends StatelessWidget {
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
     final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
-    final activeBg = const Color(0xFF6E56CF).withOpacity(0.08);
+    final activeBg = CupertinoColors.activeBlue.withOpacity(0.08);
 
     return GestureDetector(
       onTap: onTap,
@@ -2731,7 +2732,7 @@ class _SupplierTile extends StatelessWidget {
           color: isSelected ? activeBg : cardBg,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? const Color(0xFF6E56CF) : separatorColor,
+            color: isSelected ? CupertinoColors.activeBlue : separatorColor,
             width: isSelected ? 1.5 : 0.5,
           ),
         ),
@@ -2743,7 +2744,7 @@ class _SupplierTile extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF6E56CF) : CupertinoColors.systemGroupedBackground.resolveFrom(context),
+                  color: isSelected ? CupertinoColors.activeBlue : CupertinoColors.systemGroupedBackground.resolveFrom(context),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -2762,7 +2763,7 @@ class _SupplierTile extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
-                        color: isSelected ? const Color(0xFF6E56CF) : labelColor,
+                        color: isSelected ? CupertinoColors.activeBlue : labelColor,
                       ),
                     ),
                     if (supplier.city != null || supplier.code != null)
@@ -2776,7 +2777,7 @@ class _SupplierTile extends StatelessWidget {
                 ),
               ),
               if (isSelected)
-                const Icon(CupertinoIcons.check_mark_circled_solid, size: 20, color: Color(0xFF6E56CF)),
+                const Icon(CupertinoIcons.check_mark_circled_solid, size: 20, color: CupertinoColors.activeBlue),
             ],
           ),
         ),
@@ -3042,7 +3043,8 @@ class _ApprovedItemCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: CupertinoGlassContainer(
-        borderColor: isSelected ? const Color(0xFF6E56CF) : separatorColor,
+        borderColor: isSelected ? CupertinoColors.activeBlue : null,
+        backgroundColor: isSelected ? CupertinoColors.activeBlue.withValues(alpha: 0.08) : null,
         borderRadius: CupertinoSpacing.cardRadius,
         padding: EdgeInsets.zero,
         child: Padding(
@@ -3089,14 +3091,14 @@ class _ApprovedItemCard extends StatelessWidget {
               const SizedBox(height: 6),
               Row(
                 children: [
-                  const Icon(CupertinoIcons.doc_text, size: 13, color: Color(0xFF6E56CF)),
+                  const Icon(CupertinoIcons.doc_text, size: 13, color: CupertinoColors.activeBlue),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       '${pr.code}  •  ${pr.companyName ?? "Unknown"}',
                       style: const TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF6E56CF),
+                        color: CupertinoColors.activeBlue,
                         fontWeight: FontWeight.w600,
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -3379,14 +3381,14 @@ class _ApprovedItemDetailsViewState
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    const Icon(CupertinoIcons.doc_text, size: 16, color: Color(0xFF6E56CF)),
+                    const Icon(CupertinoIcons.doc_text, size: 16, color: CupertinoColors.activeBlue),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         '${pr.code}  •  ${pr.companyName ?? "Unknown"}',
                         style: const TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF6E56CF),
+                          color: CupertinoColors.activeBlue,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -3579,7 +3581,7 @@ class _ApprovedItemDetailsViewState
       children: [
         Row(
           children: [
-            Icon(icon, size: 16, color: const Color(0xFF6E56CF)),
+            Icon(icon, size: 16, color: CupertinoColors.activeBlue),
             const SizedBox(width: 8),
             Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: CupertinoColors.label.resolveFrom(context))),
           ],
@@ -3685,7 +3687,8 @@ class VendorWarehouseGroupCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: CupertinoGlassContainer(
-        borderColor: isSelected ? const Color(0xFF6E56CF) : separatorColor,
+        borderColor: isSelected ? CupertinoColors.activeBlue : null,
+        backgroundColor: isSelected ? CupertinoColors.activeBlue.withValues(alpha: 0.08) : null,
         borderRadius: CupertinoSpacing.cardRadius,
         padding: EdgeInsets.zero,
         child: Padding(
@@ -3752,7 +3755,7 @@ class VendorWarehouseGroupCard extends StatelessWidget {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  const Icon(CupertinoIcons.home, size: 14, color: Color(0xFF6E56CF)),
+                  const Icon(CupertinoIcons.home, size: 14, color: CupertinoColors.activeBlue),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -3781,7 +3784,7 @@ class VendorWarehouseGroupCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF6E56CF),
+                      color: CupertinoColors.activeBlue,
                     ),
                   ),
                 ],
@@ -3947,7 +3950,7 @@ class _GroupedDetailsViewState extends State<_GroupedDetailsView> {
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF6E56CF),
+                            color: CupertinoColors.activeBlue,
                           ),
                         ),
                       ],
@@ -3986,7 +3989,7 @@ class _GroupedDetailsViewState extends State<_GroupedDetailsView> {
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF6E56CF),
+                          color: CupertinoColors.activeBlue,
                         ),
                       ),
                     ),
@@ -4027,7 +4030,7 @@ class _GroupedDetailsViewState extends State<_GroupedDetailsView> {
                                   ? CupertinoIcons.checkmark_square_fill
                                   : CupertinoIcons.square,
                               color: isChecked
-                                  ? const Color(0xFF6E56CF)
+                                  ? CupertinoColors.activeBlue
                                   : secondaryLabel,
                               size: 22,
                             ),
@@ -4082,13 +4085,13 @@ class _GroupedDetailsViewState extends State<_GroupedDetailsView> {
                                 children: [
                                   Row(
                                     children: [
-                                      const Icon(CupertinoIcons.doc_text, size: 13, color: Color(0xFF6E56CF)),
+                                      const Icon(CupertinoIcons.doc_text, size: 13, color: CupertinoColors.activeBlue),
                                       const SizedBox(width: 4),
                                       Text(
                                         pr.code,
                                         style: const TextStyle(
                                           fontSize: 12,
-                                          color: Color(0xFF6E56CF),
+                                          color: CupertinoColors.activeBlue,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -4153,7 +4156,7 @@ class _GroupedDetailsViewState extends State<_GroupedDetailsView> {
                       borderColor: separatorColor,
                       child: Row(
                         children: [
-                          const Icon(CupertinoIcons.doc_plaintext, color: Color(0xFF6E56CF), size: 20),
+                          const Icon(CupertinoIcons.doc_plaintext, color: CupertinoColors.activeBlue, size: 20),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -4183,7 +4186,7 @@ class _GroupedDetailsViewState extends State<_GroupedDetailsView> {
                             CupertinoButton(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               minSize: 0,
-                              color: const Color(0xFF6E56CF),
+                              color: CupertinoColors.activeBlue,
                               borderRadius: BorderRadius.circular(6),
                               onPressed: () => widget.onDownloadPdf(po.pdfUrl!, po.poNumber),
                               child: const Row(
@@ -4305,14 +4308,14 @@ class _WaitingBodItemDetailViewState
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    const Icon(CupertinoIcons.doc_text, size: 16, color: Color(0xFF6E56CF)),
+                    const Icon(CupertinoIcons.doc_text, size: 16, color: CupertinoColors.activeBlue),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         '${pr.code}  •  ${pr.companyName ?? "Unknown"}',
                         style: const TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF6E56CF),
+                          color: CupertinoColors.activeBlue,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

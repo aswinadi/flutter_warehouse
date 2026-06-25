@@ -381,8 +381,6 @@ class CupertinoGlassSearchField extends StatelessWidget {
           controller: controller,
           placeholder: placeholder,
           onChanged: onChanged,
-          backgroundColor: defaultBg,
-          borderRadius: BorderRadius.circular(9999.0),
           placeholderStyle: TextStyle(
             color: isDark ? const Color(0x99FFFFFF) : const Color(0x993C3C43),
             fontSize: 15.0,
@@ -392,6 +390,7 @@ class CupertinoGlassSearchField extends StatelessWidget {
             fontSize: 15.0,
           ),
           decoration: BoxDecoration(
+            color: defaultBg,
             borderRadius: BorderRadius.circular(9999.0),
             border: Border.all(
               color: defaultBorder,
@@ -884,10 +883,30 @@ class CupertinoGlassListSection extends StatelessWidget {
             }),
           ),
         ),
-      ],
     );
   }
 }
+```
+
+---
+
+### J. Kartu & Item List Aktif (Active/Selected Card List Item)
+- **Fungsi**: Menunjukkan item yang sedang aktif/terpilih pada daftar master (Master View) dalam tata letak split screen (Tablet/Desktop).
+- **Estetika**:
+  - *Unselected*: Menggunakan border tipis default kaca (`null`) dan latar belakang default kaca (`null`) agar konsisten dengan efek glassmorphism dasar.
+  - *Selected/Active*:
+    - **Border**: Highlight menggunakan warna aksen biru aktif (`CupertinoColors.activeBlue`).
+    - **Background**: Menggunakan warna aksen biru aktif dengan opasitas tipis (`CupertinoColors.activeBlue.withValues(alpha: 0.08)`).
+- **Aturan**:
+  - Penanda aktif (`isSelected`) hanya boleh ditampilkan secara visual apabila layar berada dalam mode lebar (`isWide`) di mana panel daftar dan detail tampil berdampingan, guna menghindari getaran visual (flashing) saat navigasi berpindah di layar ponsel (Mobile).
+
+```dart
+CupertinoGlassContainer(
+  borderRadius: CupertinoSpacing.cardRadius,
+  borderColor: isSelected ? CupertinoColors.activeBlue.resolveFrom(context) : null,
+  backgroundColor: isSelected ? CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.08) : null,
+  child: child,
+)
 ```
 
 ---

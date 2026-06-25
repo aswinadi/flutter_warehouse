@@ -210,7 +210,7 @@ class _PaymentRequestDetailScreenState extends ConsumerState<PaymentRequestDetai
                               onPressed: () {
                                 context.push('/pdf-preview?title=Payment Request ${pr.requestNumber}&url_path=pdf/payment-request/${pr.id}');
                               },
-                              child: const Icon(CupertinoIcons.printer, color: Color(0xFF6E56CF), size: 20),
+                              child: const Icon(CupertinoIcons.printer, color: CupertinoColors.activeBlue, size: 20),
                             ),
                           ],
                         ),
@@ -312,7 +312,7 @@ class _PaymentRequestDetailScreenState extends ConsumerState<PaymentRequestDetai
                             flex: 2,
                             child: CupertinoButton(
                               padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.m),
-                              color: const Color(0xFF6E56CF),
+                              color: CupertinoColors.activeBlue,
                               borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
                               minimumSize: Size.zero,
                               onPressed: _isSubmitting ? null : _approve,

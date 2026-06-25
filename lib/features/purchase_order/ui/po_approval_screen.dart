@@ -155,7 +155,7 @@ class _POApprovalScreenState extends ConsumerState<POApprovalScreen> {
                           'Jumlah Total',
                           formatWithCurrency(displayTotal, 'IDR'),
                           isBold: true,
-                          textColor: const Color(0xFF6E56CF),
+                          textColor: CupertinoColors.activeBlue,
                         ),
                       ],
                     ),

@@ -18,7 +18,7 @@ import '../../../core/theme/cupertino_spacing.dart';
 import '../../../core/widgets/cupertino_glass_container.dart';
 import '../../../core/widgets/cupertino_glass_toast.dart';
 
-const _primaryAccent = Color(0xFF6E56CF);
+const _primaryAccent = CupertinoColors.activeBlue;
 const _dangerColor = CupertinoColors.destructiveRed;
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -331,7 +331,7 @@ class _TransferInScreenState extends ConsumerState<TransferInScreen> {
 
             final cardColor = isSelected && isWide
                 ? CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.08)
-                : CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+                : null;
 
             return CupertinoGlassContainer(
               backgroundColor: cardColor,

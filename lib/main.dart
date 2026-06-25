@@ -73,9 +73,7 @@ class MyApp extends ConsumerWidget {
         barBackgroundColor: isDark
             ? const Color(0xFF1C1C1E)
             : CupertinoColors.systemBackground,
-        scaffoldBackgroundColor: isDark
-            ? const Color(0xFF000000)
-            : CupertinoColors.systemGroupedBackground,
+        scaffoldBackgroundColor: CupertinoColors.transparent,
         textTheme: CupertinoTextThemeData(
           primaryColor: isDark
               ? CupertinoColors.white

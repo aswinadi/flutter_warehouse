@@ -279,7 +279,7 @@ class _POApprovalScreenState extends ConsumerState<POApprovalScreen> {
 
     if (widget.isEmbedded) {
       return Container(
-        color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
+        color: CupertinoColors.transparent,
         child: Column(
           children: [
             Container(

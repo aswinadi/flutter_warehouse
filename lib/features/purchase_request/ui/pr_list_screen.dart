@@ -1,11 +1,11 @@
 import 'dart:async';
+import 'dart:ui';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart' show showDateRangePicker, Theme, ThemeData, ColorScheme, DateTimeRange, Colors;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
@@ -105,36 +105,54 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
     });
   }
 
-  Future<void> _selectCustomDateRange() async {
-    final picked = await showDateRangePicker(
+  Future<void> _selectDate(bool isStart) async {
+    DateTime initialDate = (isStart ? _startDate : _endDate) ?? DateTime.now();
+    await showCupertinoModalPopup<void>(
       context: context,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
-      initialDateRange: _startDate != null && _endDate != null
-          ? DateTimeRange(start: _startDate!, end: _endDate!)
-          : null,
-      builder: (context, child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF6E56CF),
-              onPrimary: Colors.white,
-              onSurface: Color(0xFF1E293B),
-            ),
+      builder: (BuildContext context) {
+        return Container(
+          height: 300,
+          color: CupertinoColors.systemBackground.resolveFrom(context),
+          child: Column(
+            children: [
+              Container(
+                color: CupertinoColors.secondarySystemBackground.resolveFrom(context),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    CupertinoButton(
+                      child: const Text('Batal'),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    CupertinoButton(
+                      child: const Text('Selesai'),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.date,
+                  initialDateTime: initialDate,
+                  onDateTimeChanged: (DateTime newDate) {
+                    setState(() {
+                      if (isStart) {
+                        _startDate = newDate;
+                      } else {
+                        _endDate = newDate;
+                      }
+                      _selectedPrId = null;
+                      _selectedItem = null;
+                    });
+                  },
+                ),
+              ),
+            ],
           ),
-          child: child!,
         );
       },
     );
-
-    if (picked != null) {
-      setState(() {
-        _startDate = picked.start;
-        _endDate = picked.end;
-        _selectedPrId = null;
-        _selectedItem = null;
-      });
-    }
   }
 
   void _showDatePresetPicker(BuildContext context) {
@@ -172,10 +190,13 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
             child: const Text('3 Bulan Terakhir'),
           ),
           CupertinoActionSheetAction(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
               _updateDatePreset('custom');
-              _selectCustomDateRange();
+              await _selectDate(true);
+              if (mounted && _startDate != null) {
+                await _selectDate(false);
+              }
             },
             child: const Text('Pilih Tanggal...'),
           ),
@@ -263,31 +284,37 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
     return CupertinoPageScaffold(
-      backgroundColor: systemGroupedBgColor,
+      backgroundColor: CupertinoColors.transparent,
       navigationBar: CupertinoNavigationBar(
         middle: const Text('Purchase Requests'),
-        trailing: CupertinoButton(
-          padding: EdgeInsets.zero,
-          child: const Icon(CupertinoIcons.refresh, size: 24),
-          onPressed: () {
-            setState(() {
-              _selectedPrId = null;
-              _selectedItem = null;
-            });
-            ref.invalidate(purchaseRequestsProvider);
-          },
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CompanySwitcher(),
+            const SizedBox(width: 8),
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: const Icon(CupertinoIcons.refresh, size: 24),
+              onPressed: () {
+                setState(() {
+                  _selectedPrId = null;
+                  _selectedItem = null;
+                });
+                ref.invalidate(purchaseRequestsProvider);
+              },
+            ),
+          ],
         ),
       ),
       child: SafeArea(
         child: Column(
           children: [
-            const CompanySwitcher(),
             
             // Date Filter Panel
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: secondarySystemGroupedBgColor,
+                color: secondarySystemGroupedBgColor.withValues(alpha: 0.85),
                 border: Border(bottom: BorderSide(color: separatorColor, width: 0.5)),
               ),
               child: Row(
@@ -341,7 +368,12 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
                     CupertinoButton(
                       padding: EdgeInsets.zero,
                       minSize: 0,
-                      onPressed: _selectCustomDateRange,
+                      onPressed: () async {
+                        await _selectDate(true);
+                        if (mounted && _startDate != null) {
+                          await _selectDate(false);
+                        }
+                      },
                       child: const Icon(CupertinoIcons.calendar_badge_plus, size: 20, color: Color(0xFF6E56CF)),
                     ),
                   ],
@@ -2807,24 +2839,13 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
-    return Container(
+    return CupertinoGlassContainer(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: separatorColor, width: 0.5),
-        boxShadow: [
-          BoxShadow(
-            color: CupertinoColors.black.withOpacity(0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      borderRadius: 12,
+      borderColor: separatorColor,
       child: child,
     );
   }
@@ -3017,7 +3038,6 @@ class _ApprovedItemCard extends StatelessWidget {
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
 
     return GestureDetector(
       onTap: onTap,
@@ -3661,7 +3681,6 @@ class VendorWarehouseGroupCard extends StatelessWidget {
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
 
     return GestureDetector(
       onTap: onTap,
@@ -3826,7 +3845,6 @@ class _GroupedDetailsViewState extends State<_GroupedDetailsView> {
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
 
     final selectedTotal = allPoCreated
         ? widget.group.totalPrice
@@ -3845,21 +3863,11 @@ class _GroupedDetailsViewState extends State<_GroupedDetailsView> {
             controller: widget.scrollController,
             padding: const EdgeInsets.all(16),
             children: [
-              Container(
+              CupertinoGlassContainer(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: cardBg,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: separatorColor, width: 0.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: CupertinoColors.black.withOpacity(0.04),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
+                borderRadius: 12,
+                borderColor: separatorColor,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -3992,20 +4000,11 @@ class _GroupedDetailsViewState extends State<_GroupedDetailsView> {
                 final isOrdered = item.status == 'po_created';
                 final isChecked = _selectedItemIds.contains(item.id);
 
-                return Container(
+                return CupertinoGlassContainer(
                   margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: separatorColor, width: 0.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: CupertinoColors.black.withOpacity(0.02),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
+                  borderRadius: 12,
+                  borderColor: separatorColor,
+                  padding: EdgeInsets.zero,
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -4147,14 +4146,11 @@ class _GroupedDetailsViewState extends State<_GroupedDetailsView> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                ...widget.group.purchaseOrders.map((po) => Container(
+                ...widget.group.purchaseOrders.map((po) => CupertinoGlassContainer(
                       margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: cardBg,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: separatorColor, width: 0.5),
-                      ),
+                      borderRadius: 8,
+                      borderColor: separatorColor,
                       child: Row(
                         children: [
                           const Icon(CupertinoIcons.doc_plaintext, color: Color(0xFF6E56CF), size: 20),
@@ -4208,12 +4204,17 @@ class _GroupedDetailsViewState extends State<_GroupedDetailsView> {
         ),
 
         if (!allPoCreated)
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: cardBg,
-              border: Border(top: BorderSide(color: separatorColor, width: 0.5)),
-            ),
+          ClipRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: CupertinoTheme.of(context).brightness == Brightness.dark
+                      ? const Color(0x881C1C1E)
+                      : const Color(0xEEFFFFFF),
+                  border: Border(top: BorderSide(color: separatorColor, width: 0.5)),
+                ),
             child: SizedBox(
               width: double.infinity,
               child: CupertinoButton.filled(
@@ -4233,9 +4234,11 @@ class _GroupedDetailsViewState extends State<_GroupedDetailsView> {
               ),
             ),
           ),
-      ],
-    );
-  }
+        ),
+      ),
+    ],
+  );
+}
 }
 
 // ─── Waiting BOD Item Detail View ───────────────────────────────────────────
@@ -4265,7 +4268,6 @@ class _WaitingBodItemDetailViewState
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -4382,17 +4384,11 @@ class _WaitingBodItemDetailViewState
               final compDetail =
                   comp.details.firstWhere((d) => d.purchaseRequestDetailId == item.id);
 
-              return Container(
+              return CupertinoGlassContainer(
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: cardBg,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: separatorColor,
-                    width: 0.5,
-                  ),
-                ),
+                borderRadius: 10,
+                borderColor: separatorColor,
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

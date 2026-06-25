@@ -9,6 +9,7 @@ import '../config/menu_items.dart';
 import '../../features/notifications/providers/notification_provider.dart';
 import '../services/updater_service.dart';
 import '../providers/theme_provider.dart';
+import 'cupertino_mesh_background.dart';
 
 final sidebarCollapsedProvider = StateProvider<bool>((ref) => false);
 final expandedMenuIndexProvider = StateProvider<int?>((ref) => null);
@@ -121,9 +122,10 @@ class _MainShellState extends ConsumerState<MainShell> {
 
     final currentExpandedIndex = expandedIndex ?? (activeParentIndex != -1 ? activeParentIndex : null);
 
-    return CupertinoPageScaffold(
-      backgroundColor: CupertinoColors.systemGroupedBackground,
-      child: SafeArea(
+    return CupertinoMeshBackground(
+      child: CupertinoPageScaffold(
+        backgroundColor: CupertinoColors.transparent,
+        child: SafeArea(
         top: false,
         bottom: false,
         child: Row(
@@ -144,6 +146,7 @@ class _MainShellState extends ConsumerState<MainShell> {
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -160,7 +163,9 @@ class _MainShellState extends ConsumerState<MainShell> {
       duration: const Duration(milliseconds: 200),
       width: isCollapsed ? 70 : 265,
       decoration: BoxDecoration(
-        color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
+        color: CupertinoTheme.of(context).brightness == Brightness.dark
+            ? const Color(0xAA1C1C1E)
+            : const Color(0xAAFFFFFF),
         border: Border(
           right: BorderSide(
             color: CupertinoColors.separator.resolveFrom(context),

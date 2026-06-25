@@ -23,6 +23,7 @@ All notable changes to the Maxmar Warehouse Flutter project will be documented i
   - Refactored `pr_list_screen.dart`, `approvals_screen.dart`, `packing_list_screen.dart`, `transfer_in_screen.dart`, and `transfer_out_screen.dart` to use translucent `CupertinoGlassContainer` wrapper for details panels, item lists, and selection cards, resolving the discrepancy where the right-pane detail views had solid white background cards.
   - Re-styled anchored bottom action bars and filter panels across list screens to use translucent blurs (`BackdropFilter`) instead of solid colored panels.
   - Set `isEmbedded` details panel wrapper background to transparent in `po_approval_screen.dart` to let the global mesh gradient shine through.
+  - Replaced standard `CupertinoActionSheet` in `main_shell.dart` with custom `CupertinoGlassBottomSheet` and `CupertinoGlassListSection` tiles list in the collapsed navigation sidebar.
 
 ## [1.6.2] - 2026-06-24
 

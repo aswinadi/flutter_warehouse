@@ -11,6 +11,8 @@ import '../services/updater_service.dart';
 import '../providers/theme_provider.dart';
 import 'cupertino_mesh_background.dart';
 import 'cupertino_glass_bottom_sheet.dart';
+import 'cupertino_glass_list_section.dart';
+
 
 final sidebarCollapsedProvider = StateProvider<bool>((ref) => false);
 final expandedMenuIndexProvider = StateProvider<int?>((ref) => null);

@@ -2,6 +2,28 @@
 
 All notable changes to the Maxmar Warehouse Flutter project will be documented in this file.
 
+## [1.6.3] - 2026-06-25
+
+### Added
+- **iOS 26 Cupertino Liquid Glass Components**:
+  - Created multiple new reusable glassmorphic components in `lib/core/widgets/`:
+    - `CupertinoMeshBackground` for high-quality background mesh gradients.
+    - `CupertinoGlassChoiceChip` for glassmorphic filter pills.
+    - `CupertinoGlassSearchField` for glassmorphic search input field.
+    - `CupertinoGlassCheckbox` for custom check boxes.
+    - `CupertinoGlassRadioButton` for custom radio buttons.
+    - `CupertinoGlassSwitch` for custom switches.
+    - `CupertinoGlassBottomSheet` for overlay sheets.
+    - `CupertinoGlassLoadingIndicator` for overlay loader.
+    - `CupertinoGlassListSection` for grouped translucent items.
+
+### Changed
+- **Liquid Glass Theme Standardization**:
+  - Updated card radius (`16.0`), button radius (`12.0`), and dialog radius (`24.0`) globally in `lib/core/theme/cupertino_spacing.dart` to match Cupertino continuous corners.
+  - Refactored `pr_list_screen.dart`, `approvals_screen.dart`, `packing_list_screen.dart`, `transfer_in_screen.dart`, and `transfer_out_screen.dart` to use translucent `CupertinoGlassContainer` wrapper for details panels, item lists, and selection cards, resolving the discrepancy where the right-pane detail views had solid white background cards.
+  - Re-styled anchored bottom action bars and filter panels across list screens to use translucent blurs (`BackdropFilter`) instead of solid colored panels.
+  - Set `isEmbedded` details panel wrapper background to transparent in `po_approval_screen.dart` to let the global mesh gradient shine through.
+
 ## [1.6.2] - 2026-06-24
 
 ### Added

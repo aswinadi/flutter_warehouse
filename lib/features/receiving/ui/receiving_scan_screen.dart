@@ -10,6 +10,7 @@ import 'package:dio/dio.dart';
 import '../../../core/api/dio_client.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/theme/cupertino_spacing.dart';
+import '../../../core/utils/excel_download_helper.dart';
 import '../../../core/widgets/cupertino_glass_container.dart';
 import '../../../core/widgets/cupertino_glass_toast.dart';
 import '../../../core/widgets/company_switcher.dart';
@@ -809,10 +810,23 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> {
             navigationBar: CupertinoNavigationBar(
               backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
               middle: Text(receivingNumber),
-              leading: CupertinoButton(
-                padding: EdgeInsets.zero,
-                child: const Icon(CupertinoIcons.printer, size: 22),
-                onPressed: () => _downloadAndPrintPdf(receivingId, receivingNumber),
+              leading: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    child: const Icon(CupertinoIcons.printer, size: 22),
+                    onPressed: () => _downloadAndPrintPdf(receivingId, receivingNumber),
+                  ),
+                  CupertinoButton(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: const Icon(CupertinoIcons.table, size: 22),
+                    onPressed: () {
+                      final excelUrl = '${AppConfig.baseUrl.replaceAll('/api/v1/', '')}/excel/receiving/$receivingId';
+                      downloadExcel(context, ref.read(dioProvider), excelUrl, 'Receipt_$receivingNumber');
+                    },
+                  ),
+                ],
               ),
               trailing: CupertinoButton(
                 padding: EdgeInsets.zero,
@@ -1202,15 +1216,34 @@ class _ReceivingScanScreenState extends ConsumerState<ReceivingScanScreen> {
                               color: labelColor,
                             ),
                           ),
-                          CupertinoButton(
-                            padding: EdgeInsets.zero,
-                            minimumSize: Size.zero,
-                            onPressed: () => _downloadAndPrintPdf(record.id, record.receivingNumber),
-                            child: const Icon(
-                              CupertinoIcons.printer,
-                              size: 20,
-                              color: CupertinoColors.activeBlue,
-                            ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CupertinoButton(
+                                padding: EdgeInsets.zero,
+                                minimumSize: Size.zero,
+                                onPressed: () => _downloadAndPrintPdf(record.id, record.receivingNumber),
+                                child: const Icon(
+                                  CupertinoIcons.printer,
+                                  size: 20,
+                                  color: CupertinoColors.activeBlue,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              CupertinoButton(
+                                padding: EdgeInsets.zero,
+                                minimumSize: Size.zero,
+                                onPressed: () {
+                                  final excelUrl = '${AppConfig.baseUrl.replaceAll('/api/v1/', '')}/excel/receiving/${record.id}';
+                                  downloadExcel(context, ref.read(dioProvider), excelUrl, 'Receipt_${record.receivingNumber}');
+                                },
+                                child: const Icon(
+                                  CupertinoIcons.table,
+                                  size: 20,
+                                  color: CupertinoColors.activeGreen,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),

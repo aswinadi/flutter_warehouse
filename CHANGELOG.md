@@ -2,6 +2,26 @@
 
 All notable changes to the Maxmar Warehouse Flutter project will be documented in this file.
 
+## [1.6.4] - 2026-06-26
+
+### Added
+- **COA (Chart of Account) Legacy Sync**:
+  - Implemented `ChartOfAccount` model, Riverpod repository provider (`chartOfAccountsProvider`), and search picker selection.
+- **Cost Center Allocation Proration**:
+  - Integrated `CostCentreRepository` fetching active cost centers and cost codes.
+  - Added support for parent cost center proration with a bottom sheet preview (`ProrationPreviewWidget`) calculating area ratios (`luas_m2`) and rounding remainder allocations in real-time.
+- **Spreadsheet-style Horizontal Scrollable Journal Grid**:
+  - Added horizontally scrollable table layout (`SingleChildScrollView` with explicit `1180px` width) for journal entry repeater details.
+  - Implemented live calculations for Total Debit sum, Total Credit sum, and balanced verification checks.
+  - Enforced mutual exclusion between Debit and Credit inputs on the same journal row.
+  - Built custom `IndonesianNumberFormatter` for live thousand dot (`.`) and decimal comma (`,`) formatting with precise text selection cursor offset tracking.
+
+### Fixed
+- **Horizontal Layout Overflow**:
+  - Wrapped `CupertinoGlassContainer` inside the horizontal `SingleChildScrollView` to resolve parent layout constraint propagation issues, eliminating the `216px` overflow on tablet/desktop displays.
+- **TextInput Rebuilding/Cursor Reversal Bug**:
+  - Converted the inline detail card generator to a dedicated stateful widget `InvoiceBiayaDetailRow` with unique key references (`_detailKeys`), ensuring editing text controllers persist state correctly across parent rebuilding cycles.
+
 ## [1.6.3] - 2026-06-25
 
 ### Added

@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../../core/utils/json_utils.dart';
 import '../../invoice/models/invoice.dart';
+import 'invoice_biaya_detail.dart';
 
 part 'invoice_biaya.freezed.dart';
 part 'invoice_biaya.g.dart';
@@ -25,7 +26,12 @@ class InvoiceBiaya with _$InvoiceBiaya {
     required String status,
     @JsonKey(name: 'created_by') int? createdBy,
     @JsonKey(name: 'created_at') String? createdAt,
+    @JsonKey(name: 'tax_invoice_number') String? taxInvoiceNumber,
+    @JsonKey(name: 'tax_invoice_date') String? taxInvoiceDate,
+    @JsonKey(name: 'cost_center_code') String? costCenterCode,
+    @JsonKey(name: 'jv_type') String? jvType,
     @Default([]) List<MediaFile> media,
+    @Default([]) List<InvoiceBiayaDetail> details,
   }) = _InvoiceBiaya;
 
   factory InvoiceBiaya.fromJson(Map<String, dynamic> json) =>

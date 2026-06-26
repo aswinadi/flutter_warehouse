@@ -2,6 +2,20 @@
 
 All notable changes to the Maxmar Warehouse Flutter project will be documented in this file.
 
+## [1.6.5] - 2026-06-26
+
+### Added
+- **Excel Export Support**:
+  - Implemented `ExcelDownloadHelper` in `lib/core/utils/excel_download_helper.dart` supporting file downloading and launching on desktop and mobile.
+  - Added Excel download buttons next to existing PDF download buttons in the following screens:
+    - `receiving_scan_screen.dart`
+    - `pr_approval_screen.dart`
+    - `pr_list_screen.dart`
+    - `po_approval_screen.dart`
+    - `payment_request_approval_screen.dart`
+    - `payment_request_detail_screen.dart`
+    - `transfer_out_screen.dart`
+
 ## [1.6.4] - 2026-06-26
 
 ### Added

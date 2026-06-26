@@ -18,7 +18,9 @@ import '../widgets/pr_card.dart';
 import '../../../core/widgets/company_switcher.dart';
 import 'pr_approval_screen.dart';
 import '../../../core/utils/currency_utils.dart';
+import '../../../core/utils/excel_download_helper.dart';
 import '../../../core/api/dio_client.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/theme/cupertino_theme_extensions.dart';
 import '../../../core/theme/cupertino_spacing.dart';
 import '../../../core/widgets/cupertino_glass_container.dart';
@@ -1051,6 +1053,10 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
                         isGeneratingPos: _isGeneratingPos,
                         onProceedToPO: (selectedIds) => _handleProceedToPO(group, selectedIds),
                         onDownloadPdf: (url, poNo) => _downloadAndPrintPdf(context, url, poNo),
+                        onDownloadExcel: (poId, poNo) {
+                          final excelUrl = '${AppConfig.baseUrl.replaceAll('/api/v1/', '')}/excel/purchase-order/$poId';
+                          downloadExcel(context, ref.read(dioProvider), excelUrl, poNo);
+                        },
                       ),
                     ),
                   ),
@@ -1077,6 +1083,10 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
               isGeneratingPos: _isGeneratingPos,
               onProceedToPO: (selectedIds) => _handleProceedToPO(selectedGroupWithPrice, selectedIds),
               onDownloadPdf: (url, poNo) => _downloadAndPrintPdf(context, url, poNo),
+              onDownloadExcel: (poId, poNo) {
+                final excelUrl = '${AppConfig.baseUrl.replaceAll('/api/v1/', '')}/excel/purchase-order/$poId';
+                downloadExcel(context, ref.read(dioProvider), excelUrl, poNo);
+              },
             ),
           ),
         ],
@@ -1170,7 +1180,7 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
                                   ],
                                 ),
                               ),
-                              if (pdfUrl != null)
+                              if (pdfUrl != null) ...[
                                 CupertinoButton(
                                   padding: EdgeInsets.zero,
                                   minimumSize: Size.zero,
@@ -1179,6 +1189,19 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
                                   },
                                   child: const Icon(CupertinoIcons.cloud_download, color: CupertinoColors.activeBlue, size: 20),
                                 ),
+                                CupertinoButton(
+                                  padding: const EdgeInsets.only(left: 4),
+                                  minimumSize: Size.zero,
+                                  onPressed: () {
+                                    final poId = poRaw['id'];
+                                    if (poId != null) {
+                                      final excelUrl = '${AppConfig.baseUrl.replaceAll('/api/v1/', '')}/excel/purchase-order/$poId';
+                                      downloadExcel(dialogCtx, ref.read(dioProvider), excelUrl, poNum);
+                                    }
+                                  },
+                                  child: const Icon(CupertinoIcons.table, color: CupertinoColors.activeGreen, size: 20),
+                                ),
+                              ],
                             ],
                           ),
                         );
@@ -3168,6 +3191,7 @@ class _GroupedDetailsView extends StatefulWidget {
   final bool isGeneratingPos;
   final Function(List<int> selectedItemIds) onProceedToPO;
   final Function(String url, String number) onDownloadPdf;
+  final Function(int poId, String number)? onDownloadExcel;
 
   const _GroupedDetailsView({
     required this.group,
@@ -3175,6 +3199,7 @@ class _GroupedDetailsView extends StatefulWidget {
     required this.isGeneratingPos,
     required this.onProceedToPO,
     required this.onDownloadPdf,
+    this.onDownloadExcel,
   });
 
   @override
@@ -3546,20 +3571,41 @@ class _GroupedDetailsViewState extends State<_GroupedDetailsView> {
                             ),
                           ),
                           if (po.pdfUrl != null && po.pdfUrl!.isNotEmpty)
-                            CupertinoButton(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              minSize: 0,
-                              color: CupertinoColors.activeBlue,
-                              borderRadius: BorderRadius.circular(6),
-                              onPressed: () => widget.onDownloadPdf(po.pdfUrl!, po.poNumber),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(CupertinoIcons.cloud_download, size: 14, color: CupertinoColors.white),
-                                  SizedBox(width: 4),
-                                  Text('PDF', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: CupertinoColors.white)),
-                                ],
-                              ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CupertinoButton(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  minSize: 0,
+                                  color: CupertinoColors.activeBlue,
+                                  borderRadius: BorderRadius.circular(6),
+                                  onPressed: () => widget.onDownloadPdf(po.pdfUrl!, po.poNumber),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(CupertinoIcons.cloud_download, size: 14, color: CupertinoColors.white),
+                                      SizedBox(width: 4),
+                                      Text('PDF', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: CupertinoColors.white)),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                CupertinoButton(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  minSize: 0,
+                                  color: CupertinoColors.activeGreen,
+                                  borderRadius: BorderRadius.circular(6),
+                                  onPressed: () => widget.onDownloadExcel?.call(po.id, po.poNumber),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(CupertinoIcons.table, size: 14, color: CupertinoColors.white),
+                                      SizedBox(width: 4),
+                                      Text('Excel', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: CupertinoColors.white)),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                         ],
                       ),

@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/payment_request_repository.dart';
 import '../../../core/utils/currency_utils.dart';
+import '../../../core/utils/excel_download_helper.dart';
+import '../../../core/api/dio_client.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/theme/cupertino_theme_extensions.dart';
 import '../../../core/theme/cupertino_spacing.dart';
 import '../../../core/widgets/cupertino_glass_container.dart';
@@ -190,13 +193,27 @@ class _PaymentRequestApprovalScreenState extends ConsumerState<PaymentRequestApp
           style: TextStyle(color: labelColor),
         ),
         trailing: prAsync.when(
-          data: (pr) => CupertinoButton(
-            padding: EdgeInsets.zero,
-            minimumSize: const Size.square(32),
-            child: const Icon(CupertinoIcons.printer, size: 22),
-            onPressed: () {
-              context.push('/pdf-preview?title=Payment Request ${pr.requestNumber}&url_path=pdf/payment-request/${pr.id}');
-            },
+          data: (pr) => Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size.square(32),
+                child: const Icon(CupertinoIcons.printer, size: 22),
+                onPressed: () {
+                  context.push('/pdf-preview?title=Payment Request ${pr.requestNumber}&url_path=pdf/payment-request/${pr.id}');
+                },
+              ),
+              CupertinoButton(
+                padding: const EdgeInsets.only(left: 4),
+                minimumSize: const Size.square(32),
+                child: const Icon(CupertinoIcons.table, size: 22),
+                onPressed: () {
+                  final excelUrl = '${AppConfig.baseUrl.replaceAll('/api/v1/', '')}/excel/payment-request/${pr.id}';
+                  downloadExcel(context, ref.read(dioProvider), excelUrl, pr.requestNumber);
+                },
+              ),
+            ],
           ),
           loading: () => const SizedBox.shrink(),
           error: (_, __) => const SizedBox.shrink(),

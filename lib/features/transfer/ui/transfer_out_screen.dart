@@ -8,6 +8,9 @@ import '../models/transfer.dart';
 import '../providers/transfer_provider.dart';
 import '../providers/transfer_repository.dart';
 import '../../inventory/models/inventory.dart';
+import '../../../core/utils/excel_download_helper.dart';
+import '../../../core/api/dio_client.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/theme/cupertino_theme_extensions.dart';
 import '../../../core/theme/cupertino_spacing.dart';
 import '../../../core/widgets/cupertino_glass_container.dart';
@@ -1227,12 +1230,25 @@ class _TransferDetailView extends ConsumerWidget {
                 style: TextStyle(color: labelColor),
               ),
               trailing: (transfer.pdfUrl != null && transfer.pdfUrl!.isNotEmpty)
-                  ? CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      child: const Icon(CupertinoIcons.printer),
-                      onPressed: () {
-                        context.push('/pdf-preview?title=Surat Jalan ${transfer.transferNumber}&url_path=pdf/warehouse-transfer/${transfer.id}');
-                      },
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CupertinoButton(
+                          padding: EdgeInsets.zero,
+                          child: const Icon(CupertinoIcons.printer),
+                          onPressed: () {
+                            context.push('/pdf-preview?title=Surat Jalan ${transfer.transferNumber}&url_path=pdf/warehouse-transfer/${transfer.id}');
+                          },
+                        ),
+                        CupertinoButton(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: const Icon(CupertinoIcons.table),
+                          onPressed: () {
+                            final excelUrl = '${AppConfig.baseUrl.replaceAll('/api/v1/', '')}/excel/warehouse-transfer/${transfer.id}';
+                            downloadExcel(context, ref.read(dioProvider), excelUrl, transfer.transferNumber);
+                          },
+                        ),
+                      ],
                     )
                   : null,
             ),

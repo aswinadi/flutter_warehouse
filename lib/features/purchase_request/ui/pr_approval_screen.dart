@@ -12,7 +12,9 @@ import '../models/purchase_request.dart';
 import '../providers/purchase_request_detail_provider.dart';
 import '../providers/purchase_request_provider.dart';
 import '../../../core/utils/currency_utils.dart';
+import '../../../core/utils/excel_download_helper.dart';
 import '../../../core/api/dio_client.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/theme/cupertino_theme_extensions.dart';
 import '../../../core/theme/cupertino_spacing.dart';
 import '../../../core/widgets/cupertino_glass_container.dart';
@@ -37,13 +39,27 @@ class PRApprovalScreen extends ConsumerWidget {
         automaticallyImplyLeading: !isEmbedded,
         middle: Text('Detail PR', style: TextStyle(color: labelColor)),
         trailing: prAsync.when(
-          data: (pr) => CupertinoButton(
-            padding: EdgeInsets.zero,
-            minimumSize: const Size(22, 22),
-            child: const Icon(CupertinoIcons.printer, size: 22),
-            onPressed: () {
-              context.push('/pdf-preview?title=Purchase Request ${pr.code}&url_path=pdf/purchase-request/${pr.id}');
-            },
+          data: (pr) => Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(22, 22),
+                child: const Icon(CupertinoIcons.printer, size: 22),
+                onPressed: () {
+                  context.push('/pdf-preview?title=Purchase Request ${pr.code}&url_path=pdf/purchase-request/${pr.id}');
+                },
+              ),
+              CupertinoButton(
+                padding: const EdgeInsets.only(left: 4),
+                minimumSize: const Size(22, 22),
+                child: const Icon(CupertinoIcons.table, size: 22),
+                onPressed: () {
+                  final excelUrl = '${AppConfig.baseUrl.replaceAll('/api/v1/', '')}/excel/purchase-request/${pr.id}';
+                  downloadExcel(context, ref.read(dioProvider), excelUrl, pr.code);
+                },
+              ),
+            ],
           ),
           loading: () => const SizedBox(),
           error: (_, __) => const SizedBox(),
@@ -725,23 +741,46 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                           ],
                         ),
                       ),
-                      CupertinoButton(
-                        padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.s),
-                        color: CupertinoColors.tertiarySystemFill,
-                        borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
-                        minimumSize: const Size.square(32),
-                        onPressed: () => _downloadAndPrintPdf(
-                          context,
-                          po.pdfUrl ?? '',
-                          po.poNumber,
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(CupertinoIcons.cloud_download, size: 14, color: CupertinoColors.activeBlue),
-                            const SizedBox(width: CupertinoSpacing.xs),
-                            Text('PDF', style: context.caption2.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.activeBlue)),
-                          ],
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CupertinoButton(
+                            padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.s),
+                            color: CupertinoColors.tertiarySystemFill,
+                            borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
+                            minimumSize: const Size.square(32),
+                            onPressed: () => _downloadAndPrintPdf(
+                              context,
+                              po.pdfUrl ?? '',
+                              po.poNumber,
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(CupertinoIcons.cloud_download, size: 14, color: CupertinoColors.activeBlue),
+                                const SizedBox(width: CupertinoSpacing.xs),
+                                Text('PDF', style: context.caption2.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.activeBlue)),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: CupertinoSpacing.xs),
+                          CupertinoButton(
+                            padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.s),
+                            color: CupertinoColors.tertiarySystemFill,
+                            borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
+                            minimumSize: const Size.square(32),
+                            onPressed: () {
+                              final excelUrl = '${AppConfig.baseUrl.replaceAll('/api/v1/', '')}/excel/purchase-order/${po.id}';
+                              downloadExcel(context, ref.read(dioProvider), excelUrl, po.poNumber);
+                            },
+                            child: Row(
+                              children: [
+                                const Icon(CupertinoIcons.table, size: 14, color: CupertinoColors.activeGreen),
+                                const SizedBox(width: CupertinoSpacing.xs),
+                                Text('Excel', style: context.caption2.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.activeGreen)),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -854,7 +893,7 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                                 ],
                               ),
                             ),
-                            if (pdfUrl != null)
+                            if (pdfUrl != null) ...[
                               CupertinoButton(
                                 padding: EdgeInsets.zero,
                                 minimumSize: const Size.square(32),
@@ -863,6 +902,19 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                                   _downloadAndPrintPdf(context, pdfUrl, poNum);
                                 },
                               ),
+                              CupertinoButton(
+                                padding: const EdgeInsets.only(left: 4),
+                                minimumSize: const Size.square(32),
+                                child: const Icon(CupertinoIcons.table, color: CupertinoColors.activeGreen, size: 20),
+                                onPressed: () {
+                                  final poId = poRaw['id'];
+                                  if (poId != null) {
+                                    final excelUrl = '${AppConfig.baseUrl.replaceAll('/api/v1/', '')}/excel/purchase-order/$poId';
+                                    downloadExcel(context, ref.read(dioProvider), excelUrl, poNum);
+                                  }
+                                },
+                              ),
+                            ],
                           ],
                         ),
                       );

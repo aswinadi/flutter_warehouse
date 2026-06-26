@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/purchase_order_provider.dart';
 import '../../../core/utils/currency_utils.dart';
+import '../../../core/utils/excel_download_helper.dart';
+import '../../../core/api/dio_client.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/theme/cupertino_theme_extensions.dart';
 import '../../../core/theme/cupertino_spacing.dart';
 import '../../../core/widgets/cupertino_glass_container.dart';
@@ -323,13 +326,27 @@ class _POApprovalScreenState extends ConsumerState<POApprovalScreen> {
                     error: (err, _) => const Text('Error'),
                   ),
                   poAsync.when(
-                    data: (po) => CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size.square(32),
-                      child: const Icon(CupertinoIcons.printer, size: 22),
-                      onPressed: () {
-                        context.push('/pdf-preview?title=Pesanan Pembelian ${po.poNumber}&url_path=pdf/purchase-order/${po.id}');
-                      },
+                    data: (po) => Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CupertinoButton(
+                          padding: EdgeInsets.zero,
+                          minimumSize: const Size.square(32),
+                          child: const Icon(CupertinoIcons.printer, size: 22),
+                          onPressed: () {
+                            context.push('/pdf-preview?title=Pesanan Pembelian ${po.poNumber}&url_path=pdf/purchase-order/${po.id}');
+                          },
+                        ),
+                        CupertinoButton(
+                          padding: const EdgeInsets.only(left: 4),
+                          minimumSize: const Size.square(32),
+                          child: const Icon(CupertinoIcons.table, size: 22),
+                          onPressed: () {
+                            final excelUrl = '${AppConfig.baseUrl.replaceAll('/api/v1/', '')}/excel/purchase-order/${po.id}';
+                            downloadExcel(context, ref.read(dioProvider), excelUrl, po.poNumber);
+                          },
+                        ),
+                      ],
                     ),
                     loading: () => const SizedBox(),
                     error: (err, _) => const SizedBox(),
@@ -357,13 +374,27 @@ class _POApprovalScreenState extends ConsumerState<POApprovalScreen> {
           error: (err, _) => const Text('Error'),
         ),
         trailing: poAsync.when(
-          data: (po) => CupertinoButton(
-            padding: EdgeInsets.zero,
-            minimumSize: const Size.square(32),
-            child: const Icon(CupertinoIcons.printer, size: 22),
-            onPressed: () {
-              context.push('/pdf-preview?title=Pesanan Pembelian ${po.poNumber}&url_path=pdf/purchase-order/${po.id}');
-            },
+          data: (po) => Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size.square(32),
+                child: const Icon(CupertinoIcons.printer, size: 22),
+                onPressed: () {
+                  context.push('/pdf-preview?title=Pesanan Pembelian ${po.poNumber}&url_path=pdf/purchase-order/${po.id}');
+                },
+              ),
+              CupertinoButton(
+                padding: const EdgeInsets.only(left: 4),
+                minimumSize: const Size.square(32),
+                child: const Icon(CupertinoIcons.table, size: 22),
+                onPressed: () {
+                  final excelUrl = '${AppConfig.baseUrl.replaceAll('/api/v1/', '')}/excel/purchase-order/${po.id}';
+                  downloadExcel(context, ref.read(dioProvider), excelUrl, po.poNumber);
+                },
+              ),
+            ],
           ),
           loading: () => const SizedBox(),
           error: (err, _) => const SizedBox(),

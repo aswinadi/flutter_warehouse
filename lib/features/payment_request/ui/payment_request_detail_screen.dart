@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/payment_request_repository.dart';
 import '../../../core/utils/currency_utils.dart';
+import '../../../core/utils/excel_download_helper.dart';
+import '../../../core/api/dio_client.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/theme/cupertino_theme_extensions.dart';
 import '../../../core/theme/cupertino_spacing.dart';
 import '../../../core/widgets/cupertino_glass_container.dart';
@@ -204,13 +207,28 @@ class _PaymentRequestDetailScreenState extends ConsumerState<PaymentRequestDetai
                               pr.requestNumber,
                               style: context.callout.copyWith(fontWeight: FontWeight.bold, color: labelColor),
                             ),
-                            CupertinoButton(
-                              padding: EdgeInsets.zero,
-                              minimumSize: Size.zero,
-                              onPressed: () {
-                                context.push('/pdf-preview?title=Payment Request ${pr.requestNumber}&url_path=pdf/payment-request/${pr.id}');
-                              },
-                              child: const Icon(CupertinoIcons.printer, color: CupertinoColors.activeBlue, size: 20),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CupertinoButton(
+                                  padding: EdgeInsets.zero,
+                                  minimumSize: Size.zero,
+                                  onPressed: () {
+                                    context.push('/pdf-preview?title=Payment Request ${pr.requestNumber}&url_path=pdf/payment-request/${pr.id}');
+                                  },
+                                  child: const Icon(CupertinoIcons.printer, color: CupertinoColors.activeBlue, size: 20),
+                                ),
+                                const SizedBox(width: 8),
+                                CupertinoButton(
+                                  padding: EdgeInsets.zero,
+                                  minimumSize: Size.zero,
+                                  onPressed: () {
+                                    final excelUrl = '${AppConfig.baseUrl.replaceAll('/api/v1/', '')}/excel/payment-request/${pr.id}';
+                                    downloadExcel(context, ref.read(dioProvider), excelUrl, pr.requestNumber);
+                                  },
+                                  child: const Icon(CupertinoIcons.table, color: CupertinoColors.activeGreen, size: 20),
+                                ),
+                              ],
                             ),
                           ],
                         ),

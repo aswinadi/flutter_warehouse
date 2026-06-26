@@ -63,10 +63,10 @@ class _PaymentRequestListScreenState extends ConsumerState<PaymentRequestListScr
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.s),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF6E56CF) : CupertinoColors.systemGroupedBackground.resolveFrom(context),
+          color: isSelected ? CupertinoColors.activeBlue : CupertinoColors.systemGroupedBackground.resolveFrom(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? const Color(0xFF6E56CF) : CupertinoColors.separator.resolveFrom(context),
+            color: isSelected ? CupertinoColors.activeBlue : CupertinoColors.separator.resolveFrom(context),
           ),
         ),
         child: Text(
@@ -132,7 +132,7 @@ class _PaymentRequestListScreenState extends ConsumerState<PaymentRequestListScr
                     return Center(
                       child: Text(
                         'Tidak ada permintaan pembayaran',
-                        style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel),
+                        style: context.subhead.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                       ),
                     );
                   }
@@ -167,7 +167,7 @@ class _PaymentRequestListScreenState extends ConsumerState<PaymentRequestListScr
                           );
                         }
                         final pr = items[index];
-                        final isSelected = pr.id == _selectedPrId;
+                        final isSelected = isWide && pr.id == _selectedPrId;
 
                         return _PaymentRequestCard(
                           pr: pr,
@@ -207,7 +207,7 @@ class _PaymentRequestListScreenState extends ConsumerState<PaymentRequestListScr
                               : Center(
                                   child: Text(
                                     'Pilih Permintaan Pembayaran untuk detail',
-                                    style: context.body.copyWith(color: CupertinoColors.secondaryLabel),
+                                    style: context.body.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                                   ),
                                 ),
                         ),
@@ -263,7 +263,8 @@ class _PaymentRequestCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: CupertinoGlassContainer(
-        borderColor: isSelected ? const Color(0xFF6E56CF) : null,
+        borderColor: isSelected ? CupertinoColors.activeBlue : null,
+        backgroundColor: isSelected ? CupertinoColors.activeBlue.withValues(alpha: 0.08) : null,
         borderRadius: CupertinoSpacing.cardRadius,
         padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
         child: Column(
@@ -306,7 +307,7 @@ class _PaymentRequestCard extends StatelessWidget {
               children: [
                 Text(
                   'Total Tagihan',
-                  style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel),
+                  style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
                 ),
                 Text(
                   formatWithCurrency(pr.totalAmount, pr.currency),
@@ -328,7 +329,7 @@ class _PaymentRequestCard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel)),
+          Text(label, style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context))),
           Expanded(
             child: Text(
               value,

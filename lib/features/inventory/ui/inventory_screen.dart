@@ -9,6 +9,7 @@ import '../models/inventory.dart';
 import '../../../core/theme/cupertino_theme_extensions.dart';
 import '../../../core/theme/cupertino_spacing.dart';
 import '../../../core/widgets/cupertino_glass_container.dart';
+import '../../../core/widgets/cupertino_glass_search_field.dart';
 
 class InventoryScreen extends ConsumerStatefulWidget {
   const InventoryScreen({super.key});
@@ -52,15 +53,14 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
-    const primaryAccent = Color(0xFF6E56CF);
+    const primaryAccent = CupertinoColors.activeBlue;
 
     Widget buildLeftPane() {
       return Column(
         children: [
-          const CompanySwitcher(),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
-            child: CupertinoSearchTextField(
+            child: CupertinoGlassSearchField(
               controller: _searchController,
               placeholder: 'Cari SKU atau Produk...',
               onChanged: (val) {
@@ -191,9 +191,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     }
 
     return CupertinoPageScaffold(
-      backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+      backgroundColor: CupertinoColors.transparent,
       navigationBar: const CupertinoNavigationBar(
         middle: Text('Stok Barang'),
+        trailing: CompanySwitcher(),
       ),
       child: SafeArea(
         child: isLargeScreen

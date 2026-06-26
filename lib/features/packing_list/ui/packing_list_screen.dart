@@ -459,22 +459,15 @@ class _ContainerCard extends StatelessWidget {
         statusColor = CupertinoColors.inactiveGray;
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isSelected ? CupertinoColors.activeBlue.resolveFrom(context) : separatorColor,
-          width: isSelected ? 2.0 : 0.5,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A0F0F0F),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
+    final cardColor = isSelected
+        ? CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.08)
+        : null;
+
+    return CupertinoGlassContainer(
+      backgroundColor: cardColor,
+      borderColor: isSelected ? CupertinoColors.activeBlue.resolveFrom(context) : separatorColor,
+      borderRadius: CupertinoSpacing.cardRadius,
+      padding: EdgeInsets.zero,
       child: GestureDetector(
         onTap: onTap,
         child: Padding(
@@ -648,14 +641,11 @@ class _ContainerDetailView extends ConsumerWidget {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  Container(
+                  CupertinoGlassContainer(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: cardBg,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: separatorColor, width: 0.5),
-                    ),
+                    borderRadius: 12,
+                    borderColor: separatorColor,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -745,13 +735,10 @@ class _ContainerDetailView extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Container(
+                  CupertinoGlassContainer(
                     padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: cardBg,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: separatorColor, width: 0.5),
-                    ),
+                    borderRadius: 12,
+                    borderColor: separatorColor,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -886,14 +873,11 @@ class _ManifestItemCard extends StatelessWidget {
     final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
-    return Container(
+    return CupertinoGlassContainer(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: separatorColor, width: 0.5),
-      ),
+      borderRadius: 8,
+      borderColor: separatorColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1306,13 +1290,10 @@ class _AvailablePoItemCardState extends State<_AvailablePoItemCard> {
     final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
-    return Container(
+    return CupertinoGlassContainer(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: separatorColor, width: 0.5),
-      ),
+      borderRadius: 8,
+      borderColor: separatorColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1473,13 +1454,10 @@ class _AvailableInventoryCardState extends State<_AvailableInventoryCard> {
     final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
 
-    return Container(
+    return CupertinoGlassContainer(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: separatorColor, width: 0.5),
-      ),
+      borderRadius: 8,
+      borderColor: separatorColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

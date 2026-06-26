@@ -74,7 +74,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF6E56CF),
+              primary: CupertinoColors.activeBlue,
               onPrimary: Colors.white,
               onSurface: Color(0xFF1E293B),
             ),
@@ -398,7 +398,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
 
   Widget _buildPresetChip(String label, bool isSelected, VoidCallback onTap) {
     final contextResolvedBg = isSelected
-        ? const Color(0xFF6E56CF)
+        ? CupertinoColors.activeBlue
         : CupertinoColors.tertiarySystemFill.resolveFrom(context);
     final labelColor = isSelected
         ? CupertinoColors.white
@@ -511,7 +511,7 @@ class _StockMutationScreenState extends ConsumerState<StockMutationScreen> {
                   final isSelected = item.sku == _selectedSku;
 
                   return CupertinoGlassContainer(
-                    borderColor: isSelected ? const Color(0xFF6E56CF) : null,
+                    borderColor: isSelected ? CupertinoColors.activeBlue : null,
                     padding: EdgeInsets.zero,
                     child: GestureDetector(
                       onTap: () {

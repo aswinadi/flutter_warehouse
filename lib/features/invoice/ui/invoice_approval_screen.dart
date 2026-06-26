@@ -397,7 +397,7 @@ class _InvoiceApprovalScreenState extends ConsumerState<InvoiceApprovalScreen> {
                               ],
                               const SizedBox(height: 16),
                               CupertinoButton(
-                                color: const Color(0xFF6E56CF),
+                                color: CupertinoColors.activeBlue,
                                 padding: EdgeInsets.zero,
                                 onPressed: _isSubmitting ? null : _saveVerification,
                                 child: Container(
@@ -441,7 +441,7 @@ class _InvoiceApprovalScreenState extends ConsumerState<InvoiceApprovalScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  Icon(isImage ? CupertinoIcons.photo : CupertinoIcons.doc_text, color: const Color(0xFF6E56CF), size: 24),
+                                  Icon(isImage ? CupertinoIcons.photo : CupertinoIcons.doc_text, color: CupertinoColors.activeBlue, size: 24),
                                   const SizedBox(width: CupertinoSpacing.m),
                                   Expanded(
                                     child: Column(
@@ -608,7 +608,7 @@ class _InvoiceApprovalScreenState extends ConsumerState<InvoiceApprovalScreen> {
                         Expanded(
                           flex: 2,
                           child: CupertinoButton(
-                            color: const Color(0xFF6E56CF),
+                            color: CupertinoColors.activeBlue,
                             padding: EdgeInsets.zero,
                             onPressed: _isSubmitting ? null : _approve,
                             child: Container(

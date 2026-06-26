@@ -25,12 +25,12 @@ class CupertinoSpacing {
   /// Standard height for standard buttons or text inputs (44.0pt)
   static const double standardControlHeight = 44.0;
 
-  /// Typical iOS rounded corner radius for grouped layouts or cards (10.0pt)
-  static const double cardRadius = 10.0;
+  /// Typical iOS rounded corner radius for grouped layouts or cards (16.0pt)
+  static const double cardRadius = 16.0;
 
-  /// Standard iOS button corner radius (8.0pt)
-  static const double buttonRadius = 8.0;
+  /// Standard iOS button corner radius (12.0pt)
+  static const double buttonRadius = 12.0;
 
-  /// Standard iOS sheet/dialog corner radius (14.0pt)
-  static const double dialogRadius = 14.0;
+  /// Standard iOS sheet/dialog corner radius (24.0pt)
+  static const double dialogRadius = 24.0;
 }

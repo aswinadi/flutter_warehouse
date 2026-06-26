@@ -1,5 +1,5 @@
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Scrollbar, Colors, showDateRangePicker, DateTimeRange, Theme, ThemeData, ColorScheme;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -7,6 +7,7 @@ import '../../purchase_request/providers/purchase_request_provider.dart';
 import '../../invoice/providers/invoice_repository.dart';
 import '../../payment_request/providers/payment_request_repository.dart';
 import '../../../core/widgets/company_switcher.dart';
+import '../../../core/widgets/cupertino_glass_checkbox.dart';
 import '../../../core/utils/currency_utils.dart';
 import '../../purchase_request/models/purchase_request.dart';
 import '../../purchase_request/models/pr_approval.dart';
@@ -19,43 +20,7 @@ import '../../../core/theme/cupertino_spacing.dart';
 import '../../../core/widgets/cupertino_glass_container.dart';
 import '../../../core/widgets/cupertino_glass_toast.dart';
 
-class CupertinoCheckbox extends StatelessWidget {
-  final bool value;
-  final ValueChanged<bool?> onChanged;
-
-  const CupertinoCheckbox({
-    super.key,
-    required this.value,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => onChanged(!value),
-      child: Container(
-        margin: const EdgeInsets.only(right: 12),
-        width: 22,
-        height: 22,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: value ? CupertinoColors.activeBlue : Colors.transparent,
-          border: Border.all(
-            color: value ? CupertinoColors.activeBlue : CupertinoColors.separator.resolveFrom(context),
-            width: 1.5,
-          ),
-        ),
-        child: value
-            ? const Icon(
-                CupertinoIcons.checkmark,
-                size: 14,
-                color: CupertinoColors.white,
-              )
-            : null,
-      ),
-    );
-  }
-}
+// CupertinoCheckbox has been removed in favor of CupertinoGlassCheckbox
 
 class StatusBadge extends StatelessWidget {
   final String status;
@@ -143,40 +108,58 @@ class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen> {
     });
   }
 
-  Future<void> _selectCustomDateRange() async {
-    final picked = await showDateRangePicker(
+  Future<void> _selectDate(bool isStart) async {
+    DateTime initialDate = (isStart ? _startDate : _endDate) ?? DateTime.now();
+    await showCupertinoModalPopup<void>(
       context: context,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
-      initialDateRange: _startDate != null && _endDate != null
-          ? DateTimeRange(start: _startDate!, end: _endDate!)
-          : null,
-      builder: (context, child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF6E56CF),
-              onPrimary: Colors.white,
-              onSurface: Color(0xFF1E293B),
-            ),
+      builder: (BuildContext context) {
+        return Container(
+          height: 300,
+          color: CupertinoColors.systemBackground.resolveFrom(context),
+          child: Column(
+            children: [
+              Container(
+                color: CupertinoColors.secondarySystemBackground.resolveFrom(context),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    CupertinoButton(
+                      child: const Text('Batal'),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    CupertinoButton(
+                      child: const Text('Selesai'),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.date,
+                  initialDateTime: initialDate,
+                  onDateTimeChanged: (DateTime newDate) {
+                    setState(() {
+                      if (isStart) {
+                        _startDate = newDate;
+                      } else {
+                        _endDate = newDate;
+                      }
+                      _selectedPrQtyId = null;
+                      _selectedPrQtyItemId = null;
+                      _selectedPrVendorId = null;
+                      _selectedPrVendorItemId = null;
+                      _selectedInvoiceId = null;
+                      _selectedPaymentRequestId = null;
+                    });
+                  },
+                ),
+              ),
+            ],
           ),
-          child: child!,
         );
       },
     );
-
-    if (picked != null) {
-      setState(() {
-        _startDate = picked.start;
-        _endDate = picked.end;
-        _selectedPrQtyId = null;
-        _selectedPrQtyItemId = null;
-        _selectedPrVendorId = null;
-        _selectedPrVendorItemId = null;
-        _selectedInvoiceId = null;
-        _selectedPaymentRequestId = null;
-      });
-    }
   }
 
   void _showDatePresetPicker(BuildContext context) {
@@ -214,10 +197,13 @@ class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen> {
             child: const Text('3 Bulan Terakhir'),
           ),
           CupertinoActionSheetAction(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
               _updateDatePreset('custom');
-              _selectCustomDateRange();
+              await _selectDate(true);
+              if (mounted && _startDate != null) {
+                await _selectDate(false);
+              }
             },
             child: const Text('Pilih Tanggal...'),
           ),
@@ -347,12 +333,12 @@ class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
+              color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context).withValues(alpha: 0.85),
               border: Border(bottom: BorderSide(color: separatorColor, width: 0.5)),
             ),
             child: Row(
               children: [
-                const Icon(CupertinoIcons.calendar, size: 16, color: Color(0xFF6E56CF)),
+                const Icon(CupertinoIcons.calendar, size: 16, color: CupertinoColors.activeBlue),
                 const SizedBox(width: 8),
                 Text(
                   'Periode:',
@@ -401,8 +387,13 @@ class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen> {
                   CupertinoButton(
                     padding: EdgeInsets.zero,
                     minimumSize: Size.zero,
-                    onPressed: _selectCustomDateRange,
-                    child: const Icon(CupertinoIcons.calendar_badge_plus, size: 20, color: Color(0xFF6E56CF)),
+                    onPressed: () async {
+                      await _selectDate(true);
+                      if (mounted && _startDate != null) {
+                        await _selectDate(false);
+                      }
+                    },
+                    child: const Icon(CupertinoIcons.calendar_badge_plus, size: 20, color: CupertinoColors.activeBlue),
                   ),
                 ],
               ],
@@ -814,7 +805,7 @@ class _PrQtyApprovalListState extends ConsumerState<_PrQtyApprovalList> {
                         ),
                       ),
                     )
-                  : Scrollbar(
+                  : CupertinoScrollbar(
                       child: ListView.separated(
                         controller: _scrollController,
                         padding: const EdgeInsets.all(16),
@@ -846,8 +837,8 @@ class _PrQtyApprovalListState extends ConsumerState<_PrQtyApprovalList> {
                               decoration: BoxDecoration(
                                 border: Border.all(
                                   color: isRowSelected
-                                      ? const Color(0xFF6E56CF)
-                                      : Colors.transparent,
+                                      ? CupertinoColors.activeBlue
+                                      : CupertinoColors.transparent,
                                   width: isRowSelected ? 1.5 : 0.0,
                                 ),
                                 borderRadius: BorderRadius.circular(12),
@@ -913,45 +904,52 @@ class _PrQtyApprovalListState extends ConsumerState<_PrQtyApprovalList> {
 
     return SafeArea(
       top: false,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
-          border: Border(
-            top: BorderSide(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: CupertinoTheme.of(context).brightness == Brightness.dark
+                  ? const Color(0x881C1C1E)
+                  : const Color(0xEEFFFFFF),
+              border: Border(
+                top: BorderSide(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CupertinoTextField(
+                  controller: _notesController,
+                  placeholder: 'Catatan Persetujuan (Opsional)',
+                  placeholderStyle: context.subhead.copyWith(color: CupertinoColors.placeholderText.resolveFrom(context)),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.systemBackground.resolveFrom(context),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
+                  ),
+                  style: context.subhead.copyWith(color: labelColor),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: CupertinoSpacing.primaryButtonHeight,
+                  child: CupertinoButton.filled(
+                    padding: EdgeInsets.zero,
+                    onPressed: _isSubmitting ? null : () => _submitBatchApproval(allItems),
+                    child: _isSubmitting
+                        ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                        : Text(
+                            'Setujui Seleksi (${_selectedItemIds.length} Barang)',
+                            style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.white),
+                          ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CupertinoTextField(
-              controller: _notesController,
-              placeholder: 'Catatan Persetujuan (Opsional)',
-              placeholderStyle: context.subhead.copyWith(color: CupertinoColors.placeholderText.resolveFrom(context)),
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: CupertinoColors.systemBackground.resolveFrom(context),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
-              ),
-              style: context.subhead.copyWith(color: labelColor),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              height: CupertinoSpacing.primaryButtonHeight,
-              child: CupertinoButton.filled(
-                padding: EdgeInsets.zero,
-                onPressed: _isSubmitting ? null : () => _submitBatchApproval(allItems),
-                child: _isSubmitting
-                    ? const CupertinoActivityIndicator(color: CupertinoColors.white)
-                    : Text(
-                        'Setujui Seleksi (${_selectedItemIds.length} Barang)',
-                        style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.white),
-                      ),
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -979,7 +977,7 @@ class _ApprovalItemRow extends StatelessWidget {
 
     final cardColor = isSelected
         ? CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.08)
-        : CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+        : null;
 
     return CupertinoGlassContainer(
       backgroundColor: cardColor,
@@ -991,7 +989,7 @@ class _ApprovalItemRow extends StatelessWidget {
       child: Row(
         children: [
           if (onChanged != null)
-            CupertinoCheckbox(
+            CupertinoGlassCheckbox(
               value: isSelected, 
               onChanged: (val) => onChanged?.call(val),
             )
@@ -1048,8 +1046,15 @@ class _ApprovalItemRow extends StatelessWidget {
                 Text(
                   'Stok Saat Ini: ${item.currentStock} ${item.uom}',
                   style: context.caption1.copyWith(
-                    color: item.currentStock < item.qtyRequested ? CupertinoColors.activeOrange : CupertinoColors.secondaryLabel,
+                    color: item.currentStock < item.qtyRequested ? CupertinoColors.activeOrange : CupertinoColors.secondaryLabel.resolveFrom(context),
                     fontWeight: item.currentStock < item.qtyRequested ? FontWeight.w500 : FontWeight.normal,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Gudang: ${item.warehouseName != null && item.warehouseName!.isNotEmpty ? (item.warehouseCode != null ? "${item.warehouseName} (${item.warehouseCode})" : item.warehouseName!) : (item.warehouseCode ?? "-")}',
+                  style: context.caption1.copyWith(
+                    color: CupertinoColors.secondaryLabel.resolveFrom(context),
                   ),
                 ),
                 if (item.dtSpec != null && item.dtSpec!.trim().isNotEmpty) ...[
@@ -1118,7 +1123,7 @@ class _PrVendorItemCard extends StatelessWidget {
 
     final cardColor = isSelected
         ? CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.08)
-        : CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+        : null;
 
     final showBadge = item.status != null && 
         (item.status!.toLowerCase() == 'vendor_approved' || 
@@ -1174,6 +1179,42 @@ class _PrVendorItemCard extends StatelessWidget {
                 ],
               ],
             ),
+            const SizedBox(height: CupertinoSpacing.xs),
+            Row(
+              children: [
+                Icon(CupertinoIcons.location, size: 12, color: secondaryLabelColor),
+                const SizedBox(width: CupertinoSpacing.xs),
+                Expanded(
+                  child: Text(
+                    'Gudang: ${item.warehouseName != null && item.warehouseName!.isNotEmpty ? (item.warehouseCode != null ? "${item.warehouseName} (${item.warehouseCode})" : item.warehouseName!) : (item.warehouseCode ?? "-")}',
+                    style: context.caption1.copyWith(
+                      color: secondaryLabelColor,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            if (item.dtNotes != null && item.dtNotes!.trim().isNotEmpty) ...[
+              const SizedBox(height: CupertinoSpacing.xs),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(CupertinoIcons.doc_plaintext, size: 12, color: secondaryLabelColor),
+                  const SizedBox(width: CupertinoSpacing.xs),
+                  Expanded(
+                    child: Text(
+                      'Keterangan: ${item.dtNotes}',
+                      style: context.caption1.copyWith(
+                        color: secondaryLabelColor,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
@@ -1287,7 +1328,7 @@ class _PrVendorApprovalListState extends ConsumerState<_PrVendorApprovalList> {
             : ref.watch(purchaseRequestsProvider(status: 'waiting_bod_approval').notifier).hasMore;
         final showLoader = listAsync.isLoading && hasMore;
 
-        return Scrollbar(
+        return CupertinoScrollbar(
           child: ListView.separated(
             controller: _scrollController,
             padding: const EdgeInsets.all(16),
@@ -1417,7 +1458,7 @@ class _InvoiceApprovalListState extends ConsumerState<_InvoiceApprovalList> {
             : ref.watch(invoicesProvider(status: 'draft').notifier).hasMore;
         final showLoader = listAsync.isLoading && hasMore;
 
-        return Scrollbar(
+        return CupertinoScrollbar(
           child: ListView.separated(
             controller: _scrollController,
             padding: const EdgeInsets.all(16),
@@ -1435,7 +1476,7 @@ class _InvoiceApprovalListState extends ConsumerState<_InvoiceApprovalList> {
 
               final cardColor = isSelected
                   ? CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.08)
-                  : CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+                  : null;
 
               final statusLower = item.status.toLowerCase();
               final isApproved = statusLower == 'approved';
@@ -1615,7 +1656,7 @@ class _PaymentRequestApprovalListState extends ConsumerState<_PaymentRequestAppr
             : ref.watch(paymentRequestsProvider(status: 'pending').notifier).hasMore;
         final showLoader = listAsync.isLoading && hasMore;
 
-        return Scrollbar(
+        return CupertinoScrollbar(
           child: ListView.separated(
             controller: _scrollController,
             padding: const EdgeInsets.all(16),
@@ -1633,7 +1674,7 @@ class _PaymentRequestApprovalListState extends ConsumerState<_PaymentRequestAppr
 
               final cardColor = isSelected
                   ? CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.08)
-                  : CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+                  : null;
 
               final statusLower = item.status.toLowerCase();
               final isApproved = statusLower == 'approved';

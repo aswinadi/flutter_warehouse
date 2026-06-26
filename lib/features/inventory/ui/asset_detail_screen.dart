@@ -298,7 +298,7 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
 
   Widget _buildAssignmentCard(Asset asset) {
     final labelColor = CupertinoColors.label.resolveFrom(context);
-    const primaryAccent = Color(0xFF6E56CF);
+    const primaryAccent = CupertinoColors.activeBlue;
 
     return CupertinoGlassContainer(
       padding: const EdgeInsets.all(CupertinoSpacing.xl),
@@ -330,7 +330,7 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
 
   Widget _buildAcquisitionCard(Asset asset) {
     final labelColor = CupertinoColors.label.resolveFrom(context);
-    const primaryAccent = Color(0xFF6E56CF);
+    const primaryAccent = CupertinoColors.activeBlue;
 
     return CupertinoGlassContainer(
       padding: const EdgeInsets.all(CupertinoSpacing.xl),
@@ -363,7 +363,7 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
   Widget _buildDetailsCard(Asset asset) {
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
-    const primaryAccent = Color(0xFF6E56CF);
+    const primaryAccent = CupertinoColors.activeBlue;
 
     return CupertinoGlassContainer(
       padding: const EdgeInsets.all(CupertinoSpacing.xl),
@@ -498,7 +498,7 @@ class _AssetDetailContentState extends ConsumerState<AssetDetailContent> {
         SizedBox(
           width: double.infinity,
           child: CupertinoButton(
-            color: const Color(0xFF6E56CF),
+            color: CupertinoColors.activeBlue,
             onPressed: () {
               context.push('/assets/${asset.id}/edit');
             },

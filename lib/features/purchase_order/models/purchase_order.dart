@@ -44,6 +44,8 @@ class PurchaseOrderItem with _$PurchaseOrderItem {
     @JsonKey(name: 'unit_price', fromJson: doubleOrNullFromJson) double? unitPrice,
     @JsonKey(name: 'detail_notes') String? detailNotes,
     @JsonKey(name: 'detail_spec') String? detailSpec,
+    @JsonKey(name: 'warehouse_code') String? warehouseCode,
+    @JsonKey(name: 'warehouse_name') String? warehouseName,
     @Default(0) int version,
   }) = _PurchaseOrderItem;
 

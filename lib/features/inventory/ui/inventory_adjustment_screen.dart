@@ -434,7 +434,7 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
               context.go('/');
             }
           },
-          child: const Icon(CupertinoIcons.back, color: Color(0xFF6E56CF)),
+          child: const Icon(CupertinoIcons.back, color: CupertinoColors.activeBlue),
         ),
       ),
       child: SafeArea(
@@ -489,7 +489,7 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final separatorColor = CupertinoColors.separator.resolveFrom(context);
-    const primaryAccent = Color(0xFF6E56CF);
+    const primaryAccent = CupertinoColors.activeBlue;
 
     return CupertinoGlassContainer(
       padding: const EdgeInsets.all(CupertinoSpacing.screenMargin),
@@ -862,7 +862,7 @@ class _InventoryAdjustmentScreenState extends ConsumerState<InventoryAdjustmentS
   }
 
   Widget _buildPhotoPickerSection() {
-    const primaryAccent = Color(0xFF6E56CF);
+    const primaryAccent = CupertinoColors.activeBlue;
 
     if (_photoFile != null) {
       return CupertinoGlassContainer(
@@ -991,7 +991,7 @@ class _BarcodeScannerBottomSheetState extends State<BarcodeScannerBottomSheet> {
               width: 260,
               height: 260,
               decoration: BoxDecoration(
-                border: Border.all(color: const Color(0xFF6E56CF), width: 3),
+                border: Border.all(color: CupertinoColors.activeBlue, width: 3),
                 borderRadius: BorderRadius.circular(12),
               ),
             ),

@@ -326,7 +326,7 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
 
                               return CupertinoGlassContainer(
                                 margin: const EdgeInsets.only(bottom: CupertinoSpacing.m),
-                                borderColor: isSelected && isWide ? const Color(0xFF6E56CF) : null,
+                                borderColor: isSelected && isWide ? CupertinoColors.activeBlue : null,
                                 padding: EdgeInsets.zero,
                                 child: GestureDetector(
                                   behavior: HitTestBehavior.opaque,
@@ -503,7 +503,7 @@ class _AssetListScreenState extends ConsumerState<AssetListScreen> {
 
   Widget _buildCategoryChip(String cat, bool isSelected) {
     final contextResolvedBg = isSelected
-        ? const Color(0xFF6E56CF)
+        ? CupertinoColors.activeBlue
         : CupertinoColors.tertiarySystemFill.resolveFrom(context);
     final labelColor = isSelected
         ? CupertinoColors.white
@@ -757,7 +757,7 @@ class _AssetScanBottomSheetState extends ConsumerState<AssetScanBottomSheet> wit
                 width: scanSize,
                 height: scanSize,
                 decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFF6E56CF), width: 2),
+                  border: Border.all(color: CupertinoColors.activeBlue, width: 2),
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),

@@ -209,7 +209,7 @@ class _PRVendorApprovalScreenState extends ConsumerState<PRVendorApprovalScreen>
                                             padding: const EdgeInsets.only(top: 2.0, right: CupertinoSpacing.s),
                                             child: Icon(
                                               isSelected ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.circle,
-                                              color: isSelected ? const Color(0xFF6E56CF) : secondaryLabel,
+                                              color: isSelected ? CupertinoColors.activeBlue : secondaryLabel,
                                               size: 20,
                                             ),
                                           ),

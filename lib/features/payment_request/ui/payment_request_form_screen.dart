@@ -455,9 +455,9 @@ class _PaymentRequestFormScreenState extends ConsumerState<PaymentRequestFormScr
                           borderRadius: BorderRadius.circular(CupertinoSpacing.cardRadius),
                           border: Border.all(
                             color: isPreviewed
-                                ? const Color(0xFF6E56CF)
+                                ? CupertinoColors.activeBlue
                                 : isSelected
-                                    ? const Color(0xFF6E56CF).withValues(alpha: 0.5)
+                                    ? CupertinoColors.activeBlue.withValues(alpha: 0.5)
                                     : CupertinoColors.separator.resolveFrom(context),
                             width: isPreviewed ? 2.0 : (isSelected ? 1.5 : 0.5),
                           ),
@@ -469,7 +469,7 @@ class _PaymentRequestFormScreenState extends ConsumerState<PaymentRequestFormScr
                                   ? CupertinoIcons.check_mark_circled_solid
                                   : CupertinoIcons.circle,
                               color: isSelected
-                                  ? const Color(0xFF6E56CF)
+                                  ? CupertinoColors.activeBlue
                                   : CupertinoColors.placeholderText.resolveFrom(context),
                               size: 24,
                             ),
@@ -515,14 +515,14 @@ class _PaymentRequestFormScreenState extends ConsumerState<PaymentRequestFormScr
                                 padding: const EdgeInsets.all(CupertinoSpacing.s),
                                 decoration: BoxDecoration(
                                   color: isPreviewed
-                                      ? const Color(0xFF6E56CF).withValues(alpha: 0.1)
+                                      ? CupertinoColors.activeBlue.withValues(alpha: 0.1)
                                       : CupertinoColors.systemFill.resolveFrom(context),
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Icon(
                                   CupertinoIcons.info,
                                   color: isPreviewed
-                                      ? const Color(0xFF6E56CF)
+                                      ? CupertinoColors.activeBlue
                                       : CupertinoColors.secondaryLabel.resolveFrom(context),
                                   size: 18,
                                 ),
@@ -566,7 +566,7 @@ class _PaymentRequestFormScreenState extends ConsumerState<PaymentRequestFormScr
                     formatWithCurrency(_totalAmount, 'IDR'),
                     style: context.title3.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF6E56CF),
+                      color: CupertinoColors.activeBlue,
                     ),
                   ),
                 ],
@@ -631,7 +631,7 @@ class _PaymentRequestFormScreenState extends ConsumerState<PaymentRequestFormScr
                 width: double.infinity,
                 height: CupertinoSpacing.primaryButtonHeight,
                 child: CupertinoButton(
-                  color: const Color(0xFF6E56CF),
+                  color: CupertinoColors.activeBlue,
                   disabledColor: CupertinoColors.inactiveGray.withValues(alpha: 0.5),
                   padding: EdgeInsets.zero,
                   onPressed: _selectedInvoices.isEmpty || _isSubmitting ? null : _submit,
@@ -898,7 +898,7 @@ class InvoiceDetailPreview extends ConsumerWidget {
             const Divider(height: 0.5, thickness: 0.5),
             const SizedBox(height: CupertinoSpacing.s),
           ],
-          _buildRowAmount(context, 'Total Tagihan', total, isBold: true, color: const Color(0xFF6E56CF)),
+          _buildRowAmount(context, 'Total Tagihan', total, isBold: true, color: CupertinoColors.activeBlue),
         ],
       ),
     );

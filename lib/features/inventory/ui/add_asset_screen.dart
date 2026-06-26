@@ -538,7 +538,7 @@ class _AddAssetScreenState extends ConsumerState<AddAssetScreen> {
                         ),
                         CupertinoButton(
                           padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
-                          child: const Text('Pilih', style: TextStyle(color: Color(0xFF6E56CF))),
+                          child: const Text('Pilih', style: TextStyle(color: CupertinoColors.activeBlue)),
                           onPressed: () => _showCupertinoDatePicker(
                             initialDate: _purchaseDate ?? DateTime.now(),
                             onDateSelected: (date) => setState(() => _purchaseDate = date),
@@ -587,7 +587,7 @@ class _AddAssetScreenState extends ConsumerState<AddAssetScreen> {
                         ),
                         CupertinoButton(
                           padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
-                          child: const Text('Pilih', style: TextStyle(color: Color(0xFF6E56CF))),
+                          child: const Text('Pilih', style: TextStyle(color: CupertinoColors.activeBlue)),
                           onPressed: () => _showCupertinoDatePicker(
                             initialDate: _warrantyExpiry ?? DateTime.now(),
                             onDateSelected: (date) => setState(() => _warrantyExpiry = date),
@@ -654,7 +654,7 @@ class _AddAssetScreenState extends ConsumerState<AddAssetScreen> {
                         ),
                         CupertinoButton(
                           padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
-                          child: const Text('Pilih', style: TextStyle(color: Color(0xFF6E56CF))),
+                          child: const Text('Pilih', style: TextStyle(color: CupertinoColors.activeBlue)),
                           onPressed: () => _showCupertinoDatePicker(
                             initialDate: _assignedDate ?? DateTime.now(),
                             onDateSelected: (date) => setState(() => _assignedDate = date),
@@ -721,11 +721,11 @@ class _AddAssetScreenState extends ConsumerState<AddAssetScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(CupertinoIcons.camera, color: Color(0xFF6E56CF), size: 18),
+                          const Icon(CupertinoIcons.camera, color: CupertinoColors.activeBlue, size: 18),
                           const SizedBox(width: CupertinoSpacing.s),
                           Text(
                             _photoFile == null ? 'Lampirkan Foto Aset' : 'Ganti Foto Terlampir',
-                            style: context.subhead.copyWith(color: const Color(0xFF6E56CF), fontWeight: FontWeight.bold),
+                            style: context.subhead.copyWith(color: CupertinoColors.activeBlue, fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),

@@ -583,6 +583,10 @@ mixin _$PurchaseOrderItem {
   String? get detailNotes => throw _privateConstructorUsedError;
   @JsonKey(name: 'detail_spec')
   String? get detailSpec => throw _privateConstructorUsedError;
+  @JsonKey(name: 'warehouse_code')
+  String? get warehouseCode => throw _privateConstructorUsedError;
+  @JsonKey(name: 'warehouse_name')
+  String? get warehouseName => throw _privateConstructorUsedError;
   int get version => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -612,6 +616,8 @@ abstract class $PurchaseOrderItemCopyWith<$Res> {
       double? unitPrice,
       @JsonKey(name: 'detail_notes') String? detailNotes,
       @JsonKey(name: 'detail_spec') String? detailSpec,
+      @JsonKey(name: 'warehouse_code') String? warehouseCode,
+      @JsonKey(name: 'warehouse_name') String? warehouseName,
       int version});
 }
 
@@ -639,6 +645,8 @@ class _$PurchaseOrderItemCopyWithImpl<$Res, $Val extends PurchaseOrderItem>
     Object? unitPrice = freezed,
     Object? detailNotes = freezed,
     Object? detailSpec = freezed,
+    Object? warehouseCode = freezed,
+    Object? warehouseName = freezed,
     Object? version = null,
   }) {
     return _then(_value.copyWith(
@@ -686,6 +694,14 @@ class _$PurchaseOrderItemCopyWithImpl<$Res, $Val extends PurchaseOrderItem>
           ? _value.detailSpec
           : detailSpec // ignore: cast_nullable_to_non_nullable
               as String?,
+      warehouseCode: freezed == warehouseCode
+          ? _value.warehouseCode
+          : warehouseCode // ignore: cast_nullable_to_non_nullable
+              as String?,
+      warehouseName: freezed == warehouseName
+          ? _value.warehouseName
+          : warehouseName // ignore: cast_nullable_to_non_nullable
+              as String?,
       version: null == version
           ? _value.version
           : version // ignore: cast_nullable_to_non_nullable
@@ -717,6 +733,8 @@ abstract class _$$PurchaseOrderItemImplCopyWith<$Res>
       double? unitPrice,
       @JsonKey(name: 'detail_notes') String? detailNotes,
       @JsonKey(name: 'detail_spec') String? detailSpec,
+      @JsonKey(name: 'warehouse_code') String? warehouseCode,
+      @JsonKey(name: 'warehouse_name') String? warehouseName,
       int version});
 }
 
@@ -742,6 +760,8 @@ class __$$PurchaseOrderItemImplCopyWithImpl<$Res>
     Object? unitPrice = freezed,
     Object? detailNotes = freezed,
     Object? detailSpec = freezed,
+    Object? warehouseCode = freezed,
+    Object? warehouseName = freezed,
     Object? version = null,
   }) {
     return _then(_$PurchaseOrderItemImpl(
@@ -789,6 +809,14 @@ class __$$PurchaseOrderItemImplCopyWithImpl<$Res>
           ? _value.detailSpec
           : detailSpec // ignore: cast_nullable_to_non_nullable
               as String?,
+      warehouseCode: freezed == warehouseCode
+          ? _value.warehouseCode
+          : warehouseCode // ignore: cast_nullable_to_non_nullable
+              as String?,
+      warehouseName: freezed == warehouseName
+          ? _value.warehouseName
+          : warehouseName // ignore: cast_nullable_to_non_nullable
+              as String?,
       version: null == version
           ? _value.version
           : version // ignore: cast_nullable_to_non_nullable
@@ -816,6 +844,8 @@ class _$PurchaseOrderItemImpl implements _PurchaseOrderItem {
       this.unitPrice,
       @JsonKey(name: 'detail_notes') this.detailNotes,
       @JsonKey(name: 'detail_spec') this.detailSpec,
+      @JsonKey(name: 'warehouse_code') this.warehouseCode,
+      @JsonKey(name: 'warehouse_name') this.warehouseName,
       this.version = 0});
 
   factory _$PurchaseOrderItemImpl.fromJson(Map<String, dynamic> json) =>
@@ -852,12 +882,18 @@ class _$PurchaseOrderItemImpl implements _PurchaseOrderItem {
   @JsonKey(name: 'detail_spec')
   final String? detailSpec;
   @override
+  @JsonKey(name: 'warehouse_code')
+  final String? warehouseCode;
+  @override
+  @JsonKey(name: 'warehouse_name')
+  final String? warehouseName;
+  @override
   @JsonKey()
   final int version;
 
   @override
   String toString() {
-    return 'PurchaseOrderItem(id: $id, sku: $sku, productName: $productName, orderedQty: $orderedQty, receivedQty: $receivedQty, remainingQty: $remainingQty, unit: $unit, imageUrl: $imageUrl, unitPrice: $unitPrice, detailNotes: $detailNotes, detailSpec: $detailSpec, version: $version)';
+    return 'PurchaseOrderItem(id: $id, sku: $sku, productName: $productName, orderedQty: $orderedQty, receivedQty: $receivedQty, remainingQty: $remainingQty, unit: $unit, imageUrl: $imageUrl, unitPrice: $unitPrice, detailNotes: $detailNotes, detailSpec: $detailSpec, warehouseCode: $warehouseCode, warehouseName: $warehouseName, version: $version)';
   }
 
   @override
@@ -884,6 +920,10 @@ class _$PurchaseOrderItemImpl implements _PurchaseOrderItem {
                 other.detailNotes == detailNotes) &&
             (identical(other.detailSpec, detailSpec) ||
                 other.detailSpec == detailSpec) &&
+            (identical(other.warehouseCode, warehouseCode) ||
+                other.warehouseCode == warehouseCode) &&
+            (identical(other.warehouseName, warehouseName) ||
+                other.warehouseName == warehouseName) &&
             (identical(other.version, version) || other.version == version));
   }
 
@@ -902,6 +942,8 @@ class _$PurchaseOrderItemImpl implements _PurchaseOrderItem {
       unitPrice,
       detailNotes,
       detailSpec,
+      warehouseCode,
+      warehouseName,
       version);
 
   @JsonKey(ignore: true)
@@ -936,6 +978,8 @@ abstract class _PurchaseOrderItem implements PurchaseOrderItem {
       final double? unitPrice,
       @JsonKey(name: 'detail_notes') final String? detailNotes,
       @JsonKey(name: 'detail_spec') final String? detailSpec,
+      @JsonKey(name: 'warehouse_code') final String? warehouseCode,
+      @JsonKey(name: 'warehouse_name') final String? warehouseName,
       final int version}) = _$PurchaseOrderItemImpl;
 
   factory _PurchaseOrderItem.fromJson(Map<String, dynamic> json) =
@@ -971,6 +1015,12 @@ abstract class _PurchaseOrderItem implements PurchaseOrderItem {
   @override
   @JsonKey(name: 'detail_spec')
   String? get detailSpec;
+  @override
+  @JsonKey(name: 'warehouse_code')
+  String? get warehouseCode;
+  @override
+  @JsonKey(name: 'warehouse_name')
+  String? get warehouseName;
   @override
   int get version;
   @override

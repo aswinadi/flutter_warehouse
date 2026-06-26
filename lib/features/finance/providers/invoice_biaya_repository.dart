@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/invoice_biaya.dart';
+import '../models/invoice_biaya_detail.dart';
 import '../../../core/api/dio_client.dart';
 import '../../../core/api/paginated_response.dart';
 import '../../../core/providers/company_provider.dart';
@@ -50,6 +51,11 @@ class InvoiceBiayaRepository {
     required double amount,
     double? taxAmount,
     String? notes,
+    String? taxInvoiceNumber,
+    String? taxInvoiceDate,
+    String? costCenterCode,
+    String? jvType,
+    List<InvoiceBiayaDetail>? details,
     List<XFile>? files,
   }) async {
     final formData = FormData.fromMap({
@@ -61,7 +67,33 @@ class InvoiceBiayaRepository {
       'amount': amount,
       if (taxAmount != null) 'tax_amount': taxAmount,
       if (notes != null) 'notes': notes,
+      if (taxInvoiceNumber != null) 'tax_invoice_number': taxInvoiceNumber,
+      if (taxInvoiceDate != null) 'tax_invoice_date': taxInvoiceDate,
+      if (costCenterCode != null) 'cost_center_code': costCenterCode,
+      if (jvType != null) 'jv_type': jvType,
     });
+
+    if (details != null && details.isNotEmpty) {
+      for (int i = 0; i < details.length; i++) {
+        final row = details[i];
+        formData.fields.add(MapEntry('details[$i][coa_code]', row.coaCode));
+        formData.fields.add(MapEntry('details[$i][coa_name]', row.coaName ?? ''));
+        if (row.projectCode != null) {
+          formData.fields.add(MapEntry('details[$i][project_code]', row.projectCode!));
+        }
+        if (row.costCode != null) {
+          formData.fields.add(MapEntry('details[$i][cost_code]', row.costCode!));
+        }
+        formData.fields.add(MapEntry('details[$i][debit]', row.debit.toString()));
+        formData.fields.add(MapEntry('details[$i][credit]', row.credit.toString()));
+        if (row.staffName != null) {
+          formData.fields.add(MapEntry('details[$i][staff_name]', row.staffName!));
+        }
+        if (row.notes != null) {
+          formData.fields.add(MapEntry('details[$i][notes]', row.notes!));
+        }
+      }
+    }
 
     if (files != null && files.isNotEmpty) {
       for (final file in files) {
@@ -87,6 +119,11 @@ class InvoiceBiayaRepository {
     double? amount,
     double? taxAmount,
     String? notes,
+    String? taxInvoiceNumber,
+    String? taxInvoiceDate,
+    String? costCenterCode,
+    String? jvType,
+    List<InvoiceBiayaDetail>? details,
     List<XFile>? files,
   }) async {
     final formData = FormData.fromMap({
@@ -96,7 +133,33 @@ class InvoiceBiayaRepository {
       if (amount != null) 'amount': amount,
       if (taxAmount != null) 'tax_amount': taxAmount,
       if (notes != null) 'notes': notes,
+      if (taxInvoiceNumber != null) 'tax_invoice_number': taxInvoiceNumber,
+      if (taxInvoiceDate != null) 'tax_invoice_date': taxInvoiceDate,
+      if (costCenterCode != null) 'cost_center_code': costCenterCode,
+      if (jvType != null) 'jv_type': jvType,
     });
+
+    if (details != null && details.isNotEmpty) {
+      for (int i = 0; i < details.length; i++) {
+        final row = details[i];
+        formData.fields.add(MapEntry('details[$i][coa_code]', row.coaCode));
+        formData.fields.add(MapEntry('details[$i][coa_name]', row.coaName ?? ''));
+        if (row.projectCode != null) {
+          formData.fields.add(MapEntry('details[$i][project_code]', row.projectCode!));
+        }
+        if (row.costCode != null) {
+          formData.fields.add(MapEntry('details[$i][cost_code]', row.costCode!));
+        }
+        formData.fields.add(MapEntry('details[$i][debit]', row.debit.toString()));
+        formData.fields.add(MapEntry('details[$i][credit]', row.credit.toString()));
+        if (row.staffName != null) {
+          formData.fields.add(MapEntry('details[$i][staff_name]', row.staffName!));
+        }
+        if (row.notes != null) {
+          formData.fields.add(MapEntry('details[$i][notes]', row.notes!));
+        }
+      }
+    }
 
     if (files != null && files.isNotEmpty) {
       for (final file in files) {

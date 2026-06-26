@@ -4,6 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/invoice_biaya_repository.dart';
+import '../providers/cost_centre_repository.dart';
+import '../models/cost_centre.dart';
+import '../models/invoice_biaya.dart';
+import 'invoice_biaya_form_screen.dart' show ProrationPreviewWidget;
+import '../../../core/widgets/cupertino_glass_bottom_sheet.dart';
 import '../../../core/utils/currency_utils.dart';
 import '../../payment_request/providers/payment_request_repository.dart';
 import '../../../core/theme/cupertino_theme_extensions.dart';
@@ -239,10 +244,16 @@ class _InvoiceBiayaDetailScreenState extends ConsumerState<InvoiceBiayaDetailScr
                         _buildInfoRow('No. Invoice Vendor', invoice.vendorInvoiceNumber ?? '-'),
                         _buildInfoRow('Tanggal Invoice', _formatDate(invoice.invoiceDate)),
                         _buildInfoRow('Tanggal Jatuh Tempo', _formatDate(invoice.dueDate)),
-                        const Divider(color: CupertinoColors.separator, height: CupertinoSpacing.xxl, thickness: 0.5),
-                        _buildInfoRow('Subtotal', formatWithCurrency(invoice.amount, invoice.currency)),
-                        _buildInfoRow('Pajak', formatWithCurrency(invoice.taxAmount, invoice.currency)),
-                        _buildInfoRow('Total Tagihan', formatWithCurrency(invoice.totalAmount, invoice.currency), isBold: true),
+                        const Divider(color: CupertinoColors.separator, height: 16, thickness: 0.5),
+                        _buildInfoRow('No. Faktur Pajak', invoice.taxInvoiceNumber ?? '-'),
+                        _buildInfoRow('Tanggal Faktur Pajak', _formatDate(invoice.taxInvoiceDate)),
+                        _buildInfoRow('Cost Center Header', invoice.costCenterCode ?? '-'),
+                        _buildInfoRow('Tipe Invoice Biaya', invoice.jvType ?? 'Reguler'),
+                        const Divider(color: CupertinoColors.separator, height: 24, thickness: 0.5),
+                        _buildInfoRow('Total Debet', formatWithCurrency(invoice.amount, invoice.currency)),
+                        if (invoice.taxAmount > 0)
+                          _buildInfoRow('Pajak', formatWithCurrency(invoice.taxAmount, invoice.currency)),
+                        _buildInfoRow('Total Kredit', formatWithCurrency(invoice.totalAmount, invoice.currency), isBold: true),
                         if (invoice.notes != null && invoice.notes!.isNotEmpty) ...[
                           const SizedBox(height: CupertinoSpacing.m),
                           Text('Catatan:', style: context.footnote.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.secondaryLabel.resolveFrom(context))),
@@ -252,6 +263,13 @@ class _InvoiceBiayaDetailScreenState extends ConsumerState<InvoiceBiayaDetailScr
                       ],
                     ),
                   ),
+                  const SizedBox(height: CupertinoSpacing.screenMargin),
+                  Text(
+                    'Entri Jurnal',
+                    style: context.callout.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: CupertinoSpacing.s),
+                  _buildJournalEntriesList(invoice),
                   const SizedBox(height: CupertinoSpacing.screenMargin),
                   Text(
                     'Lampiran Dokumen',
@@ -283,7 +301,7 @@ class _InvoiceBiayaDetailScreenState extends ConsumerState<InvoiceBiayaDetailScr
                             },
                             child: Row(
                               children: [
-                                const Icon(CupertinoIcons.doc_text, color: Color(0xFF6E56CF), size: 20),
+                                const Icon(CupertinoIcons.doc_text, color: CupertinoColors.activeBlue, size: 20),
                                 const SizedBox(width: CupertinoSpacing.m),
                                 Expanded(
                                   child: Text(
@@ -346,7 +364,7 @@ class _InvoiceBiayaDetailScreenState extends ConsumerState<InvoiceBiayaDetailScr
                           flex: 2,
                           child: CupertinoButton(
                             padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.m),
-                            color: const Color(0xFF6E56CF),
+                            color: CupertinoColors.activeBlue,
                             borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
                             minimumSize: Size.zero,
                             onPressed: _isSubmitting ? null : _markPending,
@@ -360,7 +378,7 @@ class _InvoiceBiayaDetailScreenState extends ConsumerState<InvoiceBiayaDetailScr
                         Expanded(
                           child: CupertinoButton(
                             padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.m),
-                            color: const Color(0xFF6E56CF),
+                            color: CupertinoColors.activeBlue,
                             borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
                             minimumSize: Size.zero,
                             onPressed: _isSubmitting ? null : _submitPaymentRequest,
@@ -434,5 +452,135 @@ class _InvoiceBiayaDetailScreenState extends ConsumerState<InvoiceBiayaDetailScr
       }
       return dateStr;
     }
+  }
+
+  Widget _buildJournalEntriesList(InvoiceBiaya invoice) {
+    final costCentresAsync = ref.watch(costCentresProvider(companyId: invoice.companyId));
+
+    return costCentresAsync.when(
+      data: (ccs) {
+        if (invoice.details.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8.0),
+            child: Text(
+              'Tidak ada entri jurnal.',
+              style: TextStyle(color: CupertinoColors.secondaryLabel),
+            ),
+          );
+        }
+
+        return Column(
+          children: invoice.details.map((detail) {
+            final selectedCc = ccs.firstWhere(
+              (cc) => cc.code == detail.projectCode,
+              orElse: () => const CostCentre(id: 0, code: '', name: '', luasM2: 0, isActive: false),
+            );
+            final isParentCostCenter = selectedCc.isParent;
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8.0),
+              child: CupertinoGlassContainer(
+                borderRadius: CupertinoSpacing.cardRadius,
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            detail.coaCode.isNotEmpty
+                                ? '${detail.coaCode} — ${detail.coaName ?? ""}'
+                                : '-',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.0),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        if (detail.debit > 0)
+                          Text(
+                            'D: IDR ${formatCurrency(detail.debit, 'IDR')}',
+                            style: const TextStyle(fontWeight: FontWeight.bold, color: CupertinoColors.activeBlue, fontSize: 13.0),
+                          )
+                        else if (detail.credit > 0)
+                          Text(
+                            'K: IDR ${formatCurrency(detail.credit, 'IDR')}',
+                            style: const TextStyle(fontWeight: FontWeight.bold, color: CupertinoColors.activeGreen, fontSize: 13.0),
+                          ),
+                      ],
+                    ),
+                    const Divider(color: CupertinoColors.separator, height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Text(
+                                'Proyek: ${selectedCc.name.isNotEmpty ? selectedCc.name : (detail.projectCode ?? "-")}',
+                                style: const TextStyle(fontSize: 12.0),
+                              ),
+                              if (isParentCostCenter && detail.projectCode != null) ...[
+                                const SizedBox(width: 4),
+                                GestureDetector(
+                                  onTap: () {
+                                    final amount = detail.debit > 0 ? detail.debit : detail.credit;
+                                    CupertinoGlassBottomSheet.show(
+                                      context,
+                                      title: 'Pratinjau Distribusi Cost Center',
+                                      child: ProrationPreviewWidget(
+                                        parentCode: detail.projectCode!,
+                                        amount: amount,
+                                      ),
+                                    );
+                                  },
+                                  child: const Icon(
+                                    CupertinoIcons.info_circle_fill,
+                                    size: 14.0,
+                                    color: CupertinoColors.activeBlue,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            'Cost Code: ${detail.costCode ?? "-"}',
+                            textAlign: TextAlign.end,
+                            style: const TextStyle(fontSize: 12.0),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Karyawan: ${detail.staffName ?? "-"}',
+                          style: const TextStyle(fontSize: 12.0, color: CupertinoColors.secondaryLabel),
+                        ),
+                      ],
+                    ),
+                    if (detail.notes != null && detail.notes!.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        'Keterangan: ${detail.notes}',
+                        style: const TextStyle(fontSize: 12.0, fontStyle: FontStyle.italic, color: CupertinoColors.secondaryLabel),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+      loading: () => const Center(child: CupertinoActivityIndicator()),
+      error: (err, _) => Text(
+        'Gagal memuat detail proyek: $err',
+        style: const TextStyle(color: CupertinoColors.destructiveRed),
+      ),
+    );
   }
 }

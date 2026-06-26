@@ -2,6 +2,49 @@
 
 All notable changes to the Maxmar Warehouse Flutter project will be documented in this file.
 
+## [1.6.4] - 2026-06-26
+
+### Added
+- **COA (Chart of Account) Legacy Sync**:
+  - Implemented `ChartOfAccount` model, Riverpod repository provider (`chartOfAccountsProvider`), and search picker selection.
+- **Cost Center Allocation Proration**:
+  - Integrated `CostCentreRepository` fetching active cost centers and cost codes.
+  - Added support for parent cost center proration with a bottom sheet preview (`ProrationPreviewWidget`) calculating area ratios (`luas_m2`) and rounding remainder allocations in real-time.
+- **Spreadsheet-style Horizontal Scrollable Journal Grid**:
+  - Added horizontally scrollable table layout (`SingleChildScrollView` with explicit `1180px` width) for journal entry repeater details.
+  - Implemented live calculations for Total Debit sum, Total Credit sum, and balanced verification checks.
+  - Enforced mutual exclusion between Debit and Credit inputs on the same journal row.
+  - Built custom `IndonesianNumberFormatter` for live thousand dot (`.`) and decimal comma (`,`) formatting with precise text selection cursor offset tracking.
+
+### Fixed
+- **Horizontal Layout Overflow**:
+  - Wrapped `CupertinoGlassContainer` inside the horizontal `SingleChildScrollView` to resolve parent layout constraint propagation issues, eliminating the `216px` overflow on tablet/desktop displays.
+- **TextInput Rebuilding/Cursor Reversal Bug**:
+  - Converted the inline detail card generator to a dedicated stateful widget `InvoiceBiayaDetailRow` with unique key references (`_detailKeys`), ensuring editing text controllers persist state correctly across parent rebuilding cycles.
+
+## [1.6.3] - 2026-06-25
+
+### Added
+- **iOS 26 Cupertino Liquid Glass Components**:
+  - Created multiple new reusable glassmorphic components in `lib/core/widgets/`:
+    - `CupertinoMeshBackground` for high-quality background mesh gradients.
+    - `CupertinoGlassChoiceChip` for glassmorphic filter pills.
+    - `CupertinoGlassSearchField` for glassmorphic search input field.
+    - `CupertinoGlassCheckbox` for custom check boxes.
+    - `CupertinoGlassRadioButton` for custom radio buttons.
+    - `CupertinoGlassSwitch` for custom switches.
+    - `CupertinoGlassBottomSheet` for overlay sheets.
+    - `CupertinoGlassLoadingIndicator` for overlay loader.
+    - `CupertinoGlassListSection` for grouped translucent items.
+
+### Changed
+- **Liquid Glass Theme Standardization**:
+  - Updated card radius (`16.0`), button radius (`12.0`), and dialog radius (`24.0`) globally in `lib/core/theme/cupertino_spacing.dart` to match Cupertino continuous corners.
+  - Refactored `pr_list_screen.dart`, `approvals_screen.dart`, `packing_list_screen.dart`, `transfer_in_screen.dart`, and `transfer_out_screen.dart` to use translucent `CupertinoGlassContainer` wrapper for details panels, item lists, and selection cards, resolving the discrepancy where the right-pane detail views had solid white background cards.
+  - Re-styled anchored bottom action bars and filter panels across list screens to use translucent blurs (`BackdropFilter`) instead of solid colored panels.
+  - Set `isEmbedded` details panel wrapper background to transparent in `po_approval_screen.dart` to let the global mesh gradient shine through.
+  - Replaced standard `CupertinoActionSheet` in `main_shell.dart` with custom `CupertinoGlassBottomSheet` and `CupertinoGlassListSection` tiles list in the collapsed navigation sidebar.
+
 ## [1.6.2] - 2026-06-24
 
 ### Added

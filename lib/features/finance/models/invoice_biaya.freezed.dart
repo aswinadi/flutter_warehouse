@@ -50,7 +50,16 @@ mixin _$InvoiceBiaya {
   int? get createdBy => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
   String? get createdAt => throw _privateConstructorUsedError;
+  @JsonKey(name: 'tax_invoice_number')
+  String? get taxInvoiceNumber => throw _privateConstructorUsedError;
+  @JsonKey(name: 'tax_invoice_date')
+  String? get taxInvoiceDate => throw _privateConstructorUsedError;
+  @JsonKey(name: 'cost_center_code')
+  String? get costCenterCode => throw _privateConstructorUsedError;
+  @JsonKey(name: 'jv_type')
+  String? get jvType => throw _privateConstructorUsedError;
   List<MediaFile> get media => throw _privateConstructorUsedError;
+  List<InvoiceBiayaDetail> get details => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -83,7 +92,12 @@ abstract class $InvoiceBiayaCopyWith<$Res> {
       String status,
       @JsonKey(name: 'created_by') int? createdBy,
       @JsonKey(name: 'created_at') String? createdAt,
-      List<MediaFile> media});
+      @JsonKey(name: 'tax_invoice_number') String? taxInvoiceNumber,
+      @JsonKey(name: 'tax_invoice_date') String? taxInvoiceDate,
+      @JsonKey(name: 'cost_center_code') String? costCenterCode,
+      @JsonKey(name: 'jv_type') String? jvType,
+      List<MediaFile> media,
+      List<InvoiceBiayaDetail> details});
 }
 
 /// @nodoc
@@ -116,7 +130,12 @@ class _$InvoiceBiayaCopyWithImpl<$Res, $Val extends InvoiceBiaya>
     Object? status = null,
     Object? createdBy = freezed,
     Object? createdAt = freezed,
+    Object? taxInvoiceNumber = freezed,
+    Object? taxInvoiceDate = freezed,
+    Object? costCenterCode = freezed,
+    Object? jvType = freezed,
     Object? media = null,
+    Object? details = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -187,10 +206,30 @@ class _$InvoiceBiayaCopyWithImpl<$Res, $Val extends InvoiceBiaya>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as String?,
+      taxInvoiceNumber: freezed == taxInvoiceNumber
+          ? _value.taxInvoiceNumber
+          : taxInvoiceNumber // ignore: cast_nullable_to_non_nullable
+              as String?,
+      taxInvoiceDate: freezed == taxInvoiceDate
+          ? _value.taxInvoiceDate
+          : taxInvoiceDate // ignore: cast_nullable_to_non_nullable
+              as String?,
+      costCenterCode: freezed == costCenterCode
+          ? _value.costCenterCode
+          : costCenterCode // ignore: cast_nullable_to_non_nullable
+              as String?,
+      jvType: freezed == jvType
+          ? _value.jvType
+          : jvType // ignore: cast_nullable_to_non_nullable
+              as String?,
       media: null == media
           ? _value.media
           : media // ignore: cast_nullable_to_non_nullable
               as List<MediaFile>,
+      details: null == details
+          ? _value.details
+          : details // ignore: cast_nullable_to_non_nullable
+              as List<InvoiceBiayaDetail>,
     ) as $Val);
   }
 }
@@ -222,7 +261,12 @@ abstract class _$$InvoiceBiayaImplCopyWith<$Res>
       String status,
       @JsonKey(name: 'created_by') int? createdBy,
       @JsonKey(name: 'created_at') String? createdAt,
-      List<MediaFile> media});
+      @JsonKey(name: 'tax_invoice_number') String? taxInvoiceNumber,
+      @JsonKey(name: 'tax_invoice_date') String? taxInvoiceDate,
+      @JsonKey(name: 'cost_center_code') String? costCenterCode,
+      @JsonKey(name: 'jv_type') String? jvType,
+      List<MediaFile> media,
+      List<InvoiceBiayaDetail> details});
 }
 
 /// @nodoc
@@ -253,7 +297,12 @@ class __$$InvoiceBiayaImplCopyWithImpl<$Res>
     Object? status = null,
     Object? createdBy = freezed,
     Object? createdAt = freezed,
+    Object? taxInvoiceNumber = freezed,
+    Object? taxInvoiceDate = freezed,
+    Object? costCenterCode = freezed,
+    Object? jvType = freezed,
     Object? media = null,
+    Object? details = null,
   }) {
     return _then(_$InvoiceBiayaImpl(
       id: null == id
@@ -324,10 +373,30 @@ class __$$InvoiceBiayaImplCopyWithImpl<$Res>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as String?,
+      taxInvoiceNumber: freezed == taxInvoiceNumber
+          ? _value.taxInvoiceNumber
+          : taxInvoiceNumber // ignore: cast_nullable_to_non_nullable
+              as String?,
+      taxInvoiceDate: freezed == taxInvoiceDate
+          ? _value.taxInvoiceDate
+          : taxInvoiceDate // ignore: cast_nullable_to_non_nullable
+              as String?,
+      costCenterCode: freezed == costCenterCode
+          ? _value.costCenterCode
+          : costCenterCode // ignore: cast_nullable_to_non_nullable
+              as String?,
+      jvType: freezed == jvType
+          ? _value.jvType
+          : jvType // ignore: cast_nullable_to_non_nullable
+              as String?,
       media: null == media
           ? _value._media
           : media // ignore: cast_nullable_to_non_nullable
               as List<MediaFile>,
+      details: null == details
+          ? _value._details
+          : details // ignore: cast_nullable_to_non_nullable
+              as List<InvoiceBiayaDetail>,
     ));
   }
 }
@@ -355,8 +424,14 @@ class _$InvoiceBiayaImpl implements _InvoiceBiaya {
       required this.status,
       @JsonKey(name: 'created_by') this.createdBy,
       @JsonKey(name: 'created_at') this.createdAt,
-      final List<MediaFile> media = const []})
-      : _media = media;
+      @JsonKey(name: 'tax_invoice_number') this.taxInvoiceNumber,
+      @JsonKey(name: 'tax_invoice_date') this.taxInvoiceDate,
+      @JsonKey(name: 'cost_center_code') this.costCenterCode,
+      @JsonKey(name: 'jv_type') this.jvType,
+      final List<MediaFile> media = const [],
+      final List<InvoiceBiayaDetail> details = const []})
+      : _media = media,
+        _details = details;
 
   factory _$InvoiceBiayaImpl.fromJson(Map<String, dynamic> json) =>
       _$$InvoiceBiayaImplFromJson(json);
@@ -408,6 +483,18 @@ class _$InvoiceBiayaImpl implements _InvoiceBiaya {
   @override
   @JsonKey(name: 'created_at')
   final String? createdAt;
+  @override
+  @JsonKey(name: 'tax_invoice_number')
+  final String? taxInvoiceNumber;
+  @override
+  @JsonKey(name: 'tax_invoice_date')
+  final String? taxInvoiceDate;
+  @override
+  @JsonKey(name: 'cost_center_code')
+  final String? costCenterCode;
+  @override
+  @JsonKey(name: 'jv_type')
+  final String? jvType;
   final List<MediaFile> _media;
   @override
   @JsonKey()
@@ -417,9 +504,18 @@ class _$InvoiceBiayaImpl implements _InvoiceBiaya {
     return EqualUnmodifiableListView(_media);
   }
 
+  final List<InvoiceBiayaDetail> _details;
+  @override
+  @JsonKey()
+  List<InvoiceBiayaDetail> get details {
+    if (_details is EqualUnmodifiableListView) return _details;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_details);
+  }
+
   @override
   String toString() {
-    return 'InvoiceBiaya(id: $id, companyId: $companyId, supplierId: $supplierId, supplierCode: $supplierCode, supplierName: $supplierName, invoiceNumber: $invoiceNumber, vendorInvoiceNumber: $vendorInvoiceNumber, invoiceDate: $invoiceDate, dueDate: $dueDate, amount: $amount, taxAmount: $taxAmount, totalAmount: $totalAmount, currency: $currency, notes: $notes, status: $status, createdBy: $createdBy, createdAt: $createdAt, media: $media)';
+    return 'InvoiceBiaya(id: $id, companyId: $companyId, supplierId: $supplierId, supplierCode: $supplierCode, supplierName: $supplierName, invoiceNumber: $invoiceNumber, vendorInvoiceNumber: $vendorInvoiceNumber, invoiceDate: $invoiceDate, dueDate: $dueDate, amount: $amount, taxAmount: $taxAmount, totalAmount: $totalAmount, currency: $currency, notes: $notes, status: $status, createdBy: $createdBy, createdAt: $createdAt, taxInvoiceNumber: $taxInvoiceNumber, taxInvoiceDate: $taxInvoiceDate, costCenterCode: $costCenterCode, jvType: $jvType, media: $media, details: $details)';
   }
 
   @override
@@ -456,31 +552,45 @@ class _$InvoiceBiayaImpl implements _InvoiceBiaya {
                 other.createdBy == createdBy) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
-            const DeepCollectionEquality().equals(other._media, _media));
+            (identical(other.taxInvoiceNumber, taxInvoiceNumber) ||
+                other.taxInvoiceNumber == taxInvoiceNumber) &&
+            (identical(other.taxInvoiceDate, taxInvoiceDate) ||
+                other.taxInvoiceDate == taxInvoiceDate) &&
+            (identical(other.costCenterCode, costCenterCode) ||
+                other.costCenterCode == costCenterCode) &&
+            (identical(other.jvType, jvType) || other.jvType == jvType) &&
+            const DeepCollectionEquality().equals(other._media, _media) &&
+            const DeepCollectionEquality().equals(other._details, _details));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      companyId,
-      supplierId,
-      supplierCode,
-      supplierName,
-      invoiceNumber,
-      vendorInvoiceNumber,
-      invoiceDate,
-      dueDate,
-      amount,
-      taxAmount,
-      totalAmount,
-      currency,
-      notes,
-      status,
-      createdBy,
-      createdAt,
-      const DeepCollectionEquality().hash(_media));
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        id,
+        companyId,
+        supplierId,
+        supplierCode,
+        supplierName,
+        invoiceNumber,
+        vendorInvoiceNumber,
+        invoiceDate,
+        dueDate,
+        amount,
+        taxAmount,
+        totalAmount,
+        currency,
+        notes,
+        status,
+        createdBy,
+        createdAt,
+        taxInvoiceNumber,
+        taxInvoiceDate,
+        costCenterCode,
+        jvType,
+        const DeepCollectionEquality().hash(_media),
+        const DeepCollectionEquality().hash(_details)
+      ]);
 
   @JsonKey(ignore: true)
   @override
@@ -517,7 +627,12 @@ abstract class _InvoiceBiaya implements InvoiceBiaya {
       required final String status,
       @JsonKey(name: 'created_by') final int? createdBy,
       @JsonKey(name: 'created_at') final String? createdAt,
-      final List<MediaFile> media}) = _$InvoiceBiayaImpl;
+      @JsonKey(name: 'tax_invoice_number') final String? taxInvoiceNumber,
+      @JsonKey(name: 'tax_invoice_date') final String? taxInvoiceDate,
+      @JsonKey(name: 'cost_center_code') final String? costCenterCode,
+      @JsonKey(name: 'jv_type') final String? jvType,
+      final List<MediaFile> media,
+      final List<InvoiceBiayaDetail> details}) = _$InvoiceBiayaImpl;
 
   factory _InvoiceBiaya.fromJson(Map<String, dynamic> json) =
       _$InvoiceBiayaImpl.fromJson;
@@ -570,7 +685,21 @@ abstract class _InvoiceBiaya implements InvoiceBiaya {
   @JsonKey(name: 'created_at')
   String? get createdAt;
   @override
+  @JsonKey(name: 'tax_invoice_number')
+  String? get taxInvoiceNumber;
+  @override
+  @JsonKey(name: 'tax_invoice_date')
+  String? get taxInvoiceDate;
+  @override
+  @JsonKey(name: 'cost_center_code')
+  String? get costCenterCode;
+  @override
+  @JsonKey(name: 'jv_type')
+  String? get jvType;
+  @override
   List<MediaFile> get media;
+  @override
+  List<InvoiceBiayaDetail> get details;
   @override
   @JsonKey(ignore: true)
   _$$InvoiceBiayaImplCopyWith<_$InvoiceBiayaImpl> get copyWith =>

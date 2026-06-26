@@ -526,7 +526,7 @@ class _LandedCostDetailScreenState extends ConsumerState<LandedCostDetailScreen>
                   child: SizedBox(
                     width: double.infinity,
                     child: CupertinoButton(
-                      color: const Color(0xFF6E56CF),
+                      color: CupertinoColors.activeBlue,
                       borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
                       onPressed: _isSubmitting ? null : _approveLandedCost,
                       child: _isSubmitting

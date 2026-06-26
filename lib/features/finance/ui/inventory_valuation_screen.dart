@@ -281,10 +281,10 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
                     return CupertinoGlassContainer(
                       borderRadius: CupertinoSpacing.cardRadius + 2,
                       backgroundColor: isSelected 
-                          ? const Color(0xFF6E56CF).withValues(alpha: 0.08) 
+                          ? CupertinoColors.activeBlue.withValues(alpha: 0.08) 
                           : null,
                       borderColor: isSelected 
-                          ? const Color(0xFF6E56CF) 
+                          ? CupertinoColors.activeBlue 
                           : null,
                       child: GestureDetector(
                         behavior: HitTestBehavior.opaque,
@@ -340,7 +340,7 @@ class _InventoryValuationScreenState extends ConsumerState<InventoryValuationScr
                                     style: context.footnote.copyWith(
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,
-                                      color: const Color(0xFF6E56CF),
+                                      color: CupertinoColors.activeBlue,
                                     ),
                                   ),
                                   const SizedBox(height: CupertinoSpacing.xs),
@@ -587,7 +587,7 @@ class ValuationDetailPane extends ConsumerWidget {
                       const SizedBox(height: CupertinoSpacing.xs),
                       Text(
                         _formatCurrency(item.totalValuation),
-                        style: context.title3.copyWith(color: const Color(0xFF6E56CF), fontSize: 18, fontWeight: FontWeight.bold),
+                        style: context.title3.copyWith(color: CupertinoColors.activeBlue, fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -633,7 +633,7 @@ class ValuationDetailPane extends ConsumerWidget {
                             Text(
                               _formatCurrency(bd.totalValuation),
                               style: context.body.copyWith(
-                                color: const Color(0xFF6E56CF),
+                                color: CupertinoColors.activeBlue,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),

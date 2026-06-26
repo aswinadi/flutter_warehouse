@@ -155,7 +155,7 @@ class _POApprovalScreenState extends ConsumerState<POApprovalScreen> {
                           'Jumlah Total',
                           formatWithCurrency(displayTotal, 'IDR'),
                           isBold: true,
-                          textColor: const Color(0xFF6E56CF),
+                          textColor: CupertinoColors.activeBlue,
                         ),
                       ],
                     ),
@@ -194,6 +194,21 @@ class _POApprovalScreenState extends ConsumerState<POApprovalScreen> {
                                 style: context.footnote.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: labelColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: CupertinoSpacing.xs),
+                          Row(
+                            children: [
+                              Icon(CupertinoIcons.location, size: 12, color: secondaryLabel),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  'Gudang: ${item.warehouseName != null && item.warehouseName!.isNotEmpty ? (item.warehouseCode != null ? "${item.warehouseName} (${item.warehouseCode})" : item.warehouseName!) : (item.warehouseCode ?? "-")}',
+                                  style: context.caption1.copyWith(color: secondaryLabel),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
@@ -279,7 +294,7 @@ class _POApprovalScreenState extends ConsumerState<POApprovalScreen> {
 
     if (widget.isEmbedded) {
       return Container(
-        color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
+        color: CupertinoColors.transparent,
         child: Column(
           children: [
             Container(

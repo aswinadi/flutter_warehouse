@@ -100,7 +100,7 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF6E56CF), // Notion Purple
+              primary: CupertinoColors.activeBlue, // Notion Purple
               onPrimary: CupertinoColors.white,
               onSurface: Color(0xFF1E293B),
             ),
@@ -212,10 +212,10 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.m, vertical: CupertinoSpacing.xs + 2),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF6E56CF) : CupertinoColors.systemGroupedBackground.resolveFrom(context),
+          color: isSelected ? CupertinoColors.activeBlue : CupertinoColors.systemGroupedBackground.resolveFrom(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? const Color(0xFF6E56CF) : CupertinoColors.separator.resolveFrom(context),
+            color: isSelected ? CupertinoColors.activeBlue : CupertinoColors.separator.resolveFrom(context),
           ),
         ),
         child: Text(
@@ -286,7 +286,7 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
               ),
               child: Row(
                 children: [
-                  const Icon(CupertinoIcons.calendar, size: 16, color: Color(0xFF6E56CF)),
+                  const Icon(CupertinoIcons.calendar, size: 16, color: CupertinoColors.activeBlue),
                   const SizedBox(width: CupertinoSpacing.s),
                   Text(
                     'Periode:',
@@ -354,7 +354,7 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
                           _datePreset == '30days' ? '30 Hari Terakhir' :
                           _datePreset == 'thisMonth' ? 'Bulan Ini' :
                           _datePreset == '90days' ? '3 Bulan Terakhir' : 'Kustom',
-                          style: context.footnote.copyWith(color: const Color(0xFF6E56CF), fontWeight: FontWeight.w600),
+                          style: context.footnote.copyWith(color: CupertinoColors.activeBlue, fontWeight: FontWeight.w600),
                         ),
                       ),
                     ),
@@ -536,7 +536,7 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
               style: context.subhead.copyWith(fontWeight: FontWeight.bold),
             ),
             CupertinoButton(
-              color: const Color(0xFF6E56CF),
+              color: CupertinoColors.activeBlue,
               padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.halfScreenMargin),
               borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
               minimumSize: Size.zero,
@@ -597,10 +597,10 @@ class _InvoiceBiayaCard extends StatelessWidget {
     return CupertinoGlassContainer(
       borderRadius: CupertinoSpacing.cardRadius + 2,
       backgroundColor: isSelected 
-          ? const Color(0xFF6E56CF).withValues(alpha: 0.08) 
+          ? CupertinoColors.activeBlue.withValues(alpha: 0.08) 
           : null,
       borderColor: isSelected 
-          ? const Color(0xFF6E56CF) 
+          ? CupertinoColors.activeBlue 
           : null,
       padding: EdgeInsets.zero,
       child: GestureDetector(
@@ -615,7 +615,7 @@ class _InvoiceBiayaCard extends StatelessWidget {
                   margin: const EdgeInsets.only(right: CupertinoSpacing.m),
                   child: Icon(
                     isChecked ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.circle,
-                    color: isChecked ? const Color(0xFF6E56CF) : CupertinoColors.inactiveGray,
+                    color: isChecked ? CupertinoColors.activeBlue : CupertinoColors.inactiveGray,
                     size: 20,
                   ),
                 ),

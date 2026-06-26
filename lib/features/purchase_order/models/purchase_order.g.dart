@@ -66,6 +66,8 @@ _$PurchaseOrderItemImpl _$$PurchaseOrderItemImplFromJson(
       unitPrice: doubleOrNullFromJson(json['unit_price']),
       detailNotes: json['detail_notes'] as String?,
       detailSpec: json['detail_spec'] as String?,
+      warehouseCode: json['warehouse_code'] as String?,
+      warehouseName: json['warehouse_name'] as String?,
       version: (json['version'] as num?)?.toInt() ?? 0,
     );
 
@@ -83,5 +85,7 @@ Map<String, dynamic> _$$PurchaseOrderItemImplToJson(
       'unit_price': instance.unitPrice,
       'detail_notes': instance.detailNotes,
       'detail_spec': instance.detailSpec,
+      'warehouse_code': instance.warehouseCode,
+      'warehouse_name': instance.warehouseName,
       'version': instance.version,
     };

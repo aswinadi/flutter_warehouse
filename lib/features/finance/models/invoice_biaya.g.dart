@@ -25,8 +25,17 @@ _$InvoiceBiayaImpl _$$InvoiceBiayaImplFromJson(Map<String, dynamic> json) =>
       status: json['status'] as String,
       createdBy: (json['created_by'] as num?)?.toInt(),
       createdAt: json['created_at'] as String?,
+      taxInvoiceNumber: json['tax_invoice_number'] as String?,
+      taxInvoiceDate: json['tax_invoice_date'] as String?,
+      costCenterCode: json['cost_center_code'] as String?,
+      jvType: json['jv_type'] as String?,
       media: (json['media'] as List<dynamic>?)
               ?.map((e) => MediaFile.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      details: (json['details'] as List<dynamic>?)
+              ?.map(
+                  (e) => InvoiceBiayaDetail.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
     );
@@ -50,5 +59,10 @@ Map<String, dynamic> _$$InvoiceBiayaImplToJson(_$InvoiceBiayaImpl instance) =>
       'status': instance.status,
       'created_by': instance.createdBy,
       'created_at': instance.createdAt,
+      'tax_invoice_number': instance.taxInvoiceNumber,
+      'tax_invoice_date': instance.taxInvoiceDate,
+      'cost_center_code': instance.costCenterCode,
+      'jv_type': instance.jvType,
       'media': instance.media,
+      'details': instance.details,
     };

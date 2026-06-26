@@ -9,6 +9,10 @@ import '../config/menu_items.dart';
 import '../../features/notifications/providers/notification_provider.dart';
 import '../services/updater_service.dart';
 import '../providers/theme_provider.dart';
+import 'cupertino_mesh_background.dart';
+import 'cupertino_glass_bottom_sheet.dart';
+import 'cupertino_glass_list_section.dart';
+
 
 final sidebarCollapsedProvider = StateProvider<bool>((ref) => false);
 final expandedMenuIndexProvider = StateProvider<int?>((ref) => null);
@@ -121,9 +125,10 @@ class _MainShellState extends ConsumerState<MainShell> {
 
     final currentExpandedIndex = expandedIndex ?? (activeParentIndex != -1 ? activeParentIndex : null);
 
-    return CupertinoPageScaffold(
-      backgroundColor: CupertinoColors.systemGroupedBackground,
-      child: SafeArea(
+    return CupertinoMeshBackground(
+      child: CupertinoPageScaffold(
+        backgroundColor: CupertinoColors.transparent,
+        child: SafeArea(
         top: false,
         bottom: false,
         child: Row(
@@ -144,6 +149,7 @@ class _MainShellState extends ConsumerState<MainShell> {
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -160,7 +166,9 @@ class _MainShellState extends ConsumerState<MainShell> {
       duration: const Duration(milliseconds: 200),
       width: isCollapsed ? 70 : 265,
       decoration: BoxDecoration(
-        color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
+        color: CupertinoTheme.of(context).brightness == Brightness.dark
+            ? const Color(0xAA1C1C1E)
+            : const Color(0xAAFFFFFF),
         border: Border(
           right: BorderSide(
             color: CupertinoColors.separator.resolveFrom(context),
@@ -269,32 +277,79 @@ class _MainShellState extends ConsumerState<MainShell> {
         onTap: () {
           showCupertinoModalPopup(
             context: context,
-            builder: (context) => CupertinoActionSheet(
-              title: Text(parentLabel),
-              actions: item.subItems!.map((subItem) {
-                return CupertinoActionSheetAction(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(subItem.icon, color: CupertinoColors.activeBlue, size: 20),
-                      const SizedBox(width: 12),
-                      Text(subItem.labelBuilder(l10n)),
-                    ],
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    if (subItem.path != null) {
-                      context.go(subItem.path!);
-                    }
-                  },
-                );
-              }).toList(),
-              cancelButton: CupertinoActionSheetAction(
-                isDefaultAction: true,
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Batal'),
-              ),
-            ),
+            builder: (context) {
+              final isDark = CupertinoTheme.of(context).brightness == Brightness.dark;
+              return CupertinoGlassBottomSheet(
+                title: parentLabel,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: SingleChildScrollView(
+                        child: CupertinoGlassListSection(
+                          children: item.subItems!.map((subItem) {
+                            return GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                Navigator.pop(context);
+                                if (subItem.path != null) {
+                                  context.go(subItem.path!);
+                                }
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                child: Row(
+                                  children: [
+                                    Icon(subItem.icon, color: CupertinoColors.activeBlue, size: 20),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Text(
+                                        subItem.labelBuilder(l10n),
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          color: CupertinoColors.label.resolveFrom(context),
+                                          decoration: TextDecoration.none,
+                                        ),
+                                      ),
+                                    ),
+                                    const Icon(
+                                      CupertinoIcons.chevron_forward,
+                                      color: CupertinoColors.secondaryLabel,
+                                      size: 16,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      color: isDark ? const Color(0x33FF453A) : const Color(0x11FF3B30),
+                      borderRadius: BorderRadius.circular(12),
+                      onPressed: () => Navigator.pop(context),
+                      child: Container(
+                        width: double.infinity,
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        child: const Text(
+                          'Batal',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: CupertinoColors.destructiveRed,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           );
         },
         child: Container(

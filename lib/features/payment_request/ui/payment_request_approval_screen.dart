@@ -356,7 +356,7 @@ class _PaymentRequestApprovalScreenState extends ConsumerState<PaymentRequestApp
                             Expanded(
                               flex: 2,
                               child: CupertinoButton(
-                                color: const Color(0xFF6E56CF),
+                                color: CupertinoColors.activeBlue,
                                 padding: EdgeInsets.zero,
                                 onPressed: _isSubmitting ? null : _approve,
                                 child: Container(

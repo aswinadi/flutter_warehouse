@@ -387,7 +387,7 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
             const SizedBox(height: CupertinoSpacing.xs),
             Text(
               pr.companyName!,
-              style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: const Color(0xFF6E56CF)),
+              style: context.subhead.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.activeBlue),
             ),
           ],
           Padding(
@@ -543,7 +543,7 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                             if (!hasPo && pr.status.toLowerCase() == 'vendor_approved')
                               CupertinoCheckbox(
                                 value: _selectedComparisonIds.contains(comp.id),
-                                activeColor: const Color(0xFF6E56CF),
+                                activeColor: CupertinoColors.activeBlue,
                                 onChanged: (val) {
                                   setState(() {
                                     if (val == true) {
@@ -676,7 +676,7 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                               formatWithCurrency(comp.totalAmount, 'IDR'),
                               style: context.subhead.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: const Color(0xFF6E56CF),
+                                color: CupertinoColors.activeBlue,
                               ),
                             ),
                           ],
@@ -704,7 +704,7 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                   padding: const EdgeInsets.all(CupertinoSpacing.m),
                   child: Row(
                     children: [
-                      const Icon(CupertinoIcons.doc_text, color: Color(0xFF6E56CF), size: 20),
+                      const Icon(CupertinoIcons.doc_text, color: CupertinoColors.activeBlue, size: 20),
                       const SizedBox(width: CupertinoSpacing.m),
                       Expanded(
                         child: Column(
@@ -837,7 +837,7 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                         padding: const EdgeInsets.all(CupertinoSpacing.s),
                         child: Row(
                           children: [
-                            const Icon(CupertinoIcons.doc_text, size: 18, color: Color(0xFF6E56CF)),
+                            const Icon(CupertinoIcons.doc_text, size: 18, color: CupertinoColors.activeBlue),
                             const SizedBox(width: CupertinoSpacing.s),
                             Expanded(
                               child: Column(
@@ -1083,6 +1083,21 @@ class _DetailItemRow extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: CupertinoSpacing.xs),
+          Row(
+            children: [
+              Icon(CupertinoIcons.location, size: 14, color: secondaryLabel),
+              const SizedBox(width: CupertinoSpacing.xs),
+              Expanded(
+                child: Text(
+                  'Gudang: ${item.warehouseName != null && item.warehouseName!.isNotEmpty ? (item.warehouseCode != null ? "${item.warehouseName} (${item.warehouseCode})" : item.warehouseName!) : (item.warehouseCode ?? "-")}',
+                  style: context.caption1.copyWith(color: secondaryLabel),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
           if (item.dtSpec != null && item.dtSpec!.trim().isNotEmpty) ...[
             const SizedBox(height: CupertinoSpacing.s),
             Container(
@@ -1165,7 +1180,7 @@ class _ComparisonCard extends StatelessWidget {
             'Total: ${formatWithCurrency(comparison.totalAmount, 'IDR')}',
             style: context.footnote.copyWith(
               fontWeight: FontWeight.bold,
-              color: const Color(0xFF6E56CF),
+              color: CupertinoColors.activeBlue,
             ),
           ),
           if (comparison.notes != null && comparison.notes!.trim().isNotEmpty) ...[

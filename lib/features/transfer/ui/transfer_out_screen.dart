@@ -322,13 +322,13 @@ class _TransferOutScreenState extends ConsumerState<TransferOutScreen> {
 
             final cardColor = isSelected && isWide
                 ? CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.08)
-                : CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+                : null;
 
             return CupertinoGlassContainer(
               backgroundColor: cardColor,
               borderColor: isSelected && isWide
                   ? CupertinoColors.activeBlue.resolveFrom(context)
-                  : separatorColor,
+                  : null,
               borderRadius: CupertinoSpacing.cardRadius,
               padding: const EdgeInsets.all(CupertinoSpacing.l),
               child: GestureDetector(

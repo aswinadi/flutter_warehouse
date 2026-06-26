@@ -7,24 +7,24 @@ extension CupertinoTypography on BuildContext {
   /// Large Title style (34pt, Bold)
   TextStyle get largeTitle => _textTheme.navLargeTitleTextStyle;
 
-  /// Title 1 style (28pt, Regular)
+  /// Title 1 style (28pt, Semi-Bold)
   TextStyle get title1 => _textTheme.textStyle.copyWith(
         fontSize: 28,
-        fontWeight: FontWeight.w400,
-        letterSpacing: 0.38,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.34,
       );
 
-  /// Title 2 style (22pt, Regular)
+  /// Title 2 style (22pt, Medium)
   TextStyle get title2 => _textTheme.textStyle.copyWith(
         fontSize: 22,
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w500,
         letterSpacing: 0.35,
       );
 
-  /// Title 3 style (20pt, Regular)
+  /// Title 3 style (20pt, Medium)
   TextStyle get title3 => _textTheme.textStyle.copyWith(
         fontSize: 20,
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w500,
         letterSpacing: 0.38,
       );
 
@@ -34,10 +34,10 @@ extension CupertinoTypography on BuildContext {
   /// Body style (17pt, Regular)
   TextStyle get body => _textTheme.textStyle;
 
-  /// Callout style (16pt, Regular)
+  /// Callout style (16pt, Medium)
   TextStyle get callout => _textTheme.textStyle.copyWith(
         fontSize: 16,
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w500,
         letterSpacing: -0.32,
       );
 
@@ -55,10 +55,10 @@ extension CupertinoTypography on BuildContext {
         letterSpacing: -0.08,
       );
 
-  /// Caption 1 style (12pt, Regular)
+  /// Caption 1 style (12pt, Medium)
   TextStyle get caption1 => _textTheme.textStyle.copyWith(
         fontSize: 12,
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w500,
         letterSpacing: 0.0,
       );
 

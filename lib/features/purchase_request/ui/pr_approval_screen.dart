@@ -1083,6 +1083,21 @@ class _DetailItemRow extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: CupertinoSpacing.xs),
+          Row(
+            children: [
+              Icon(CupertinoIcons.location, size: 14, color: secondaryLabel),
+              const SizedBox(width: CupertinoSpacing.xs),
+              Expanded(
+                child: Text(
+                  'Gudang: ${item.warehouseName != null && item.warehouseName!.isNotEmpty ? (item.warehouseCode != null ? "${item.warehouseName} (${item.warehouseCode})" : item.warehouseName!) : (item.warehouseCode ?? "-")}',
+                  style: context.caption1.copyWith(color: secondaryLabel),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
           if (item.dtSpec != null && item.dtSpec!.trim().isNotEmpty) ...[
             const SizedBox(height: CupertinoSpacing.s),
             Container(

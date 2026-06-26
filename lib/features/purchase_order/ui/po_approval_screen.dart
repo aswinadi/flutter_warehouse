@@ -198,6 +198,21 @@ class _POApprovalScreenState extends ConsumerState<POApprovalScreen> {
                               ),
                             ],
                           ),
+                          const SizedBox(height: CupertinoSpacing.xs),
+                          Row(
+                            children: [
+                              Icon(CupertinoIcons.location, size: 12, color: secondaryLabel),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  'Gudang: ${item.warehouseName != null && item.warehouseName!.isNotEmpty ? (item.warehouseCode != null ? "${item.warehouseName} (${item.warehouseCode})" : item.warehouseName!) : (item.warehouseCode ?? "-")}',
+                                  style: context.caption1.copyWith(color: secondaryLabel),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.s),
                             child: Container(height: 0.5, color: CupertinoColors.separator.resolveFrom(context)),

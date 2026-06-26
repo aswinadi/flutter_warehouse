@@ -1046,8 +1046,15 @@ class _ApprovalItemRow extends StatelessWidget {
                 Text(
                   'Stok Saat Ini: ${item.currentStock} ${item.uom}',
                   style: context.caption1.copyWith(
-                    color: item.currentStock < item.qtyRequested ? CupertinoColors.activeOrange : CupertinoColors.secondaryLabel,
+                    color: item.currentStock < item.qtyRequested ? CupertinoColors.activeOrange : CupertinoColors.secondaryLabel.resolveFrom(context),
                     fontWeight: item.currentStock < item.qtyRequested ? FontWeight.w500 : FontWeight.normal,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Gudang: ${item.warehouseName != null && item.warehouseName!.isNotEmpty ? (item.warehouseCode != null ? "${item.warehouseName} (${item.warehouseCode})" : item.warehouseName!) : (item.warehouseCode ?? "-")}',
+                  style: context.caption1.copyWith(
+                    color: CupertinoColors.secondaryLabel.resolveFrom(context),
                   ),
                 ),
                 if (item.dtSpec != null && item.dtSpec!.trim().isNotEmpty) ...[
@@ -1172,6 +1179,42 @@ class _PrVendorItemCard extends StatelessWidget {
                 ],
               ],
             ),
+            const SizedBox(height: CupertinoSpacing.xs),
+            Row(
+              children: [
+                Icon(CupertinoIcons.location, size: 12, color: secondaryLabelColor),
+                const SizedBox(width: CupertinoSpacing.xs),
+                Expanded(
+                  child: Text(
+                    'Gudang: ${item.warehouseName != null && item.warehouseName!.isNotEmpty ? (item.warehouseCode != null ? "${item.warehouseName} (${item.warehouseCode})" : item.warehouseName!) : (item.warehouseCode ?? "-")}',
+                    style: context.caption1.copyWith(
+                      color: secondaryLabelColor,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            if (item.dtNotes != null && item.dtNotes!.trim().isNotEmpty) ...[
+              const SizedBox(height: CupertinoSpacing.xs),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(CupertinoIcons.doc_plaintext, size: 12, color: secondaryLabelColor),
+                  const SizedBox(width: CupertinoSpacing.xs),
+                  Expanded(
+                    child: Text(
+                      'Keterangan: ${item.dtNotes}',
+                      style: context.caption1.copyWith(
+                        color: secondaryLabelColor,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

@@ -8,6 +8,7 @@ A multi-platform application for managing warehouse operations, farm usage, and 
 - **Operations**: Farm (Tambak) usage logs with pond referencing.
 - **Inventory**: Real-time stock view by location and SKU.
 - **Hardware**: Zebra ZPL II and Generic ESC/POS network printing.
+- **Reporting**: Dual-format (PDF & Excel) document exporting and direct downloads on desktop, mobile, and web.
 
 ## 📚 Documentation
 Detailed documentation is available in the [`.docs`](./.docs) folder:

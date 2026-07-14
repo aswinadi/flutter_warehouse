@@ -191,6 +191,15 @@ class _MainShellState extends ConsumerState<MainShell> {
     int? currentExpandedIndex,
   ) {
     final l10n = AppLocalizations.of(context)!;
+    final authState = ref.watch(authProvider);
+    final user = authState.valueOrNull?.maybeWhen(
+      authenticated: (user, _) => user,
+      orElse: () => null,
+    );
+    final impersonationState = ref.watch(impersonationProvider);
+    final isImpersonating = impersonationState.valueOrNull?.isImpersonating ?? false;
+    final canImpersonate = !isImpersonating && (user?.roles.contains('super_admin') ?? false);
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       width: isCollapsed ? 70 : 265,
@@ -249,6 +258,56 @@ class _MainShellState extends ConsumerState<MainShell> {
               ],
             ),
           ),
+          if (canImpersonate)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: _SidebarItem(
+                icon: CupertinoIcons.person_crop_circle_badge_plus,
+                label: 'Impersonate',
+                isCollapsed: isCollapsed,
+                isActive: false,
+                onTap: () {
+                  showCupertinoDialog(
+                    context: context,
+                    builder: (context) => const ImpersonateSelectionDialog(),
+                  );
+                },
+              ),
+            ),
+          if (isImpersonating)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: _SidebarItem(
+                icon: CupertinoIcons.person_crop_circle_badge_xmark,
+                label: 'Keluar Impersonate',
+                isCollapsed: isCollapsed,
+                isActive: false,
+                onTap: () {
+                  showCupertinoDialog(
+                    context: context,
+                    builder: (context) => CupertinoAlertDialog(
+                      title: const Text('Keluar Impersonasi'),
+                      content: const Text('Apakah Anda yakin ingin keluar dari sesi impersonasi ini?'),
+                      actions: [
+                        CupertinoDialogAction(
+                          isDestructiveAction: true,
+                          onPressed: () {
+                            Navigator.pop(context);
+                            ref.read(impersonationProvider.notifier).stopImpersonating();
+                          },
+                          child: const Text('Keluar'),
+                        ),
+                        CupertinoDialogAction(
+                          isDefaultAction: true,
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Batal'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: _SidebarItem(

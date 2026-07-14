@@ -14,6 +14,214 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
+WarehouseArea _$WarehouseAreaFromJson(Map<String, dynamic> json) {
+  return _WarehouseArea.fromJson(json);
+}
+
+/// @nodoc
+mixin _$WarehouseArea {
+  int get id => throw _privateConstructorUsedError;
+  @JsonKey(name: 'warehouse_id')
+  int? get warehouseId => throw _privateConstructorUsedError;
+  String get name => throw _privateConstructorUsedError;
+  @JsonKey(name: 'is_active')
+  bool get isActive => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $WarehouseAreaCopyWith<WarehouseArea> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $WarehouseAreaCopyWith<$Res> {
+  factory $WarehouseAreaCopyWith(
+          WarehouseArea value, $Res Function(WarehouseArea) then) =
+      _$WarehouseAreaCopyWithImpl<$Res, WarehouseArea>;
+  @useResult
+  $Res call(
+      {int id,
+      @JsonKey(name: 'warehouse_id') int? warehouseId,
+      String name,
+      @JsonKey(name: 'is_active') bool isActive});
+}
+
+/// @nodoc
+class _$WarehouseAreaCopyWithImpl<$Res, $Val extends WarehouseArea>
+    implements $WarehouseAreaCopyWith<$Res> {
+  _$WarehouseAreaCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? warehouseId = freezed,
+    Object? name = null,
+    Object? isActive = null,
+  }) {
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      warehouseId: freezed == warehouseId
+          ? _value.warehouseId
+          : warehouseId // ignore: cast_nullable_to_non_nullable
+              as int?,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      isActive: null == isActive
+          ? _value.isActive
+          : isActive // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$WarehouseAreaImplCopyWith<$Res>
+    implements $WarehouseAreaCopyWith<$Res> {
+  factory _$$WarehouseAreaImplCopyWith(
+          _$WarehouseAreaImpl value, $Res Function(_$WarehouseAreaImpl) then) =
+      __$$WarehouseAreaImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {int id,
+      @JsonKey(name: 'warehouse_id') int? warehouseId,
+      String name,
+      @JsonKey(name: 'is_active') bool isActive});
+}
+
+/// @nodoc
+class __$$WarehouseAreaImplCopyWithImpl<$Res>
+    extends _$WarehouseAreaCopyWithImpl<$Res, _$WarehouseAreaImpl>
+    implements _$$WarehouseAreaImplCopyWith<$Res> {
+  __$$WarehouseAreaImplCopyWithImpl(
+      _$WarehouseAreaImpl _value, $Res Function(_$WarehouseAreaImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? warehouseId = freezed,
+    Object? name = null,
+    Object? isActive = null,
+  }) {
+    return _then(_$WarehouseAreaImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      warehouseId: freezed == warehouseId
+          ? _value.warehouseId
+          : warehouseId // ignore: cast_nullable_to_non_nullable
+              as int?,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      isActive: null == isActive
+          ? _value.isActive
+          : isActive // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$WarehouseAreaImpl implements _WarehouseArea {
+  const _$WarehouseAreaImpl(
+      {required this.id,
+      @JsonKey(name: 'warehouse_id') this.warehouseId,
+      required this.name,
+      @JsonKey(name: 'is_active') this.isActive = true});
+
+  factory _$WarehouseAreaImpl.fromJson(Map<String, dynamic> json) =>
+      _$$WarehouseAreaImplFromJson(json);
+
+  @override
+  final int id;
+  @override
+  @JsonKey(name: 'warehouse_id')
+  final int? warehouseId;
+  @override
+  final String name;
+  @override
+  @JsonKey(name: 'is_active')
+  final bool isActive;
+
+  @override
+  String toString() {
+    return 'WarehouseArea(id: $id, warehouseId: $warehouseId, name: $name, isActive: $isActive)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$WarehouseAreaImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.warehouseId, warehouseId) ||
+                other.warehouseId == warehouseId) &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.isActive, isActive) ||
+                other.isActive == isActive));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(runtimeType, id, warehouseId, name, isActive);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$WarehouseAreaImplCopyWith<_$WarehouseAreaImpl> get copyWith =>
+      __$$WarehouseAreaImplCopyWithImpl<_$WarehouseAreaImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$WarehouseAreaImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _WarehouseArea implements WarehouseArea {
+  const factory _WarehouseArea(
+      {required final int id,
+      @JsonKey(name: 'warehouse_id') final int? warehouseId,
+      required final String name,
+      @JsonKey(name: 'is_active') final bool isActive}) = _$WarehouseAreaImpl;
+
+  factory _WarehouseArea.fromJson(Map<String, dynamic> json) =
+      _$WarehouseAreaImpl.fromJson;
+
+  @override
+  int get id;
+  @override
+  @JsonKey(name: 'warehouse_id')
+  int? get warehouseId;
+  @override
+  String get name;
+  @override
+  @JsonKey(name: 'is_active')
+  bool get isActive;
+  @override
+  @JsonKey(ignore: true)
+  _$$WarehouseAreaImplCopyWith<_$WarehouseAreaImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 Warehouse _$WarehouseFromJson(Map<String, dynamic> json) {
   return _Warehouse.fromJson(json);
 }
@@ -28,6 +236,7 @@ mixin _$Warehouse {
   String? get address => throw _privateConstructorUsedError;
   @JsonKey(name: 'is_active')
   bool get isActive => throw _privateConstructorUsedError;
+  List<WarehouseArea> get areas => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -46,7 +255,8 @@ abstract class $WarehouseCopyWith<$Res> {
       String code,
       String name,
       String? address,
-      @JsonKey(name: 'is_active') bool isActive});
+      @JsonKey(name: 'is_active') bool isActive,
+      List<WarehouseArea> areas});
 }
 
 /// @nodoc
@@ -68,6 +278,7 @@ class _$WarehouseCopyWithImpl<$Res, $Val extends Warehouse>
     Object? name = null,
     Object? address = freezed,
     Object? isActive = null,
+    Object? areas = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -94,6 +305,10 @@ class _$WarehouseCopyWithImpl<$Res, $Val extends Warehouse>
           ? _value.isActive
           : isActive // ignore: cast_nullable_to_non_nullable
               as bool,
+      areas: null == areas
+          ? _value.areas
+          : areas // ignore: cast_nullable_to_non_nullable
+              as List<WarehouseArea>,
     ) as $Val);
   }
 }
@@ -112,7 +327,8 @@ abstract class _$$WarehouseImplCopyWith<$Res>
       String code,
       String name,
       String? address,
-      @JsonKey(name: 'is_active') bool isActive});
+      @JsonKey(name: 'is_active') bool isActive,
+      List<WarehouseArea> areas});
 }
 
 /// @nodoc
@@ -132,6 +348,7 @@ class __$$WarehouseImplCopyWithImpl<$Res>
     Object? name = null,
     Object? address = freezed,
     Object? isActive = null,
+    Object? areas = null,
   }) {
     return _then(_$WarehouseImpl(
       id: null == id
@@ -158,6 +375,10 @@ class __$$WarehouseImplCopyWithImpl<$Res>
           ? _value.isActive
           : isActive // ignore: cast_nullable_to_non_nullable
               as bool,
+      areas: null == areas
+          ? _value._areas
+          : areas // ignore: cast_nullable_to_non_nullable
+              as List<WarehouseArea>,
     ));
   }
 }
@@ -171,7 +392,9 @@ class _$WarehouseImpl implements _Warehouse {
       required this.code,
       required this.name,
       this.address,
-      @JsonKey(name: 'is_active') required this.isActive});
+      @JsonKey(name: 'is_active') required this.isActive,
+      final List<WarehouseArea> areas = const []})
+      : _areas = areas;
 
   factory _$WarehouseImpl.fromJson(Map<String, dynamic> json) =>
       _$$WarehouseImplFromJson(json);
@@ -190,10 +413,18 @@ class _$WarehouseImpl implements _Warehouse {
   @override
   @JsonKey(name: 'is_active')
   final bool isActive;
+  final List<WarehouseArea> _areas;
+  @override
+  @JsonKey()
+  List<WarehouseArea> get areas {
+    if (_areas is EqualUnmodifiableListView) return _areas;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_areas);
+  }
 
   @override
   String toString() {
-    return 'Warehouse(id: $id, companyId: $companyId, code: $code, name: $name, address: $address, isActive: $isActive)';
+    return 'Warehouse(id: $id, companyId: $companyId, code: $code, name: $name, address: $address, isActive: $isActive, areas: $areas)';
   }
 
   @override
@@ -208,13 +439,14 @@ class _$WarehouseImpl implements _Warehouse {
             (identical(other.name, name) || other.name == name) &&
             (identical(other.address, address) || other.address == address) &&
             (identical(other.isActive, isActive) ||
-                other.isActive == isActive));
+                other.isActive == isActive) &&
+            const DeepCollectionEquality().equals(other._areas, _areas));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, companyId, code, name, address, isActive);
+  int get hashCode => Object.hash(runtimeType, id, companyId, code, name,
+      address, isActive, const DeepCollectionEquality().hash(_areas));
 
   @JsonKey(ignore: true)
   @override
@@ -232,13 +464,13 @@ class _$WarehouseImpl implements _Warehouse {
 
 abstract class _Warehouse implements Warehouse {
   const factory _Warehouse(
-          {required final int id,
-          @JsonKey(name: 'company_id') required final int companyId,
-          required final String code,
-          required final String name,
-          final String? address,
-          @JsonKey(name: 'is_active') required final bool isActive}) =
-      _$WarehouseImpl;
+      {required final int id,
+      @JsonKey(name: 'company_id') required final int companyId,
+      required final String code,
+      required final String name,
+      final String? address,
+      @JsonKey(name: 'is_active') required final bool isActive,
+      final List<WarehouseArea> areas}) = _$WarehouseImpl;
 
   factory _Warehouse.fromJson(Map<String, dynamic> json) =
       _$WarehouseImpl.fromJson;
@@ -257,6 +489,8 @@ abstract class _Warehouse implements Warehouse {
   @override
   @JsonKey(name: 'is_active')
   bool get isActive;
+  @override
+  List<WarehouseArea> get areas;
   @override
   @JsonKey(ignore: true)
   _$$WarehouseImplCopyWith<_$WarehouseImpl> get copyWith =>

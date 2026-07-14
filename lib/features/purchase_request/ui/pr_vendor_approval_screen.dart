@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/purchase_request_detail_provider.dart';
 import '../providers/purchase_request_provider.dart';
+import '../../../core/providers/warehouse_provider.dart';
 import '../../../core/utils/currency_utils.dart';
 import '../../../core/theme/cupertino_theme_extensions.dart';
 import '../../../core/theme/cupertino_spacing.dart';
@@ -22,16 +23,21 @@ class PRVendorApprovalScreen extends ConsumerStatefulWidget {
 class _PRVendorApprovalScreenState extends ConsumerState<PRVendorApprovalScreen> {
   // Map to store selected comparison_id for each item_id (detail.id)
   final Map<int, int> _selections = {};
+  // Map to store selected warehouse_area_id for each item_id (detail.id)
+  final Map<int, int?> _areaSelections = {};
+  bool _isSelectionsInitialized = false;
   bool _isSubmitting = false;
 
   void _initializeSelections(List<dynamic> details, List<dynamic> comparisons) {
-    if (_selections.isEmpty) {
+    if (!_isSelectionsInitialized) {
       for (var detail in details) {
         final options = comparisons.where((c) => c.details.any((d) => d.purchaseRequestDetailId == detail.id)).toList();
         if (options.isNotEmpty) {
           _selections[detail.id] = options.first.id;
         }
+        _areaSelections[detail.id] = detail.warehouseAreaId;
       }
+      _isSelectionsInitialized = true;
     }
   }
 
@@ -59,6 +65,7 @@ class _PRVendorApprovalScreenState extends ConsumerState<PRVendorApprovalScreen>
         return {
           'item_id': d.id,
           'comparison_id': _selections[d.id]!,
+          if (_areaSelections[d.id] != null) 'warehouse_area_id': _areaSelections[d.id]!,
         };
       }).toList();
 
@@ -175,6 +182,101 @@ class _PRVendorApprovalScreenState extends ConsumerState<PRVendorApprovalScreen>
                               Text(
                                 'SKU: ${detail.itemCode} | Qty: ${detail.qtyRequested} ${detail.uom}',
                                 style: context.footnote.copyWith(color: secondaryLabel),
+                              ),
+                              const SizedBox(height: CupertinoSpacing.xs),
+                              Text(
+                                'Gudang: ${detail.warehouseName != null && detail.warehouseName!.isNotEmpty ? (detail.warehouseCode != null ? "${detail.warehouseName} (${detail.warehouseCode})" : detail.warehouseName!) : (detail.warehouseCode ?? "-")}${detail.warehouseAreaName != null ? " - Area: ${detail.warehouseAreaName}" : ""}',
+                                style: context.footnote.copyWith(color: secondaryLabel),
+                              ),
+                              Builder(
+                                builder: (ctx) {
+                                  final warehouses = ref.watch(warehousesProvider).valueOrNull ?? [];
+                                  final itemWarehouse = warehouses.where((w) => w.code == detail.warehouseCode).firstOrNull;
+                                  final areas = itemWarehouse?.areas.where((a) => a.isActive).toList() ?? [];
+                                  
+                                  if (areas.isEmpty) {
+                                    return const SizedBox.shrink();
+                                  }
+
+                                  final selectedAreaId = _areaSelections[detail.id];
+                                  final selectedArea = areas.where((a) => a.id == selectedAreaId).firstOrNull;
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: CupertinoSpacing.s),
+                                    child: Row(
+                                      children: [
+                                        Text(
+                                          'Area Tujuan: ',
+                                          style: context.footnote.copyWith(fontWeight: FontWeight.bold, color: labelColor),
+                                        ),
+                                        const SizedBox(width: CupertinoSpacing.xs),
+                                        GestureDetector(
+                                          onTap: canApproveNow ? () async {
+                                            await showCupertinoModalPopup<void>(
+                                              context: ctx,
+                                              builder: (BuildContext sheetCtx) {
+                                                return CupertinoActionSheet(
+                                                  title: const Text('Pilih Area Tujuan'),
+                                                  message: Text('Gudang: ${detail.warehouseName ?? detail.warehouseCode}'),
+                                                  actions: [
+                                                    CupertinoActionSheetAction(
+                                                      onPressed: () {
+                                                        setState(() {
+                                                          _areaSelections[detail.id] = null;
+                                                        });
+                                                        Navigator.pop(sheetCtx);
+                                                      },
+                                                      child: const Text('Tanpa Area / Default'),
+                                                    ),
+                                                    ...areas.map((area) {
+                                                      return CupertinoActionSheetAction(
+                                                        onPressed: () {
+                                                          setState(() {
+                                                            _areaSelections[detail.id] = area.id;
+                                                          });
+                                                          Navigator.pop(sheetCtx);
+                                                        },
+                                                        child: Text(area.name),
+                                                      );
+                                                    }),
+                                                  ],
+                                                  cancelButton: CupertinoActionSheetAction(
+                                                    isDefaultAction: true,
+                                                    onPressed: () => Navigator.pop(sheetCtx),
+                                                    child: const Text('Batal'),
+                                                  ),
+                                                );
+                                              },
+                                            );
+                                          } : null,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.s, vertical: CupertinoSpacing.xs),
+                                            decoration: BoxDecoration(
+                                              color: CupertinoColors.tertiarySystemFill.resolveFrom(ctx),
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                  selectedArea?.name ?? 'Pilih Area...',
+                                                  style: context.footnote.copyWith(
+                                                    color: selectedArea != null ? CupertinoColors.activeBlue : secondaryLabel,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                if (canApproveNow) ...[
+                                                  const SizedBox(width: 4),
+                                                  Icon(CupertinoIcons.chevron_down, size: 10, color: secondaryLabel),
+                                                ],
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
                               ),
                               Padding(
                                 padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.m),

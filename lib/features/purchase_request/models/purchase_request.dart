@@ -77,6 +77,8 @@ class PurchaseRequestItem with _$PurchaseRequestItem {
     @JsonKey(name: 'selected_comparison_id') int? selectedComparisonId,
     @JsonKey(name: 'warehouse_code') String? warehouseCode,
     @JsonKey(name: 'warehouse_name') String? warehouseName,
+    @JsonKey(name: 'warehouse_area_id') int? warehouseAreaId,
+    @JsonKey(name: 'warehouse_area_name') String? warehouseAreaName,
     @JsonKey(name: 'po_number') String? poNumber,
   }) = _PurchaseRequestItem;
 

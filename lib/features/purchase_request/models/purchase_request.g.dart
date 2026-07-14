@@ -124,6 +124,8 @@ _$PurchaseRequestItemImpl _$$PurchaseRequestItemImplFromJson(
       selectedComparisonId: (json['selected_comparison_id'] as num?)?.toInt(),
       warehouseCode: json['warehouse_code'] as String?,
       warehouseName: json['warehouse_name'] as String?,
+      warehouseAreaId: (json['warehouse_area_id'] as num?)?.toInt(),
+      warehouseAreaName: json['warehouse_area_name'] as String?,
       poNumber: json['po_number'] as String?,
     );
 
@@ -148,6 +150,8 @@ Map<String, dynamic> _$$PurchaseRequestItemImplToJson(
       'selected_comparison_id': instance.selectedComparisonId,
       'warehouse_code': instance.warehouseCode,
       'warehouse_name': instance.warehouseName,
+      'warehouse_area_id': instance.warehouseAreaId,
+      'warehouse_area_name': instance.warehouseAreaName,
       'po_number': instance.poNumber,
     };
 

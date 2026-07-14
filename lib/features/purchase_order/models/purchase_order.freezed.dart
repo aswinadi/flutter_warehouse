@@ -29,6 +29,10 @@ mixin _$PurchaseOrder {
   int get warehouseId => throw _privateConstructorUsedError;
   @JsonKey(name: 'warehouse_name')
   String? get warehouseName => throw _privateConstructorUsedError;
+  @JsonKey(name: 'warehouse_area_id')
+  int? get warehouseAreaId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'warehouse_area_name')
+  String? get warehouseAreaName => throw _privateConstructorUsedError;
   @JsonKey(name: 'supplier_id')
   int? get supplierId => throw _privateConstructorUsedError;
   @JsonKey(name: 'supplier_name')
@@ -70,6 +74,8 @@ abstract class $PurchaseOrderCopyWith<$Res> {
       @JsonKey(name: 'company_id') int companyId,
       @JsonKey(name: 'warehouse_id') int warehouseId,
       @JsonKey(name: 'warehouse_name') String? warehouseName,
+      @JsonKey(name: 'warehouse_area_id') int? warehouseAreaId,
+      @JsonKey(name: 'warehouse_area_name') String? warehouseAreaName,
       @JsonKey(name: 'supplier_id') int? supplierId,
       @JsonKey(name: 'supplier_name') String supplierName,
       @JsonKey(name: 'transaction_date') String transactionDate,
@@ -103,6 +109,8 @@ class _$PurchaseOrderCopyWithImpl<$Res, $Val extends PurchaseOrder>
     Object? companyId = null,
     Object? warehouseId = null,
     Object? warehouseName = freezed,
+    Object? warehouseAreaId = freezed,
+    Object? warehouseAreaName = freezed,
     Object? supplierId = freezed,
     Object? supplierName = null,
     Object? transactionDate = null,
@@ -136,6 +144,14 @@ class _$PurchaseOrderCopyWithImpl<$Res, $Val extends PurchaseOrder>
       warehouseName: freezed == warehouseName
           ? _value.warehouseName
           : warehouseName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      warehouseAreaId: freezed == warehouseAreaId
+          ? _value.warehouseAreaId
+          : warehouseAreaId // ignore: cast_nullable_to_non_nullable
+              as int?,
+      warehouseAreaName: freezed == warehouseAreaName
+          ? _value.warehouseAreaName
+          : warehouseAreaName // ignore: cast_nullable_to_non_nullable
               as String?,
       supplierId: freezed == supplierId
           ? _value.supplierId
@@ -203,6 +219,8 @@ abstract class _$$PurchaseOrderImplCopyWith<$Res>
       @JsonKey(name: 'company_id') int companyId,
       @JsonKey(name: 'warehouse_id') int warehouseId,
       @JsonKey(name: 'warehouse_name') String? warehouseName,
+      @JsonKey(name: 'warehouse_area_id') int? warehouseAreaId,
+      @JsonKey(name: 'warehouse_area_name') String? warehouseAreaName,
       @JsonKey(name: 'supplier_id') int? supplierId,
       @JsonKey(name: 'supplier_name') String supplierName,
       @JsonKey(name: 'transaction_date') String transactionDate,
@@ -234,6 +252,8 @@ class __$$PurchaseOrderImplCopyWithImpl<$Res>
     Object? companyId = null,
     Object? warehouseId = null,
     Object? warehouseName = freezed,
+    Object? warehouseAreaId = freezed,
+    Object? warehouseAreaName = freezed,
     Object? supplierId = freezed,
     Object? supplierName = null,
     Object? transactionDate = null,
@@ -267,6 +287,14 @@ class __$$PurchaseOrderImplCopyWithImpl<$Res>
       warehouseName: freezed == warehouseName
           ? _value.warehouseName
           : warehouseName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      warehouseAreaId: freezed == warehouseAreaId
+          ? _value.warehouseAreaId
+          : warehouseAreaId // ignore: cast_nullable_to_non_nullable
+              as int?,
+      warehouseAreaName: freezed == warehouseAreaName
+          ? _value.warehouseAreaName
+          : warehouseAreaName // ignore: cast_nullable_to_non_nullable
               as String?,
       supplierId: freezed == supplierId
           ? _value.supplierId
@@ -329,6 +357,8 @@ class _$PurchaseOrderImpl implements _PurchaseOrder {
       @JsonKey(name: 'company_id') required this.companyId,
       @JsonKey(name: 'warehouse_id') required this.warehouseId,
       @JsonKey(name: 'warehouse_name') this.warehouseName,
+      @JsonKey(name: 'warehouse_area_id') this.warehouseAreaId,
+      @JsonKey(name: 'warehouse_area_name') this.warehouseAreaName,
       @JsonKey(name: 'supplier_id') this.supplierId,
       @JsonKey(name: 'supplier_name') required this.supplierName,
       @JsonKey(name: 'transaction_date') required this.transactionDate,
@@ -361,6 +391,12 @@ class _$PurchaseOrderImpl implements _PurchaseOrder {
   @override
   @JsonKey(name: 'warehouse_name')
   final String? warehouseName;
+  @override
+  @JsonKey(name: 'warehouse_area_id')
+  final int? warehouseAreaId;
+  @override
+  @JsonKey(name: 'warehouse_area_name')
+  final String? warehouseAreaName;
   @override
   @JsonKey(name: 'supplier_id')
   final int? supplierId;
@@ -404,7 +440,7 @@ class _$PurchaseOrderImpl implements _PurchaseOrder {
 
   @override
   String toString() {
-    return 'PurchaseOrder(id: $id, poNumber: $poNumber, companyId: $companyId, warehouseId: $warehouseId, warehouseName: $warehouseName, supplierId: $supplierId, supplierName: $supplierName, transactionDate: $transactionDate, expectedDate: $expectedDate, paymentTerm: $paymentTerm, status: $status, totalItems: $totalItems, receivedItems: $receivedItems, canApprove: $canApprove, pdfUrl: $pdfUrl, totalAmount: $totalAmount, items: $items)';
+    return 'PurchaseOrder(id: $id, poNumber: $poNumber, companyId: $companyId, warehouseId: $warehouseId, warehouseName: $warehouseName, warehouseAreaId: $warehouseAreaId, warehouseAreaName: $warehouseAreaName, supplierId: $supplierId, supplierName: $supplierName, transactionDate: $transactionDate, expectedDate: $expectedDate, paymentTerm: $paymentTerm, status: $status, totalItems: $totalItems, receivedItems: $receivedItems, canApprove: $canApprove, pdfUrl: $pdfUrl, totalAmount: $totalAmount, items: $items)';
   }
 
   @override
@@ -421,6 +457,10 @@ class _$PurchaseOrderImpl implements _PurchaseOrder {
                 other.warehouseId == warehouseId) &&
             (identical(other.warehouseName, warehouseName) ||
                 other.warehouseName == warehouseName) &&
+            (identical(other.warehouseAreaId, warehouseAreaId) ||
+                other.warehouseAreaId == warehouseAreaId) &&
+            (identical(other.warehouseAreaName, warehouseAreaName) ||
+                other.warehouseAreaName == warehouseAreaName) &&
             (identical(other.supplierId, supplierId) ||
                 other.supplierId == supplierId) &&
             (identical(other.supplierName, supplierName) ||
@@ -446,25 +486,28 @@ class _$PurchaseOrderImpl implements _PurchaseOrder {
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      poNumber,
-      companyId,
-      warehouseId,
-      warehouseName,
-      supplierId,
-      supplierName,
-      transactionDate,
-      expectedDate,
-      paymentTerm,
-      status,
-      totalItems,
-      receivedItems,
-      canApprove,
-      pdfUrl,
-      totalAmount,
-      const DeepCollectionEquality().hash(_items));
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        id,
+        poNumber,
+        companyId,
+        warehouseId,
+        warehouseName,
+        warehouseAreaId,
+        warehouseAreaName,
+        supplierId,
+        supplierName,
+        transactionDate,
+        expectedDate,
+        paymentTerm,
+        status,
+        totalItems,
+        receivedItems,
+        canApprove,
+        pdfUrl,
+        totalAmount,
+        const DeepCollectionEquality().hash(_items)
+      ]);
 
   @JsonKey(ignore: true)
   @override
@@ -487,6 +530,8 @@ abstract class _PurchaseOrder implements PurchaseOrder {
       @JsonKey(name: 'company_id') required final int companyId,
       @JsonKey(name: 'warehouse_id') required final int warehouseId,
       @JsonKey(name: 'warehouse_name') final String? warehouseName,
+      @JsonKey(name: 'warehouse_area_id') final int? warehouseAreaId,
+      @JsonKey(name: 'warehouse_area_name') final String? warehouseAreaName,
       @JsonKey(name: 'supplier_id') final int? supplierId,
       @JsonKey(name: 'supplier_name') required final String supplierName,
       @JsonKey(name: 'transaction_date') required final String transactionDate,
@@ -518,6 +563,12 @@ abstract class _PurchaseOrder implements PurchaseOrder {
   @override
   @JsonKey(name: 'warehouse_name')
   String? get warehouseName;
+  @override
+  @JsonKey(name: 'warehouse_area_id')
+  int? get warehouseAreaId;
+  @override
+  @JsonKey(name: 'warehouse_area_name')
+  String? get warehouseAreaName;
   @override
   @JsonKey(name: 'supplier_id')
   int? get supplierId;

@@ -30,9 +30,10 @@ class PurchaseRequestRepository {
     });
   }
 
-  Future<void> submitToBod(int id, {List<int>? itemIds}) async {
+  Future<void> submitToBod(int id, {List<int>? itemIds, List<Map<String, dynamic>>? items}) async {
     await dio.post('wh/purchase-requests/$id/submit-to-bod', data: {
       if (itemIds != null) 'item_ids': itemIds,
+      if (items != null) 'items': items,
     });
   }
 
@@ -104,6 +105,12 @@ class PurchaseRequestRepository {
 
   Future<void> removeVendorComparison(int prId, int comparisonId) async {
     await dio.delete('wh/purchase-requests/$prId/comparisons/$comparisonId');
+  }
+
+  Future<void> updateWarehouseArea(int itemId, int? warehouseAreaId) async {
+    await dio.patch('wh/purchase-requests/items/$itemId/warehouse-area', data: {
+      'warehouse_area_id': warehouseAreaId,
+    });
   }
 
   /// Generates POs from BOD acknowledged vendor selections.

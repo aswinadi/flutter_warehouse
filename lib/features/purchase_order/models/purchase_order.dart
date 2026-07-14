@@ -12,6 +12,8 @@ class PurchaseOrder with _$PurchaseOrder {
     @JsonKey(name: 'company_id') required int companyId,
     @JsonKey(name: 'warehouse_id') required int warehouseId,
     @JsonKey(name: 'warehouse_name') String? warehouseName,
+    @JsonKey(name: 'warehouse_area_id') int? warehouseAreaId,
+    @JsonKey(name: 'warehouse_area_name') String? warehouseAreaName,
     @JsonKey(name: 'supplier_id') int? supplierId,
     @JsonKey(name: 'supplier_name') required String supplierName,
     @JsonKey(name: 'transaction_date') required String transactionDate,

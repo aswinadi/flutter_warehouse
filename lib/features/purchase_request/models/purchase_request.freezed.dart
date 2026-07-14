@@ -1047,6 +1047,10 @@ mixin _$PurchaseRequestItem {
   String? get warehouseCode => throw _privateConstructorUsedError;
   @JsonKey(name: 'warehouse_name')
   String? get warehouseName => throw _privateConstructorUsedError;
+  @JsonKey(name: 'warehouse_area_id')
+  int? get warehouseAreaId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'warehouse_area_name')
+  String? get warehouseAreaName => throw _privateConstructorUsedError;
   @JsonKey(name: 'po_number')
   String? get poNumber => throw _privateConstructorUsedError;
 
@@ -1084,6 +1088,8 @@ abstract class $PurchaseRequestItemCopyWith<$Res> {
       @JsonKey(name: 'selected_comparison_id') int? selectedComparisonId,
       @JsonKey(name: 'warehouse_code') String? warehouseCode,
       @JsonKey(name: 'warehouse_name') String? warehouseName,
+      @JsonKey(name: 'warehouse_area_id') int? warehouseAreaId,
+      @JsonKey(name: 'warehouse_area_name') String? warehouseAreaName,
       @JsonKey(name: 'po_number') String? poNumber});
 }
 
@@ -1118,6 +1124,8 @@ class _$PurchaseRequestItemCopyWithImpl<$Res, $Val extends PurchaseRequestItem>
     Object? selectedComparisonId = freezed,
     Object? warehouseCode = freezed,
     Object? warehouseName = freezed,
+    Object? warehouseAreaId = freezed,
+    Object? warehouseAreaName = freezed,
     Object? poNumber = freezed,
   }) {
     return _then(_value.copyWith(
@@ -1193,6 +1201,14 @@ class _$PurchaseRequestItemCopyWithImpl<$Res, $Val extends PurchaseRequestItem>
           ? _value.warehouseName
           : warehouseName // ignore: cast_nullable_to_non_nullable
               as String?,
+      warehouseAreaId: freezed == warehouseAreaId
+          ? _value.warehouseAreaId
+          : warehouseAreaId // ignore: cast_nullable_to_non_nullable
+              as int?,
+      warehouseAreaName: freezed == warehouseAreaName
+          ? _value.warehouseAreaName
+          : warehouseAreaName // ignore: cast_nullable_to_non_nullable
+              as String?,
       poNumber: freezed == poNumber
           ? _value.poNumber
           : poNumber // ignore: cast_nullable_to_non_nullable
@@ -1231,6 +1247,8 @@ abstract class _$$PurchaseRequestItemImplCopyWith<$Res>
       @JsonKey(name: 'selected_comparison_id') int? selectedComparisonId,
       @JsonKey(name: 'warehouse_code') String? warehouseCode,
       @JsonKey(name: 'warehouse_name') String? warehouseName,
+      @JsonKey(name: 'warehouse_area_id') int? warehouseAreaId,
+      @JsonKey(name: 'warehouse_area_name') String? warehouseAreaName,
       @JsonKey(name: 'po_number') String? poNumber});
 }
 
@@ -1263,6 +1281,8 @@ class __$$PurchaseRequestItemImplCopyWithImpl<$Res>
     Object? selectedComparisonId = freezed,
     Object? warehouseCode = freezed,
     Object? warehouseName = freezed,
+    Object? warehouseAreaId = freezed,
+    Object? warehouseAreaName = freezed,
     Object? poNumber = freezed,
   }) {
     return _then(_$PurchaseRequestItemImpl(
@@ -1338,6 +1358,14 @@ class __$$PurchaseRequestItemImplCopyWithImpl<$Res>
           ? _value.warehouseName
           : warehouseName // ignore: cast_nullable_to_non_nullable
               as String?,
+      warehouseAreaId: freezed == warehouseAreaId
+          ? _value.warehouseAreaId
+          : warehouseAreaId // ignore: cast_nullable_to_non_nullable
+              as int?,
+      warehouseAreaName: freezed == warehouseAreaName
+          ? _value.warehouseAreaName
+          : warehouseAreaName // ignore: cast_nullable_to_non_nullable
+              as String?,
       poNumber: freezed == poNumber
           ? _value.poNumber
           : poNumber // ignore: cast_nullable_to_non_nullable
@@ -1371,6 +1399,8 @@ class _$PurchaseRequestItemImpl implements _PurchaseRequestItem {
       @JsonKey(name: 'selected_comparison_id') this.selectedComparisonId,
       @JsonKey(name: 'warehouse_code') this.warehouseCode,
       @JsonKey(name: 'warehouse_name') this.warehouseName,
+      @JsonKey(name: 'warehouse_area_id') this.warehouseAreaId,
+      @JsonKey(name: 'warehouse_area_name') this.warehouseAreaName,
       @JsonKey(name: 'po_number') this.poNumber});
 
   factory _$PurchaseRequestItemImpl.fromJson(Map<String, dynamic> json) =>
@@ -1429,12 +1459,18 @@ class _$PurchaseRequestItemImpl implements _PurchaseRequestItem {
   @JsonKey(name: 'warehouse_name')
   final String? warehouseName;
   @override
+  @JsonKey(name: 'warehouse_area_id')
+  final int? warehouseAreaId;
+  @override
+  @JsonKey(name: 'warehouse_area_name')
+  final String? warehouseAreaName;
+  @override
   @JsonKey(name: 'po_number')
   final String? poNumber;
 
   @override
   String toString() {
-    return 'PurchaseRequestItem(id: $id, itemName: $itemName, itemCode: $itemCode, qtyRequested: $qtyRequested, uom: $uom, status: $status, currentStock: $currentStock, dtNotes: $dtNotes, dtSpec: $dtSpec, costCode: $costCode, canApprove: $canApprove, prCode: $prCode, companyName: $companyName, prId: $prId, approvedQty: $approvedQty, selectedComparisonId: $selectedComparisonId, warehouseCode: $warehouseCode, warehouseName: $warehouseName, poNumber: $poNumber)';
+    return 'PurchaseRequestItem(id: $id, itemName: $itemName, itemCode: $itemCode, qtyRequested: $qtyRequested, uom: $uom, status: $status, currentStock: $currentStock, dtNotes: $dtNotes, dtSpec: $dtSpec, costCode: $costCode, canApprove: $canApprove, prCode: $prCode, companyName: $companyName, prId: $prId, approvedQty: $approvedQty, selectedComparisonId: $selectedComparisonId, warehouseCode: $warehouseCode, warehouseName: $warehouseName, warehouseAreaId: $warehouseAreaId, warehouseAreaName: $warehouseAreaName, poNumber: $poNumber)';
   }
 
   @override
@@ -1471,6 +1507,10 @@ class _$PurchaseRequestItemImpl implements _PurchaseRequestItem {
                 other.warehouseCode == warehouseCode) &&
             (identical(other.warehouseName, warehouseName) ||
                 other.warehouseName == warehouseName) &&
+            (identical(other.warehouseAreaId, warehouseAreaId) ||
+                other.warehouseAreaId == warehouseAreaId) &&
+            (identical(other.warehouseAreaName, warehouseAreaName) ||
+                other.warehouseAreaName == warehouseAreaName) &&
             (identical(other.poNumber, poNumber) ||
                 other.poNumber == poNumber));
   }
@@ -1497,6 +1537,8 @@ class _$PurchaseRequestItemImpl implements _PurchaseRequestItem {
         selectedComparisonId,
         warehouseCode,
         warehouseName,
+        warehouseAreaId,
+        warehouseAreaName,
         poNumber
       ]);
 
@@ -1538,6 +1580,8 @@ abstract class _PurchaseRequestItem implements PurchaseRequestItem {
       @JsonKey(name: 'selected_comparison_id') final int? selectedComparisonId,
       @JsonKey(name: 'warehouse_code') final String? warehouseCode,
       @JsonKey(name: 'warehouse_name') final String? warehouseName,
+      @JsonKey(name: 'warehouse_area_id') final int? warehouseAreaId,
+      @JsonKey(name: 'warehouse_area_name') final String? warehouseAreaName,
       @JsonKey(name: 'po_number')
       final String? poNumber}) = _$PurchaseRequestItemImpl;
 
@@ -1596,6 +1640,12 @@ abstract class _PurchaseRequestItem implements PurchaseRequestItem {
   @override
   @JsonKey(name: 'warehouse_name')
   String? get warehouseName;
+  @override
+  @JsonKey(name: 'warehouse_area_id')
+  int? get warehouseAreaId;
+  @override
+  @JsonKey(name: 'warehouse_area_name')
+  String? get warehouseAreaName;
   @override
   @JsonKey(name: 'po_number')
   String? get poNumber;

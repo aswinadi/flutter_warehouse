@@ -1142,7 +1142,7 @@ class _DetailItemRow extends StatelessWidget {
               const SizedBox(width: CupertinoSpacing.xs),
               Expanded(
                 child: Text(
-                  'Gudang: ${item.warehouseName != null && item.warehouseName!.isNotEmpty ? (item.warehouseCode != null ? "${item.warehouseName} (${item.warehouseCode})" : item.warehouseName!) : (item.warehouseCode ?? "-")}',
+                  'Gudang: ${item.warehouseName != null && item.warehouseName!.isNotEmpty ? (item.warehouseCode != null ? "${item.warehouseName} (${item.warehouseCode})" : item.warehouseName!) : (item.warehouseCode ?? "-")}${item.warehouseAreaName != null ? " - Area: ${item.warehouseAreaName}" : ""}',
                   style: context.caption1.copyWith(color: secondaryLabel),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

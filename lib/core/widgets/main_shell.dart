@@ -12,6 +12,9 @@ import '../providers/theme_provider.dart';
 import 'cupertino_mesh_background.dart';
 import 'cupertino_glass_bottom_sheet.dart';
 import 'cupertino_glass_list_section.dart';
+import '../../features/auth/providers/impersonation_provider.dart';
+import '../../features/auth/ui/impersonate_selection_dialog.dart';
+import 'cupertino_impersonation_banner.dart';
 
 
 final sidebarCollapsedProvider = StateProvider<bool>((ref) => false);
@@ -129,27 +132,32 @@ class _MainShellState extends ConsumerState<MainShell> {
       child: CupertinoPageScaffold(
         backgroundColor: CupertinoColors.transparent,
         child: SafeArea(
-        top: false,
-        bottom: false,
-        child: Row(
-          children: [
-            if (isDesktop)
-              _buildSidebar(context, ref, navItems, isCollapsed, unreadCount, currentExpandedIndex),
-            Expanded(
-              child: Column(
+          top: false,
+          bottom: false,
+          child: Stack(
+            children: [
+              Row(
                 children: [
+                  if (isDesktop)
+                    _buildSidebar(context, ref, navItems, isCollapsed, unreadCount, currentExpandedIndex),
                   Expanded(
-                    child: widget.child,
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: widget.child,
+                        ),
+                        if (!isDesktop)
+                          _buildBottomNav(context, navItems, unreadCount),
+                      ],
+                    ),
                   ),
-                  if (!isDesktop)
-                    _buildBottomNav(context, navItems, unreadCount),
                 ],
               ),
-            ),
-          ],
+              const CupertinoImpersonationBanner(),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 
@@ -385,6 +393,16 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   Widget _buildHeader(BuildContext context, WidgetRef ref, bool isCollapsed) {
     final themeMode = ref.watch(themeModeProvider);
+    
+    final authState = ref.watch(authProvider);
+    final user = authState.valueOrNull?.maybeWhen(
+      authenticated: (user, _) => user,
+      orElse: () => null,
+    );
+    final impersonationState = ref.watch(impersonationProvider);
+    final isImpersonating = impersonationState.valueOrNull?.isImpersonating ?? false;
+    final canImpersonate = !isImpersonating && (user?.roles.contains('super_admin') ?? false);
+
     return Container(
       height: 80,
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -410,6 +428,24 @@ class _MainShellState extends ConsumerState<MainShell> {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (!isCollapsed) ...[
+                if (canImpersonate) ...[
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    minSize: 32,
+                    child: const Icon(
+                      CupertinoIcons.person_crop_circle_badge_plus,
+                      color: CupertinoColors.activeBlue,
+                      size: 22,
+                    ),
+                    onPressed: () {
+                      showCupertinoDialog(
+                        context: context,
+                        builder: (context) => const ImpersonateSelectionDialog(),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 CupertinoButton(
                   padding: EdgeInsets.zero,
                   minSize: 32,

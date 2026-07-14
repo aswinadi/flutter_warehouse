@@ -159,6 +159,13 @@ class DashboardScreen extends ConsumerWidget {
               ],
             ),
           ),
+          CupertinoSliverRefreshControl(
+            onRefresh: () async {
+              try {
+                await ref.refresh(authProvider.future);
+              } catch (_) {}
+            },
+          ),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: CupertinoSpacing.screenMargin, vertical: CupertinoSpacing.xl),
             sliver: SliverList(
@@ -216,7 +223,7 @@ class DashboardScreen extends ConsumerWidget {
     final double screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = ResponsiveBreakpoints.of(context).largerThan(MOBILE);
     final double contentWidth = isDesktop ? screenWidth - sidebarWidth : screenWidth;
-    final int crossAxisCount = contentWidth > 1000 ? 5 : (contentWidth > 600 ? 3 : 2);
+    final int crossAxisCount = isDesktop ? (contentWidth > 1000 ? 6 : 5) : 4;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,8 +244,9 @@ class DashboardScreen extends ConsumerWidget {
             final double spacing = 12.0;
             final double totalSpacing = (crossAxisCount - 1) * spacing;
             final double cardWidth = (gridWidth - totalSpacing) / crossAxisCount;
-            // Mathematically guarantees exactly 140.0 pixels height for the grid cells
-            final double childAspectRatio = cardWidth / 140.0;
+            // Mathematically guarantees exact height for the grid cells
+            final double cardHeight = isDesktop ? 140.0 : 88.0;
+            final double childAspectRatio = cardWidth / cardHeight;
 
             return GridView.count(
               shrinkWrap: true,
@@ -256,6 +264,10 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildMenuCard(BuildContext context, _MenuItem item) {
+    final isDesktop = ResponsiveBreakpoints.of(context).largerThan(MOBILE);
+    final double iconSize = isDesktop ? 22.0 : 18.0;
+    final double paddingSize = isDesktop ? 8.0 : 6.0;
+
     return CupertinoGlassContainer(
       borderRadius: CupertinoSpacing.cardRadius,
       padding: EdgeInsets.zero,
@@ -263,27 +275,30 @@ class DashboardScreen extends ConsumerWidget {
         onTap: item.onTap,
         behavior: HitTestBehavior.opaque,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          padding: EdgeInsets.symmetric(
+            horizontal: isDesktop ? 8.0 : 4.0,
+            vertical: isDesktop ? 10.0 : 6.0,
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: EdgeInsets.all(paddingSize),
                 decoration: BoxDecoration(
                   color: item.color.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   item.icon,
-                  size: 22,
+                  size: iconSize,
                   color: item.color,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: isDesktop ? 8.0 : 4.0),
               Text(
                 item.label,
                 textAlign: TextAlign.center,
-                style: context.caption1.copyWith(
+                style: (isDesktop ? context.caption1 : context.caption2).copyWith(
                   fontWeight: FontWeight.w600,
                   color: CupertinoColors.label.resolveFrom(context),
                 ),

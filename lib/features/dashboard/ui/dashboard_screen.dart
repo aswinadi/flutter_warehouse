@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:responsive_framework/responsive_framework.dart';
-import 'package:flutter_app/l10n/app_localizations.dart';
+import 'package:maxmar_warehouse/l10n/app_localizations.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/models/user.dart';
 import '../../../core/config/menu_items.dart';

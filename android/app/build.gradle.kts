@@ -52,11 +52,11 @@ android {
         create("development") {
             dimension = "environment"
             applicationIdSuffix = ".dev"
-            resValue("string", "app_name", "Warehouse Dev")
+            resValue("string", "app_name", "Maxmar Warehouse Dev")
         }
         create("production") {
             dimension = "environment"
-            resValue("string", "app_name", "Warehouse")
+            resValue("string", "app_name", "Maxmar Warehouse")
         }
     }
 }

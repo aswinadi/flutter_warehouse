@@ -111,9 +111,11 @@ Once this setup is completed, deploying updates requires only two steps:
    ```
 2. **On your shared hosting server:**
    * **If using SSH:**
+     Since the local deployment script force-pushes build files (`git push origin release-web -f`), the local history on the server will diverge from the remote. Therefore, a plain `git pull` will fail. Use the following commands instead:
      ```bash
      cd public_html/user
-     git pull origin release-web
+     git fetch origin
+     git reset --hard origin/release-web
      ```
    * **If using cPanel:**
-     Go to **Git Version Control**, select the repository, and click **Pull or Deploy** -> **Update from Remote**.
+     Go to **Git Version Control**, select the repository, and click **Pull or Deploy** -> **Update from Remote** (if cPanel throws a divergent branch warning, you may need to redeploy or use SSH to perform a hard reset).

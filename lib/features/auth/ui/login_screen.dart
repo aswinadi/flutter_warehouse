@@ -9,6 +9,9 @@ import '../../../core/widgets/cupertino_glass_container.dart';
 import '../../../core/widgets/cupertino_mesh_background.dart';
 import '../../../core/widgets/cupertino_glass_switch.dart';
 
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -21,11 +24,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _rememberMe = false;
+  String _appVersion = 'Loading...';
 
   @override
   void initState() {
     super.initState();
     _loadRememberMe();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      if (mounted) {
+        setState(() {
+          _appVersion = 'v${packageInfo.version}+${packageInfo.buildNumber}';
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _appVersion = 'v1.5.0';
+        });
+      }
+    }
   }
 
   Future<void> _loadRememberMe() async {
@@ -258,6 +280,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                     ],
+                    const SizedBox(height: CupertinoSpacing.xl),
+                    Text(
+                      _appVersion,
+                      style: context.caption2.copyWith(
+                        color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ],
                 ),
               ),

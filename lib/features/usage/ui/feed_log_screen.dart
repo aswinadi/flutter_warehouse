@@ -9,7 +9,7 @@ import '../../../core/widgets/cupertino_glass_dialog.dart';
 import '../../../core/widgets/cupertino_glass_toast.dart';
 import '../models/feed_log.dart';
 import '../providers/feed_log_provider.dart';
-import 'package:flutter_app/l10n/app_localizations.dart';
+import 'package:maxmar_warehouse/l10n/app_localizations.dart';
 
 class FeedLogScreen extends ConsumerStatefulWidget {
   const FeedLogScreen({super.key});

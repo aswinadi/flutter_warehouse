@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show showDateRangePicker, Theme, ThemeData, ColorScheme, DateTimeRange, Colors;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_app/l10n/app_localizations.dart';
+import 'package:maxmar_warehouse/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/purchase_order_provider.dart';
 import '../models/purchase_order.dart';

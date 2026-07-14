@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:responsive_framework/responsive_framework.dart';
-import 'package:flutter_app/l10n/app_localizations.dart';
+import 'package:maxmar_warehouse/l10n/app_localizations.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/models/user.dart';
 import '../config/menu_items.dart';
@@ -16,6 +16,8 @@ import '../../features/auth/providers/impersonation_provider.dart';
 import '../../features/auth/ui/impersonate_selection_dialog.dart';
 import 'cupertino_impersonation_banner.dart';
 
+
+import 'package:package_info_plus/package_info_plus.dart';
 
 final sidebarCollapsedProvider = StateProvider<bool>((ref) => false);
 final expandedMenuIndexProvider = StateProvider<int?>((ref) => null);
@@ -31,14 +33,33 @@ class MainShell extends ConsumerStatefulWidget {
 
 class _MainShellState extends ConsumerState<MainShell> {
   String? _lastRoute;
+  String _appVersion = '';
 
   @override
   void initState() {
     super.initState();
+    _loadAppVersion();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.read(updaterServiceProvider).checkForUpdates(context);
     });
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      if (mounted) {
+        setState(() {
+          _appVersion = 'v${packageInfo.version}+${packageInfo.buildNumber}';
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _appVersion = 'v1.5.0';
+        });
+      }
+    }
   }
 
   bool _isRouteActive(BuildContext context, NavItemConfig item) {
@@ -170,6 +191,15 @@ class _MainShellState extends ConsumerState<MainShell> {
     int? currentExpandedIndex,
   ) {
     final l10n = AppLocalizations.of(context)!;
+    final authState = ref.watch(authProvider);
+    final user = authState.valueOrNull?.maybeWhen(
+      authenticated: (user, _) => user,
+      orElse: () => null,
+    );
+    final impersonationState = ref.watch(impersonationProvider);
+    final isImpersonating = impersonationState.valueOrNull?.isImpersonating ?? false;
+    final canImpersonate = !isImpersonating && (user?.roles.contains('super_admin') ?? false);
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       width: isCollapsed ? 70 : 265,
@@ -228,6 +258,56 @@ class _MainShellState extends ConsumerState<MainShell> {
               ],
             ),
           ),
+          if (canImpersonate)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: _SidebarItem(
+                icon: CupertinoIcons.person_crop_circle_badge_plus,
+                label: 'Impersonate',
+                isCollapsed: isCollapsed,
+                isActive: false,
+                onTap: () {
+                  showCupertinoDialog(
+                    context: context,
+                    builder: (context) => const ImpersonateSelectionDialog(),
+                  );
+                },
+              ),
+            ),
+          if (isImpersonating)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: _SidebarItem(
+                icon: CupertinoIcons.person_crop_circle_badge_xmark,
+                label: 'Keluar Impersonate',
+                isCollapsed: isCollapsed,
+                isActive: false,
+                onTap: () {
+                  showCupertinoDialog(
+                    context: context,
+                    builder: (context) => CupertinoAlertDialog(
+                      title: const Text('Keluar Impersonasi'),
+                      content: const Text('Apakah Anda yakin ingin keluar dari sesi impersonasi ini?'),
+                      actions: [
+                        CupertinoDialogAction(
+                          isDestructiveAction: true,
+                          onPressed: () {
+                            Navigator.pop(context);
+                            ref.read(impersonationProvider.notifier).stopImpersonating();
+                          },
+                          child: const Text('Keluar'),
+                        ),
+                        CupertinoDialogAction(
+                          isDefaultAction: true,
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Batal'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: _SidebarItem(
@@ -259,6 +339,22 @@ class _MainShellState extends ConsumerState<MainShell> {
                   ),
                 );
               },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16, top: 4),
+            child: Center(
+              child: Text(
+                isCollapsed
+                    ? (_appVersion.isNotEmpty ? _appVersion.split('+')[0] : '')
+                    : _appVersion,
+                style: TextStyle(
+                  fontSize: isCollapsed ? 10 : 11,
+                  fontWeight: FontWeight.w500,
+                  color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                ),
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
         ],

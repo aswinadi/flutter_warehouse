@@ -13,6 +13,8 @@ import '../../../core/theme/cupertino_theme_extensions.dart';
 import '../../../core/theme/cupertino_spacing.dart';
 import '../../../core/widgets/cupertino_glass_container.dart';
 import '../../../core/widgets/cupertino_glass_dialog.dart';
+import '../../auth/providers/impersonation_provider.dart';
+import '../../auth/ui/impersonate_selection_dialog.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -92,6 +94,10 @@ class DashboardScreen extends ConsumerWidget {
       orElse: () => null,
     );
 
+    final impersonationState = ref.watch(impersonationProvider);
+    final isImpersonating = impersonationState.valueOrNull?.isImpersonating ?? false;
+    final canImpersonate = !isImpersonating && (user?.roles.contains('super_admin') ?? false);
+
     final navItems = _filterMenuItems(user);
     
     // Grouped section configurations based on menuConfig entries with sub-items
@@ -113,6 +119,22 @@ class DashboardScreen extends ConsumerWidget {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                if (canImpersonate) ...[
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      showCupertinoDialog(
+                        context: context,
+                        builder: (context) => const ImpersonateSelectionDialog(),
+                      );
+                    },
+                    child: const Icon(
+                      CupertinoIcons.person_crop_circle_badge_plus,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 CupertinoButton(
                   padding: EdgeInsets.zero,
                   child: Icon(

@@ -2,6 +2,14 @@
 
 All notable changes to the Maxmar Warehouse Flutter project will be documented in this file.
 
+## [1.6.6] - 2026-07-15
+
+### Fixed
+- **Invoice Biaya Creation Crash & API 422 Errors**:
+  - Guarded Riverpod providers (`costCentres`, `costCodes`, `chartOfAccounts`, `assetOffices`, `assetEmployees`, `assetSuppliers`) to return an empty list immediately when `companyId` is `0` or less, avoiding invalid requests to the backend.
+  - Prevented `Bad state: No element` red-screen crashes by adding empty list checks before calling `.first` or `.firstWhere` in `invoice_biaya_form_screen.dart`.
+  - Refactored the **Supplier List Picker** to use the glassmorphic `SearchPickerBottomSheet` with a built-in search text field, resolving the scroll-only issue for large supplier lists and conforming to the **iOS 26 Cupertino Liquid Glass - Search Text** design specification.
+
 ## [1.6.5] - 2026-06-26
 
 ### Added

@@ -83,10 +83,11 @@ class CompanySwitcher extends ConsumerWidget {
               onTap: () => _showPicker(context, ref, companies, selectedCompany),
               behavior: HitTestBehavior.opaque,
               child: CupertinoGlassContainer(
+                width: 220.0,
                 borderRadius: 9999.0, // {radius.full}
                 padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 6.0),
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(
                       CupertinoIcons.building_2_fill,
@@ -94,15 +95,17 @@ class CompanySwitcher extends ConsumerWidget {
                       size: 14.0,
                     ),
                     const SizedBox(width: 6.0),
-                    Flexible(
-                      child: Text(
-                        displayName,
-                        style: const TextStyle(
-                          fontSize: 13.0,
-                          fontWeight: FontWeight.w600,
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          displayName,
+                          style: const TextStyle(
+                            fontSize: 13.0,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 4.0),

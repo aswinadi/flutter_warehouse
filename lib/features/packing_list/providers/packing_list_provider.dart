@@ -22,6 +22,8 @@ class PackingLists extends _$PackingLists {
   Future<List<PackingList>> build({
     String? status,
     String? search,
+    String? startDate,
+    String? endDate,
   }) async {
     ref.watch(packingListRepositoryProvider);
     _currentPage = 1;
@@ -37,6 +39,8 @@ class PackingLists extends _$PackingLists {
       page: page,
       status: status,
       search: search,
+      startDate: startDate,
+      endDate: endDate,
     );
 
     if (response.meta != null) {

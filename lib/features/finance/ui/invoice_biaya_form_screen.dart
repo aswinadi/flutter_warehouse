@@ -104,14 +104,16 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
     if (_selectedCompany == null) return;
     try {
       final ccs = await ref.read(costCentresProvider(companyId: _selectedCompany!.id).future);
-      final defaultCc = ccs.firstWhere(
-        (c) => c.name.toLowerCase().contains('lokasi 1'),
-        orElse: () => ccs.first,
-      );
-      if (mounted) {
-        setState(() {
-          _selectedCostCenterCode = defaultCc.code;
-        });
+      if (ccs.isNotEmpty) {
+        final defaultCc = ccs.firstWhere(
+          (c) => c.name.toLowerCase().contains('lokasi 1'),
+          orElse: () => ccs.first,
+        );
+        if (mounted) {
+          setState(() {
+            _selectedCostCenterCode = defaultCc.code;
+          });
+        }
       }
     } catch (_) {}
   }
@@ -123,11 +125,15 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
       
       // Load companies
       final companies = await ref.read(companiesProvider.future);
-      _selectedCompany = companies.firstWhere((c) => c.id == detail.companyId, orElse: () => companies.first);
+      _selectedCompany = companies.isEmpty 
+          ? null 
+          : companies.firstWhere((c) => c.id == detail.companyId, orElse: () => companies.first);
 
       // Load suppliers
       final suppliers = await ref.read(assetSuppliersProvider(companyId: null).future);
-      _selectedSupplier = suppliers.firstWhere((s) => s.id == detail.supplierId, orElse: () => suppliers.first);
+      _selectedSupplier = suppliers.isEmpty 
+          ? null 
+          : suppliers.firstWhere((s) => s.id == detail.supplierId, orElse: () => suppliers.first);
 
       _vendorInvoiceNumberController.text = detail.vendorInvoiceNumber ?? '';
       _notesController.text = detail.notes ?? '';
@@ -470,6 +476,10 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
                                     });
                                   },
                             itemLabelBuilder: (s) => s.name,
+                            itemSublabelBuilder: (s) => s.code ?? '',
+                            filterFn: (s, query) =>
+                                s.name.toLowerCase().contains(query.toLowerCase()) ||
+                                (s.code ?? '').toLowerCase().contains(query.toLowerCase()),
                           ),
                           const Divider(color: CupertinoColors.separator, height: 16),
                           _buildFormRow(
@@ -797,29 +807,33 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
         alignment: Alignment.centerRight,
         child: asyncValue.when(
           data: (items) {
-            final selectedCc = items.firstWhere((cc) => cc.code == _selectedCostCenterCode, orElse: () => items.first);
+            final selectedCc = items.isNotEmpty
+                ? items.firstWhere((cc) => cc.code == _selectedCostCenterCode, orElse: () => items.first)
+                : null;
             return CupertinoButton(
               padding: EdgeInsets.zero,
               minimumSize: Size.zero,
-              onPressed: () {
-                _showSearchPicker<CostCentre>(
-                  title: 'Cost Center Header',
-                  items: items,
-                  itemLabelBuilder: (c) => c.name,
-                  itemSublabelBuilder: (c) => c.code,
-                  filterFn: (c, q) => c.name.toLowerCase().contains(q.toLowerCase()) || c.code.toLowerCase().contains(q.toLowerCase()),
-                  onSelected: (cc) {
-                    setState(() {
-                      _selectedCostCenterCode = cc.code;
-                    });
-                  },
-                );
-              },
+              onPressed: items.isEmpty
+                  ? null
+                  : () {
+                      _showSearchPicker<CostCentre>(
+                        title: 'Cost Center Header',
+                        items: items,
+                        itemLabelBuilder: (c) => c.name,
+                        itemSublabelBuilder: (c) => c.code,
+                        filterFn: (c, q) => c.name.toLowerCase().contains(q.toLowerCase()) || c.code.toLowerCase().contains(q.toLowerCase()),
+                        onSelected: (cc) {
+                          setState(() {
+                            _selectedCostCenterCode = cc.code;
+                          });
+                        },
+                      );
+                    },
               child: Text(
-                _selectedCostCenterCode != null ? selectedCc.name : 'Pilih Cost Center...',
+                _selectedCostCenterCode != null && selectedCc != null ? selectedCc.name : 'Pilih Cost Center...',
                 style: TextStyle(
-                  color: _selectedCostCenterCode != null ? CupertinoColors.label.resolveFrom(context) : CupertinoColors.placeholderText,
-                  fontWeight: _selectedCostCenterCode != null ? FontWeight.w500 : FontWeight.normal,
+                  color: _selectedCostCenterCode != null && selectedCc != null ? CupertinoColors.label.resolveFrom(context) : CupertinoColors.placeholderText,
+                  fontWeight: _selectedCostCenterCode != null && selectedCc != null ? FontWeight.w500 : FontWeight.normal,
                 ),
               ),
             );
@@ -838,6 +852,8 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
     required AsyncValue<List<T>> asyncValue,
     required void Function(T)? onSelected,
     required String Function(T) itemLabelBuilder,
+    String Function(T)? itemSublabelBuilder,
+    bool Function(T, String)? filterFn,
   }) {
     return _buildFormRow(
       label: label,
@@ -852,25 +868,36 @@ class _InvoiceBiayaFormScreenState extends ConsumerState<InvoiceBiayaFormScreen>
                   ? null
                   : () {
                       if (items.isEmpty) return;
-                      showCupertinoModalPopup(
-                        context: context,
-                        builder: (context) => CupertinoActionSheet(
-                          title: Text('Pilih $label'),
-                          actions: items.map((item) {
-                            return CupertinoActionSheetAction(
-                              child: Text(itemLabelBuilder(item)),
-                              onPressed: () {
-                                onSelected(item);
-                                Navigator.pop(context);
-                              },
-                            );
-                          }).toList(),
-                          cancelButton: CupertinoActionSheetAction(
-                            child: const Text('Batal'),
-                            onPressed: () => Navigator.pop(context),
+                      if (filterFn != null) {
+                        _showSearchPicker<T>(
+                          title: label,
+                          items: items,
+                          itemLabelBuilder: itemLabelBuilder,
+                          itemSublabelBuilder: itemSublabelBuilder ?? (_) => '',
+                          filterFn: filterFn,
+                          onSelected: onSelected,
+                        );
+                      } else {
+                        showCupertinoModalPopup(
+                          context: context,
+                          builder: (context) => CupertinoActionSheet(
+                            title: Text('Pilih $label'),
+                            actions: items.map((item) {
+                              return CupertinoActionSheetAction(
+                                child: Text(itemLabelBuilder(item)),
+                                onPressed: () {
+                                  onSelected(item);
+                                  Navigator.pop(context);
+                                },
+                              );
+                            }).toList(),
+                            cancelButton: CupertinoActionSheetAction(
+                              child: const Text('Batal'),
+                              onPressed: () => Navigator.pop(context),
+                            ),
                           ),
-                        ),
-                      );
+                        );
+                      }
                     },
               child: Text(
                 value != null ? itemLabelBuilder(value) : placeholder,
@@ -1096,14 +1123,36 @@ class _SearchPickerBottomSheetState<T> extends State<SearchPickerBottomSheet<T>>
                   ],
                 ),
                 const SizedBox(height: 12.0),
-                CupertinoSearchTextField(
-                  controller: _searchController,
-                  placeholder: 'Cari...',
-                  onChanged: (val) {
-                    setState(() {
-                      _searchQuery = val;
-                    });
-                  },
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(9999.0),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                    child: CupertinoSearchTextField(
+                      controller: _searchController,
+                      placeholder: 'Cari...',
+                      onChanged: (val) {
+                        setState(() {
+                          _searchQuery = val;
+                        });
+                      },
+                      placeholderStyle: TextStyle(
+                        color: isDark ? const Color(0x99FFFFFF) : const Color(0x993C3C43),
+                        fontSize: 15.0,
+                      ),
+                      style: TextStyle(
+                        color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                        fontSize: 15.0,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0x331C1C1E) : const Color(0x77FFFFFF),
+                        borderRadius: BorderRadius.circular(9999.0),
+                        border: Border.all(
+                          color: isDark ? const Color(0x22FFFFFF) : const Color(0x1F000000),
+                          width: 0.5,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 12.0),
                 Expanded(

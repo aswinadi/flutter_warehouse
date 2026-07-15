@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Divider, VerticalDivider, Scrollbar;
+import 'package:flutter/material.dart' show Divider, VerticalDivider, Scrollbar, Colors, DateTimeRange, showDateRangePicker, Theme, ColorScheme;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/payment_request_repository.dart';
@@ -30,9 +30,126 @@ class _PaymentRequestListScreenState extends ConsumerState<PaymentRequestListScr
   int? _selectedPrId;
   final ScrollController _scrollController = ScrollController();
 
+  DateTime? _startDate;
+  DateTime? _endDate;
+  String _datePreset = 'thisMonth';
+
+  String? get _startDateStr => _startDate != null
+      ? '${_startDate!.day.toString().padLeft(2, '0')}/${_startDate!.month.toString().padLeft(2, '0')}/${_startDate!.year}'
+      : null;
+
+  String? get _endDateStr => _endDate != null
+      ? '${_endDate!.day.toString().padLeft(2, '0')}/${_endDate!.month.toString().padLeft(2, '0')}/${_endDate!.year}'
+      : null;
+
+  void _updateDatePreset(String preset) {
+    setState(() {
+      _datePreset = preset;
+      if (preset == 'all') {
+        _startDate = null;
+        _endDate = null;
+      } else if (preset == '30days') {
+        _endDate = DateTime.now();
+        _startDate = DateTime.now().subtract(const Duration(days: 30));
+      } else if (preset == 'thisMonth') {
+        _endDate = DateTime.now();
+        _startDate = DateTime(DateTime.now().year, DateTime.now().month, 1);
+      } else if (preset == '90days') {
+        _endDate = DateTime.now();
+        _startDate = DateTime.now().subtract(const Duration(days: 90));
+      }
+      _selectedPrId = null;
+    });
+  }
+
+  Future<void> _selectCustomDateRange() async {
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+      initialDateRange: _startDate != null && _endDate != null
+          ? DateTimeRange(start: _startDate!, end: _endDate!)
+          : null,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: CupertinoColors.activeBlue,
+              onPrimary: Colors.white,
+              onSurface: Color(0xFF1E293B),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _startDate = picked.start;
+        _endDate = picked.end;
+        _selectedPrId = null;
+      });
+    }
+  }
+
+  Future<void> _showPresetPicker() async {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Pilih Periode'),
+        actions: [
+          CupertinoActionSheetAction(
+            child: const Text('Semua Waktu'),
+            onPressed: () {
+              _updateDatePreset('all');
+              Navigator.pop(context);
+            },
+          ),
+          CupertinoActionSheetAction(
+            child: const Text('30 Hari Terakhir'),
+            onPressed: () {
+              _updateDatePreset('30days');
+              Navigator.pop(context);
+            },
+          ),
+          CupertinoActionSheetAction(
+            child: const Text('Bulan Ini'),
+            onPressed: () {
+              _updateDatePreset('thisMonth');
+              Navigator.pop(context);
+            },
+          ),
+          CupertinoActionSheetAction(
+            child: const Text('3 Bulan Terakhir'),
+            onPressed: () {
+              _updateDatePreset('90days');
+              Navigator.pop(context);
+            },
+          ),
+          CupertinoActionSheetAction(
+            child: const Text('Pilih Tanggal...'),
+            onPressed: () {
+              Navigator.pop(context);
+              _selectCustomDateRange();
+            },
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
+    _datePreset = 'thisMonth';
+    _endDate = DateTime.now();
+    _startDate = DateTime(DateTime.now().year, DateTime.now().month, 1);
     _scrollController.addListener(_onScroll);
   }
 
@@ -47,7 +164,11 @@ class _PaymentRequestListScreenState extends ConsumerState<PaymentRequestListScr
     final maxScroll = _scrollController.position.maxScrollExtent;
     final currentScroll = _scrollController.position.pixels;
     if (currentScroll >= maxScroll * 0.9) {
-      ref.read(paymentRequestsProvider(status: _selectedStatus).notifier).loadMore();
+      ref.read(paymentRequestsProvider(
+        status: _selectedStatus,
+        startDate: _startDateStr,
+        endDate: _endDateStr,
+      ).notifier).loadMore();
     }
   }
 
@@ -82,7 +203,11 @@ class _PaymentRequestListScreenState extends ConsumerState<PaymentRequestListScr
 
   @override
   Widget build(BuildContext context) {
-    final listAsync = ref.watch(paymentRequestsProvider(status: _selectedStatus));
+    final listAsync = ref.watch(paymentRequestsProvider(
+      status: _selectedStatus,
+      startDate: _startDateStr,
+      endDate: _endDateStr,
+    ));
     final isWide = MediaQuery.of(context).size.width > 900;
     final labelColor = CupertinoColors.label.resolveFrom(context);
 
@@ -104,6 +229,50 @@ class _PaymentRequestListScreenState extends ConsumerState<PaymentRequestListScr
         child: Column(
           children: [
             const CompanySwitcher(),
+            GestureDetector(
+              onTap: _showPresetPicker,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: CupertinoColors.systemBackground.resolveFrom(context),
+                  border: Border(bottom: BorderSide(color: CupertinoColors.separator.resolveFrom(context), width: 0.5)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(CupertinoIcons.calendar, size: 16, color: CupertinoColors.activeBlue),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Periode:',
+                      style: context.footnote.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _datePreset == 'all' ? 'Semua Waktu' :
+                        _datePreset == '30days' ? '30 Hari Terakhir' :
+                        _datePreset == 'thisMonth' ? 'Bulan Ini' :
+                        _datePreset == '90days' ? '3 Bulan Terakhir' : 'Kustom...',
+                        style: context.footnote.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: CupertinoColors.label.resolveFrom(context),
+                        ),
+                      ),
+                    ),
+                    if (_startDate != null && _endDate != null) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        '${_startDate!.day}/${_startDate!.month}/${_startDate!.year} - ${_endDate!.day}/${_endDate!.month}/${_endDate!.year}',
+                        style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                      ),
+                    ],
+                    const Icon(CupertinoIcons.chevron_down, size: 14, color: CupertinoColors.secondaryLabel),
+                  ],
+                ),
+              ),
+            ),
             Container(
               height: CupertinoSpacing.primaryButtonHeight,
               color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
@@ -149,7 +318,11 @@ class _PaymentRequestListScreenState extends ConsumerState<PaymentRequestListScr
                     }
                   }
 
-                  final hasMore = ref.watch(paymentRequestsProvider(status: _selectedStatus).notifier).hasMore;
+                  final hasMore = ref.watch(paymentRequestsProvider(
+                    status: _selectedStatus,
+                    startDate: _startDateStr,
+                    endDate: _endDateStr,
+                  ).notifier).hasMore;
                   final showLoader = listAsync.isLoading && hasMore;
 
                   final mainList = ScrollConfiguration(

@@ -46,6 +46,9 @@ class _InvoiceBiayaListScreenState extends ConsumerState<InvoiceBiayaListScreen>
   @override
   void initState() {
     super.initState();
+    _datePreset = 'thisMonth';
+    _endDate = DateTime.now();
+    _startDate = DateTime(DateTime.now().year, DateTime.now().month, 1);
     _scrollController.addListener(_onScroll);
   }
 

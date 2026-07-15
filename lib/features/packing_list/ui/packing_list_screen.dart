@@ -21,6 +21,7 @@ import '../../../core/providers/warehouse_provider.dart';
 import '../../../core/models/warehouse.dart';
 import '../../../core/providers/company_provider.dart';
 import '../../../core/config/app_config.dart';
+import 'package:flutter/material.dart' show Colors, DateTimeRange, showDateRangePicker, Theme, ColorScheme;
 
 class _WebScrollBehavior extends CupertinoScrollBehavior {
   @override
@@ -47,9 +48,126 @@ class _PackingListScreenState extends ConsumerState<PackingListScreen> {
   String _searchQuery = '';
   bool _isDownloadingPdf = false;
 
+  DateTime? _startDate;
+  DateTime? _endDate;
+  String _datePreset = 'thisMonth';
+
+  String? get _startDateStr => _startDate != null
+      ? '${_startDate!.day.toString().padLeft(2, '0')}/${_startDate!.month.toString().padLeft(2, '0')}/${_startDate!.year}'
+      : null;
+
+  String? get _endDateStr => _endDate != null
+      ? '${_endDate!.day.toString().padLeft(2, '0')}/${_endDate!.month.toString().padLeft(2, '0')}/${_endDate!.year}'
+      : null;
+
+  void _updateDatePreset(String preset) {
+    setState(() {
+      _datePreset = preset;
+      if (preset == 'all') {
+        _startDate = null;
+        _endDate = null;
+      } else if (preset == '30days') {
+        _endDate = DateTime.now();
+        _startDate = DateTime.now().subtract(const Duration(days: 30));
+      } else if (preset == 'thisMonth') {
+        _endDate = DateTime.now();
+        _startDate = DateTime(DateTime.now().year, DateTime.now().month, 1);
+      } else if (preset == '90days') {
+        _endDate = DateTime.now();
+        _startDate = DateTime.now().subtract(const Duration(days: 90));
+      }
+      _selectedId = null;
+    });
+  }
+
+  Future<void> _selectCustomDateRange() async {
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+      initialDateRange: _startDate != null && _endDate != null
+          ? DateTimeRange(start: _startDate!, end: _endDate!)
+          : null,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: CupertinoColors.activeBlue,
+              onPrimary: Colors.white,
+              onSurface: Color(0xFF1E293B),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _startDate = picked.start;
+        _endDate = picked.end;
+        _selectedId = null;
+      });
+    }
+  }
+
+  Future<void> _showPresetPicker() async {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Pilih Periode'),
+        actions: [
+          CupertinoActionSheetAction(
+            child: const Text('Semua Waktu'),
+            onPressed: () {
+              _updateDatePreset('all');
+              Navigator.pop(context);
+            },
+          ),
+          CupertinoActionSheetAction(
+            child: const Text('30 Hari Terakhir'),
+            onPressed: () {
+              _updateDatePreset('30days');
+              Navigator.pop(context);
+            },
+          ),
+          CupertinoActionSheetAction(
+            child: const Text('Bulan Ini'),
+            onPressed: () {
+              _updateDatePreset('thisMonth');
+              Navigator.pop(context);
+            },
+          ),
+          CupertinoActionSheetAction(
+            child: const Text('3 Bulan Terakhir'),
+            onPressed: () {
+              _updateDatePreset('90days');
+              Navigator.pop(context);
+            },
+          ),
+          CupertinoActionSheetAction(
+            child: const Text('Pilih Tanggal...'),
+            onPressed: () {
+              Navigator.pop(context);
+              _selectCustomDateRange();
+            },
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
+    _datePreset = 'thisMonth';
+    _endDate = DateTime.now();
+    _startDate = DateTime(DateTime.now().year, DateTime.now().month, 1);
     _scrollController.addListener(_onScroll);
   }
 
@@ -68,6 +186,8 @@ class _PackingListScreenState extends ConsumerState<PackingListScreen> {
       ref.read(packingListsProvider(
         status: _selectedStatus,
         search: _searchQuery,
+        startDate: _startDateStr,
+        endDate: _endDateStr,
       ).notifier).loadMore();
     }
   }
@@ -205,6 +325,8 @@ class _PackingListScreenState extends ConsumerState<PackingListScreen> {
     final listAsync = ref.watch(packingListsProvider(
       status: _selectedStatus,
       search: _searchQuery,
+      startDate: _startDateStr,
+      endDate: _endDateStr,
     ));
     final isWide = MediaQuery.of(context).size.width > 900;
     final labelColor = CupertinoColors.label.resolveFrom(context);
@@ -215,6 +337,50 @@ class _PackingListScreenState extends ConsumerState<PackingListScreen> {
       return Column(
         children: [
           const CompanySwitcher(),
+          GestureDetector(
+            onTap: _showPresetPicker,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: CupertinoColors.systemBackground.resolveFrom(context),
+                border: Border(bottom: BorderSide(color: CupertinoColors.separator.resolveFrom(context), width: 0.5)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(CupertinoIcons.calendar, size: 16, color: CupertinoColors.activeBlue),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Periode:',
+                    style: context.footnote.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _datePreset == 'all' ? 'Semua Waktu' :
+                      _datePreset == '30days' ? '30 Hari Terakhir' :
+                      _datePreset == 'thisMonth' ? 'Bulan Ini' :
+                      _datePreset == '90days' ? '3 Bulan Terakhir' : 'Kustom...',
+                      style: context.footnote.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: CupertinoColors.label.resolveFrom(context),
+                      ),
+                    ),
+                  ),
+                  if (_startDate != null && _endDate != null) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      '${_startDate!.day}/${_startDate!.month}/${_startDate!.year} - ${_endDate!.day}/${_endDate!.month}/${_endDate!.year}',
+                      style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                    ),
+                  ],
+                  const Icon(CupertinoIcons.chevron_down, size: 14, color: CupertinoColors.secondaryLabel),
+                ],
+              ),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: CupertinoSearchTextField(
@@ -281,7 +447,12 @@ class _PackingListScreenState extends ConsumerState<PackingListScreen> {
                   padding: const EdgeInsets.all(16),
                   itemCount: containers.length +
                       (ref
-                              .watch(packingListsProvider(status: _selectedStatus, search: _searchQuery).notifier)
+                              .watch(packingListsProvider(
+                                status: _selectedStatus,
+                                search: _searchQuery,
+                                startDate: _startDateStr,
+                                endDate: _endDateStr,
+                              ).notifier)
                               .hasMore
                           ? 1
                           : 0),

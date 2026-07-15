@@ -246,6 +246,9 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
   @override
   void initState() {
     super.initState();
+    _datePreset = 'thisMonth';
+    _endDate = DateTime.now();
+    _startDate = DateTime(DateTime.now().year, DateTime.now().month, 1);
     if (widget.initialStatus != null) {
       _selectedStatus = widget.initialStatus;
     }
@@ -289,28 +292,22 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
       backgroundColor: CupertinoColors.transparent,
       navigationBar: CupertinoNavigationBar(
         middle: const Text('Purchase Requests'),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CompanySwitcher(),
-            const SizedBox(width: 8),
-            CupertinoButton(
-              padding: EdgeInsets.zero,
-              child: const Icon(CupertinoIcons.refresh, size: 24),
-              onPressed: () {
-                setState(() {
-                  _selectedPrId = null;
-                  _selectedItem = null;
-                });
-                ref.invalidate(purchaseRequestsProvider);
-              },
-            ),
-          ],
+        trailing: CupertinoButton(
+          padding: EdgeInsets.zero,
+          child: const Icon(CupertinoIcons.refresh, size: 24),
+          onPressed: () {
+            setState(() {
+              _selectedPrId = null;
+              _selectedItem = null;
+            });
+            ref.invalidate(purchaseRequestsProvider);
+          },
         ),
       ),
       child: SafeArea(
         child: Column(
           children: [
+            const CompanySwitcher(),
             
             // Date Filter Panel
             Container(

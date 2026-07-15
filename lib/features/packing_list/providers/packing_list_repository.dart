@@ -11,11 +11,15 @@ class PackingListRepository {
     int page = 1,
     String? search,
     String? status,
+    String? startDate,
+    String? endDate,
   }) async {
     final response = await dio.get('wh/containers', queryParameters: {
       'page': page,
       if (search != null && search.isNotEmpty) 'search': search,
       if (status != null && status.isNotEmpty) 'status': status,
+      if (startDate != null && startDate.isNotEmpty) 'start_date': startDate,
+      if (endDate != null && endDate.isNotEmpty) 'end_date': endDate,
     });
 
     return PaginatedResponse.fromJson(

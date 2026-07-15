@@ -193,52 +193,62 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     }
 
     return CupertinoPageScaffold(
-      backgroundColor: CupertinoColors.transparent,
-      navigationBar: const CupertinoNavigationBar(
-        middle: Text('Stok Barang'),
-        trailing: CompanySwitcher(),
+      backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+      navigationBar: CupertinoNavigationBar(
+        backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
+        middle: Text(
+          'Stok Barang',
+          style: TextStyle(color: labelColor),
+        ),
       ),
       child: SafeArea(
-        child: isLargeScreen
-            ? Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: buildLeftPane(),
-                  ),
-                  Container(
-                    width: 0.5,
-                    color: separatorColor,
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Container(
-                      color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
-                      child: _selectedSku != null
-                          ? StockDetailPane(sku: _selectedSku!)
-                          : Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    CupertinoIcons.square_stack_3d_up,
-                                    size: 48,
-                                    color: secondaryLabel.withValues(alpha: 0.5),
+        child: Column(
+          children: [
+            const CompanySwitcher(),
+            Expanded(
+              child: isLargeScreen
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: buildLeftPane(),
+                        ),
+                        Container(
+                          width: 0.5,
+                          color: separatorColor,
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Container(
+                            color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+                            child: _selectedSku != null
+                                ? StockDetailPane(sku: _selectedSku!)
+                                : Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          CupertinoIcons.square_stack_3d_up,
+                                          size: 48,
+                                          color: secondaryLabel.withValues(alpha: 0.5),
+                                        ),
+                                        const SizedBox(height: CupertinoSpacing.screenMargin),
+                                        Text(
+                                          'Pilih barang untuk melihat detail rincian stok',
+                                          style: context.subhead.copyWith(color: secondaryLabel),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  const SizedBox(height: CupertinoSpacing.screenMargin),
-                                  Text(
-                                    'Pilih barang untuk melihat detail rincian stok',
-                                    style: context.subhead.copyWith(color: secondaryLabel),
-                                  ),
-                                ],
-                              ),
-                            ),
-                    ),
-                  ),
-                ],
-              )
-            : buildLeftPane(),
+                          ),
+                        ),
+                      ],
+                    )
+                  : buildLeftPane(),
+            ),
+          ],
+        ),
       ),
     );
   }

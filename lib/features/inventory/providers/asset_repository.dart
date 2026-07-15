@@ -202,15 +202,18 @@ Future<Asset> assetDetail(AssetDetailRef ref, int id) async {
 
 @riverpod
 Future<List<AssetOffice>> assetOffices(AssetOfficesRef ref, {int? companyId}) async {
+  if (companyId != null && companyId <= 0) return [];
   return ref.watch(assetRepositoryProvider).getOffices(companyId: companyId);
 }
 
 @riverpod
 Future<List<AssetEmployee>> assetEmployees(AssetEmployeesRef ref, {int? companyId}) async {
+  if (companyId != null && companyId <= 0) return [];
   return ref.watch(assetRepositoryProvider).getEmployees(companyId: companyId);
 }
 
 @riverpod
 Future<List<Supplier>> assetSuppliers(AssetSuppliersRef ref, {int? companyId}) async {
+  if (companyId != null && companyId <= 0) return [];
   return ref.watch(assetRepositoryProvider).getSuppliers(companyId: companyId);
 }

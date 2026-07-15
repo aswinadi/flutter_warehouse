@@ -437,16 +437,20 @@ class _AvailableInventoryItemsProviderElement
   int get id => (origin as AvailableInventoryItemsProvider).id;
 }
 
-String _$packingListsHash() => r'f9fb56c3b274beeb0adea4415e62a128e2cd3b58';
+String _$packingListsHash() => r'4c2ec96a0e2acf552f2a6ea34ba673483cd9630d';
 
 abstract class _$PackingLists
     extends BuildlessAutoDisposeAsyncNotifier<List<PackingList>> {
   late final String? status;
   late final String? search;
+  late final String? startDate;
+  late final String? endDate;
 
   FutureOr<List<PackingList>> build({
     String? status,
     String? search,
+    String? startDate,
+    String? endDate,
   });
 }
 
@@ -463,10 +467,14 @@ class PackingListsFamily extends Family<AsyncValue<List<PackingList>>> {
   PackingListsProvider call({
     String? status,
     String? search,
+    String? startDate,
+    String? endDate,
   }) {
     return PackingListsProvider(
       status: status,
       search: search,
+      startDate: startDate,
+      endDate: endDate,
     );
   }
 
@@ -477,6 +485,8 @@ class PackingListsFamily extends Family<AsyncValue<List<PackingList>>> {
     return call(
       status: provider.status,
       search: provider.search,
+      startDate: provider.startDate,
+      endDate: provider.endDate,
     );
   }
 
@@ -502,10 +512,14 @@ class PackingListsProvider extends AutoDisposeAsyncNotifierProviderImpl<
   PackingListsProvider({
     String? status,
     String? search,
+    String? startDate,
+    String? endDate,
   }) : this._internal(
           () => PackingLists()
             ..status = status
-            ..search = search,
+            ..search = search
+            ..startDate = startDate
+            ..endDate = endDate,
           from: packingListsProvider,
           name: r'packingListsProvider',
           debugGetCreateSourceHash:
@@ -517,6 +531,8 @@ class PackingListsProvider extends AutoDisposeAsyncNotifierProviderImpl<
               PackingListsFamily._allTransitiveDependencies,
           status: status,
           search: search,
+          startDate: startDate,
+          endDate: endDate,
         );
 
   PackingListsProvider._internal(
@@ -528,10 +544,14 @@ class PackingListsProvider extends AutoDisposeAsyncNotifierProviderImpl<
     required super.from,
     required this.status,
     required this.search,
+    required this.startDate,
+    required this.endDate,
   }) : super.internal();
 
   final String? status;
   final String? search;
+  final String? startDate;
+  final String? endDate;
 
   @override
   FutureOr<List<PackingList>> runNotifierBuild(
@@ -540,6 +560,8 @@ class PackingListsProvider extends AutoDisposeAsyncNotifierProviderImpl<
     return notifier.build(
       status: status,
       search: search,
+      startDate: startDate,
+      endDate: endDate,
     );
   }
 
@@ -550,7 +572,9 @@ class PackingListsProvider extends AutoDisposeAsyncNotifierProviderImpl<
       override: PackingListsProvider._internal(
         () => create()
           ..status = status
-          ..search = search,
+          ..search = search
+          ..startDate = startDate
+          ..endDate = endDate,
         from: from,
         name: null,
         dependencies: null,
@@ -558,6 +582,8 @@ class PackingListsProvider extends AutoDisposeAsyncNotifierProviderImpl<
         debugGetCreateSourceHash: null,
         status: status,
         search: search,
+        startDate: startDate,
+        endDate: endDate,
       ),
     );
   }
@@ -572,7 +598,9 @@ class PackingListsProvider extends AutoDisposeAsyncNotifierProviderImpl<
   bool operator ==(Object other) {
     return other is PackingListsProvider &&
         other.status == status &&
-        other.search == search;
+        other.search == search &&
+        other.startDate == startDate &&
+        other.endDate == endDate;
   }
 
   @override
@@ -580,6 +608,8 @@ class PackingListsProvider extends AutoDisposeAsyncNotifierProviderImpl<
     var hash = _SystemHash.combine(0, runtimeType.hashCode);
     hash = _SystemHash.combine(hash, status.hashCode);
     hash = _SystemHash.combine(hash, search.hashCode);
+    hash = _SystemHash.combine(hash, startDate.hashCode);
+    hash = _SystemHash.combine(hash, endDate.hashCode);
 
     return _SystemHash.finish(hash);
   }
@@ -592,6 +622,12 @@ mixin PackingListsRef
 
   /// The parameter `search` of this provider.
   String? get search;
+
+  /// The parameter `startDate` of this provider.
+  String? get startDate;
+
+  /// The parameter `endDate` of this provider.
+  String? get endDate;
 }
 
 class _PackingListsProviderElement
@@ -603,6 +639,10 @@ class _PackingListsProviderElement
   String? get status => (origin as PackingListsProvider).status;
   @override
   String? get search => (origin as PackingListsProvider).search;
+  @override
+  String? get startDate => (origin as PackingListsProvider).startDate;
+  @override
+  String? get endDate => (origin as PackingListsProvider).endDate;
 }
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

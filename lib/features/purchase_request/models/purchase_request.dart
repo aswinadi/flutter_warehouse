@@ -18,6 +18,8 @@ class PurchaseRequest with _$PurchaseRequest {
     @JsonKey(name: 'can_approve') @Default(false) bool canApprove,
     @JsonKey(name: 'approved_by') String? approvedBy,
     @JsonKey(name: 'approved_at') String? approvedAt,
+    @JsonKey(name: 'vendor_submitted_at') String? vendorSubmittedAt,
+    @JsonKey(name: 'vendor_rejection_reason') String? vendorRejectionReason,
     @Default([]) List<PurchaseRequestItem> details,
     @Default([]) List<PurchaseRequestComparison> comparisons,
     @JsonKey(name: 'purchase_orders') @Default([]) List<PRAssociatedPO> purchaseOrders,
@@ -77,6 +79,8 @@ class PurchaseRequestItem with _$PurchaseRequestItem {
     @JsonKey(name: 'selected_comparison_id') int? selectedComparisonId,
     @JsonKey(name: 'warehouse_code') String? warehouseCode,
     @JsonKey(name: 'warehouse_name') String? warehouseName,
+    @JsonKey(name: 'warehouse_area_id') int? warehouseAreaId,
+    @JsonKey(name: 'warehouse_area_name') String? warehouseAreaName,
     @JsonKey(name: 'po_number') String? poNumber,
   }) = _PurchaseRequestItem;
 

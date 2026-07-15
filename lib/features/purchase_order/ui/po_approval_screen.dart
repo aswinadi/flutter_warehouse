@@ -146,6 +146,12 @@ class _POApprovalScreenState extends ConsumerState<POApprovalScreen> {
                         _buildInfoRow(context, 'Pemasok', po.supplierName),
                         _buildInfoRow(context, 'Tanggal Transaksi', po.transactionDate),
                         _buildInfoRow(context, 'Tanggal Perkiraan', po.expectedDate),
+                        if (po.warehouseName != null && po.warehouseName!.isNotEmpty)
+                          _buildInfoRow(
+                            context,
+                            'Gudang Tujuan',
+                            '${po.warehouseName!}${po.warehouseAreaName != null ? " (${po.warehouseAreaName})" : ""}',
+                          ),
                         if (po.paymentTerm != null && po.paymentTerm!.isNotEmpty)
                           _buildInfoRow(context, 'Syarat Pembayaran', po.paymentTerm!),
                         _buildInfoRow(context, 'Status', po.status.toUpperCase()),

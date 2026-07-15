@@ -17,6 +17,7 @@ _$InventoryImpl _$$InventoryImplFromJson(Map<String, dynamic> json) =>
       warehouseName: json['warehouse_name'] as String?,
       locationCode: json['location_code'] as String?,
       unit: json['unit'] as String?,
+      description: json['description'] as String?,
     );
 
 Map<String, dynamic> _$$InventoryImplToJson(_$InventoryImpl instance) =>
@@ -30,4 +31,5 @@ Map<String, dynamic> _$$InventoryImplToJson(_$InventoryImpl instance) =>
       'warehouse_name': instance.warehouseName,
       'location_code': instance.locationCode,
       'unit': instance.unit,
+      'description': instance.description,
     };

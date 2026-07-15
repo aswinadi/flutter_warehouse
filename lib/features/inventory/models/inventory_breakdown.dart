@@ -9,6 +9,7 @@ class InventoryBreakdown with _$InventoryBreakdown {
     @JsonKey(name: 'product_name') required String productName,
     required String sku,
     required String unit,
+    String? description,
     @JsonKey(name: 'on_hand') @Default([]) List<WarehouseOnHand> onHand,
     @JsonKey(name: 'in_transit') @Default([]) List<InTransitStock> inTransit,
     @Default([]) List<OrderedStock> ordered,

@@ -26,6 +26,7 @@ import '../../../core/theme/cupertino_spacing.dart';
 import '../../../core/widgets/cupertino_glass_container.dart';
 import '../../../core/widgets/cupertino_glass_dialog.dart';
 import '../../../core/widgets/cupertino_glass_toast.dart';
+import '../../../core/providers/warehouse_provider.dart';
 
 // ─── Sentinel values ──────────────────────────────────────────────────────────
 
@@ -229,6 +230,9 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
   String? get _apiStatus {
     if (_selectedStatus == 'vendor_approved' || _selectedStatus == 'po_created') {
       return 'vendor_approved,po_created';
+    }
+    if (_selectedStatus == 'waiting_bod_approval') {
+      return 'waiting_acknowledge,waiting_bod_approval';
     }
     return _selectedStatus;
   }
@@ -742,7 +746,9 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
   }) {
     final allItems = requests
         .expand((pr) => pr.details.map((item) => _ItemWithPr(item: item, pr: pr)))
-        .where((entry) => entry.item.status?.toLowerCase() == 'waiting_bod_approval')
+        .where((entry) =>
+            entry.item.status?.toLowerCase() == 'waiting_acknowledge' ||
+            entry.item.status?.toLowerCase() == 'waiting_bod_approval')
         .toList();
 
     final secondaryLabelColor = CupertinoColors.secondaryLabel.resolveFrom(context);
@@ -1653,6 +1659,21 @@ class _ComparisonItemDetailView extends ConsumerStatefulWidget {
 class _ComparisonItemDetailViewState
     extends ConsumerState<_ComparisonItemDetailView> {
   bool _isSubmittingToBod = false;
+  int? _selectedAreaId;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedAreaId = widget.entry.item.warehouseAreaId;
+  }
+
+  @override
+  void didUpdateWidget(covariant _ComparisonItemDetailView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.entry.item.id != widget.entry.item.id) {
+      _selectedAreaId = widget.entry.item.warehouseAreaId;
+    }
+  }
 
   Future<void> _removeComparison(BuildContext context, int comparisonId) async {
     final confirmed = await showCupertinoDialog<bool>(
@@ -1701,7 +1722,15 @@ class _ComparisonItemDetailViewState
     try {
       await ref
           .read(purchaseRequestRepositoryProvider)
-          .submitToBod(widget.entry.pr.id, itemIds: [widget.entry.item.id]);
+          .submitToBod(
+            widget.entry.pr.id,
+            items: [
+              {
+                'item_id': widget.entry.item.id,
+                'warehouse_area_id': _selectedAreaId,
+              }
+            ],
+          );
       ref.invalidate(purchaseRequestsProvider);
       if (mounted) {
         _showNotification(context, 'Item submitted to BOD for vendor selection.');
@@ -1712,6 +1741,17 @@ class _ComparisonItemDetailViewState
       }
     } finally {
       if (mounted) setState(() => _isSubmittingToBod = false);
+    }
+  }
+
+  Future<void> _updateAreaOnBackend(int? areaId) async {
+    try {
+      await ref.read(purchaseRequestRepositoryProvider).updateWarehouseArea(widget.entry.item.id, areaId);
+      ref.invalidate(purchaseRequestsProvider);
+    } catch (e) {
+      if (mounted) {
+        _showNotification(context, 'Error updating area: $e', isError: true);
+      }
     }
   }
 
@@ -1818,6 +1858,96 @@ class _ComparisonItemDetailViewState
                     value: item.warehouseName != null
                         ? '[${item.warehouseCode}] ${item.warehouseName}'
                         : (item.warehouseCode ?? '-'),
+                  ),
+                  Builder(
+                    builder: (ctx) {
+                      final warehouses = ref.watch(warehousesProvider).valueOrNull ?? [];
+                      final itemWarehouse = warehouses.where((w) => w.code == item.warehouseCode).firstOrNull;
+                      final areas = itemWarehouse?.areas.where((a) => a.isActive).toList() ?? [];
+                      
+                      if (areas.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+
+                      final selectedArea = areas.where((a) => a.id == _selectedAreaId).firstOrNull;
+
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Row(
+                          children: [
+                            const Text(
+                              'Area Tujuan: ',
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () async {
+                                await showCupertinoModalPopup<void>(
+                                  context: ctx,
+                                  builder: (BuildContext sheetCtx) {
+                                    return CupertinoActionSheet(
+                                      title: const Text('Pilih Area Tujuan'),
+                                      message: Text('Gudang: ${item.warehouseName ?? item.warehouseCode}'),
+                                      actions: [
+                                        CupertinoActionSheetAction(
+                                          onPressed: () {
+                                            setState(() {
+                                              _selectedAreaId = null;
+                                            });
+                                            _updateAreaOnBackend(null);
+                                            Navigator.pop(sheetCtx);
+                                          },
+                                          child: const Text('Tanpa Area / Default'),
+                                        ),
+                                        ...areas.map((area) {
+                                          return CupertinoActionSheetAction(
+                                            onPressed: () {
+                                              setState(() {
+                                                _selectedAreaId = area.id;
+                                              });
+                                              _updateAreaOnBackend(area.id);
+                                              Navigator.pop(sheetCtx);
+                                            },
+                                            child: Text(area.name),
+                                          );
+                                        }),
+                                      ],
+                                      cancelButton: CupertinoActionSheetAction(
+                                        isDefaultAction: true,
+                                        onPressed: () => Navigator.pop(sheetCtx),
+                                        child: const Text('Batal'),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: CupertinoColors.tertiarySystemFill.resolveFrom(ctx),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      selectedArea?.name ?? 'Pilih Area...',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: selectedArea != null ? CupertinoColors.activeBlue : CupertinoColors.secondaryLabel.resolveFrom(ctx),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(CupertinoIcons.chevron_down, size: 10, color: CupertinoColors.secondaryLabel.resolveFrom(ctx)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ],
                 if (item.dtSpec != null && item.dtSpec!.isNotEmpty) ...[

@@ -33,6 +33,7 @@ mixin _$Inventory {
   @JsonKey(name: 'location_code')
   String? get locationCode => throw _privateConstructorUsedError;
   String? get unit => throw _privateConstructorUsedError;
+  String? get description => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -54,7 +55,8 @@ abstract class $InventoryCopyWith<$Res> {
       String status,
       @JsonKey(name: 'warehouse_name') String? warehouseName,
       @JsonKey(name: 'location_code') String? locationCode,
-      String? unit});
+      String? unit,
+      String? description});
 }
 
 /// @nodoc
@@ -79,6 +81,7 @@ class _$InventoryCopyWithImpl<$Res, $Val extends Inventory>
     Object? warehouseName = freezed,
     Object? locationCode = freezed,
     Object? unit = freezed,
+    Object? description = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -117,6 +120,10 @@ class _$InventoryCopyWithImpl<$Res, $Val extends Inventory>
           ? _value.unit
           : unit // ignore: cast_nullable_to_non_nullable
               as String?,
+      description: freezed == description
+          ? _value.description
+          : description // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -138,7 +145,8 @@ abstract class _$$InventoryImplCopyWith<$Res>
       String status,
       @JsonKey(name: 'warehouse_name') String? warehouseName,
       @JsonKey(name: 'location_code') String? locationCode,
-      String? unit});
+      String? unit,
+      String? description});
 }
 
 /// @nodoc
@@ -161,6 +169,7 @@ class __$$InventoryImplCopyWithImpl<$Res>
     Object? warehouseName = freezed,
     Object? locationCode = freezed,
     Object? unit = freezed,
+    Object? description = freezed,
   }) {
     return _then(_$InventoryImpl(
       id: null == id
@@ -199,6 +208,10 @@ class __$$InventoryImplCopyWithImpl<$Res>
           ? _value.unit
           : unit // ignore: cast_nullable_to_non_nullable
               as String?,
+      description: freezed == description
+          ? _value.description
+          : description // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -215,7 +228,8 @@ class _$InventoryImpl implements _Inventory {
       required this.status,
       @JsonKey(name: 'warehouse_name') this.warehouseName,
       @JsonKey(name: 'location_code') this.locationCode,
-      this.unit});
+      this.unit,
+      this.description});
 
   factory _$InventoryImpl.fromJson(Map<String, dynamic> json) =>
       _$$InventoryImplFromJson(json);
@@ -242,10 +256,12 @@ class _$InventoryImpl implements _Inventory {
   final String? locationCode;
   @override
   final String? unit;
+  @override
+  final String? description;
 
   @override
   String toString() {
-    return 'Inventory(id: $id, barcodeCode: $barcodeCode, sku: $sku, productName: $productName, quantity: $quantity, status: $status, warehouseName: $warehouseName, locationCode: $locationCode, unit: $unit)';
+    return 'Inventory(id: $id, barcodeCode: $barcodeCode, sku: $sku, productName: $productName, quantity: $quantity, status: $status, warehouseName: $warehouseName, locationCode: $locationCode, unit: $unit, description: $description)';
   }
 
   @override
@@ -266,13 +282,25 @@ class _$InventoryImpl implements _Inventory {
                 other.warehouseName == warehouseName) &&
             (identical(other.locationCode, locationCode) ||
                 other.locationCode == locationCode) &&
-            (identical(other.unit, unit) || other.unit == unit));
+            (identical(other.unit, unit) || other.unit == unit) &&
+            (identical(other.description, description) ||
+                other.description == description));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, id, barcodeCode, sku,
-      productName, quantity, status, warehouseName, locationCode, unit);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      barcodeCode,
+      sku,
+      productName,
+      quantity,
+      status,
+      warehouseName,
+      locationCode,
+      unit,
+      description);
 
   @JsonKey(ignore: true)
   @override
@@ -298,7 +326,8 @@ abstract class _Inventory implements Inventory {
       required final String status,
       @JsonKey(name: 'warehouse_name') final String? warehouseName,
       @JsonKey(name: 'location_code') final String? locationCode,
-      final String? unit}) = _$InventoryImpl;
+      final String? unit,
+      final String? description}) = _$InventoryImpl;
 
   factory _Inventory.fromJson(Map<String, dynamic> json) =
       _$InventoryImpl.fromJson;
@@ -325,6 +354,8 @@ abstract class _Inventory implements Inventory {
   String? get locationCode;
   @override
   String? get unit;
+  @override
+  String? get description;
   @override
   @JsonKey(ignore: true)
   _$$InventoryImplCopyWith<_$InventoryImpl> get copyWith =>

@@ -20,6 +20,8 @@ _$PurchaseRequestImpl _$$PurchaseRequestImplFromJson(
       canApprove: json['can_approve'] as bool? ?? false,
       approvedBy: json['approved_by'] as String?,
       approvedAt: json['approved_at'] as String?,
+      vendorSubmittedAt: json['vendor_submitted_at'] as String?,
+      vendorRejectionReason: json['vendor_rejection_reason'] as String?,
       details: (json['details'] as List<dynamic>?)
               ?.map((e) =>
                   PurchaseRequestItem.fromJson(e as Map<String, dynamic>))
@@ -50,6 +52,8 @@ Map<String, dynamic> _$$PurchaseRequestImplToJson(
       'can_approve': instance.canApprove,
       'approved_by': instance.approvedBy,
       'approved_at': instance.approvedAt,
+      'vendor_submitted_at': instance.vendorSubmittedAt,
+      'vendor_rejection_reason': instance.vendorRejectionReason,
       'details': instance.details,
       'comparisons': instance.comparisons,
       'purchase_orders': instance.purchaseOrders,
@@ -124,6 +128,8 @@ _$PurchaseRequestItemImpl _$$PurchaseRequestItemImplFromJson(
       selectedComparisonId: (json['selected_comparison_id'] as num?)?.toInt(),
       warehouseCode: json['warehouse_code'] as String?,
       warehouseName: json['warehouse_name'] as String?,
+      warehouseAreaId: (json['warehouse_area_id'] as num?)?.toInt(),
+      warehouseAreaName: json['warehouse_area_name'] as String?,
       poNumber: json['po_number'] as String?,
     );
 
@@ -148,6 +154,8 @@ Map<String, dynamic> _$$PurchaseRequestItemImplToJson(
       'selected_comparison_id': instance.selectedComparisonId,
       'warehouse_code': instance.warehouseCode,
       'warehouse_name': instance.warehouseName,
+      'warehouse_area_id': instance.warehouseAreaId,
+      'warehouse_area_name': instance.warehouseAreaName,
       'po_number': instance.poNumber,
     };
 

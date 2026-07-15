@@ -18,6 +18,8 @@ class PaymentTransactionRepository {
     int? supplierId,
     String? search,
     bool? hasProof,
+    String? startDate,
+    String? endDate,
   }) async {
     final response = await dio.get('wh/payment-transactions', queryParameters: {
       'page': page,
@@ -25,6 +27,8 @@ class PaymentTransactionRepository {
       if (supplierId != null) 'supplier_id': supplierId,
       if (search != null) 'search': search,
       if (hasProof != null) 'has_proof': hasProof,
+      if (startDate != null) 'start_date': startDate,
+      if (endDate != null) 'end_date': endDate,
     });
 
     return PaginatedResponse.fromJson(
@@ -77,6 +81,8 @@ class PaymentTransactionsList extends _$PaymentTransactionsList {
   Future<List<PaymentTransaction>> build({
     bool? hasProof,
     String? search,
+    String? startDate,
+    String? endDate,
   }) async {
     ref.watch(paymentTransactionRepositoryProvider);
     ref.watch(selectedCompanyProvider);
@@ -96,6 +102,8 @@ class PaymentTransactionsList extends _$PaymentTransactionsList {
       companyId: selectedCompany?.id,
       search: (search?.isEmpty ?? true) ? null : search,
       hasProof: hasProof,
+      startDate: startDate,
+      endDate: endDate,
     );
 
     if (response.meta != null) {

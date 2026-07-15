@@ -42,6 +42,9 @@ class _LandedCostListScreenState extends ConsumerState<LandedCostListScreen> {
   @override
   void initState() {
     super.initState();
+    _datePreset = 'thisMonth';
+    _endDate = DateTime.now();
+    _startDate = DateTime(DateTime.now().year, DateTime.now().month, 1);
     _scrollController.addListener(_onScroll);
   }
 
@@ -310,7 +313,7 @@ class _LandedCostListScreenState extends ConsumerState<LandedCostListScreen> {
         trailing: CupertinoButton(
           padding: EdgeInsets.zero,
           onPressed: () => _handleAddNewLandedCost(selectedCompany),
-          child: const Icon(CupertinoIcons.add_circled, size: 24),
+          child: const Icon(CupertinoIcons.add, size: 24),
         ),
       ),
       child: SafeArea(

@@ -180,16 +180,20 @@ class _PaymentTransactionDetailsProviderElement
 }
 
 String _$paymentTransactionsListHash() =>
-    r'b7ba5beea3981135a5b13247c58118d06e48be90';
+    r'20e50d6865ddbad81b5410c0c596cd1112b6ec55';
 
 abstract class _$PaymentTransactionsList
     extends BuildlessAutoDisposeAsyncNotifier<List<PaymentTransaction>> {
   late final bool? hasProof;
   late final String? search;
+  late final String? startDate;
+  late final String? endDate;
 
   FutureOr<List<PaymentTransaction>> build({
     bool? hasProof,
     String? search,
+    String? startDate,
+    String? endDate,
   });
 }
 
@@ -207,10 +211,14 @@ class PaymentTransactionsListFamily
   PaymentTransactionsListProvider call({
     bool? hasProof,
     String? search,
+    String? startDate,
+    String? endDate,
   }) {
     return PaymentTransactionsListProvider(
       hasProof: hasProof,
       search: search,
+      startDate: startDate,
+      endDate: endDate,
     );
   }
 
@@ -221,6 +229,8 @@ class PaymentTransactionsListFamily
     return call(
       hasProof: provider.hasProof,
       search: provider.search,
+      startDate: provider.startDate,
+      endDate: provider.endDate,
     );
   }
 
@@ -247,10 +257,14 @@ class PaymentTransactionsListProvider
   PaymentTransactionsListProvider({
     bool? hasProof,
     String? search,
+    String? startDate,
+    String? endDate,
   }) : this._internal(
           () => PaymentTransactionsList()
             ..hasProof = hasProof
-            ..search = search,
+            ..search = search
+            ..startDate = startDate
+            ..endDate = endDate,
           from: paymentTransactionsListProvider,
           name: r'paymentTransactionsListProvider',
           debugGetCreateSourceHash:
@@ -262,6 +276,8 @@ class PaymentTransactionsListProvider
               PaymentTransactionsListFamily._allTransitiveDependencies,
           hasProof: hasProof,
           search: search,
+          startDate: startDate,
+          endDate: endDate,
         );
 
   PaymentTransactionsListProvider._internal(
@@ -273,10 +289,14 @@ class PaymentTransactionsListProvider
     required super.from,
     required this.hasProof,
     required this.search,
+    required this.startDate,
+    required this.endDate,
   }) : super.internal();
 
   final bool? hasProof;
   final String? search;
+  final String? startDate;
+  final String? endDate;
 
   @override
   FutureOr<List<PaymentTransaction>> runNotifierBuild(
@@ -285,6 +305,8 @@ class PaymentTransactionsListProvider
     return notifier.build(
       hasProof: hasProof,
       search: search,
+      startDate: startDate,
+      endDate: endDate,
     );
   }
 
@@ -295,7 +317,9 @@ class PaymentTransactionsListProvider
       override: PaymentTransactionsListProvider._internal(
         () => create()
           ..hasProof = hasProof
-          ..search = search,
+          ..search = search
+          ..startDate = startDate
+          ..endDate = endDate,
         from: from,
         name: null,
         dependencies: null,
@@ -303,6 +327,8 @@ class PaymentTransactionsListProvider
         debugGetCreateSourceHash: null,
         hasProof: hasProof,
         search: search,
+        startDate: startDate,
+        endDate: endDate,
       ),
     );
   }
@@ -317,7 +343,9 @@ class PaymentTransactionsListProvider
   bool operator ==(Object other) {
     return other is PaymentTransactionsListProvider &&
         other.hasProof == hasProof &&
-        other.search == search;
+        other.search == search &&
+        other.startDate == startDate &&
+        other.endDate == endDate;
   }
 
   @override
@@ -325,6 +353,8 @@ class PaymentTransactionsListProvider
     var hash = _SystemHash.combine(0, runtimeType.hashCode);
     hash = _SystemHash.combine(hash, hasProof.hashCode);
     hash = _SystemHash.combine(hash, search.hashCode);
+    hash = _SystemHash.combine(hash, startDate.hashCode);
+    hash = _SystemHash.combine(hash, endDate.hashCode);
 
     return _SystemHash.finish(hash);
   }
@@ -337,6 +367,12 @@ mixin PaymentTransactionsListRef
 
   /// The parameter `search` of this provider.
   String? get search;
+
+  /// The parameter `startDate` of this provider.
+  String? get startDate;
+
+  /// The parameter `endDate` of this provider.
+  String? get endDate;
 }
 
 class _PaymentTransactionsListProviderElement
@@ -348,6 +384,11 @@ class _PaymentTransactionsListProviderElement
   bool? get hasProof => (origin as PaymentTransactionsListProvider).hasProof;
   @override
   String? get search => (origin as PaymentTransactionsListProvider).search;
+  @override
+  String? get startDate =>
+      (origin as PaymentTransactionsListProvider).startDate;
+  @override
+  String? get endDate => (origin as PaymentTransactionsListProvider).endDate;
 }
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

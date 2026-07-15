@@ -1,9 +1,9 @@
+import 'package:flutter/cupertino.dart' show CupertinoListTile;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../providers/inventory_provider.dart';
-import '../models/inventory.dart';
 import '../models/inventory_breakdown.dart';
 import '../models/asset.dart';
 import '../providers/asset_repository.dart';
@@ -834,8 +834,8 @@ class _WarehouseStockTileState extends State<WarehouseStockTile> {
       ),
       child: Column(
         children: [
-          ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          CupertinoListTile(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             leading: Icon(
               Icons.warehouse_outlined,
               color: wh.quantity > 0 ? const Color(0xFF38BDF8) : Colors.white30,
@@ -883,7 +883,7 @@ class _WarehouseStockTileState extends State<WarehouseStockTile> {
                 : null,
           ),
           if (_isExpanded && wh.locations.isNotEmpty) ...[
-            const Divider(color: Colors.white10, height: 1),
+            Container(height: 1, color: Colors.white10),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(

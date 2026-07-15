@@ -44,11 +44,13 @@ CostCentreRepository costCentreRepository(CostCentreRepositoryRef ref) {
 
 @riverpod
 Future<List<CostCentre>> costCentres(CostCentresRef ref, {required int companyId}) async {
+  if (companyId <= 0) return [];
   return ref.watch(costCentreRepositoryProvider).getCostCentres(companyId: companyId);
 }
 
 @riverpod
 Future<List<CostCode>> costCodes(CostCodesRef ref, {required int companyId}) async {
+  if (companyId <= 0) return [];
   return ref.watch(costCentreRepositoryProvider).getCostCodes(companyId: companyId);
 }
 

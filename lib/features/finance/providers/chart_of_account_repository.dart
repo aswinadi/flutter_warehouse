@@ -27,5 +27,6 @@ ChartOfAccountRepository chartOfAccountRepository(ChartOfAccountRepositoryRef re
 
 @riverpod
 Future<List<ChartOfAccount>> chartOfAccounts(ChartOfAccountsRef ref, {required int companyId}) async {
+  if (companyId <= 0) return [];
   return ref.watch(chartOfAccountRepositoryProvider).getChartOfAccounts(companyId: companyId);
 }

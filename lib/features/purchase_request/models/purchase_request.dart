@@ -18,6 +18,8 @@ class PurchaseRequest with _$PurchaseRequest {
     @JsonKey(name: 'can_approve') @Default(false) bool canApprove,
     @JsonKey(name: 'approved_by') String? approvedBy,
     @JsonKey(name: 'approved_at') String? approvedAt,
+    @JsonKey(name: 'vendor_submitted_at') String? vendorSubmittedAt,
+    @JsonKey(name: 'vendor_rejection_reason') String? vendorRejectionReason,
     @Default([]) List<PurchaseRequestItem> details,
     @Default([]) List<PurchaseRequestComparison> comparisons,
     @JsonKey(name: 'purchase_orders') @Default([]) List<PRAssociatedPO> purchaseOrders,

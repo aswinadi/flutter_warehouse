@@ -132,7 +132,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    item.productName ?? 'Produk Tidak Dikenal',
+                                    (item.productName != null && item.productName!.isNotEmpty)
+                                        ? item.productName!
+                                        : 'Produk Tanpa Nama',
                                     style: context.subhead.copyWith(
                                       fontWeight: FontWeight.bold,
                                       color: labelColor,
@@ -285,7 +287,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    breakdown.productName,
+                                    breakdown.productName.isNotEmpty
+                                        ? breakdown.productName
+                                        : 'Produk Tanpa Nama',
                                     style: context.headline.copyWith(
                                       color: labelColor,
                                       fontWeight: FontWeight.bold,
@@ -296,6 +300,21 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                     'SKU: ${breakdown.sku}',
                                     style: context.footnote.copyWith(color: secondaryLabel),
                                   ),
+                                  if (breakdown.description != null && breakdown.description!.isNotEmpty) ...[
+                                    const SizedBox(height: CupertinoSpacing.m),
+                                    Text(
+                                      'Spesifikasi Teknis:',
+                                      style: context.footnote.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: secondaryLabel,
+                                      ),
+                                    ),
+                                    const SizedBox(height: CupertinoSpacing.xs),
+                                    Text(
+                                      breakdown.description!,
+                                      style: context.caption1.copyWith(color: labelColor),
+                                    ),
+                                  ],
                                   const SizedBox(height: CupertinoSpacing.m),
                                   SizedBox(
                                     width: double.infinity,
@@ -587,7 +606,9 @@ class StockDetailPane extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      breakdown.productName,
+                      breakdown.productName.isNotEmpty
+                          ? breakdown.productName
+                          : 'Produk Tanpa Nama',
                       style: context.title3.copyWith(
                         color: labelColor,
                         fontWeight: FontWeight.bold,
@@ -598,6 +619,21 @@ class StockDetailPane extends ConsumerWidget {
                       'SKU: ${breakdown.sku}',
                       style: context.subhead.copyWith(color: secondaryLabel),
                     ),
+                    if (breakdown.description != null && breakdown.description!.isNotEmpty) ...[
+                      const SizedBox(height: CupertinoSpacing.m),
+                      Text(
+                        'Spesifikasi Teknis:',
+                        style: context.footnote.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: secondaryLabel,
+                        ),
+                      ),
+                      const SizedBox(height: CupertinoSpacing.xs),
+                      Text(
+                        breakdown.description!,
+                        style: context.caption1.copyWith(color: labelColor),
+                      ),
+                    ],
                     const SizedBox(height: CupertinoSpacing.m),
                     SizedBox(
                       width: double.infinity,

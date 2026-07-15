@@ -12,6 +12,7 @@ _$InventoryBreakdownImpl _$$InventoryBreakdownImplFromJson(
       productName: json['product_name'] as String,
       sku: json['sku'] as String,
       unit: json['unit'] as String,
+      description: json['description'] as String?,
       onHand: (json['on_hand'] as List<dynamic>?)
               ?.map((e) => WarehouseOnHand.fromJson(e as Map<String, dynamic>))
               .toList() ??
@@ -32,6 +33,7 @@ Map<String, dynamic> _$$InventoryBreakdownImplToJson(
       'product_name': instance.productName,
       'sku': instance.sku,
       'unit': instance.unit,
+      'description': instance.description,
       'on_hand': instance.onHand,
       'in_transit': instance.inTransit,
       'ordered': instance.ordered,

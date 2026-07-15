@@ -67,7 +67,7 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   build_runner: ^2.4.11
   riverpod_generator: ^2.4.0
-  # drift_dev: ^2.19.1
+  drift_dev: ^2.19.1
   # Removed retrofit due to generator errors
   # retrofit_generator: ^8.2.1
   freezed: ^2.5.2

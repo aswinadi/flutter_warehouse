@@ -24,6 +24,7 @@ mixin _$InventoryBreakdown {
   String get productName => throw _privateConstructorUsedError;
   String get sku => throw _privateConstructorUsedError;
   String get unit => throw _privateConstructorUsedError;
+  String? get description => throw _privateConstructorUsedError;
   @JsonKey(name: 'on_hand')
   List<WarehouseOnHand> get onHand => throw _privateConstructorUsedError;
   @JsonKey(name: 'in_transit')
@@ -46,6 +47,7 @@ abstract class $InventoryBreakdownCopyWith<$Res> {
       {@JsonKey(name: 'product_name') String productName,
       String sku,
       String unit,
+      String? description,
       @JsonKey(name: 'on_hand') List<WarehouseOnHand> onHand,
       @JsonKey(name: 'in_transit') List<InTransitStock> inTransit,
       List<OrderedStock> ordered});
@@ -67,6 +69,7 @@ class _$InventoryBreakdownCopyWithImpl<$Res, $Val extends InventoryBreakdown>
     Object? productName = null,
     Object? sku = null,
     Object? unit = null,
+    Object? description = freezed,
     Object? onHand = null,
     Object? inTransit = null,
     Object? ordered = null,
@@ -84,6 +87,10 @@ class _$InventoryBreakdownCopyWithImpl<$Res, $Val extends InventoryBreakdown>
           ? _value.unit
           : unit // ignore: cast_nullable_to_non_nullable
               as String,
+      description: freezed == description
+          ? _value.description
+          : description // ignore: cast_nullable_to_non_nullable
+              as String?,
       onHand: null == onHand
           ? _value.onHand
           : onHand // ignore: cast_nullable_to_non_nullable
@@ -112,6 +119,7 @@ abstract class _$$InventoryBreakdownImplCopyWith<$Res>
       {@JsonKey(name: 'product_name') String productName,
       String sku,
       String unit,
+      String? description,
       @JsonKey(name: 'on_hand') List<WarehouseOnHand> onHand,
       @JsonKey(name: 'in_transit') List<InTransitStock> inTransit,
       List<OrderedStock> ordered});
@@ -131,6 +139,7 @@ class __$$InventoryBreakdownImplCopyWithImpl<$Res>
     Object? productName = null,
     Object? sku = null,
     Object? unit = null,
+    Object? description = freezed,
     Object? onHand = null,
     Object? inTransit = null,
     Object? ordered = null,
@@ -148,6 +157,10 @@ class __$$InventoryBreakdownImplCopyWithImpl<$Res>
           ? _value.unit
           : unit // ignore: cast_nullable_to_non_nullable
               as String,
+      description: freezed == description
+          ? _value.description
+          : description // ignore: cast_nullable_to_non_nullable
+              as String?,
       onHand: null == onHand
           ? _value._onHand
           : onHand // ignore: cast_nullable_to_non_nullable
@@ -171,6 +184,7 @@ class _$InventoryBreakdownImpl implements _InventoryBreakdown {
       {@JsonKey(name: 'product_name') required this.productName,
       required this.sku,
       required this.unit,
+      this.description,
       @JsonKey(name: 'on_hand') final List<WarehouseOnHand> onHand = const [],
       @JsonKey(name: 'in_transit')
       final List<InTransitStock> inTransit = const [],
@@ -189,6 +203,8 @@ class _$InventoryBreakdownImpl implements _InventoryBreakdown {
   final String sku;
   @override
   final String unit;
+  @override
+  final String? description;
   final List<WarehouseOnHand> _onHand;
   @override
   @JsonKey(name: 'on_hand')
@@ -218,7 +234,7 @@ class _$InventoryBreakdownImpl implements _InventoryBreakdown {
 
   @override
   String toString() {
-    return 'InventoryBreakdown(productName: $productName, sku: $sku, unit: $unit, onHand: $onHand, inTransit: $inTransit, ordered: $ordered)';
+    return 'InventoryBreakdown(productName: $productName, sku: $sku, unit: $unit, description: $description, onHand: $onHand, inTransit: $inTransit, ordered: $ordered)';
   }
 
   @override
@@ -230,6 +246,8 @@ class _$InventoryBreakdownImpl implements _InventoryBreakdown {
                 other.productName == productName) &&
             (identical(other.sku, sku) || other.sku == sku) &&
             (identical(other.unit, unit) || other.unit == unit) &&
+            (identical(other.description, description) ||
+                other.description == description) &&
             const DeepCollectionEquality().equals(other._onHand, _onHand) &&
             const DeepCollectionEquality()
                 .equals(other._inTransit, _inTransit) &&
@@ -243,6 +261,7 @@ class _$InventoryBreakdownImpl implements _InventoryBreakdown {
       productName,
       sku,
       unit,
+      description,
       const DeepCollectionEquality().hash(_onHand),
       const DeepCollectionEquality().hash(_inTransit),
       const DeepCollectionEquality().hash(_ordered));
@@ -267,6 +286,7 @@ abstract class _InventoryBreakdown implements InventoryBreakdown {
       {@JsonKey(name: 'product_name') required final String productName,
       required final String sku,
       required final String unit,
+      final String? description,
       @JsonKey(name: 'on_hand') final List<WarehouseOnHand> onHand,
       @JsonKey(name: 'in_transit') final List<InTransitStock> inTransit,
       final List<OrderedStock> ordered}) = _$InventoryBreakdownImpl;
@@ -281,6 +301,8 @@ abstract class _InventoryBreakdown implements InventoryBreakdown {
   String get sku;
   @override
   String get unit;
+  @override
+  String? get description;
   @override
   @JsonKey(name: 'on_hand')
   List<WarehouseOnHand> get onHand;

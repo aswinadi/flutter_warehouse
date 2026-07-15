@@ -232,4 +232,34 @@ final List<NavItemConfig> menuConfig = [
       ),
     ],
   ),
+  NavItemConfig(
+    icon: CupertinoIcons.folder,
+    labelBuilder: (l10n) => 'Data Master',
+    subItems: [
+      NavItemConfig(
+        icon: CupertinoIcons.building_2_fill,
+        labelBuilder: (l10n) => 'Perusahaan',
+        path: '/master/companies',
+        requiredPermissions: ['view_all_companies'],
+      ),
+      NavItemConfig(
+        icon: CupertinoIcons.cube,
+        labelBuilder: (l10n) => 'Produk',
+        path: '/master/products',
+        requiredPermissions: ['view_product'],
+      ),
+      NavItemConfig(
+        icon: CupertinoIcons.bus,
+        labelBuilder: (l10n) => 'Supplier',
+        path: '/master/suppliers',
+        requiredPermissions: ['view_inventory', 'view_purchase_order'],
+      ),
+      NavItemConfig(
+        icon: CupertinoIcons.refresh_bold,
+        labelBuilder: (l10n) => 'Monitor Sinkronisasi',
+        path: '/master/sync-monitor',
+        requiredPermissions: ['view_inventory'],
+      ),
+    ],
+  ),
 ];

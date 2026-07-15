@@ -20,6 +20,8 @@ _$PurchaseRequestImpl _$$PurchaseRequestImplFromJson(
       canApprove: json['can_approve'] as bool? ?? false,
       approvedBy: json['approved_by'] as String?,
       approvedAt: json['approved_at'] as String?,
+      vendorSubmittedAt: json['vendor_submitted_at'] as String?,
+      vendorRejectionReason: json['vendor_rejection_reason'] as String?,
       details: (json['details'] as List<dynamic>?)
               ?.map((e) =>
                   PurchaseRequestItem.fromJson(e as Map<String, dynamic>))
@@ -50,6 +52,8 @@ Map<String, dynamic> _$$PurchaseRequestImplToJson(
       'can_approve': instance.canApprove,
       'approved_by': instance.approvedBy,
       'approved_at': instance.approvedAt,
+      'vendor_submitted_at': instance.vendorSubmittedAt,
+      'vendor_rejection_reason': instance.vendorRejectionReason,
       'details': instance.details,
       'comparisons': instance.comparisons,
       'purchase_orders': instance.purchaseOrders,

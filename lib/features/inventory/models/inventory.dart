@@ -15,6 +15,7 @@ class Inventory with _$Inventory {
     @JsonKey(name: 'warehouse_name') String? warehouseName,
     @JsonKey(name: 'location_code') String? locationCode,
     String? unit,
+    String? description,
   }) = _Inventory;
 
   factory Inventory.fromJson(Map<String, dynamic> json) =>

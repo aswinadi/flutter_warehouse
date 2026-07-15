@@ -29,17 +29,34 @@ class StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isApproved = status.toLowerCase() == 'approved' || status.toLowerCase() == 'vendor_approved' || status.toLowerCase() == 'po_created';
-    final isRejected = status.toLowerCase() == 'rejected';
+    final isRejected = status.toLowerCase() == 'rejected' || status.toLowerCase() == 'vendor_rejected';
+    final isAcknowledge = status.toLowerCase() == 'waiting_acknowledge';
+    final isWaitingBod = status.toLowerCase() == 'waiting_bod_approval';
+
     final color = isApproved
         ? CupertinoColors.activeGreen
         : isRejected
             ? CupertinoColors.destructiveRed
-            : CupertinoColors.activeOrange;
-    final label = isApproved
-        ? 'Disetujui'
-        : isRejected
-            ? 'Ditolak'
-            : status.toUpperCase();
+            : isAcknowledge
+                ? CupertinoColors.systemOrange
+                : isWaitingBod
+                    ? CupertinoColors.systemYellow
+                    : CupertinoColors.activeOrange;
+
+    String label;
+    if (isApproved) {
+      label = 'Disetujui';
+    } else if (status.toLowerCase() == 'vendor_rejected') {
+      label = 'Vendor Ditolak';
+    } else if (isRejected) {
+      label = 'Ditolak';
+    } else if (isAcknowledge) {
+      label = 'Acknowledge';
+    } else if (isWaitingBod) {
+      label = 'Waiting BOD';
+    } else {
+      label = status.toUpperCase();
+    }
 
     return Container(
       margin: const EdgeInsets.only(right: 12),
@@ -1109,11 +1126,13 @@ class _PrVendorItemCard extends StatelessWidget {
   final PurchaseRequestItem item;
   final bool isSelected;
   final VoidCallback onTap;
+  final String? vendorSubmittedAt;
 
   const _PrVendorItemCard({
     required this.item,
     required this.isSelected,
     required this.onTap,
+    this.vendorSubmittedAt,
   });
 
   @override
@@ -1125,10 +1144,7 @@ class _PrVendorItemCard extends StatelessWidget {
         ? CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.08)
         : null;
 
-    final showBadge = item.status != null && 
-        (item.status!.toLowerCase() == 'vendor_approved' || 
-         item.status!.toLowerCase() == 'po_created' || 
-         item.status!.toLowerCase() == 'rejected');
+    final showBadge = item.status != null;
 
     return CupertinoGlassContainer(
       backgroundColor: cardColor,
@@ -1215,6 +1231,22 @@ class _PrVendorItemCard extends StatelessWidget {
                 ],
               ),
             ],
+            if (vendorSubmittedAt != null) ...[
+              const SizedBox(height: CupertinoSpacing.xs),
+              Row(
+                children: [
+                  Icon(CupertinoIcons.clock, size: 12, color: secondaryLabelColor),
+                  const SizedBox(width: CupertinoSpacing.xs),
+                  Text(
+                    'Submit: $vendorSubmittedAt',
+                    style: context.caption2.copyWith(
+                      color: secondaryLabelColor,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
@@ -1247,6 +1279,7 @@ class _PrVendorApprovalList extends ConsumerStatefulWidget {
 
 class _PrVendorApprovalListState extends ConsumerState<_PrVendorApprovalList> {
   final ScrollController _scrollController = ScrollController();
+  CategoryTab _activeTab = CategoryTab.budidaya;
 
   @override
   void initState() {
@@ -1268,7 +1301,7 @@ class _PrVendorApprovalListState extends ConsumerState<_PrVendorApprovalList> {
       if (widget.isHistoryMode) {
         ref.read(purchaseRequestsProvider(history: true, startDate: widget.startDate, endDate: widget.endDate).notifier).loadMore();
       } else {
-        ref.read(purchaseRequestsProvider(status: 'waiting_bod_approval').notifier).loadMore();
+        ref.read(purchaseRequestsProvider(status: 'waiting_acknowledge,waiting_bod_approval').notifier).loadMore();
       }
     }
   }
@@ -1277,7 +1310,7 @@ class _PrVendorApprovalListState extends ConsumerState<_PrVendorApprovalList> {
   Widget build(BuildContext context) {
     final listAsync = widget.isHistoryMode
         ? ref.watch(purchaseRequestsProvider(history: true, startDate: widget.startDate, endDate: widget.endDate))
-        : ref.watch(purchaseRequestsProvider(status: 'waiting_bod_approval'));
+        : ref.watch(purchaseRequestsProvider(status: 'waiting_acknowledge,waiting_bod_approval'));
 
     return listAsync.when(
       data: (items) {
@@ -1289,8 +1322,14 @@ class _PrVendorApprovalListState extends ConsumerState<_PrVendorApprovalList> {
                 )))
             .where((item) => widget.isHistoryMode
                 ? (item.status?.toLowerCase() == 'vendor_approved' || item.status?.toLowerCase() == 'po_created')
-                : item.status?.toLowerCase() == 'waiting_bod_approval')
+                : (item.status?.toLowerCase() == 'waiting_acknowledge' || item.status?.toLowerCase() == 'waiting_bod_approval'))
             .toList();
+
+        // Build vendor_submitted_at lookup map: prId -> vendorSubmittedAt string
+        final submittedAtMap = <int, String?>{};
+        for (final pr in items) {
+          submittedAtMap[pr.id] = pr.vendorSubmittedAt;
+        }
 
         if (allItems.isEmpty) {
           if (widget.isWide && (widget.selectedPrId != null || widget.selectedItemId != null)) {
@@ -1312,55 +1351,145 @@ class _PrVendorApprovalListState extends ConsumerState<_PrVendorApprovalList> {
           );
         }
 
-        if (widget.isWide && allItems.isNotEmpty) {
-          if (widget.selectedItemId == null || !allItems.any((x) => x.id == widget.selectedItemId)) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) {
-                final firstItem = allItems.first;
-                widget.onSelected(firstItem.prId, firstItem.id);
-              }
-            });
+        // Filter by category tab
+        final filteredItems = allItems.where((item) {
+          final isBudidaya = item.costCode != null && item.costCode!.startsWith('9.');
+          if (_activeTab == CategoryTab.budidaya) return isBudidaya;
+          return !isBudidaya;
+        }).toList();
+
+        if (widget.isWide) {
+          if (filteredItems.isNotEmpty) {
+            if (widget.selectedItemId == null || !filteredItems.any((x) => x.id == widget.selectedItemId)) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  final firstItem = filteredItems.first;
+                  widget.onSelected(firstItem.prId, firstItem.id);
+                }
+              });
+            }
+          } else {
+            if (widget.selectedPrId != null || widget.selectedItemId != null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) widget.onSelected(null, null);
+              });
+            }
           }
         }
 
         final hasMore = widget.isHistoryMode
             ? ref.watch(purchaseRequestsProvider(history: true, startDate: widget.startDate, endDate: widget.endDate).notifier).hasMore
-            : ref.watch(purchaseRequestsProvider(status: 'waiting_bod_approval').notifier).hasMore;
+            : ref.watch(purchaseRequestsProvider(status: 'waiting_acknowledge,waiting_bod_approval').notifier).hasMore;
         final showLoader = listAsync.isLoading && hasMore;
 
-        return CupertinoScrollbar(
-          child: ListView.separated(
-            controller: _scrollController,
-            padding: const EdgeInsets.all(16),
-            itemCount: allItems.length + (showLoader ? 1 : 0),
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              if (index == allItems.length) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Center(child: CupertinoActivityIndicator()),
-                );
-              }
-              final item = allItems[index];
-              final isSelected = widget.isWide && item.id == widget.selectedItemId;
+        return Column(
+          children: [
+            // Budidaya / Non-Budidaya tab row
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              color: CupertinoColors.systemBackground.resolveFrom(context),
+              child: Row(
+                children: [
+                  _buildPillTabVendor(
+                    context: context,
+                    label: 'Budidaya (9.x)',
+                    isActive: _activeTab == CategoryTab.budidaya,
+                    onTap: () => setState(() {
+                      _activeTab = CategoryTab.budidaya;
+                    }),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildPillTabVendor(
+                    context: context,
+                    label: 'Non-Budidaya (10.x)',
+                    isActive: _activeTab == CategoryTab.nonBudidaya,
+                    onTap: () => setState(() {
+                      _activeTab = CategoryTab.nonBudidaya;
+                    }),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: filteredItems.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          _activeTab == CategoryTab.budidaya
+                              ? 'Tidak ada item Budidaya yang menunggu'
+                              : 'Tidak ada item Non-Budidaya yang menunggu',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: CupertinoColors.secondaryLabel),
+                        ),
+                      ),
+                    )
+                  : CupertinoScrollbar(
+                      child: ListView.separated(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.all(16),
+                        itemCount: filteredItems.length + (showLoader ? 1 : 0),
+                        separatorBuilder: (context, index) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          if (index == filteredItems.length) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              child: Center(child: CupertinoActivityIndicator()),
+                            );
+                          }
+                          final item = filteredItems[index];
+                          final isSelected = widget.isWide && item.id == widget.selectedItemId;
+                          final submittedAt = item.prId != null ? submittedAtMap[item.prId] : null;
 
-              return _PrVendorItemCard(
-                item: item,
-                isSelected: isSelected,
-                onTap: () {
-                  if (widget.isWide) {
-                    widget.onSelected(item.prId, item.id);
-                  } else {
-                    context.push('/approvals/pr-vendor/${item.prId}?item_id=${item.id}');
-                  }
-                },
-              );
-            },
-          ),
+                          return _PrVendorItemCard(
+                            item: item,
+                            isSelected: isSelected,
+                            vendorSubmittedAt: submittedAt,
+                            onTap: () {
+                              if (widget.isWide) {
+                                widget.onSelected(item.prId, item.id);
+                              } else {
+                                context.push('/approvals/pr-vendor/${item.prId}?item_id=${item.id}');
+                              }
+                            },
+                          );
+                        },
+                      ),
+                    ),
+            ),
+          ],
         );
       },
       loading: () => const Center(child: CupertinoActivityIndicator()),
       error: (err, _) => Center(child: Text('Error: $err')),
+    );
+  }
+
+  Widget _buildPillTabVendor({
+    required BuildContext context,
+    required String label,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive
+              ? CupertinoColors.activeBlue
+              : CupertinoColors.tertiarySystemFill.resolveFrom(context),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: isActive ? CupertinoColors.white : CupertinoColors.label.resolveFrom(context),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
     );
   }
 }

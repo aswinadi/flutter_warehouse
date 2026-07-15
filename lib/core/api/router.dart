@@ -50,6 +50,10 @@ import '../../features/inventory/models/inventory.dart';
 import '../../features/inventory/ui/landed_cost_list_screen.dart';
 import '../../features/inventory/ui/landed_cost_form_screen.dart';
 import '../../features/inventory/ui/landed_cost_detail_screen.dart';
+import '../../features/master_data/ui/master_company_list_screen.dart';
+import '../../features/master_data/ui/master_product_list_screen.dart';
+import '../../features/master_data/ui/master_supplier_list_screen.dart';
+import '../../features/master_data/ui/master_sync_monitor_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -89,6 +93,22 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/notifications',
             builder: (context, state) => const NotificationInboxScreen(),
+          ),
+          GoRoute(
+            path: '/master/companies',
+            builder: (context, state) => const MasterCompanyListScreen(),
+          ),
+          GoRoute(
+            path: '/master/products',
+            builder: (context, state) => const MasterProductListScreen(),
+          ),
+          GoRoute(
+            path: '/master/suppliers',
+            builder: (context, state) => const MasterSupplierListScreen(),
+          ),
+          GoRoute(
+            path: '/master/sync-monitor',
+            builder: (context, state) => const MasterSyncMonitorScreen(),
           ),
           GoRoute(
             path: '/pdf-preview',

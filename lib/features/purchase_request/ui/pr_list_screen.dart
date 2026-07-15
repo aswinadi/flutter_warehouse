@@ -231,6 +231,9 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
     if (_selectedStatus == 'vendor_approved' || _selectedStatus == 'po_created') {
       return 'vendor_approved,po_created';
     }
+    if (_selectedStatus == 'waiting_bod_approval') {
+      return 'waiting_acknowledge,waiting_bod_approval';
+    }
     return _selectedStatus;
   }
 
@@ -743,7 +746,9 @@ class _PRListScreenState extends ConsumerState<PRListScreen> {
   }) {
     final allItems = requests
         .expand((pr) => pr.details.map((item) => _ItemWithPr(item: item, pr: pr)))
-        .where((entry) => entry.item.status?.toLowerCase() == 'waiting_bod_approval')
+        .where((entry) =>
+            entry.item.status?.toLowerCase() == 'waiting_acknowledge' ||
+            entry.item.status?.toLowerCase() == 'waiting_bod_approval')
         .toList();
 
     final secondaryLabelColor = CupertinoColors.secondaryLabel.resolveFrom(context);

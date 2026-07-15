@@ -38,6 +38,10 @@ mixin _$PurchaseRequest {
   String? get approvedBy => throw _privateConstructorUsedError;
   @JsonKey(name: 'approved_at')
   String? get approvedAt => throw _privateConstructorUsedError;
+  @JsonKey(name: 'vendor_submitted_at')
+  String? get vendorSubmittedAt => throw _privateConstructorUsedError;
+  @JsonKey(name: 'vendor_rejection_reason')
+  String? get vendorRejectionReason => throw _privateConstructorUsedError;
   List<PurchaseRequestItem> get details => throw _privateConstructorUsedError;
   List<PurchaseRequestComparison> get comparisons =>
       throw _privateConstructorUsedError;
@@ -68,6 +72,8 @@ abstract class $PurchaseRequestCopyWith<$Res> {
       @JsonKey(name: 'can_approve') bool canApprove,
       @JsonKey(name: 'approved_by') String? approvedBy,
       @JsonKey(name: 'approved_at') String? approvedAt,
+      @JsonKey(name: 'vendor_submitted_at') String? vendorSubmittedAt,
+      @JsonKey(name: 'vendor_rejection_reason') String? vendorRejectionReason,
       List<PurchaseRequestItem> details,
       List<PurchaseRequestComparison> comparisons,
       @JsonKey(name: 'purchase_orders') List<PRAssociatedPO> purchaseOrders});
@@ -97,6 +103,8 @@ class _$PurchaseRequestCopyWithImpl<$Res, $Val extends PurchaseRequest>
     Object? canApprove = null,
     Object? approvedBy = freezed,
     Object? approvedAt = freezed,
+    Object? vendorSubmittedAt = freezed,
+    Object? vendorRejectionReason = freezed,
     Object? details = null,
     Object? comparisons = null,
     Object? purchaseOrders = null,
@@ -146,6 +154,14 @@ class _$PurchaseRequestCopyWithImpl<$Res, $Val extends PurchaseRequest>
           ? _value.approvedAt
           : approvedAt // ignore: cast_nullable_to_non_nullable
               as String?,
+      vendorSubmittedAt: freezed == vendorSubmittedAt
+          ? _value.vendorSubmittedAt
+          : vendorSubmittedAt // ignore: cast_nullable_to_non_nullable
+              as String?,
+      vendorRejectionReason: freezed == vendorRejectionReason
+          ? _value.vendorRejectionReason
+          : vendorRejectionReason // ignore: cast_nullable_to_non_nullable
+              as String?,
       details: null == details
           ? _value.details
           : details // ignore: cast_nullable_to_non_nullable
@@ -182,6 +198,8 @@ abstract class _$$PurchaseRequestImplCopyWith<$Res>
       @JsonKey(name: 'can_approve') bool canApprove,
       @JsonKey(name: 'approved_by') String? approvedBy,
       @JsonKey(name: 'approved_at') String? approvedAt,
+      @JsonKey(name: 'vendor_submitted_at') String? vendorSubmittedAt,
+      @JsonKey(name: 'vendor_rejection_reason') String? vendorRejectionReason,
       List<PurchaseRequestItem> details,
       List<PurchaseRequestComparison> comparisons,
       @JsonKey(name: 'purchase_orders') List<PRAssociatedPO> purchaseOrders});
@@ -209,6 +227,8 @@ class __$$PurchaseRequestImplCopyWithImpl<$Res>
     Object? canApprove = null,
     Object? approvedBy = freezed,
     Object? approvedAt = freezed,
+    Object? vendorSubmittedAt = freezed,
+    Object? vendorRejectionReason = freezed,
     Object? details = null,
     Object? comparisons = null,
     Object? purchaseOrders = null,
@@ -258,6 +278,14 @@ class __$$PurchaseRequestImplCopyWithImpl<$Res>
           ? _value.approvedAt
           : approvedAt // ignore: cast_nullable_to_non_nullable
               as String?,
+      vendorSubmittedAt: freezed == vendorSubmittedAt
+          ? _value.vendorSubmittedAt
+          : vendorSubmittedAt // ignore: cast_nullable_to_non_nullable
+              as String?,
+      vendorRejectionReason: freezed == vendorRejectionReason
+          ? _value.vendorRejectionReason
+          : vendorRejectionReason // ignore: cast_nullable_to_non_nullable
+              as String?,
       details: null == details
           ? _value._details
           : details // ignore: cast_nullable_to_non_nullable
@@ -289,6 +317,8 @@ class _$PurchaseRequestImpl implements _PurchaseRequest {
       @JsonKey(name: 'can_approve') this.canApprove = false,
       @JsonKey(name: 'approved_by') this.approvedBy,
       @JsonKey(name: 'approved_at') this.approvedAt,
+      @JsonKey(name: 'vendor_submitted_at') this.vendorSubmittedAt,
+      @JsonKey(name: 'vendor_rejection_reason') this.vendorRejectionReason,
       final List<PurchaseRequestItem> details = const [],
       final List<PurchaseRequestComparison> comparisons = const [],
       @JsonKey(name: 'purchase_orders')
@@ -329,6 +359,12 @@ class _$PurchaseRequestImpl implements _PurchaseRequest {
   @override
   @JsonKey(name: 'approved_at')
   final String? approvedAt;
+  @override
+  @JsonKey(name: 'vendor_submitted_at')
+  final String? vendorSubmittedAt;
+  @override
+  @JsonKey(name: 'vendor_rejection_reason')
+  final String? vendorRejectionReason;
   final List<PurchaseRequestItem> _details;
   @override
   @JsonKey()
@@ -358,7 +394,7 @@ class _$PurchaseRequestImpl implements _PurchaseRequest {
 
   @override
   String toString() {
-    return 'PurchaseRequest(id: $id, companyId: $companyId, companyName: $companyName, code: $code, requestDate: $requestDate, notes: $notes, requestByName: $requestByName, status: $status, canApprove: $canApprove, approvedBy: $approvedBy, approvedAt: $approvedAt, details: $details, comparisons: $comparisons, purchaseOrders: $purchaseOrders)';
+    return 'PurchaseRequest(id: $id, companyId: $companyId, companyName: $companyName, code: $code, requestDate: $requestDate, notes: $notes, requestByName: $requestByName, status: $status, canApprove: $canApprove, approvedBy: $approvedBy, approvedAt: $approvedAt, vendorSubmittedAt: $vendorSubmittedAt, vendorRejectionReason: $vendorRejectionReason, details: $details, comparisons: $comparisons, purchaseOrders: $purchaseOrders)';
   }
 
   @override
@@ -384,6 +420,10 @@ class _$PurchaseRequestImpl implements _PurchaseRequest {
                 other.approvedBy == approvedBy) &&
             (identical(other.approvedAt, approvedAt) ||
                 other.approvedAt == approvedAt) &&
+            (identical(other.vendorSubmittedAt, vendorSubmittedAt) ||
+                other.vendorSubmittedAt == vendorSubmittedAt) &&
+            (identical(other.vendorRejectionReason, vendorRejectionReason) ||
+                other.vendorRejectionReason == vendorRejectionReason) &&
             const DeepCollectionEquality().equals(other._details, _details) &&
             const DeepCollectionEquality()
                 .equals(other._comparisons, _comparisons) &&
@@ -406,6 +446,8 @@ class _$PurchaseRequestImpl implements _PurchaseRequest {
       canApprove,
       approvedBy,
       approvedAt,
+      vendorSubmittedAt,
+      vendorRejectionReason,
       const DeepCollectionEquality().hash(_details),
       const DeepCollectionEquality().hash(_comparisons),
       const DeepCollectionEquality().hash(_purchaseOrders));
@@ -438,6 +480,9 @@ abstract class _PurchaseRequest implements PurchaseRequest {
       @JsonKey(name: 'can_approve') final bool canApprove,
       @JsonKey(name: 'approved_by') final String? approvedBy,
       @JsonKey(name: 'approved_at') final String? approvedAt,
+      @JsonKey(name: 'vendor_submitted_at') final String? vendorSubmittedAt,
+      @JsonKey(name: 'vendor_rejection_reason')
+      final String? vendorRejectionReason,
       final List<PurchaseRequestItem> details,
       final List<PurchaseRequestComparison> comparisons,
       @JsonKey(name: 'purchase_orders')
@@ -475,6 +520,12 @@ abstract class _PurchaseRequest implements PurchaseRequest {
   @override
   @JsonKey(name: 'approved_at')
   String? get approvedAt;
+  @override
+  @JsonKey(name: 'vendor_submitted_at')
+  String? get vendorSubmittedAt;
+  @override
+  @JsonKey(name: 'vendor_rejection_reason')
+  String? get vendorRejectionReason;
   @override
   List<PurchaseRequestItem> get details;
   @override

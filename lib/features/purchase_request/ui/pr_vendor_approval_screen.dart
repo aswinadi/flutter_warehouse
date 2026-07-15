@@ -31,9 +31,13 @@ class _PRVendorApprovalScreenState extends ConsumerState<PRVendorApprovalScreen>
   void _initializeSelections(List<dynamic> details, List<dynamic> comparisons) {
     if (!_isSelectionsInitialized) {
       for (var detail in details) {
-        final options = comparisons.where((c) => c.details.any((d) => d.purchaseRequestDetailId == detail.id)).toList();
-        if (options.isNotEmpty) {
-          _selections[detail.id] = options.first.id;
+        if (detail.selectedComparisonId != null) {
+          _selections[detail.id] = detail.selectedComparisonId!;
+        } else {
+          final options = comparisons.where((c) => c.details.any((d) => d.purchaseRequestDetailId == detail.id)).toList();
+          if (options.isNotEmpty) {
+            _selections[detail.id] = options.first.id;
+          }
         }
         _areaSelections[detail.id] = detail.warehouseAreaId;
       }
@@ -47,10 +51,13 @@ class _PRVendorApprovalScreenState extends ConsumerState<PRVendorApprovalScreen>
 
     if (pr == null) return;
 
-    final itemsWaitingBod = pr.details.where((d) => d.status?.toLowerCase() == 'waiting_bod_approval').toList();
+    final itemsWaitingSelection = pr.details.where((d) => 
+        d.status?.toLowerCase() == 'waiting_acknowledge' || 
+        d.status?.toLowerCase() == 'waiting_bod_approval').toList();
+        
     final targetItems = widget.itemId != null
-        ? itemsWaitingBod.where((d) => d.id == widget.itemId).toList()
-        : itemsWaitingBod;
+        ? itemsWaitingSelection.where((d) => d.id == widget.itemId).toList()
+        : itemsWaitingSelection;
 
     final missingSelections = targetItems.any((d) => !_selections.containsKey(d.id));
 
@@ -75,7 +82,64 @@ class _PRVendorApprovalScreenState extends ConsumerState<PRVendorApprovalScreen>
           );
 
       ref.invalidate(purchaseRequestsProvider);
-      _showNotification('Pilihan vendor berhasil disetujui');
+      final String msg = pr.status.toLowerCase() == 'waiting_acknowledge' 
+          ? 'Pilihan vendor berhasil di-acknowledge' 
+          : 'Pilihan vendor berhasil disetujui';
+      _showNotification(msg);
+      if (!widget.isEmbedded && mounted) {
+        context.pop();
+      }
+    } catch (e) {
+      _showNotification('Error: $e', isError: true);
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  Future<void> _reject() async {
+    String? reason;
+    await showCupertinoDialog<void>(
+      context: context,
+      builder: (ctx) {
+        final textController = TextEditingController();
+        return CupertinoAlertDialog(
+          title: const Text('Tolak Pilihan Vendor'),
+          content: Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: CupertinoTextField(
+              controller: textController,
+              placeholder: 'Alasan penolakan',
+            ),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              child: const Text('Batal'),
+              onPressed: () => Navigator.pop(ctx),
+            ),
+            CupertinoDialogAction(
+              isDestructiveAction: true,
+              onPressed: () {
+                reason = textController.text.trim();
+                Navigator.pop(ctx);
+              },
+              child: const Text('Tolak'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (reason == null) return;
+
+    setState(() => _isSubmitting = true);
+    try {
+      await ref.read(purchaseRequestRepositoryProvider).rejectPurchaseRequestComparisons(
+            widget.prId,
+            reason!,
+          );
+
+      ref.invalidate(purchaseRequestsProvider);
+      _showNotification('Pilihan vendor berhasil ditolak');
       if (!widget.isEmbedded && mounted) {
         context.pop();
       }
@@ -110,10 +174,10 @@ class _PRVendorApprovalScreenState extends ConsumerState<PRVendorApprovalScreen>
         middle: Text(
           prAsync.valueOrNull != null &&
                       (widget.itemId != null
-                          ? prAsync.valueOrNull!.details.any((d) => d.id == widget.itemId && d.status?.toLowerCase() == 'waiting_bod_approval')
-                          : prAsync.valueOrNull!.details.any((d) => d.status?.toLowerCase() == 'waiting_bod_approval')) &&
+                          ? prAsync.valueOrNull!.details.any((d) => d.id == widget.itemId && (d.status?.toLowerCase() == 'waiting_acknowledge' || d.status?.toLowerCase() == 'waiting_bod_approval'))
+                          : prAsync.valueOrNull!.details.any((d) => d.status?.toLowerCase() == 'waiting_acknowledge' || d.status?.toLowerCase() == 'waiting_bod_approval')) &&
                       prAsync.valueOrNull!.canApprove
-              ? 'Pemilihan Vendor PR'
+              ? (prAsync.valueOrNull!.status.toLowerCase() == 'waiting_acknowledge' ? 'Acknowledge Vendor PR' : 'Pemilihan Vendor PR')
               : 'Detail PR',
           style: TextStyle(color: labelColor),
         ),
@@ -123,8 +187,8 @@ class _PRVendorApprovalScreenState extends ConsumerState<PRVendorApprovalScreen>
           data: (pr) {
             _initializeSelections(pr.details, pr.comparisons);
             final hasItemsWaitingBod = widget.itemId != null
-                ? pr.details.any((d) => d.id == widget.itemId && d.status?.toLowerCase() == 'waiting_bod_approval')
-                : pr.details.any((d) => d.status?.toLowerCase() == 'waiting_bod_approval');
+                ? pr.details.any((d) => d.id == widget.itemId && (d.status?.toLowerCase() == 'waiting_acknowledge' || d.status?.toLowerCase() == 'waiting_bod_approval'))
+                : pr.details.any((d) => d.status?.toLowerCase() == 'waiting_acknowledge' || d.status?.toLowerCase() == 'waiting_bod_approval');
             final canApproveNow = hasItemsWaitingBod && pr.canApprove;
 
             return Column(
@@ -147,6 +211,22 @@ class _PRVendorApprovalScreenState extends ConsumerState<PRVendorApprovalScreen>
                             const SizedBox(height: CupertinoSpacing.xs),
                             Text('Tanggal: ${pr.requestDate}', style: context.footnote.copyWith(color: secondaryLabel)),
                             const SizedBox(height: CupertinoSpacing.xs),
+                            if (pr.vendorSubmittedAt != null) ...[
+                              Row(
+                                children: [
+                                  Icon(CupertinoIcons.clock, size: 12, color: secondaryLabel),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Diajukan Purchasing: ${pr.vendorSubmittedAt}',
+                                    style: context.footnote.copyWith(
+                                      color: CupertinoColors.activeBlue,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: CupertinoSpacing.xs),
+                            ],
                             Text('Catatan: ${pr.notes ?? "-"}', style: context.footnote.copyWith(color: secondaryLabel, fontStyle: FontStyle.italic)),
                           ],
                         ),
@@ -297,7 +377,7 @@ class _PRVendorApprovalScreenState extends ConsumerState<PRVendorApprovalScreen>
 
                                   return GestureDetector(
                                     behavior: HitTestBehavior.opaque,
-                                    onTap: (canApproveNow && detail.status?.toLowerCase() == 'waiting_bod_approval')
+                                    onTap: (canApproveNow && (detail.status?.toLowerCase() == 'waiting_acknowledge' || detail.status?.toLowerCase() == 'waiting_bod_approval'))
                                         ? () {
                                             setState(() => _selections[detail.id] = comp.id);
                                           }
@@ -355,12 +435,26 @@ class _PRVendorApprovalScreenState extends ConsumerState<PRVendorApprovalScreen>
                     child: Row(
                       children: [
                         Expanded(
+                          child: CupertinoButton(
+                            color: CupertinoColors.systemRed.resolveFrom(context),
+                            borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
+                            onPressed: _isSubmitting ? null : _reject,
+                            child: const Text('Tolak Pilihan', style: TextStyle(fontWeight: FontWeight.bold, color: CupertinoColors.white)),
+                          ),
+                        ),
+                        const SizedBox(width: CupertinoSpacing.m),
+                        Expanded(
                           child: CupertinoButton.filled(
                             borderRadius: BorderRadius.circular(CupertinoSpacing.buttonRadius),
                             onPressed: _isSubmitting ? null : _submit,
                             child: _isSubmitting
                                 ? const CupertinoActivityIndicator(color: CupertinoColors.white)
-                                : const Text('Kirim Pilihan Vendor', style: TextStyle(fontWeight: FontWeight.bold)),
+                                : Text(
+                                    pr.status.toLowerCase() == 'waiting_acknowledge'
+                                        ? 'Acknowledge'
+                                        : 'Setujui Pilihan',
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
                           ),
                         ),
                       ],

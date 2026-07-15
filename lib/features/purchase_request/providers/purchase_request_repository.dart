@@ -122,4 +122,10 @@ class PurchaseRequestRepository {
     });
     return response.data['purchase_orders'] as List<dynamic>;
   }
+
+  Future<void> rejectPurchaseRequestComparisons(int id, String reason) async {
+    await dio.post('wh/purchase-requests/$id/reject-comparisons', data: {
+      'rejection_reason': reason,
+    });
+  }
 }

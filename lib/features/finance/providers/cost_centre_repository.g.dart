@@ -23,7 +23,7 @@ final costCentreRepositoryProvider =
 );
 
 typedef CostCentreRepositoryRef = AutoDisposeProviderRef<CostCentreRepository>;
-String _$costCentresHash() => r'8f7d8f289c86b4977a55909ebe9e65cb81736340';
+String _$costCentresHash() => r'8cd84165cdec59a819207e6e7961af9aef09ad34';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -173,7 +173,7 @@ class _CostCentresProviderElement
   int get companyId => (origin as CostCentresProvider).companyId;
 }
 
-String _$costCodesHash() => r'eb3d4ca15e2b30fa848f69d11c962e9ed0cb5346';
+String _$costCodesHash() => r'e85282355c5192d3a4bdbbf40753324b0978a034';
 
 /// See also [costCodes].
 @ProviderFor(costCodes)

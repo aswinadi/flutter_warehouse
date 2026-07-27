@@ -413,6 +413,31 @@ class _PRVendorApprovalScreenState extends ConsumerState<PRVendorApprovalScreen>
                                                     color: secondaryLabel,
                                                   ),
                                                 ),
+                                                const SizedBox(height: 4),
+                                                if (comp.isAdvancePayment) ...[
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                    decoration: BoxDecoration(
+                                                      color: CupertinoColors.systemOrange.resolveFrom(context).withValues(alpha: 0.12),
+                                                      borderRadius: BorderRadius.circular(4),
+                                                    ),
+                                                    child: Text(
+                                                      'Membutuhkan DP ${comp.dpPercentage?.toStringAsFixed(0) ?? 0}% (${formatWithCurrency(comp.dpAmount ?? 0, 'IDR')})',
+                                                      style: context.caption2.copyWith(
+                                                        color: CupertinoColors.systemOrange.resolveFrom(context),
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ] else ...[
+                                                  Text(
+                                                    'Tanpa DP (TOP / Cash)',
+                                                    style: context.caption2.copyWith(
+                                                      color: CupertinoColors.systemGreen.resolveFrom(context),
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ],
                                               ],
                                             ),
                                           ),

@@ -44,6 +44,16 @@ mixin _$PurchaseOrder {
   @JsonKey(name: 'payment_term')
   String? get paymentTerm => throw _privateConstructorUsedError;
   String get status => throw _privateConstructorUsedError;
+  @JsonKey(name: 'is_advance_payment')
+  bool get isAdvancePayment => throw _privateConstructorUsedError;
+  @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson)
+  double? get dpPercentage => throw _privateConstructorUsedError;
+  @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson)
+  double? get dpAmount => throw _privateConstructorUsedError;
+  @JsonKey(name: 'dp_paid_amount', fromJson: doubleOrNullFromJson)
+  double? get dpPaidAmount => throw _privateConstructorUsedError;
+  @JsonKey(name: 'remaining_dp_amount', fromJson: doubleOrNullFromJson)
+  double? get remainingDpAmount => throw _privateConstructorUsedError;
   @JsonKey(name: 'total_items')
   int get totalItems => throw _privateConstructorUsedError;
   @JsonKey(name: 'received_items')
@@ -82,6 +92,15 @@ abstract class $PurchaseOrderCopyWith<$Res> {
       @JsonKey(name: 'expected_date') String expectedDate,
       @JsonKey(name: 'payment_term') String? paymentTerm,
       String status,
+      @JsonKey(name: 'is_advance_payment') bool isAdvancePayment,
+      @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson)
+      double? dpPercentage,
+      @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson)
+      double? dpAmount,
+      @JsonKey(name: 'dp_paid_amount', fromJson: doubleOrNullFromJson)
+      double? dpPaidAmount,
+      @JsonKey(name: 'remaining_dp_amount', fromJson: doubleOrNullFromJson)
+      double? remainingDpAmount,
       @JsonKey(name: 'total_items') int totalItems,
       @JsonKey(name: 'received_items') int receivedItems,
       @JsonKey(name: 'can_approve') bool canApprove,
@@ -117,6 +136,11 @@ class _$PurchaseOrderCopyWithImpl<$Res, $Val extends PurchaseOrder>
     Object? expectedDate = null,
     Object? paymentTerm = freezed,
     Object? status = null,
+    Object? isAdvancePayment = null,
+    Object? dpPercentage = freezed,
+    Object? dpAmount = freezed,
+    Object? dpPaidAmount = freezed,
+    Object? remainingDpAmount = freezed,
     Object? totalItems = null,
     Object? receivedItems = null,
     Object? canApprove = null,
@@ -177,6 +201,26 @@ class _$PurchaseOrderCopyWithImpl<$Res, $Val extends PurchaseOrder>
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
               as String,
+      isAdvancePayment: null == isAdvancePayment
+          ? _value.isAdvancePayment
+          : isAdvancePayment // ignore: cast_nullable_to_non_nullable
+              as bool,
+      dpPercentage: freezed == dpPercentage
+          ? _value.dpPercentage
+          : dpPercentage // ignore: cast_nullable_to_non_nullable
+              as double?,
+      dpAmount: freezed == dpAmount
+          ? _value.dpAmount
+          : dpAmount // ignore: cast_nullable_to_non_nullable
+              as double?,
+      dpPaidAmount: freezed == dpPaidAmount
+          ? _value.dpPaidAmount
+          : dpPaidAmount // ignore: cast_nullable_to_non_nullable
+              as double?,
+      remainingDpAmount: freezed == remainingDpAmount
+          ? _value.remainingDpAmount
+          : remainingDpAmount // ignore: cast_nullable_to_non_nullable
+              as double?,
       totalItems: null == totalItems
           ? _value.totalItems
           : totalItems // ignore: cast_nullable_to_non_nullable
@@ -227,6 +271,15 @@ abstract class _$$PurchaseOrderImplCopyWith<$Res>
       @JsonKey(name: 'expected_date') String expectedDate,
       @JsonKey(name: 'payment_term') String? paymentTerm,
       String status,
+      @JsonKey(name: 'is_advance_payment') bool isAdvancePayment,
+      @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson)
+      double? dpPercentage,
+      @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson)
+      double? dpAmount,
+      @JsonKey(name: 'dp_paid_amount', fromJson: doubleOrNullFromJson)
+      double? dpPaidAmount,
+      @JsonKey(name: 'remaining_dp_amount', fromJson: doubleOrNullFromJson)
+      double? remainingDpAmount,
       @JsonKey(name: 'total_items') int totalItems,
       @JsonKey(name: 'received_items') int receivedItems,
       @JsonKey(name: 'can_approve') bool canApprove,
@@ -260,6 +313,11 @@ class __$$PurchaseOrderImplCopyWithImpl<$Res>
     Object? expectedDate = null,
     Object? paymentTerm = freezed,
     Object? status = null,
+    Object? isAdvancePayment = null,
+    Object? dpPercentage = freezed,
+    Object? dpAmount = freezed,
+    Object? dpPaidAmount = freezed,
+    Object? remainingDpAmount = freezed,
     Object? totalItems = null,
     Object? receivedItems = null,
     Object? canApprove = null,
@@ -320,6 +378,26 @@ class __$$PurchaseOrderImplCopyWithImpl<$Res>
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
               as String,
+      isAdvancePayment: null == isAdvancePayment
+          ? _value.isAdvancePayment
+          : isAdvancePayment // ignore: cast_nullable_to_non_nullable
+              as bool,
+      dpPercentage: freezed == dpPercentage
+          ? _value.dpPercentage
+          : dpPercentage // ignore: cast_nullable_to_non_nullable
+              as double?,
+      dpAmount: freezed == dpAmount
+          ? _value.dpAmount
+          : dpAmount // ignore: cast_nullable_to_non_nullable
+              as double?,
+      dpPaidAmount: freezed == dpPaidAmount
+          ? _value.dpPaidAmount
+          : dpPaidAmount // ignore: cast_nullable_to_non_nullable
+              as double?,
+      remainingDpAmount: freezed == remainingDpAmount
+          ? _value.remainingDpAmount
+          : remainingDpAmount // ignore: cast_nullable_to_non_nullable
+              as double?,
       totalItems: null == totalItems
           ? _value.totalItems
           : totalItems // ignore: cast_nullable_to_non_nullable
@@ -365,6 +443,14 @@ class _$PurchaseOrderImpl implements _PurchaseOrder {
       @JsonKey(name: 'expected_date') required this.expectedDate,
       @JsonKey(name: 'payment_term') this.paymentTerm,
       required this.status,
+      @JsonKey(name: 'is_advance_payment') this.isAdvancePayment = false,
+      @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson)
+      this.dpPercentage,
+      @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson) this.dpAmount,
+      @JsonKey(name: 'dp_paid_amount', fromJson: doubleOrNullFromJson)
+      this.dpPaidAmount,
+      @JsonKey(name: 'remaining_dp_amount', fromJson: doubleOrNullFromJson)
+      this.remainingDpAmount,
       @JsonKey(name: 'total_items') this.totalItems = 0,
       @JsonKey(name: 'received_items') this.receivedItems = 0,
       @JsonKey(name: 'can_approve') this.canApprove = false,
@@ -415,6 +501,21 @@ class _$PurchaseOrderImpl implements _PurchaseOrder {
   @override
   final String status;
   @override
+  @JsonKey(name: 'is_advance_payment')
+  final bool isAdvancePayment;
+  @override
+  @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson)
+  final double? dpPercentage;
+  @override
+  @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson)
+  final double? dpAmount;
+  @override
+  @JsonKey(name: 'dp_paid_amount', fromJson: doubleOrNullFromJson)
+  final double? dpPaidAmount;
+  @override
+  @JsonKey(name: 'remaining_dp_amount', fromJson: doubleOrNullFromJson)
+  final double? remainingDpAmount;
+  @override
   @JsonKey(name: 'total_items')
   final int totalItems;
   @override
@@ -440,7 +541,7 @@ class _$PurchaseOrderImpl implements _PurchaseOrder {
 
   @override
   String toString() {
-    return 'PurchaseOrder(id: $id, poNumber: $poNumber, companyId: $companyId, warehouseId: $warehouseId, warehouseName: $warehouseName, warehouseAreaId: $warehouseAreaId, warehouseAreaName: $warehouseAreaName, supplierId: $supplierId, supplierName: $supplierName, transactionDate: $transactionDate, expectedDate: $expectedDate, paymentTerm: $paymentTerm, status: $status, totalItems: $totalItems, receivedItems: $receivedItems, canApprove: $canApprove, pdfUrl: $pdfUrl, totalAmount: $totalAmount, items: $items)';
+    return 'PurchaseOrder(id: $id, poNumber: $poNumber, companyId: $companyId, warehouseId: $warehouseId, warehouseName: $warehouseName, warehouseAreaId: $warehouseAreaId, warehouseAreaName: $warehouseAreaName, supplierId: $supplierId, supplierName: $supplierName, transactionDate: $transactionDate, expectedDate: $expectedDate, paymentTerm: $paymentTerm, status: $status, isAdvancePayment: $isAdvancePayment, dpPercentage: $dpPercentage, dpAmount: $dpAmount, dpPaidAmount: $dpPaidAmount, remainingDpAmount: $remainingDpAmount, totalItems: $totalItems, receivedItems: $receivedItems, canApprove: $canApprove, pdfUrl: $pdfUrl, totalAmount: $totalAmount, items: $items)';
   }
 
   @override
@@ -472,6 +573,16 @@ class _$PurchaseOrderImpl implements _PurchaseOrder {
             (identical(other.paymentTerm, paymentTerm) ||
                 other.paymentTerm == paymentTerm) &&
             (identical(other.status, status) || other.status == status) &&
+            (identical(other.isAdvancePayment, isAdvancePayment) ||
+                other.isAdvancePayment == isAdvancePayment) &&
+            (identical(other.dpPercentage, dpPercentage) ||
+                other.dpPercentage == dpPercentage) &&
+            (identical(other.dpAmount, dpAmount) ||
+                other.dpAmount == dpAmount) &&
+            (identical(other.dpPaidAmount, dpPaidAmount) ||
+                other.dpPaidAmount == dpPaidAmount) &&
+            (identical(other.remainingDpAmount, remainingDpAmount) ||
+                other.remainingDpAmount == remainingDpAmount) &&
             (identical(other.totalItems, totalItems) ||
                 other.totalItems == totalItems) &&
             (identical(other.receivedItems, receivedItems) ||
@@ -501,6 +612,11 @@ class _$PurchaseOrderImpl implements _PurchaseOrder {
         expectedDate,
         paymentTerm,
         status,
+        isAdvancePayment,
+        dpPercentage,
+        dpAmount,
+        dpPaidAmount,
+        remainingDpAmount,
         totalItems,
         receivedItems,
         canApprove,
@@ -538,6 +654,15 @@ abstract class _PurchaseOrder implements PurchaseOrder {
       @JsonKey(name: 'expected_date') required final String expectedDate,
       @JsonKey(name: 'payment_term') final String? paymentTerm,
       required final String status,
+      @JsonKey(name: 'is_advance_payment') final bool isAdvancePayment,
+      @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson)
+      final double? dpPercentage,
+      @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson)
+      final double? dpAmount,
+      @JsonKey(name: 'dp_paid_amount', fromJson: doubleOrNullFromJson)
+      final double? dpPaidAmount,
+      @JsonKey(name: 'remaining_dp_amount', fromJson: doubleOrNullFromJson)
+      final double? remainingDpAmount,
       @JsonKey(name: 'total_items') final int totalItems,
       @JsonKey(name: 'received_items') final int receivedItems,
       @JsonKey(name: 'can_approve') final bool canApprove,
@@ -586,6 +711,21 @@ abstract class _PurchaseOrder implements PurchaseOrder {
   String? get paymentTerm;
   @override
   String get status;
+  @override
+  @JsonKey(name: 'is_advance_payment')
+  bool get isAdvancePayment;
+  @override
+  @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson)
+  double? get dpPercentage;
+  @override
+  @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson)
+  double? get dpAmount;
+  @override
+  @JsonKey(name: 'dp_paid_amount', fromJson: doubleOrNullFromJson)
+  double? get dpPaidAmount;
+  @override
+  @JsonKey(name: 'remaining_dp_amount', fromJson: doubleOrNullFromJson)
+  double? get remainingDpAmount;
   @override
   @JsonKey(name: 'total_items')
   int get totalItems;

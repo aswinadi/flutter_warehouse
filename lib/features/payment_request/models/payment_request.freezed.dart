@@ -34,6 +34,12 @@ mixin _$PaymentRequest {
   String? get description => throw _privateConstructorUsedError;
   @JsonKey(name: 'company_id')
   int get companyId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'origin_type')
+  String get originType => throw _privateConstructorUsedError;
+  @JsonKey(name: 'po_header_id')
+  int? get poHeaderId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'po_number')
+  String? get poNumber => throw _privateConstructorUsedError;
   @JsonKey(name: 'can_approve')
   bool get canApprove => throw _privateConstructorUsedError;
   @JsonKey(name: 'pdf_url')
@@ -68,6 +74,9 @@ abstract class $PaymentRequestCopyWith<$Res> {
       String status,
       String? description,
       @JsonKey(name: 'company_id') int companyId,
+      @JsonKey(name: 'origin_type') String originType,
+      @JsonKey(name: 'po_header_id') int? poHeaderId,
+      @JsonKey(name: 'po_number') String? poNumber,
       @JsonKey(name: 'can_approve') bool canApprove,
       @JsonKey(name: 'pdf_url') String? pdfUrl,
       @JsonKey(name: 'supplier_names') String? supplierNames,
@@ -97,6 +106,9 @@ class _$PaymentRequestCopyWithImpl<$Res, $Val extends PaymentRequest>
     Object? status = null,
     Object? description = freezed,
     Object? companyId = null,
+    Object? originType = null,
+    Object? poHeaderId = freezed,
+    Object? poNumber = freezed,
     Object? canApprove = null,
     Object? pdfUrl = freezed,
     Object? supplierNames = freezed,
@@ -140,6 +152,18 @@ class _$PaymentRequestCopyWithImpl<$Res, $Val extends PaymentRequest>
           ? _value.companyId
           : companyId // ignore: cast_nullable_to_non_nullable
               as int,
+      originType: null == originType
+          ? _value.originType
+          : originType // ignore: cast_nullable_to_non_nullable
+              as String,
+      poHeaderId: freezed == poHeaderId
+          ? _value.poHeaderId
+          : poHeaderId // ignore: cast_nullable_to_non_nullable
+              as int?,
+      poNumber: freezed == poNumber
+          ? _value.poNumber
+          : poNumber // ignore: cast_nullable_to_non_nullable
+              as String?,
       canApprove: null == canApprove
           ? _value.canApprove
           : canApprove // ignore: cast_nullable_to_non_nullable
@@ -183,6 +207,9 @@ abstract class _$$PaymentRequestImplCopyWith<$Res>
       String status,
       String? description,
       @JsonKey(name: 'company_id') int companyId,
+      @JsonKey(name: 'origin_type') String originType,
+      @JsonKey(name: 'po_header_id') int? poHeaderId,
+      @JsonKey(name: 'po_number') String? poNumber,
       @JsonKey(name: 'can_approve') bool canApprove,
       @JsonKey(name: 'pdf_url') String? pdfUrl,
       @JsonKey(name: 'supplier_names') String? supplierNames,
@@ -210,6 +237,9 @@ class __$$PaymentRequestImplCopyWithImpl<$Res>
     Object? status = null,
     Object? description = freezed,
     Object? companyId = null,
+    Object? originType = null,
+    Object? poHeaderId = freezed,
+    Object? poNumber = freezed,
     Object? canApprove = null,
     Object? pdfUrl = freezed,
     Object? supplierNames = freezed,
@@ -253,6 +283,18 @@ class __$$PaymentRequestImplCopyWithImpl<$Res>
           ? _value.companyId
           : companyId // ignore: cast_nullable_to_non_nullable
               as int,
+      originType: null == originType
+          ? _value.originType
+          : originType // ignore: cast_nullable_to_non_nullable
+              as String,
+      poHeaderId: freezed == poHeaderId
+          ? _value.poHeaderId
+          : poHeaderId // ignore: cast_nullable_to_non_nullable
+              as int?,
+      poNumber: freezed == poNumber
+          ? _value.poNumber
+          : poNumber // ignore: cast_nullable_to_non_nullable
+              as String?,
       canApprove: null == canApprove
           ? _value.canApprove
           : canApprove // ignore: cast_nullable_to_non_nullable
@@ -291,6 +333,9 @@ class _$PaymentRequestImpl implements _PaymentRequest {
       required this.status,
       this.description,
       @JsonKey(name: 'company_id') required this.companyId,
+      @JsonKey(name: 'origin_type') this.originType = 'invoice',
+      @JsonKey(name: 'po_header_id') this.poHeaderId,
+      @JsonKey(name: 'po_number') this.poNumber,
       @JsonKey(name: 'can_approve') this.canApprove = false,
       @JsonKey(name: 'pdf_url') this.pdfUrl,
       @JsonKey(name: 'supplier_names') this.supplierNames,
@@ -325,6 +370,15 @@ class _$PaymentRequestImpl implements _PaymentRequest {
   @JsonKey(name: 'company_id')
   final int companyId;
   @override
+  @JsonKey(name: 'origin_type')
+  final String originType;
+  @override
+  @JsonKey(name: 'po_header_id')
+  final int? poHeaderId;
+  @override
+  @JsonKey(name: 'po_number')
+  final String? poNumber;
+  @override
   @JsonKey(name: 'can_approve')
   final bool canApprove;
   @override
@@ -347,7 +401,7 @@ class _$PaymentRequestImpl implements _PaymentRequest {
 
   @override
   String toString() {
-    return 'PaymentRequest(id: $id, requestNumber: $requestNumber, requestDate: $requestDate, requestorName: $requestorName, totalAmount: $totalAmount, currency: $currency, status: $status, description: $description, companyId: $companyId, canApprove: $canApprove, pdfUrl: $pdfUrl, supplierNames: $supplierNames, dueDate: $dueDate, invoices: $invoices)';
+    return 'PaymentRequest(id: $id, requestNumber: $requestNumber, requestDate: $requestDate, requestorName: $requestorName, totalAmount: $totalAmount, currency: $currency, status: $status, description: $description, companyId: $companyId, originType: $originType, poHeaderId: $poHeaderId, poNumber: $poNumber, canApprove: $canApprove, pdfUrl: $pdfUrl, supplierNames: $supplierNames, dueDate: $dueDate, invoices: $invoices)';
   }
 
   @override
@@ -371,6 +425,12 @@ class _$PaymentRequestImpl implements _PaymentRequest {
                 other.description == description) &&
             (identical(other.companyId, companyId) ||
                 other.companyId == companyId) &&
+            (identical(other.originType, originType) ||
+                other.originType == originType) &&
+            (identical(other.poHeaderId, poHeaderId) ||
+                other.poHeaderId == poHeaderId) &&
+            (identical(other.poNumber, poNumber) ||
+                other.poNumber == poNumber) &&
             (identical(other.canApprove, canApprove) ||
                 other.canApprove == canApprove) &&
             (identical(other.pdfUrl, pdfUrl) || other.pdfUrl == pdfUrl) &&
@@ -393,6 +453,9 @@ class _$PaymentRequestImpl implements _PaymentRequest {
       status,
       description,
       companyId,
+      originType,
+      poHeaderId,
+      poNumber,
       canApprove,
       pdfUrl,
       supplierNames,
@@ -426,6 +489,9 @@ abstract class _PaymentRequest implements PaymentRequest {
       required final String status,
       final String? description,
       @JsonKey(name: 'company_id') required final int companyId,
+      @JsonKey(name: 'origin_type') final String originType,
+      @JsonKey(name: 'po_header_id') final int? poHeaderId,
+      @JsonKey(name: 'po_number') final String? poNumber,
       @JsonKey(name: 'can_approve') final bool canApprove,
       @JsonKey(name: 'pdf_url') final String? pdfUrl,
       @JsonKey(name: 'supplier_names') final String? supplierNames,
@@ -458,6 +524,15 @@ abstract class _PaymentRequest implements PaymentRequest {
   @override
   @JsonKey(name: 'company_id')
   int get companyId;
+  @override
+  @JsonKey(name: 'origin_type')
+  String get originType;
+  @override
+  @JsonKey(name: 'po_header_id')
+  int? get poHeaderId;
+  @override
+  @JsonKey(name: 'po_number')
+  String? get poNumber;
   @override
   @JsonKey(name: 'can_approve')
   bool get canApprove;

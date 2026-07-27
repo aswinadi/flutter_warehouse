@@ -242,16 +242,30 @@ class _POListScreenState extends ConsumerState<POListScreen> {
           AppLocalizations.of(context)!.purchaseOrders,
           style: TextStyle(color: labelColor),
         ),
-        trailing: CupertinoButton(
-          padding: EdgeInsets.zero,
-          minimumSize: const Size(22, 22),
-          child: const Icon(CupertinoIcons.refresh, size: 22),
-          onPressed: () {
-            setState(() {
-              _selectedPoId = null;
-            });
-            ref.invalidate(purchaseOrdersProvider);
-          },
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              minimumSize: const Size(22, 22),
+              child: const Icon(CupertinoIcons.add, size: 24),
+              onPressed: () {
+                context.push('/po/create');
+              },
+            ),
+            const SizedBox(width: 12),
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              minimumSize: const Size(22, 22),
+              child: const Icon(CupertinoIcons.refresh, size: 22),
+              onPressed: () {
+                setState(() {
+                  _selectedPoId = null;
+                });
+                ref.invalidate(purchaseOrdersProvider);
+              },
+            ),
+          ],
         ),
       ),
       child: SafeArea(
@@ -475,6 +489,23 @@ class _POCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (po.isAdvancePayment) ...[
+              const SizedBox(height: CupertinoSpacing.xs),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: CupertinoColors.systemPurple.resolveFrom(context).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  'DP ${po.dpPercentage?.toStringAsFixed(0) ?? 0}% (Bayar: Rp ${po.dpPaidAmount?.toStringAsFixed(0) ?? 0})',
+                  style: context.caption1.copyWith(
+                    color: CupertinoColors.systemPurple.resolveFrom(context),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: CupertinoSpacing.m),
             // Custom iOS Progress Bar
             Container(

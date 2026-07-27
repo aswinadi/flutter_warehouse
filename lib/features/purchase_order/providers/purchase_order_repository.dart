@@ -37,6 +37,35 @@ class PurchaseOrderRepository {
     return PurchaseOrder.fromJson(response.data['data']);
   }
 
+  Future<PurchaseOrder> createPurchaseOrder({
+    required int companyId,
+    required int warehouseId,
+    required int supplierId,
+    required String transactionDate,
+    required String expectedDate,
+    required List<Map<String, dynamic>> items,
+    int? paymentTerm,
+    bool isAdvancePayment = false,
+    double? dpPercentage,
+    double? dpAmount,
+    String? notes,
+  }) async {
+    final response = await dio.post('wh/purchase-orders', data: {
+      'company_id': companyId,
+      'warehouse_id': warehouseId,
+      'supplier_id': supplierId,
+      'transaction_date': transactionDate,
+      'expected_date': expectedDate,
+      'items': items,
+      if (paymentTerm != null) 'payment_term': paymentTerm,
+      'is_advance_payment': isAdvancePayment,
+      if (dpPercentage != null) 'dp_percentage': dpPercentage,
+      if (dpAmount != null) 'dp_amount': dpAmount,
+      if (notes != null) 'notes': notes,
+    });
+    return PurchaseOrder.fromJson(response.data['data']);
+  }
+
   Future<void> approvePurchaseOrder(int id) async {
     await dio.post('wh/purchase-orders/$id/approve');
   }

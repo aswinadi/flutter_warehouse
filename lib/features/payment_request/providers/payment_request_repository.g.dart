@@ -178,6 +178,142 @@ class _AvailableInvoicesProviderElement
   int get companyId => (origin as AvailableInvoicesProvider).companyId;
 }
 
+String _$availableAdvancePaymentPosHash() =>
+    r'bd34ba2ee7c5f5b420a19f7100a98bee2dc9a638';
+
+/// See also [availableAdvancePaymentPos].
+@ProviderFor(availableAdvancePaymentPos)
+const availableAdvancePaymentPosProvider = AvailableAdvancePaymentPosFamily();
+
+/// See also [availableAdvancePaymentPos].
+class AvailableAdvancePaymentPosFamily
+    extends Family<AsyncValue<List<PurchaseOrder>>> {
+  /// See also [availableAdvancePaymentPos].
+  const AvailableAdvancePaymentPosFamily();
+
+  /// See also [availableAdvancePaymentPos].
+  AvailableAdvancePaymentPosProvider call({
+    required int companyId,
+  }) {
+    return AvailableAdvancePaymentPosProvider(
+      companyId: companyId,
+    );
+  }
+
+  @override
+  AvailableAdvancePaymentPosProvider getProviderOverride(
+    covariant AvailableAdvancePaymentPosProvider provider,
+  ) {
+    return call(
+      companyId: provider.companyId,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'availableAdvancePaymentPosProvider';
+}
+
+/// See also [availableAdvancePaymentPos].
+class AvailableAdvancePaymentPosProvider
+    extends AutoDisposeFutureProvider<List<PurchaseOrder>> {
+  /// See also [availableAdvancePaymentPos].
+  AvailableAdvancePaymentPosProvider({
+    required int companyId,
+  }) : this._internal(
+          (ref) => availableAdvancePaymentPos(
+            ref as AvailableAdvancePaymentPosRef,
+            companyId: companyId,
+          ),
+          from: availableAdvancePaymentPosProvider,
+          name: r'availableAdvancePaymentPosProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$availableAdvancePaymentPosHash,
+          dependencies: AvailableAdvancePaymentPosFamily._dependencies,
+          allTransitiveDependencies:
+              AvailableAdvancePaymentPosFamily._allTransitiveDependencies,
+          companyId: companyId,
+        );
+
+  AvailableAdvancePaymentPosProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.companyId,
+  }) : super.internal();
+
+  final int companyId;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<PurchaseOrder>> Function(
+            AvailableAdvancePaymentPosRef provider)
+        create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: AvailableAdvancePaymentPosProvider._internal(
+        (ref) => create(ref as AvailableAdvancePaymentPosRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        companyId: companyId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<PurchaseOrder>> createElement() {
+    return _AvailableAdvancePaymentPosProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AvailableAdvancePaymentPosProvider &&
+        other.companyId == companyId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, companyId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin AvailableAdvancePaymentPosRef
+    on AutoDisposeFutureProviderRef<List<PurchaseOrder>> {
+  /// The parameter `companyId` of this provider.
+  int get companyId;
+}
+
+class _AvailableAdvancePaymentPosProviderElement
+    extends AutoDisposeFutureProviderElement<List<PurchaseOrder>>
+    with AvailableAdvancePaymentPosRef {
+  _AvailableAdvancePaymentPosProviderElement(super.provider);
+
+  @override
+  int get companyId => (origin as AvailableAdvancePaymentPosProvider).companyId;
+}
+
 String _$invoiceDetailPreviewHash() =>
     r'db3e5f606e4896513c1c797fc043d882ee2e7082';
 

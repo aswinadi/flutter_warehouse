@@ -24,7 +24,7 @@ final chartOfAccountRepositoryProvider =
 
 typedef ChartOfAccountRepositoryRef
     = AutoDisposeProviderRef<ChartOfAccountRepository>;
-String _$chartOfAccountsHash() => r'11802df299dabb6d26895e10dec69d74aa2fa8c7';
+String _$chartOfAccountsHash() => r'b41dcba89fc678332d39ad45e15ddeed5b2896dd';
 
 /// Copied from Dart SDK
 class _SystemHash {

@@ -52,7 +52,10 @@ class _POFormScreenState extends ConsumerState<POFormScreen> {
 
   Future<void> _loadMasterData() async {
     final company = ref.read(selectedCompanyProvider);
-    if (company == null) return;
+    if (company == null) {
+      if (mounted) setState(() => _isLoadingMaster = false);
+      return;
+    }
 
     setState(() => _isLoadingMaster = true);
     try {
@@ -63,19 +66,21 @@ class _POFormScreenState extends ConsumerState<POFormScreen> {
         dio.get('wh/products', queryParameters: {'company_id': company.id, 'per_page': 200}),
       ]);
 
-      setState(() {
-        _warehouses = futures[0].data['data'] ?? [];
-        _suppliers = futures[1].data['data'] ?? [];
-        _products = futures[2].data['data'] ?? [];
+      if (mounted) {
+        setState(() {
+          _warehouses = futures[0].data['data'] ?? [];
+          _suppliers = futures[1].data['data'] ?? [];
+          _products = futures[2].data['data'] ?? [];
 
-        if (_warehouses.isNotEmpty) {
-          _selectedWarehouseId = _warehouses.first['id'] as int;
-        }
-        if (_suppliers.isNotEmpty) {
-          _selectedSupplierId = _suppliers.first['id'] as int;
-        }
-        _isLoadingMaster = false;
-      });
+          if (_warehouses.isNotEmpty && _selectedWarehouseId == null) {
+            _selectedWarehouseId = _warehouses.first['id'] as int;
+          }
+          if (_suppliers.isNotEmpty && _selectedSupplierId == null) {
+            _selectedSupplierId = _suppliers.first['id'] as int;
+          }
+          _isLoadingMaster = false;
+        });
+      }
     } catch (e) {
       if (mounted) setState(() => _isLoadingMaster = false);
     }
@@ -265,6 +270,12 @@ class _POFormScreenState extends ConsumerState<POFormScreen> {
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final company = ref.watch(selectedCompanyProvider);
+
+    ref.listen(selectedCompanyProvider, (previous, next) {
+      if (previous != next && next != null) {
+        _loadMasterData();
+      }
+    });
 
     final selectedWh = _warehouses.firstWhere(
       (w) => w['id'] == _selectedWarehouseId,

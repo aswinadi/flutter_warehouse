@@ -34,9 +34,24 @@ class SupplierDebtRepository {
         );
       }
 
-      return PaginatedResponse.fromJson(
-        responseData,
-        (json) => SupplierDebtHistory.fromJson(json as Map<String, dynamic>),
+      dynamic rawData = responseData['data'];
+      List<dynamic> itemsList = [];
+
+      if (rawData is List) {
+        itemsList = rawData;
+      } else if (rawData is Map && rawData['data'] is List) {
+        itemsList = rawData['data'] as List;
+      } else if (responseData['items'] is List) {
+        itemsList = responseData['items'] as List;
+      }
+
+      final items = itemsList
+          .map((item) => SupplierDebtHistory.fromJson(item as Map<String, dynamic>))
+          .toList();
+
+      return PaginatedResponse<SupplierDebtHistory>(
+        success: true,
+        data: items,
       );
     } catch (e) {
       return const PaginatedResponse<SupplierDebtHistory>(

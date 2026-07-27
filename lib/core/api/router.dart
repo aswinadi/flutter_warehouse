@@ -12,6 +12,7 @@ import '../../features/receiving/ui/receiving_form_screen.dart';
 import '../../features/receiving/ui/container_receiving_form_screen.dart';
 import '../../features/inventory/ui/inventory_screen.dart';
 import '../../features/inventory/ui/stock_mutation_screen.dart';
+import '../../features/inventory/ui/running_stock_report_screen.dart';
 import '../../features/usage/ui/usage_screen.dart';
 import '../../features/usage/ui/feed_log_screen.dart';
 import '../../features/usage/ui/aquaculture_crud_list_screen.dart';
@@ -209,6 +210,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/inventory',
             builder: (context, state) => const InventoryScreen(),
+          ),
+          GoRoute(
+            path: '/running-stock-report',
+            builder: (context, state) => const RunningStockReportScreen(),
           ),
           GoRoute(
             path: '/transfer-out',

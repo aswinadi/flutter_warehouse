@@ -99,6 +99,12 @@ final List<NavItemConfig> menuConfig = [
         requiredPermissions: ['view_inventory'],
       ),
       NavItemConfig(
+        icon: CupertinoIcons.chart_bar_square,
+        labelBuilder: (l10n) => 'Laporan Stok Berjalan',
+        path: '/running-stock-report',
+        requiredPermissions: ['view_inventory'],
+      ),
+      NavItemConfig(
         icon: CupertinoIcons.arrow_counterclockwise,
         labelBuilder: (l10n) => 'Penyesuaian Barang',
         path: '/inventory-adjustments',

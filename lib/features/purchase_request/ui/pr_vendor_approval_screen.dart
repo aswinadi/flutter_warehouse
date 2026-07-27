@@ -414,6 +414,50 @@ class _PRVendorApprovalScreenState extends ConsumerState<PRVendorApprovalScreen>
                                                   ),
                                                 ),
                                                 const SizedBox(height: 4),
+                                                Wrap(
+                                                  spacing: 6,
+                                                  runSpacing: 4,
+                                                  children: [
+                                                    Container(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                      decoration: BoxDecoration(
+                                                        color: comp.shippingTerms == 'franco_gudang' 
+                                                            ? CupertinoColors.systemGreen.resolveFrom(context).withValues(alpha: 0.12)
+                                                            : CupertinoColors.systemBlue.resolveFrom(context).withValues(alpha: 0.12),
+                                                        borderRadius: BorderRadius.circular(4),
+                                                      ),
+                                                      child: Text(
+                                                        comp.shippingTerms == 'franco_gudang'
+                                                            ? 'Franco Gudang (Penjual Ongkir)'
+                                                            : comp.shippingTerms == 'loco_pabrik'
+                                                                ? 'Loco Pabrik (Pembeli Ongkir)'
+                                                                : comp.shippingTerms.toUpperCase(),
+                                                        style: context.caption2.copyWith(
+                                                          color: comp.shippingTerms == 'franco_gudang'
+                                                              ? CupertinoColors.systemGreen.resolveFrom(context)
+                                                              : CupertinoColors.systemBlue.resolveFrom(context),
+                                                          fontWeight: FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    if ((comp.estimatedLogisticsCost ?? 0) > 0)
+                                                      Container(
+                                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                        decoration: BoxDecoration(
+                                                          color: CupertinoColors.systemPurple.resolveFrom(context).withValues(alpha: 0.12),
+                                                          borderRadius: BorderRadius.circular(4),
+                                                        ),
+                                                        child: Text(
+                                                          'Est. Ongkir: ${formatWithCurrency(comp.estimatedLogisticsCost!, 'IDR')}',
+                                                          style: context.caption2.copyWith(
+                                                            color: CupertinoColors.systemPurple.resolveFrom(context),
+                                                            fontWeight: FontWeight.bold,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 4),
                                                 if (comp.isAdvancePayment) ...[
                                                   Container(
                                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

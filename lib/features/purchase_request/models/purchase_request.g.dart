@@ -70,6 +70,9 @@ _$PurchaseRequestComparisonImpl _$$PurchaseRequestComparisonImplFromJson(
       isAdvancePayment: json['is_advance_payment'] as bool? ?? false,
       dpPercentage: doubleOrNullFromJson(json['dp_percentage']),
       dpAmount: doubleOrNullFromJson(json['dp_amount']),
+      shippingTerms: json['shipping_terms'] as String? ?? 'franco_gudang',
+      estimatedLogisticsCost:
+          doubleOrNullFromJson(json['estimated_logistics_cost']),
       status: json['status'] as String?,
       notes: json['notes'] as String?,
       details: (json['details'] as List<dynamic>?)
@@ -89,6 +92,8 @@ Map<String, dynamic> _$$PurchaseRequestComparisonImplToJson(
       'is_advance_payment': instance.isAdvancePayment,
       'dp_percentage': instance.dpPercentage,
       'dp_amount': instance.dpAmount,
+      'shipping_terms': instance.shippingTerms,
+      'estimated_logistics_cost': instance.estimatedLogisticsCost,
       'status': instance.status,
       'notes': instance.notes,
       'details': instance.details,

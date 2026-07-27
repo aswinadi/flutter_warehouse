@@ -118,8 +118,26 @@ class UpdaterService {
 
     if (Platform.isAndroid) {
       _installAndroidApk(context, apkUrl);
+    } else if (Platform.isIOS) {
+      _openIosAppStore(context, exeUrl.isNotEmpty ? exeUrl : apkUrl);
     } else if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
       _installDesktopApp(context, exeUrl);
+    }
+  }
+
+  // --- IOS APP STORE / TESTFLIGHT LINK ---
+  Future<void> _openIosAppStore(BuildContext context, String urlString) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final Uri? url = Uri.tryParse(urlString);
+    if (url != null && await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(
+          content: Text('Silakan perbarui aplikasi melalui App Store atau TestFlight.'),
+          backgroundColor: Colors.blue,
+        ),
+      );
     }
   }
 

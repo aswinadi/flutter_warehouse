@@ -66,5 +66,11 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Aplikasi membutuhkan akses kamera untuk memindai barcode/QR barang dan foto persediaan.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Aplikasi membutuhkan akses galeri foto untuk memilih gambar lampiran stok.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Aplikasi membutuhkan izin menyimpan dokumen dan foto ke galeri.</string>
 </dict>
 </plist>

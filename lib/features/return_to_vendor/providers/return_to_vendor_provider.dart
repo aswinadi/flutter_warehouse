@@ -16,17 +16,32 @@ class ReturnToVendorRepository {
     int? supplierId,
     String? status,
   }) async {
-    final Map<String, dynamic> query = {'page': page};
-    if (companyId != null) query['company_id'] = companyId;
-    if (supplierId != null) query['supplier_id'] = supplierId;
-    if (status != null && status != 'all') query['status'] = status;
+    try {
+      final Map<String, dynamic> query = {'page': page};
+      if (companyId != null) query['company_id'] = companyId;
+      if (supplierId != null) query['supplier_id'] = supplierId;
+      if (status != null && status != 'all') query['status'] = status;
 
-    final response = await dio.get('wh/return-to-vendors', queryParameters: query);
+      final response = await dio.get('wh/return-to-vendors', queryParameters: query);
 
-    return PaginatedResponse.fromJson(
-      response.data,
-      (json) => ReturnToVendor.fromJson(json as Map<String, dynamic>),
-    );
+      final responseData = response.data;
+      if (responseData == null || responseData is! Map<String, dynamic>) {
+        return const PaginatedResponse<ReturnToVendor>(
+          success: true,
+          data: [],
+        );
+      }
+
+      return PaginatedResponse.fromJson(
+        responseData,
+        (json) => ReturnToVendor.fromJson(json as Map<String, dynamic>),
+      );
+    } catch (e) {
+      return const PaginatedResponse<ReturnToVendor>(
+        success: false,
+        data: [],
+      );
+    }
   }
 
   Future<ReturnToVendor> getDetail(int id) async {

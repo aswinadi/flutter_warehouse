@@ -17,18 +17,33 @@ class SupplierDebtRepository {
     String? ledgerCategory, // 'ap' vs 'ar'
     String? type,
   }) async {
-    final Map<String, dynamic> query = {'page': page};
-    if (companyId != null) query['company_id'] = companyId;
-    if (supplierId != null) query['supplier_id'] = supplierId;
-    if (ledgerCategory != null) query['ledger_category'] = ledgerCategory;
-    if (type != null) query['type'] = type;
+    try {
+      final Map<String, dynamic> query = {'page': page};
+      if (companyId != null) query['company_id'] = companyId;
+      if (supplierId != null) query['supplier_id'] = supplierId;
+      if (ledgerCategory != null) query['ledger_category'] = ledgerCategory;
+      if (type != null) query['type'] = type;
 
-    final response = await dio.get('wh/supplier-debt-histories', queryParameters: query);
+      final response = await dio.get('wh/supplier-debt-histories', queryParameters: query);
 
-    return PaginatedResponse.fromJson(
-      response.data,
-      (json) => SupplierDebtHistory.fromJson(json as Map<String, dynamic>),
-    );
+      final responseData = response.data;
+      if (responseData == null || responseData is! Map<String, dynamic>) {
+        return const PaginatedResponse<SupplierDebtHistory>(
+          success: true,
+          data: [],
+        );
+      }
+
+      return PaginatedResponse.fromJson(
+        responseData,
+        (json) => SupplierDebtHistory.fromJson(json as Map<String, dynamic>),
+      );
+    } catch (e) {
+      return const PaginatedResponse<SupplierDebtHistory>(
+        success: false,
+        data: [],
+      );
+    }
   }
 
   Future<SupplierLedgerSummary> getSupplierSummary(int supplierId, {int? companyId}) async {

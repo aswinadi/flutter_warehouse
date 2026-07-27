@@ -35,9 +35,23 @@ class _SupplierDebtHistoryScreenState
     }));
 
     return CupertinoPageScaffold(
-      navigationBar: const CupertinoNavigationBar(
-        middle: Text('Buku Hutang & Piutang Vendor'),
-        trailing: CompanySwitcher(),
+      navigationBar: CupertinoNavigationBar(
+        middle: const Text('Buku Hutang & Piutang Vendor'),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              minimumSize: const Size(22, 22),
+              child: const Icon(CupertinoIcons.refresh, size: 20),
+              onPressed: () {
+                ref.invalidate(supplierDebtHistoryProvider);
+              },
+            ),
+            const SizedBox(width: 8),
+            const CompanySwitcher(),
+          ],
+        ),
       ),
       child: SafeArea(
         child: Column(
@@ -83,9 +97,21 @@ class _SupplierDebtHistoryScreenState
                   final items = response.data;
                   if (items.isEmpty) {
                     return Center(
-                      child: Text(
-                        'Belum ada riwayat transaksi ledger vendor',
-                        style: context.subhead.copyWith(color: secondaryLabel),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(CupertinoIcons.doc_text, size: 48, color: secondaryLabel.withValues(alpha: 0.5)),
+                          const SizedBox(height: CupertinoSpacing.m),
+                          Text(
+                            'Belum ada riwayat transaksi ledger vendor',
+                            style: context.subhead.copyWith(color: secondaryLabel),
+                          ),
+                          const SizedBox(height: CupertinoSpacing.s),
+                          CupertinoButton(
+                            child: const Text('Muat Ulang'),
+                            onPressed: () => ref.invalidate(supplierDebtHistoryProvider),
+                          ),
+                        ],
                       ),
                     );
                   }

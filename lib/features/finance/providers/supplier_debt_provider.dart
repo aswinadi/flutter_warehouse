@@ -77,15 +77,13 @@ final supplierDebtRepositoryProvider = Provider<SupplierDebtRepository>((ref) {
   return SupplierDebtRepository(dio);
 });
 
-final supplierDebtHistoryProvider = FutureProvider.family<PaginatedResponse<SupplierDebtHistory>, Map<String, dynamic>>((ref, params) async {
+final supplierDebtHistoryProvider = FutureProvider.family<PaginatedResponse<SupplierDebtHistory>, String>((ref, category) async {
   final repo = ref.watch(supplierDebtRepositoryProvider);
   final selectedCompany = ref.watch(selectedCompanyProvider);
 
   return repo.getDebtHistory(
-    page: params['page'] ?? 1,
-    companyId: params['company_id'] ?? selectedCompany?.id,
-    supplierId: params['supplier_id'],
-    ledgerCategory: params['ledger_category'],
-    type: params['type'],
+    page: 1,
+    companyId: selectedCompany?.id,
+    ledgerCategory: category == 'all' ? null : category,
   );
 });

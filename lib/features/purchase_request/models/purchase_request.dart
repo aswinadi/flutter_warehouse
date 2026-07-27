@@ -40,6 +40,8 @@ class PurchaseRequestComparison with _$PurchaseRequestComparison {
     @JsonKey(name: 'is_advance_payment') @Default(false) bool isAdvancePayment,
     @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson) double? dpPercentage,
     @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson) double? dpAmount,
+    @JsonKey(name: 'shipping_terms') @Default('franco_gudang') String shippingTerms,
+    @JsonKey(name: 'estimated_logistics_cost', fromJson: doubleOrNullFromJson) double? estimatedLogisticsCost,
     String? status,
     String? notes,
     @Default([]) List<ComparisonDetail> details,

@@ -561,6 +561,10 @@ mixin _$PurchaseRequestComparison {
   double? get dpPercentage => throw _privateConstructorUsedError;
   @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson)
   double? get dpAmount => throw _privateConstructorUsedError;
+  @JsonKey(name: 'shipping_terms')
+  String get shippingTerms => throw _privateConstructorUsedError;
+  @JsonKey(name: 'estimated_logistics_cost', fromJson: doubleOrNullFromJson)
+  double? get estimatedLogisticsCost => throw _privateConstructorUsedError;
   String? get status => throw _privateConstructorUsedError;
   String? get notes => throw _privateConstructorUsedError;
   List<ComparisonDetail> get details => throw _privateConstructorUsedError;
@@ -589,6 +593,9 @@ abstract class $PurchaseRequestComparisonCopyWith<$Res> {
       double? dpPercentage,
       @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson)
       double? dpAmount,
+      @JsonKey(name: 'shipping_terms') String shippingTerms,
+      @JsonKey(name: 'estimated_logistics_cost', fromJson: doubleOrNullFromJson)
+      double? estimatedLogisticsCost,
       String? status,
       String? notes,
       List<ComparisonDetail> details});
@@ -616,6 +623,8 @@ class _$PurchaseRequestComparisonCopyWithImpl<$Res,
     Object? isAdvancePayment = null,
     Object? dpPercentage = freezed,
     Object? dpAmount = freezed,
+    Object? shippingTerms = null,
+    Object? estimatedLogisticsCost = freezed,
     Object? status = freezed,
     Object? notes = freezed,
     Object? details = null,
@@ -652,6 +661,14 @@ class _$PurchaseRequestComparisonCopyWithImpl<$Res,
       dpAmount: freezed == dpAmount
           ? _value.dpAmount
           : dpAmount // ignore: cast_nullable_to_non_nullable
+              as double?,
+      shippingTerms: null == shippingTerms
+          ? _value.shippingTerms
+          : shippingTerms // ignore: cast_nullable_to_non_nullable
+              as String,
+      estimatedLogisticsCost: freezed == estimatedLogisticsCost
+          ? _value.estimatedLogisticsCost
+          : estimatedLogisticsCost // ignore: cast_nullable_to_non_nullable
               as double?,
       status: freezed == status
           ? _value.status
@@ -690,6 +707,9 @@ abstract class _$$PurchaseRequestComparisonImplCopyWith<$Res>
       double? dpPercentage,
       @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson)
       double? dpAmount,
+      @JsonKey(name: 'shipping_terms') String shippingTerms,
+      @JsonKey(name: 'estimated_logistics_cost', fromJson: doubleOrNullFromJson)
+      double? estimatedLogisticsCost,
       String? status,
       String? notes,
       List<ComparisonDetail> details});
@@ -716,6 +736,8 @@ class __$$PurchaseRequestComparisonImplCopyWithImpl<$Res>
     Object? isAdvancePayment = null,
     Object? dpPercentage = freezed,
     Object? dpAmount = freezed,
+    Object? shippingTerms = null,
+    Object? estimatedLogisticsCost = freezed,
     Object? status = freezed,
     Object? notes = freezed,
     Object? details = null,
@@ -753,6 +775,14 @@ class __$$PurchaseRequestComparisonImplCopyWithImpl<$Res>
           ? _value.dpAmount
           : dpAmount // ignore: cast_nullable_to_non_nullable
               as double?,
+      shippingTerms: null == shippingTerms
+          ? _value.shippingTerms
+          : shippingTerms // ignore: cast_nullable_to_non_nullable
+              as String,
+      estimatedLogisticsCost: freezed == estimatedLogisticsCost
+          ? _value.estimatedLogisticsCost
+          : estimatedLogisticsCost // ignore: cast_nullable_to_non_nullable
+              as double?,
       status: freezed == status
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
@@ -783,6 +813,9 @@ class _$PurchaseRequestComparisonImpl implements _PurchaseRequestComparison {
       @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson)
       this.dpPercentage,
       @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson) this.dpAmount,
+      @JsonKey(name: 'shipping_terms') this.shippingTerms = 'franco_gudang',
+      @JsonKey(name: 'estimated_logistics_cost', fromJson: doubleOrNullFromJson)
+      this.estimatedLogisticsCost,
       this.status,
       this.notes,
       final List<ComparisonDetail> details = const []})
@@ -815,6 +848,12 @@ class _$PurchaseRequestComparisonImpl implements _PurchaseRequestComparison {
   @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson)
   final double? dpAmount;
   @override
+  @JsonKey(name: 'shipping_terms')
+  final String shippingTerms;
+  @override
+  @JsonKey(name: 'estimated_logistics_cost', fromJson: doubleOrNullFromJson)
+  final double? estimatedLogisticsCost;
+  @override
   final String? status;
   @override
   final String? notes;
@@ -829,7 +868,7 @@ class _$PurchaseRequestComparisonImpl implements _PurchaseRequestComparison {
 
   @override
   String toString() {
-    return 'PurchaseRequestComparison(id: $id, supplierId: $supplierId, supplierName: $supplierName, totalAmount: $totalAmount, leadTimeDays: $leadTimeDays, isAdvancePayment: $isAdvancePayment, dpPercentage: $dpPercentage, dpAmount: $dpAmount, status: $status, notes: $notes, details: $details)';
+    return 'PurchaseRequestComparison(id: $id, supplierId: $supplierId, supplierName: $supplierName, totalAmount: $totalAmount, leadTimeDays: $leadTimeDays, isAdvancePayment: $isAdvancePayment, dpPercentage: $dpPercentage, dpAmount: $dpAmount, shippingTerms: $shippingTerms, estimatedLogisticsCost: $estimatedLogisticsCost, status: $status, notes: $notes, details: $details)';
   }
 
   @override
@@ -852,6 +891,10 @@ class _$PurchaseRequestComparisonImpl implements _PurchaseRequestComparison {
                 other.dpPercentage == dpPercentage) &&
             (identical(other.dpAmount, dpAmount) ||
                 other.dpAmount == dpAmount) &&
+            (identical(other.shippingTerms, shippingTerms) ||
+                other.shippingTerms == shippingTerms) &&
+            (identical(other.estimatedLogisticsCost, estimatedLogisticsCost) ||
+                other.estimatedLogisticsCost == estimatedLogisticsCost) &&
             (identical(other.status, status) || other.status == status) &&
             (identical(other.notes, notes) || other.notes == notes) &&
             const DeepCollectionEquality().equals(other._details, _details));
@@ -869,6 +912,8 @@ class _$PurchaseRequestComparisonImpl implements _PurchaseRequestComparison {
       isAdvancePayment,
       dpPercentage,
       dpAmount,
+      shippingTerms,
+      estimatedLogisticsCost,
       status,
       notes,
       const DeepCollectionEquality().hash(_details));
@@ -901,6 +946,9 @@ abstract class _PurchaseRequestComparison implements PurchaseRequestComparison {
       final double? dpPercentage,
       @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson)
       final double? dpAmount,
+      @JsonKey(name: 'shipping_terms') final String shippingTerms,
+      @JsonKey(name: 'estimated_logistics_cost', fromJson: doubleOrNullFromJson)
+      final double? estimatedLogisticsCost,
       final String? status,
       final String? notes,
       final List<ComparisonDetail> details}) = _$PurchaseRequestComparisonImpl;
@@ -931,6 +979,12 @@ abstract class _PurchaseRequestComparison implements PurchaseRequestComparison {
   @override
   @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson)
   double? get dpAmount;
+  @override
+  @JsonKey(name: 'shipping_terms')
+  String get shippingTerms;
+  @override
+  @JsonKey(name: 'estimated_logistics_cost', fromJson: doubleOrNullFromJson)
+  double? get estimatedLogisticsCost;
   @override
   String? get status;
   @override

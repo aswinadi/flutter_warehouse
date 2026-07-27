@@ -38,6 +38,8 @@ import '../../features/finance/ui/inventory_valuation_screen.dart';
 import '../../features/finance/ui/invoice_biaya_list_screen.dart';
 import '../../features/finance/ui/invoice_biaya_detail_screen.dart';
 import '../../features/finance/ui/invoice_biaya_form_screen.dart';
+import '../../features/finance/ui/supplier_debt_history_screen.dart';
+import '../../features/return_to_vendor/ui/return_to_vendor_list_screen.dart';
 import '../../features/payment_request/ui/payment_request_list_screen.dart';
 import '../../features/payment_request/ui/payment_request_detail_screen.dart';
 import '../../features/payment_request/ui/payment_request_form_screen.dart';
@@ -344,6 +346,14 @@ final routerProvider = Provider<GoRouter>((ref) {
                 },
               ),
             ],
+          ),
+          GoRoute(
+            path: '/rtv',
+            builder: (context, state) => const ReturnToVendorListScreen(),
+          ),
+          GoRoute(
+            path: '/supplier-debt-history',
+            builder: (context, state) => const SupplierDebtHistoryScreen(),
           ),
           GoRoute(
             path: '/inventory-valuation',

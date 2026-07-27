@@ -56,6 +56,12 @@ final List<NavItemConfig> menuConfig = [
         path: '/po',
         requiredPermissions: ['view_po'],
       ),
+      NavItemConfig(
+        icon: CupertinoIcons.arrow_uturn_left,
+        labelBuilder: (l10n) => 'Retur Supplier (RTV)',
+        path: '/rtv',
+        requiredPermissions: ['view_po'],
+      ),
     ],
   ),
   NavItemConfig(
@@ -234,6 +240,12 @@ final List<NavItemConfig> menuConfig = [
         icon: CupertinoIcons.tag,
         labelBuilder: (l10n) => 'Landed Cost (Biaya Tambahan)',
         path: '/landed-costs',
+        requiredPermissions: ['view_payments'],
+      ),
+      NavItemConfig(
+        icon: CupertinoIcons.money_dollar_circle,
+        labelBuilder: (l10n) => 'Buku Hutang & Piutang Vendor',
+        path: '/supplier-debt-history',
         requiredPermissions: ['view_payments'],
       ),
     ],

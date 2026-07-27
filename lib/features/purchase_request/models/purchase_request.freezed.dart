@@ -555,6 +555,12 @@ mixin _$PurchaseRequestComparison {
   double get totalAmount => throw _privateConstructorUsedError;
   @JsonKey(name: 'lead_time_days')
   int get leadTimeDays => throw _privateConstructorUsedError;
+  @JsonKey(name: 'is_advance_payment')
+  bool get isAdvancePayment => throw _privateConstructorUsedError;
+  @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson)
+  double? get dpPercentage => throw _privateConstructorUsedError;
+  @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson)
+  double? get dpAmount => throw _privateConstructorUsedError;
   String? get status => throw _privateConstructorUsedError;
   String? get notes => throw _privateConstructorUsedError;
   List<ComparisonDetail> get details => throw _privateConstructorUsedError;
@@ -578,6 +584,11 @@ abstract class $PurchaseRequestComparisonCopyWith<$Res> {
       @JsonKey(name: 'total_amount', fromJson: doubleFromJson)
       double totalAmount,
       @JsonKey(name: 'lead_time_days') int leadTimeDays,
+      @JsonKey(name: 'is_advance_payment') bool isAdvancePayment,
+      @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson)
+      double? dpPercentage,
+      @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson)
+      double? dpAmount,
       String? status,
       String? notes,
       List<ComparisonDetail> details});
@@ -602,6 +613,9 @@ class _$PurchaseRequestComparisonCopyWithImpl<$Res,
     Object? supplierName = null,
     Object? totalAmount = null,
     Object? leadTimeDays = null,
+    Object? isAdvancePayment = null,
+    Object? dpPercentage = freezed,
+    Object? dpAmount = freezed,
     Object? status = freezed,
     Object? notes = freezed,
     Object? details = null,
@@ -627,6 +641,18 @@ class _$PurchaseRequestComparisonCopyWithImpl<$Res,
           ? _value.leadTimeDays
           : leadTimeDays // ignore: cast_nullable_to_non_nullable
               as int,
+      isAdvancePayment: null == isAdvancePayment
+          ? _value.isAdvancePayment
+          : isAdvancePayment // ignore: cast_nullable_to_non_nullable
+              as bool,
+      dpPercentage: freezed == dpPercentage
+          ? _value.dpPercentage
+          : dpPercentage // ignore: cast_nullable_to_non_nullable
+              as double?,
+      dpAmount: freezed == dpAmount
+          ? _value.dpAmount
+          : dpAmount // ignore: cast_nullable_to_non_nullable
+              as double?,
       status: freezed == status
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
@@ -659,6 +685,11 @@ abstract class _$$PurchaseRequestComparisonImplCopyWith<$Res>
       @JsonKey(name: 'total_amount', fromJson: doubleFromJson)
       double totalAmount,
       @JsonKey(name: 'lead_time_days') int leadTimeDays,
+      @JsonKey(name: 'is_advance_payment') bool isAdvancePayment,
+      @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson)
+      double? dpPercentage,
+      @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson)
+      double? dpAmount,
       String? status,
       String? notes,
       List<ComparisonDetail> details});
@@ -682,6 +713,9 @@ class __$$PurchaseRequestComparisonImplCopyWithImpl<$Res>
     Object? supplierName = null,
     Object? totalAmount = null,
     Object? leadTimeDays = null,
+    Object? isAdvancePayment = null,
+    Object? dpPercentage = freezed,
+    Object? dpAmount = freezed,
     Object? status = freezed,
     Object? notes = freezed,
     Object? details = null,
@@ -707,6 +741,18 @@ class __$$PurchaseRequestComparisonImplCopyWithImpl<$Res>
           ? _value.leadTimeDays
           : leadTimeDays // ignore: cast_nullable_to_non_nullable
               as int,
+      isAdvancePayment: null == isAdvancePayment
+          ? _value.isAdvancePayment
+          : isAdvancePayment // ignore: cast_nullable_to_non_nullable
+              as bool,
+      dpPercentage: freezed == dpPercentage
+          ? _value.dpPercentage
+          : dpPercentage // ignore: cast_nullable_to_non_nullable
+              as double?,
+      dpAmount: freezed == dpAmount
+          ? _value.dpAmount
+          : dpAmount // ignore: cast_nullable_to_non_nullable
+              as double?,
       status: freezed == status
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
@@ -733,6 +779,10 @@ class _$PurchaseRequestComparisonImpl implements _PurchaseRequestComparison {
       @JsonKey(name: 'total_amount', fromJson: doubleFromJson)
       required this.totalAmount,
       @JsonKey(name: 'lead_time_days') required this.leadTimeDays,
+      @JsonKey(name: 'is_advance_payment') this.isAdvancePayment = false,
+      @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson)
+      this.dpPercentage,
+      @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson) this.dpAmount,
       this.status,
       this.notes,
       final List<ComparisonDetail> details = const []})
@@ -756,6 +806,15 @@ class _$PurchaseRequestComparisonImpl implements _PurchaseRequestComparison {
   @JsonKey(name: 'lead_time_days')
   final int leadTimeDays;
   @override
+  @JsonKey(name: 'is_advance_payment')
+  final bool isAdvancePayment;
+  @override
+  @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson)
+  final double? dpPercentage;
+  @override
+  @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson)
+  final double? dpAmount;
+  @override
   final String? status;
   @override
   final String? notes;
@@ -770,7 +829,7 @@ class _$PurchaseRequestComparisonImpl implements _PurchaseRequestComparison {
 
   @override
   String toString() {
-    return 'PurchaseRequestComparison(id: $id, supplierId: $supplierId, supplierName: $supplierName, totalAmount: $totalAmount, leadTimeDays: $leadTimeDays, status: $status, notes: $notes, details: $details)';
+    return 'PurchaseRequestComparison(id: $id, supplierId: $supplierId, supplierName: $supplierName, totalAmount: $totalAmount, leadTimeDays: $leadTimeDays, isAdvancePayment: $isAdvancePayment, dpPercentage: $dpPercentage, dpAmount: $dpAmount, status: $status, notes: $notes, details: $details)';
   }
 
   @override
@@ -787,6 +846,12 @@ class _$PurchaseRequestComparisonImpl implements _PurchaseRequestComparison {
                 other.totalAmount == totalAmount) &&
             (identical(other.leadTimeDays, leadTimeDays) ||
                 other.leadTimeDays == leadTimeDays) &&
+            (identical(other.isAdvancePayment, isAdvancePayment) ||
+                other.isAdvancePayment == isAdvancePayment) &&
+            (identical(other.dpPercentage, dpPercentage) ||
+                other.dpPercentage == dpPercentage) &&
+            (identical(other.dpAmount, dpAmount) ||
+                other.dpAmount == dpAmount) &&
             (identical(other.status, status) || other.status == status) &&
             (identical(other.notes, notes) || other.notes == notes) &&
             const DeepCollectionEquality().equals(other._details, _details));
@@ -801,6 +866,9 @@ class _$PurchaseRequestComparisonImpl implements _PurchaseRequestComparison {
       supplierName,
       totalAmount,
       leadTimeDays,
+      isAdvancePayment,
+      dpPercentage,
+      dpAmount,
       status,
       notes,
       const DeepCollectionEquality().hash(_details));
@@ -828,6 +896,11 @@ abstract class _PurchaseRequestComparison implements PurchaseRequestComparison {
       @JsonKey(name: 'total_amount', fromJson: doubleFromJson)
       required final double totalAmount,
       @JsonKey(name: 'lead_time_days') required final int leadTimeDays,
+      @JsonKey(name: 'is_advance_payment') final bool isAdvancePayment,
+      @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson)
+      final double? dpPercentage,
+      @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson)
+      final double? dpAmount,
       final String? status,
       final String? notes,
       final List<ComparisonDetail> details}) = _$PurchaseRequestComparisonImpl;
@@ -849,6 +922,15 @@ abstract class _PurchaseRequestComparison implements PurchaseRequestComparison {
   @override
   @JsonKey(name: 'lead_time_days')
   int get leadTimeDays;
+  @override
+  @JsonKey(name: 'is_advance_payment')
+  bool get isAdvancePayment;
+  @override
+  @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson)
+  double? get dpPercentage;
+  @override
+  @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson)
+  double? get dpAmount;
   @override
   String? get status;
   @override

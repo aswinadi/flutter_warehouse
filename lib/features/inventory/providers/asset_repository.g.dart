@@ -170,7 +170,7 @@ class _AssetDetailProviderElement
   int get id => (origin as AssetDetailProvider).id;
 }
 
-String _$assetOfficesHash() => r'87ea5af833a96ef9b2920161d6f714acad6f7597';
+String _$assetOfficesHash() => r'574076f47fb4ef43840eb045bec3e735fb8e7401';
 
 /// See also [assetOffices].
 @ProviderFor(assetOffices)
@@ -300,7 +300,7 @@ class _AssetOfficesProviderElement
   int? get companyId => (origin as AssetOfficesProvider).companyId;
 }
 
-String _$assetEmployeesHash() => r'a61ccfd4634acda6aaddff33eda56c5c468ffb6a';
+String _$assetEmployeesHash() => r'5a29cdfc86e52c80ec5844231962c97c20ecd94b';
 
 /// See also [assetEmployees].
 @ProviderFor(assetEmployees)
@@ -430,7 +430,7 @@ class _AssetEmployeesProviderElement
   int? get companyId => (origin as AssetEmployeesProvider).companyId;
 }
 
-String _$assetSuppliersHash() => r'8dd2db64f4ecf70757d9d5440a71f89ae1debdf6';
+String _$assetSuppliersHash() => r'4a10c9349287b3ad8ae0f6b59f1bfebc55b51fb1';
 
 /// See also [assetSuppliers].
 @ProviderFor(assetSuppliers)

@@ -6,6 +6,7 @@ import '../widgets/main_shell.dart';
 import '../../features/purchase_request/ui/pr_list_screen.dart';
 import '../../features/purchase_request/ui/pr_approval_screen.dart';
 import '../../features/purchase_order/ui/po_list_screen.dart';
+import '../../features/purchase_order/ui/po_form_screen.dart';
 import '../../features/packing_list/ui/packing_list_screen.dart';
 import '../../features/receiving/ui/receiving_scan_screen.dart';
 import '../../features/receiving/ui/receiving_form_screen.dart';
@@ -181,6 +182,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/po',
             builder: (context, state) => const POListScreen(),
+            routes: [
+              GoRoute(
+                path: 'create',
+                builder: (context, state) => const POFormScreen(),
+              ),
+            ],
           ),
           GoRoute(
             path: '/packing-list',

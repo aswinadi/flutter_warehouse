@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/payment_request.dart';
+import '../../purchase_order/models/purchase_order.dart';
 import '../../finance/models/company_bank_account.dart';
 import '../../purchase_request/models/supplier.dart';
 import '../../../core/api/dio_client.dart';
@@ -113,6 +114,21 @@ class PaymentRequestRepository {
     });
   }
 
+  Future<void> createAdvancePaymentRequest({
+    required int poHeaderId,
+    required double amount,
+    required String requestDate,
+    String? description,
+  }) async {
+    await dio.post('wh/payment-requests', data: {
+      'origin_type': 'advance_payment',
+      'po_header_id': poHeaderId,
+      'amount': amount,
+      'request_date': requestDate,
+      if (description != null) 'description': description,
+    });
+  }
+
   Future<void> payPaymentRequest(
     int id, {
     required List<Map<String, dynamic>> invoices,
@@ -139,6 +155,18 @@ class PaymentRequestRepository {
     final response = await dio.get(endpoint);
     return response.data['data'] as Map<String, dynamic>;
   }
+  Future<List<PurchaseOrder>> getEligibleAdvancePaymentPos({required int companyId}) async {
+    final response = await dio.get('wh/purchase-orders', queryParameters: {
+      'company_id': companyId,
+      'status': 'approved,ordered',
+      'per_page': 100,
+    });
+    final data = response.data['data'] as List<dynamic>;
+    return data
+        .map((json) => PurchaseOrder.fromJson(json as Map<String, dynamic>))
+        .where((po) => po.isAdvancePayment && ((po.dpAmount ?? 0) - (po.dpPaidAmount ?? 0)) > 0)
+        .toList();
+  }
 }
 
 @riverpod
@@ -149,6 +177,11 @@ PaymentRequestRepository paymentRequestRepository(PaymentRequestRepositoryRef re
 @riverpod
 Future<List<AvailableInvoice>> availableInvoices(AvailableInvoicesRef ref, {required int companyId}) async {
   return ref.watch(paymentRequestRepositoryProvider).getAvailableInvoices(companyId: companyId);
+}
+
+@riverpod
+Future<List<PurchaseOrder>> availableAdvancePaymentPos(AvailableAdvancePaymentPosRef ref, {required int companyId}) async {
+  return ref.watch(paymentRequestRepositoryProvider).getEligibleAdvancePaymentPos(companyId: companyId);
 }
 
 @riverpod

@@ -235,7 +235,10 @@ class _PaymentRequestDetailScreenState extends ConsumerState<PaymentRequestDetai
                         Divider(color: CupertinoColors.separator.resolveFrom(context), height: CupertinoSpacing.xl, thickness: 0.5),
                         _buildInfoRow('Pengaju', pr.requestorName),
                         _buildInfoRow('Tanggal Pengajuan', pr.requestDate),
+                        _buildInfoRow('Tipe Pengajuan', pr.originType == 'advance_payment' ? 'Uang Muka PO (DP)' : 'Pembayaran Tagihan'),
                         _buildInfoRow('Status', pr.status.toUpperCase()),
+                        if (pr.originType == 'advance_payment' && pr.poNumber != null)
+                          _buildInfoRow('Nomor PO', pr.poNumber!),
                         _buildInfoRow('Pemasok', pr.supplierNames ?? '-'),
                         _buildInfoRow('Jatuh Tempo Terdekat', pr.dueDate ?? '-'),
                         Divider(color: CupertinoColors.separator.resolveFrom(context), height: CupertinoSpacing.xl, thickness: 0.5),
@@ -250,45 +253,75 @@ class _PaymentRequestDetailScreenState extends ConsumerState<PaymentRequestDetai
                     ),
                   ),
                   const SizedBox(height: CupertinoSpacing.screenMargin),
-                  Text('Invoice Terkait', style: context.headline.copyWith(fontWeight: FontWeight.bold, color: labelColor)),
-                  const SizedBox(height: CupertinoSpacing.s),
-                  ...pr.invoices.map((inv) => CupertinoGlassContainer(
-                        margin: const EdgeInsets.only(bottom: CupertinoSpacing.s),
-                        padding: const EdgeInsets.all(CupertinoSpacing.m),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(inv.invoiceNumber, style: context.body.copyWith(fontWeight: FontWeight.bold)),
-                                Text(
-                                  inv.paymentStatus.toUpperCase(),
-                                  style: context.caption2.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: inv.paymentStatus == 'paid' ? CupertinoColors.systemGreen : CupertinoColors.activeOrange,
+                  if (pr.originType == 'advance_payment') ...[
+                    Text('Purchase Order Terkait', style: context.headline.copyWith(fontWeight: FontWeight.bold, color: labelColor)),
+                    const SizedBox(height: CupertinoSpacing.s),
+                    CupertinoGlassContainer(
+                      padding: const EdgeInsets.all(CupertinoSpacing.m),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(pr.poNumber ?? 'PO DP', style: context.body.copyWith(fontWeight: FontWeight.bold)),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: CupertinoColors.activeBlue.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text('ADVANCE PAYMENT (DP)', style: TextStyle(color: CupertinoColors.activeBlue, fontWeight: FontWeight.bold, fontSize: 11)),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: CupertinoSpacing.s),
+                          _buildInfoRow('Pemasok', pr.supplierNames ?? '-'),
+                          _buildInfoRow('Nominal DP Diajukan', formatWithCurrency(pr.totalAmount, pr.currency), isBold: true),
+                        ],
+                      ),
+                    ),
+                  ] else ...[
+                    Text('Invoice Terkait', style: context.headline.copyWith(fontWeight: FontWeight.bold, color: labelColor)),
+                    const SizedBox(height: CupertinoSpacing.s),
+                    ...pr.invoices.map((inv) => CupertinoGlassContainer(
+                          margin: const EdgeInsets.only(bottom: CupertinoSpacing.s),
+                          padding: const EdgeInsets.all(CupertinoSpacing.m),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(inv.invoiceNumber, style: context.body.copyWith(fontWeight: FontWeight.bold)),
+                                  Text(
+                                    inv.paymentStatus.toUpperCase(),
+                                    style: context.caption2.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: inv.paymentStatus == 'paid' ? CupertinoColors.systemGreen : CupertinoColors.activeOrange,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: CupertinoSpacing.s),
-                            _buildInfoRow('Pemasok', inv.supplierName ?? '-'),
-                            _buildInfoRow('Tanggal Invoice', inv.invoiceDate),
-                            _buildInfoRow('Tipe Invoice', inv.type == 'biaya_invoice' ? 'Invoice Biaya' : 'Faktur Pembelian'),
-                            Divider(color: CupertinoColors.separator.resolveFrom(context), height: CupertinoSpacing.l, thickness: 0.5),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('Pajak: ${formatWithCurrency(inv.taxAmount, pr.currency)}', style: context.caption1.copyWith(color: secondaryLabelColor)),
-                                Text(
-                                  'Jumlah: ${formatWithCurrency(inv.amount, pr.currency)}',
-                                  style: context.body.copyWith(fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      )),
+                                ],
+                              ),
+                              const SizedBox(height: CupertinoSpacing.s),
+                              _buildInfoRow('Pemasok', inv.supplierName ?? '-'),
+                              _buildInfoRow('Tanggal Invoice', inv.invoiceDate),
+                              _buildInfoRow('Tipe Invoice', inv.type == 'biaya_invoice' ? 'Invoice Biaya' : 'Faktur Pembelian'),
+                              Divider(color: CupertinoColors.separator.resolveFrom(context), height: CupertinoSpacing.l, thickness: 0.5),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('Pajak: ${formatWithCurrency(inv.taxAmount, pr.currency)}', style: context.caption1.copyWith(color: secondaryLabelColor)),
+                                  Text(
+                                    'Jumlah: ${formatWithCurrency(inv.amount, pr.currency)}',
+                                    style: context.body.copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        )),
+                  ],
                 ],
               ),
             ),

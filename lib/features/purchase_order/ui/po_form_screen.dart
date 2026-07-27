@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Divider, DropdownButton, DropdownMenuItem, DropdownButtonHideUnderline, Material, Colors;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -19,20 +18,20 @@ class POFormScreen extends ConsumerStatefulWidget {
 }
 
 class _POFormScreenState extends ConsumerState<POFormScreen> {
-  DateTime _transactionDate = DateTime.now();
-  DateTime _expectedDate = DateTime.now().add(const Duration(days: 7));
-  
+  final DateTime _transactionDate = DateTime.now();
+  final DateTime _expectedDate = DateTime.now().add(const Duration(days: 7));
+
   int? _selectedWarehouseId;
   int? _selectedSupplierId;
-  
+
   bool _isAdvancePayment = false;
   final TextEditingController _dpPercentageController = TextEditingController(text: '30');
   final TextEditingController _notesController = TextEditingController();
-  
-  List<Map<String, dynamic>> _items = [];
+
+  final List<Map<String, dynamic>> _items = [];
   bool _isSubmitting = false;
 
-  // Master data for dropdowns
+  // Master data for pickers
   List<dynamic> _warehouses = [];
   List<dynamic> _suppliers = [];
   List<dynamic> _products = [];
@@ -68,7 +67,7 @@ class _POFormScreenState extends ConsumerState<POFormScreen> {
         _warehouses = futures[0].data['data'] ?? [];
         _suppliers = futures[1].data['data'] ?? [];
         _products = futures[2].data['data'] ?? [];
-        
+
         if (_warehouses.isNotEmpty) {
           _selectedWarehouseId = _warehouses.first['id'] as int;
         }
@@ -106,9 +105,86 @@ class _POFormScreenState extends ConsumerState<POFormScreen> {
         'product_name': firstProd['name'] ?? '',
         'ordered_qty': 1.0,
         'unit': firstProd['base_unit'] ?? 'PCS',
-        'unit_price': 100000.0,
+        'unit_price': (firstProd['unit_price'] as num?)?.toDouble() ?? 100000.0,
       });
     });
+  }
+
+  void _showWarehousePicker() {
+    if (_warehouses.isEmpty) return;
+    showCupertinoModalPopup(
+      context: context,
+      builder: (sheetCtx) => CupertinoActionSheet(
+        title: const Text('Pilih Gudang Tujuan'),
+        actions: _warehouses.map((wh) {
+          return CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _selectedWarehouseId = wh['id'] as int);
+              Navigator.pop(sheetCtx);
+            },
+            child: Text(wh['name'] as String? ?? 'Gudang'),
+          );
+        }).toList(),
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(sheetCtx),
+          child: const Text('Batal'),
+        ),
+      ),
+    );
+  }
+
+  void _showSupplierPicker() {
+    if (_suppliers.isEmpty) return;
+    showCupertinoModalPopup(
+      context: context,
+      builder: (sheetCtx) => CupertinoActionSheet(
+        title: const Text('Pilih Supplier'),
+        actions: _suppliers.map((sup) {
+          return CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _selectedSupplierId = sup['id'] as int);
+              Navigator.pop(sheetCtx);
+            },
+            child: Text(sup['name'] as String? ?? 'Supplier'),
+          );
+        }).toList(),
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(sheetCtx),
+          child: const Text('Batal'),
+        ),
+      ),
+    );
+  }
+
+  void _showProductPicker(int itemIndex) {
+    if (_products.isEmpty) return;
+    showCupertinoModalPopup(
+      context: context,
+      builder: (sheetCtx) => CupertinoActionSheet(
+        title: const Text('Pilih Produk'),
+        actions: _products.map((prod) {
+          return CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() {
+                _items[itemIndex]['product_id'] = prod['id'];
+                _items[itemIndex]['sku'] = prod['sku'] ?? '';
+                _items[itemIndex]['product_name'] = prod['name'] ?? '';
+                _items[itemIndex]['unit'] = prod['base_unit'] ?? 'PCS';
+              });
+              Navigator.pop(sheetCtx);
+            },
+            child: Text('${prod['name']} (${prod['sku'] ?? '-'})'),
+          );
+        }).toList(),
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(sheetCtx),
+          child: const Text('Batal'),
+        ),
+      ),
+    );
   }
 
   Future<void> _submit() async {
@@ -187,7 +263,17 @@ class _POFormScreenState extends ConsumerState<POFormScreen> {
   @override
   Widget build(BuildContext context) {
     final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final company = ref.watch(selectedCompanyProvider);
+
+    final selectedWh = _warehouses.firstWhere(
+      (w) => w['id'] == _selectedWarehouseId,
+      orElse: () => null,
+    );
+    final selectedSup = _suppliers.firstWhere(
+      (s) => s['id'] == _selectedSupplierId,
+      orElse: () => null,
+    );
 
     if (_isLoadingMaster) {
       return CupertinoPageScaffold(
@@ -206,332 +292,327 @@ class _POFormScreenState extends ConsumerState<POFormScreen> {
         middle: Text('Buat Purchase Order (PO)', style: TextStyle(color: labelColor)),
       ),
       child: SafeArea(
-        child: Material(
-          color: Colors.transparent,
-          child: ListView(
-            padding: const EdgeInsets.all(CupertinoSpacing.l),
-            children: [
-              // Company Card
-              CupertinoGlassContainer(
-                padding: const EdgeInsets.all(CupertinoSpacing.m),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Perusahaan', style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel)),
-                    const SizedBox(height: 4),
-                    Text(company?.companyName ?? '-', style: context.headline.copyWith(fontWeight: FontWeight.bold)),
-                  ],
-                ),
+        child: ListView(
+          padding: const EdgeInsets.all(CupertinoSpacing.l),
+          children: [
+            // Company Card
+            CupertinoGlassContainer(
+              padding: const EdgeInsets.all(CupertinoSpacing.m),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Perusahaan', style: context.caption1.copyWith(color: secondaryLabel)),
+                  const SizedBox(height: 4),
+                  Text(company?.companyName ?? '-', style: context.headline.copyWith(fontWeight: FontWeight.bold)),
+                ],
               ),
-              const SizedBox(height: CupertinoSpacing.m),
+            ),
+            const SizedBox(height: CupertinoSpacing.m),
 
-              // Warehouse & Supplier Selection
-              CupertinoGlassContainer(
-                padding: const EdgeInsets.all(CupertinoSpacing.m),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Gudang Tujuan', style: context.footnote.copyWith(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+            // Warehouse & Supplier Cupertino Pickers
+            CupertinoGlassContainer(
+              padding: const EdgeInsets.all(CupertinoSpacing.m),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Gudang Tujuan', style: context.footnote.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  GestureDetector(
+                    onTap: _showWarehousePicker,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(
-                        color: CupertinoColors.systemBackground.resolveFrom(context),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
+                        color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<int>(
-                          value: _selectedWarehouseId,
-                          isExpanded: true,
-                          items: _warehouses.map((wh) {
-                            return DropdownMenuItem<int>(
-                              value: wh['id'] as int,
-                              child: Text(wh['name'] as String? ?? 'Gudang'),
-                            );
-                          }).toList(),
-                          onChanged: (val) => setState(() => _selectedWarehouseId = val),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: CupertinoSpacing.m),
-                    Text('Supplier', style: context.footnote.copyWith(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: CupertinoColors.systemBackground.resolveFrom(context),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<int>(
-                          value: _selectedSupplierId,
-                          isExpanded: true,
-                          items: _suppliers.map((s) {
-                            return DropdownMenuItem<int>(
-                              value: s['id'] as int,
-                              child: Text(s['name'] as String? ?? 'Supplier'),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            setState(() {
-                              _selectedSupplierId = val;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: CupertinoSpacing.m),
-
-              // Advance Payment (DP) Toggle & Percent
-              CupertinoGlassContainer(
-                padding: const EdgeInsets.all(CupertinoSpacing.m),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Skema Uang Muka (DP)', style: context.body.copyWith(fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 2),
-                            Text('Aktifkan jika PO memerlukan DP sebelum barang tiba', style: context.caption1.copyWith(color: CupertinoColors.secondaryLabel)),
-                          ],
-                        ),
-                        CupertinoSwitch(
-                          value: _isAdvancePayment,
-                          onChanged: (val) => setState(() => _isAdvancePayment = val),
-                        ),
-                      ],
-                    ),
-                    if (_isAdvancePayment) ...[
-                      const Divider(height: CupertinoSpacing.l, thickness: 0.5),
-                      Row(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Persentase DP (%)', style: context.footnote.copyWith(fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 6),
-                                CupertinoTextField(
-                                  controller: _dpPercentageController,
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  suffix: const Padding(padding: EdgeInsets.only(right: 10), child: Text('%')),
-                                  padding: const EdgeInsets.all(10),
-                                  onChanged: (val) => setState(() {}),
-                                ),
-                              ],
+                          Text(
+                            selectedWh?['name'] as String? ?? 'Pilih Gudang...',
+                            style: context.body.copyWith(
+                              color: selectedWh != null ? labelColor : secondaryLabel,
                             ),
                           ),
-                          const SizedBox(width: CupertinoSpacing.m),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Estimasi DP (IDR)', style: context.footnote.copyWith(fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 6),
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: CupertinoColors.systemFill.resolveFrom(context),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    formatWithCurrency(_calculatedDpAmount, 'IDR'),
-                                    style: context.body.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.activeBlue),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          Icon(CupertinoIcons.chevron_down, size: 14, color: secondaryLabel),
                         ],
                       ),
-                    ],
-                  ],
-                ),
+                    ),
+                  ),
+                  const SizedBox(height: CupertinoSpacing.m),
+                  Text('Supplier', style: context.footnote.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  GestureDetector(
+                    onTap: _showSupplierPicker,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            selectedSup?['name'] as String? ?? 'Pilih Supplier...',
+                            style: context.body.copyWith(
+                              color: selectedSup != null ? labelColor : secondaryLabel,
+                            ),
+                          ),
+                          Icon(CupertinoIcons.chevron_down, size: 14, color: secondaryLabel),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: CupertinoSpacing.m),
+            ),
+            const SizedBox(height: CupertinoSpacing.m),
 
-              // Item Details
-              CupertinoGlassContainer(
-                padding: const EdgeInsets.all(CupertinoSpacing.m),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+            // Advance Payment (DP) Toggle & Percent
+            CupertinoGlassContainer(
+              padding: const EdgeInsets.all(CupertinoSpacing.m),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Skema Uang Muka (DP)', style: context.body.copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 2),
+                          Text('Aktifkan jika PO memerlukan DP sebelum barang tiba', style: context.caption1.copyWith(color: secondaryLabel)),
+                        ],
+                      ),
+                      CupertinoSwitch(
+                        value: _isAdvancePayment,
+                        onChanged: (val) => setState(() => _isAdvancePayment = val),
+                      ),
+                    ],
+                  ),
+                  if (_isAdvancePayment) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.m),
+                      child: Container(height: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
+                    ),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Item Produk (${_items.length})', style: context.headline.copyWith(fontWeight: FontWeight.bold)),
-                        CupertinoButton(
-                          padding: EdgeInsets.zero,
-                          onPressed: _addItem,
-                          child: const Row(
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(CupertinoIcons.add_circled, size: 18),
-                              SizedBox(width: 4),
-                              Text('Tambah Item'),
+                              Text('Persentase DP (%)', style: context.footnote.copyWith(fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 6),
+                              CupertinoTextField(
+                                controller: _dpPercentageController,
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                suffix: const Padding(padding: EdgeInsets.only(right: 10), child: Text('%')),
+                                padding: const EdgeInsets.all(10),
+                                onChanged: (val) => setState(() {}),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: CupertinoSpacing.m),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Estimasi DP (IDR)', style: context.footnote.copyWith(fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 6),
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: CupertinoColors.systemFill.resolveFrom(context),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  formatWithCurrency(_calculatedDpAmount, 'IDR'),
+                                  style: context.body.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.activeBlue),
+                                ),
+                              ),
                             ],
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    if (_items.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        child: Center(
-                          child: Text('Belum ada item ditambahkan. Tap Tambah Item di atas.', style: context.footnote.copyWith(color: CupertinoColors.secondaryLabel)),
-                        ),
-                      ),
-                    ..._items.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final item = entry.value;
-                      final subtotal = ((item['ordered_qty'] as num?)?.toDouble() ?? 0) * ((item['unit_price'] as num?)?.toDouble() ?? 0);
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: CupertinoSpacing.m),
 
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+            // Item Details
+            CupertinoGlassContainer(
+              padding: const EdgeInsets.all(CupertinoSpacing.m),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Item Produk (${_items.length})', style: context.headline.copyWith(fontWeight: FontWeight.bold)),
+                      CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        onPressed: _addItem,
+                        child: const Row(
                           children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                                    decoration: BoxDecoration(
-                                      color: CupertinoColors.systemBackground.resolveFrom(context),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: DropdownButtonHideUnderline(
-                                      child: DropdownButton<int>(
-                                        value: item['product_id'] as int?,
-                                        isExpanded: true,
-                                        items: _products.map((p) {
-                                          return DropdownMenuItem<int>(
-                                            value: p['id'] as int,
-                                            child: Text(p['name'] as String? ?? 'Produk', overflow: TextOverflow.ellipsis),
-                                          );
-                                        }).toList(),
-                                        onChanged: (val) {
-                                          if (val != null) {
-                                            final p = _products.firstWhere((element) => element['id'] == val, orElse: () => null);
-                                            setState(() {
-                                              item['product_id'] = val;
-                                              item['sku'] = p?['sku'] ?? '';
-                                              item['product_name'] = p?['name'] ?? '';
-                                              item['unit'] = p?['base_unit'] ?? 'PCS';
-                                            });
-                                          }
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                CupertinoButton(
-                                  padding: EdgeInsets.zero,
-                                  child: const Icon(CupertinoIcons.trash, color: CupertinoColors.destructiveRed, size: 20),
-                                  onPressed: () => setState(() => _items.removeAt(index)),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: CupertinoTextField(
-                                    placeholder: 'Qty',
-                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                    controller: TextEditingController(text: item['ordered_qty'].toString()),
-                                    padding: const EdgeInsets.all(8),
-                                    onChanged: (val) {
-                                      item['ordered_qty'] = double.tryParse(val) ?? 1.0;
-                                      setState(() {});
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: CupertinoTextField(
-                                    placeholder: 'Harga Satuan',
-                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                    controller: TextEditingController(text: item['unit_price'].toString()),
-                                    padding: const EdgeInsets.all(8),
-                                    onChanged: (val) {
-                                      item['unit_price'] = double.tryParse(val) ?? 0.0;
-                                      setState(() {});
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: Text('Subtotal: ${formatWithCurrency(subtotal, 'IDR')}', style: context.footnote.copyWith(fontWeight: FontWeight.bold)),
-                            ),
+                            Icon(CupertinoIcons.add_circled, size: 18),
+                            SizedBox(width: 4),
+                            Text('Tambah Item'),
                           ],
                         ),
-                      );
-                    }),
-                  ],
-                ),
-              ),
-              const SizedBox(height: CupertinoSpacing.m),
-
-              // Notes & Total Summary
-              CupertinoGlassContainer(
-                padding: const EdgeInsets.all(CupertinoSpacing.m),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Catatan PO', style: context.footnote.copyWith(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 6),
-                    CupertinoTextField(
-                      controller: _notesController,
-                      placeholder: 'Masukkan catatan tambahan...',
-                      maxLines: 2,
-                      padding: const EdgeInsets.all(10),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (_items.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Center(
+                        child: Text('Belum ada item ditambahkan. Tap Tambah Item di atas.', style: context.footnote.copyWith(color: secondaryLabel)),
+                      ),
                     ),
-                    const Divider(height: CupertinoSpacing.l, thickness: 0.5),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Total PO:', style: context.headline.copyWith(fontWeight: FontWeight.bold)),
-                        Text(formatWithCurrency(_totalPOAmount, 'IDR'), style: context.title3.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.activeBlue)),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: CupertinoSpacing.l),
+                  ..._items.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final item = entry.value;
+                    final subtotal = ((item['ordered_qty'] as num?)?.toDouble() ?? 0) * ((item['unit_price'] as num?)?.toDouble() ?? 0);
 
-              // Submit Button
-              SizedBox(
-                width: double.infinity,
-                height: CupertinoSpacing.primaryButtonHeight,
-                child: CupertinoButton(
-                  color: CupertinoColors.activeBlue,
-                  onPressed: _isSubmitting ? null : _submit,
-                  child: _isSubmitting
-                      ? const CupertinoActivityIndicator(color: CupertinoColors.white)
-                      : const Text('Buat Purchase Order', style: TextStyle(fontWeight: FontWeight.bold, color: CupertinoColors.white)),
-                ),
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: CupertinoColors.separator.resolveFrom(context), width: 0.5),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => _showProductPicker(index),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            item['product_name'] as String? ?? 'Pilih Produk...',
+                                            style: context.body.copyWith(fontWeight: FontWeight.w600),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        Icon(CupertinoIcons.chevron_down, size: 12, color: secondaryLabel),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              CupertinoButton(
+                                padding: EdgeInsets.zero,
+                                child: const Icon(CupertinoIcons.trash, color: CupertinoColors.destructiveRed, size: 20),
+                                onPressed: () => setState(() => _items.removeAt(index)),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: CupertinoTextField(
+                                  placeholder: 'Qty',
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  controller: TextEditingController(text: item['ordered_qty'].toString()),
+                                  padding: const EdgeInsets.all(8),
+                                  onChanged: (val) {
+                                    item['ordered_qty'] = double.tryParse(val) ?? 1.0;
+                                    setState(() {});
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: CupertinoTextField(
+                                  placeholder: 'Harga Satuan',
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  controller: TextEditingController(text: item['unit_price'].toString()),
+                                  padding: const EdgeInsets.all(8),
+                                  onChanged: (val) {
+                                    item['unit_price'] = double.tryParse(val) ?? 0.0;
+                                    setState(() {});
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Text('Subtotal: ${formatWithCurrency(subtotal, 'IDR')}', style: context.footnote.copyWith(fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
               ),
-              const SizedBox(height: CupertinoSpacing.xl),
-            ],
-          ),
+            ),
+            const SizedBox(height: CupertinoSpacing.m),
+
+            // Notes & Total Summary
+            CupertinoGlassContainer(
+              padding: const EdgeInsets.all(CupertinoSpacing.m),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Catatan PO', style: context.footnote.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  CupertinoTextField(
+                    controller: _notesController,
+                    placeholder: 'Masukkan catatan tambahan...',
+                    maxLines: 2,
+                    padding: const EdgeInsets.all(10),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.m),
+                    child: Container(height: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Total PO:', style: context.headline.copyWith(fontWeight: FontWeight.bold)),
+                      Text(formatWithCurrency(_totalPOAmount, 'IDR'), style: context.title3.copyWith(fontWeight: FontWeight.bold, color: CupertinoColors.activeBlue)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: CupertinoSpacing.l),
+
+            // Submit Button
+            SizedBox(
+              width: double.infinity,
+              height: CupertinoSpacing.primaryButtonHeight,
+              child: CupertinoButton(
+                color: CupertinoColors.activeBlue,
+                onPressed: _isSubmitting ? null : _submit,
+                child: _isSubmitting
+                    ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                    : const Text('Buat Purchase Order', style: TextStyle(fontWeight: FontWeight.bold, color: CupertinoColors.white)),
+              ),
+            ),
+            const SizedBox(height: CupertinoSpacing.xl),
+          ],
         ),
       ),
     );

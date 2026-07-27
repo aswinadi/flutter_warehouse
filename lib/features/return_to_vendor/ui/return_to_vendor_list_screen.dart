@@ -30,9 +30,7 @@ class _ReturnToVendorListScreenState
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
     final isWide = MediaQuery.of(context).size.width > 900;
 
-    final rtvAsync = ref.watch(returnToVendorListProvider({
-      'status': _selectedStatus,
-    }));
+    final rtvAsync = ref.watch(returnToVendorListProvider(_selectedStatus));
 
     ref.listen(selectedCompanyProvider, (previous, next) {
       if (previous != next) {

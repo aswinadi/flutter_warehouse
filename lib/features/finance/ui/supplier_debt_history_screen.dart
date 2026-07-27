@@ -30,9 +30,7 @@ class _SupplierDebtHistoryScreenState
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
 
-    final historyAsync = ref.watch(supplierDebtHistoryProvider({
-      'ledger_category': _ledgerCategory,
-    }));
+    final historyAsync = ref.watch(supplierDebtHistoryProvider(_ledgerCategory ?? 'all'));
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(

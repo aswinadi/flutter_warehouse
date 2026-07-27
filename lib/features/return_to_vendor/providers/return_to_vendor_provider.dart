@@ -85,15 +85,14 @@ final returnToVendorRepositoryProvider = Provider<ReturnToVendorRepository>((ref
   return ReturnToVendorRepository(dio);
 });
 
-final returnToVendorListProvider = FutureProvider.family<PaginatedResponse<ReturnToVendor>, Map<String, dynamic>>((ref, params) async {
+final returnToVendorListProvider = FutureProvider.family<PaginatedResponse<ReturnToVendor>, String>((ref, status) async {
   final repo = ref.watch(returnToVendorRepositoryProvider);
   final selectedCompany = ref.watch(selectedCompanyProvider);
 
   return repo.getReturnToVendors(
-    page: params['page'] ?? 1,
-    companyId: params['company_id'] ?? selectedCompany?.id,
-    supplierId: params['supplier_id'],
-    status: params['status'],
+    page: 1,
+    companyId: selectedCompany?.id,
+    status: status,
   );
 });
 

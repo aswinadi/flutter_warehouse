@@ -5,6 +5,8 @@ import '../../../core/theme/cupertino_theme_extensions.dart';
 import '../../../core/utils/currency_utils.dart';
 import '../../../core/widgets/company_switcher.dart';
 import '../../../core/widgets/cupertino_glass_container.dart';
+import '../../../core/providers/company_provider.dart';
+import '../models/return_to_vendor.dart';
 import '../providers/return_to_vendor_provider.dart';
 import 'return_to_vendor_detail_screen.dart';
 import 'return_to_vendor_form_screen.dart';
@@ -20,25 +22,41 @@ class ReturnToVendorListScreen extends ConsumerStatefulWidget {
 class _ReturnToVendorListScreenState
     extends ConsumerState<ReturnToVendorListScreen> {
   String _selectedStatus = 'all';
+  int? _selectedRtvId;
 
   @override
   Widget build(BuildContext context) {
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final isWide = MediaQuery.of(context).size.width > 900;
 
     final rtvAsync = ref.watch(returnToVendorListProvider({
       'status': _selectedStatus,
     }));
 
+    ref.listen(selectedCompanyProvider, (previous, next) {
+      if (previous != next) {
+        setState(() {
+          _selectedRtvId = null;
+        });
+      }
+    });
+
     return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
       navigationBar: CupertinoNavigationBar(
-        middle: const Text('Retur Supplier (RTV)'),
+        backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
+        middle: Text(
+          'Retur Supplier (RTV)',
+          style: TextStyle(color: labelColor),
+        ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             CupertinoButton(
               padding: EdgeInsets.zero,
-              child: const Icon(CupertinoIcons.add),
+              minimumSize: const Size(22, 22),
+              child: const Icon(CupertinoIcons.add, size: 24),
               onPressed: () {
                 Navigator.of(context).push(
                   CupertinoPageRoute(
@@ -47,14 +65,43 @@ class _ReturnToVendorListScreenState
                 ).then((_) => ref.invalidate(returnToVendorListProvider));
               },
             ),
-            const CompanySwitcher(),
+            const SizedBox(width: 12),
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              minimumSize: const Size(22, 22),
+              child: const Icon(CupertinoIcons.refresh, size: 22),
+              onPressed: () {
+                setState(() {
+                  _selectedRtvId = null;
+                });
+                ref.invalidate(returnToVendorListProvider);
+              },
+            ),
           ],
         ),
       ),
       child: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: CupertinoSpacing.m),
+            // Top Bar Company Switcher (Matching PO Standard Layout)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: CupertinoSpacing.xs),
+              decoration: BoxDecoration(
+                color: CupertinoColors.systemBackground.resolveFrom(context),
+                border: Border(
+                  bottom: BorderSide(
+                    color: CupertinoColors.separator.resolveFrom(context),
+                    width: 0.5,
+                  ),
+                ),
+              ),
+              child: const Center(
+                child: CompanySwitcher(),
+              ),
+            ),
+
+            const SizedBox(height: CupertinoSpacing.s),
 
             // Status Filter Chips
             SingleChildScrollView(
@@ -73,110 +120,181 @@ class _ReturnToVendorListScreenState
               ),
             ),
 
-            const SizedBox(height: CupertinoSpacing.m),
+            const SizedBox(height: CupertinoSpacing.s),
 
-            // RTV List
+            // RTV Content Area (Responsive Split View or Single List)
             Expanded(
               child: rtvAsync.when(
                 data: (response) {
                   final items = response.data;
                   if (items.isEmpty) {
                     return Center(
-                      child: Text(
-                        'Belum ada dokumen Retur Supplier (RTV)',
-                        style: context.subhead.copyWith(color: secondaryLabel),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            CupertinoIcons.arrow_counterclockwise,
+                            size: 48,
+                            color: secondaryLabel.withValues(alpha: 0.4),
+                          ),
+                          const SizedBox(height: CupertinoSpacing.m),
+                          Text(
+                            'Tidak ada dokumen Retur Supplier (RTV) yang ditemukan',
+                            style: context.subhead.copyWith(color: secondaryLabel),
+                          ),
+                          const SizedBox(height: CupertinoSpacing.s),
+                          CupertinoButton(
+                            child: const Text('Muat Ulang'),
+                            onPressed: () => ref.invalidate(returnToVendorListProvider),
+                          ),
+                        ],
                       ),
                     );
                   }
 
-                  return ListView.separated(
-                    padding: const EdgeInsets.all(CupertinoSpacing.m),
-                    itemCount: items.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: CupertinoSpacing.s),
-                    itemBuilder: (ctx, idx) {
-                      final item = items[idx];
-                      final statusColor = _getStatusColor(item.status, ctx);
+                  if (isWide) {
+                    final selectedRtv = _selectedRtvId != null
+                        ? items.firstWhere((r) => r.id == _selectedRtvId, orElse: () => items.first)
+                        : items.first;
 
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).push(
-                            CupertinoPageRoute(
-                              builder: (_) => ReturnToVendorDetailScreen(rtvId: item.id),
-                            ),
-                          ).then((_) => ref.invalidate(returnToVendorListProvider));
-                        },
-                        child: CupertinoGlassContainer(
-                          borderRadius: 16.0,
-                          padding: const EdgeInsets.all(CupertinoSpacing.m),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    item.rtvNumber,
-                                    style: context.headline.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: labelColor,
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: statusColor.withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      item.status.toUpperCase(),
-                                      style: context.caption1.copyWith(
-                                        color: statusColor,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'Supplier: ${item.supplierName ?? "-"} | Gudang: ${item.warehouseName ?? "-"}',
-                                style: context.subhead.copyWith(
-                                  color: secondaryLabel,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Tgl: ${item.returnDate}',
-                                    style: context.footnote.copyWith(color: secondaryLabel),
-                                  ),
-                                  Text(
-                                    formatWithCurrency(item.totalAmount, 'IDR'),
-                                    style: context.title2.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: labelColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
+                    return Row(
+                      children: [
+                        SizedBox(
+                          width: 380,
+                          child: _buildRtvListView(items, isWide, labelColor, secondaryLabel),
                         ),
-                      );
-                    },
-                  );
+                        Container(width: 0.5, color: CupertinoColors.separator.resolveFrom(context)),
+                        Expanded(
+                          child: ReturnToVendorDetailScreen(rtvId: selectedRtv.id, isEmbedded: true),
+                        ),
+                      ],
+                    );
+                  }
+
+                  return _buildRtvListView(items, isWide, labelColor, secondaryLabel);
                 },
                 loading: () => const Center(child: CupertinoActivityIndicator()),
                 error: (err, stack) => Center(
-                  child: Text('Error: $err', style: TextStyle(color: CupertinoColors.destructiveRed.resolveFrom(context))),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Gagal memuat data Retur Supplier',
+                        style: context.subhead.copyWith(color: secondaryLabel),
+                      ),
+                      const SizedBox(height: CupertinoSpacing.s),
+                      CupertinoButton(
+                        child: const Text('Coba Lagi'),
+                        onPressed: () => ref.invalidate(returnToVendorListProvider),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildRtvListView(
+    List<ReturnToVendor> items,
+    bool isWide,
+    Color labelColor,
+    Color secondaryLabel,
+  ) {
+    return ListView.separated(
+      padding: const EdgeInsets.all(CupertinoSpacing.m),
+      itemCount: items.length,
+      separatorBuilder: (_, __) => const SizedBox(height: CupertinoSpacing.s),
+      itemBuilder: (ctx, idx) {
+        final item = items[idx];
+        final isSelected = isWide && item.id == _selectedRtvId;
+        final statusColor = _getStatusColor(item.status, ctx);
+
+        return GestureDetector(
+          onTap: () {
+            if (isWide) {
+              setState(() => _selectedRtvId = item.id);
+            } else {
+              Navigator.of(context).push(
+                CupertinoPageRoute(
+                  builder: (_) => ReturnToVendorDetailScreen(rtvId: item.id),
+                ),
+              ).then((_) => ref.invalidate(returnToVendorListProvider));
+            }
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16.0),
+              border: isSelected
+                  ? Border.all(color: CupertinoColors.activeBlue.resolveFrom(ctx), width: 2.0)
+                  : null,
+            ),
+            child: CupertinoGlassContainer(
+              borderRadius: 16.0,
+              padding: const EdgeInsets.all(CupertinoSpacing.m),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        item.rtvNumber,
+                        style: context.headline.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: labelColor,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: statusColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          item.status.toUpperCase(),
+                          style: context.caption1.copyWith(
+                            color: statusColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Supplier: ${item.supplierName ?? "-"} | Gudang: ${item.warehouseName ?? "-"}',
+                    style: context.subhead.copyWith(
+                      color: secondaryLabel,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Tgl: ${item.returnDate}',
+                        style: context.footnote.copyWith(color: secondaryLabel),
+                      ),
+                      Text(
+                        formatWithCurrency(item.totalAmount, 'IDR'),
+                        style: context.title2.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: labelColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

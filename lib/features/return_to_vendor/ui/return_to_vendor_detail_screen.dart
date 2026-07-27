@@ -8,8 +8,13 @@ import '../providers/return_to_vendor_provider.dart';
 
 class ReturnToVendorDetailScreen extends ConsumerStatefulWidget {
   final int rtvId;
+  final bool isEmbedded;
 
-  const ReturnToVendorDetailScreen({super.key, required this.rtvId});
+  const ReturnToVendorDetailScreen({
+    super.key,
+    required this.rtvId,
+    this.isEmbedded = false,
+  });
 
   @override
   ConsumerState<ReturnToVendorDetailScreen> createState() =>
@@ -135,9 +140,11 @@ class _ReturnToVendorDetailScreenState
     final rtvAsync = ref.watch(returnToVendorDetailProvider(widget.rtvId));
 
     return CupertinoPageScaffold(
-      navigationBar: const CupertinoNavigationBar(
-        middle: Text('Detail Retur Supplier (RTV)'),
-      ),
+      navigationBar: widget.isEmbedded
+          ? null
+          : const CupertinoNavigationBar(
+              middle: Text('Detail Retur Supplier (RTV)'),
+            ),
       child: SafeArea(
         child: rtvAsync.when(
           data: (rtv) {

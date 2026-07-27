@@ -277,6 +277,57 @@ class _POFormScreenState extends ConsumerState<POFormScreen> {
       }
     });
 
+    if (company == null) {
+      return CupertinoPageScaffold(
+        backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+        navigationBar: CupertinoNavigationBar(
+          middle: Text('Buat Purchase Order (PO)', style: TextStyle(color: labelColor)),
+          backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(CupertinoSpacing.l),
+              child: CupertinoGlassContainer(
+                padding: const EdgeInsets.all(CupertinoSpacing.xl),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      CupertinoIcons.building_2_fill,
+                      size: 64,
+                      color: CupertinoColors.activeOrange,
+                    ),
+                    const SizedBox(height: CupertinoSpacing.m),
+                    Text(
+                      'Pilih Perusahaan Terlebih Dahulu',
+                      style: context.headline.copyWith(fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: CupertinoSpacing.s),
+                    Text(
+                      'Untuk membuat Purchase Order (PO) baru, harap pilih Perusahaan pada filter di bagian atas terlebih dahulu.',
+                      style: context.subhead.copyWith(color: secondaryLabel),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: CupertinoSpacing.l),
+                    SizedBox(
+                      width: 200,
+                      height: CupertinoSpacing.primaryButtonHeight,
+                      child: CupertinoButton.filled(
+                        onPressed: () => context.pop(),
+                        child: const Text('Kembali'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     final selectedWh = _warehouses.firstWhere(
       (w) => w['id'] == _selectedWarehouseId,
       orElse: () => null,
@@ -314,7 +365,7 @@ class _POFormScreenState extends ConsumerState<POFormScreen> {
                 children: [
                   Text('Perusahaan', style: context.caption1.copyWith(color: secondaryLabel)),
                   const SizedBox(height: 4),
-                  Text(company?.companyName ?? '-', style: context.headline.copyWith(fontWeight: FontWeight.bold)),
+                  Text(company.companyName, style: context.headline.copyWith(fontWeight: FontWeight.bold)),
                 ],
               ),
             ),

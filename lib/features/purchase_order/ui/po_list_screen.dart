@@ -250,6 +250,25 @@ class _POListScreenState extends ConsumerState<POListScreen> {
               minimumSize: const Size(22, 22),
               child: const Icon(CupertinoIcons.add, size: 24),
               onPressed: () {
+                final company = ref.read(selectedCompanyProvider);
+                if (company == null) {
+                  showCupertinoDialog(
+                    context: context,
+                    builder: (ctx) => CupertinoAlertDialog(
+                      title: const Text('Pilih Perusahaan Terlebih Dahulu'),
+                      content: const Text(
+                        'Untuk membuat Purchase Order (PO) baru, silakan pilih Perusahaan pada filter perusahaan di bagian atas terlebih dahulu.',
+                      ),
+                      actions: [
+                        CupertinoDialogAction(
+                          child: const Text('OK'),
+                          onPressed: () => Navigator.pop(ctx),
+                        ),
+                      ],
+                    ),
+                  );
+                  return;
+                }
                 context.push('/po/create');
               },
             ),

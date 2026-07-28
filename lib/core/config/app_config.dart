@@ -22,7 +22,7 @@ class AppConfig {
 
   static AppEnvironment get currentEnvironment => _override;
 
-  static const String devBaseUrl = 'https://biogeographic-raylan-interdentally.ngrok-free.dev/api/v1/';
+  static const String devBaseUrl = 'https://warehouse.maxmar.net/api/v1/';
   static const String prodBaseUrl = 'https://warehouse.maxmar.net/api/v1/';
 
   static String get baseUrl {

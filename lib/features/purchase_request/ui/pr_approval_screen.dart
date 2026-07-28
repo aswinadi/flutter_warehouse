@@ -668,7 +668,7 @@ class _PRDetailsViewState extends ConsumerState<PRDetailsView> {
                                     ),
                                     if (item.warehouseName != null)
                                       Text(
-                                        'Gudang: ${item.warehouseName}',
+                                        'Gudang: ${item.warehouseName}${item.warehouseAreaName != null && item.warehouseAreaName!.isNotEmpty ? " - Area: ${item.warehouseAreaName}" : ""}',
                                         style: context.caption1.copyWith(color: secondaryLabel),
                                       ),
                                   ],

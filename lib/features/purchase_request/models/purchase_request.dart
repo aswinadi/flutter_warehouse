@@ -37,7 +37,7 @@ class PurchaseRequestComparison with _$PurchaseRequestComparison {
     @JsonKey(name: 'supplier_name') required String supplierName,
     @JsonKey(name: 'total_amount', fromJson: doubleFromJson) required double totalAmount,
     @JsonKey(name: 'lead_time_days') required int leadTimeDays,
-    @JsonKey(name: 'is_advance_payment') @Default(false) bool isAdvancePayment,
+    @JsonKey(name: 'is_advance_payment', fromJson: boolFromJson) @Default(false) bool isAdvancePayment,
     @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson) double? dpPercentage,
     @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson) double? dpAmount,
     @JsonKey(name: 'shipping_terms') @Default('franco_gudang') String shippingTerms,

@@ -92,12 +92,18 @@ class PurchaseRequestRepository {
     int prId, {
     required int supplierId,
     int leadTimeDays = 7,
+    String? shippingTerms,
+    bool isAdvancePayment = false,
+    double? dpPercentage,
     String? notes,
     required List<Map<String, dynamic>> items,
   }) async {
     await dio.post('wh/purchase-requests/$prId/comparisons', data: {
       'supplier_id': supplierId,
       'lead_time_days': leadTimeDays,
+      if (shippingTerms != null && shippingTerms.isNotEmpty) 'shipping_terms': shippingTerms,
+      'is_advance_payment': isAdvancePayment,
+      if (isAdvancePayment && dpPercentage != null) 'dp_percentage': dpPercentage,
       if (notes != null && notes.isNotEmpty) 'notes': notes,
       'items': items,
     });

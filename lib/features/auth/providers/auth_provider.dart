@@ -69,6 +69,12 @@ class Auth extends _$Auth {
     );
   }
 
+  Future<void> forceLogout() async {
+    final storage = ref.read(tokenProvider);
+    await storage.clearAll();
+    state = const AsyncValue.data(AuthState.unauthenticated());
+  }
+
   Future<void> logout() async {
     state = const AsyncValue.loading();
     final repository = AuthRepositoryImpl(ref.read(dioProvider));

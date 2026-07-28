@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/app_config.dart';
 import 'token_provider.dart';
+import '../../features/auth/providers/auth_provider.dart';
 
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio(
@@ -33,9 +34,9 @@ final dioProvider = Provider<Dio>((ref) {
       },
       onError: (e, handler) {
         if (e.response?.statusCode == 401) {
-          // Handle unauthorized - logout user
+          // Handle unauthorized - logout user and redirect to login
           storage.clearAll();
-          // We can't navigate here easily, but we can update a provider
+          ref.read(authProvider.notifier).forceLogout();
         }
         return handler.next(e);
       },

@@ -16,3 +16,14 @@ String? stringOrNullFromJson(dynamic json) {
   if (json == null) return null;
   return json.toString();
 }
+
+bool boolFromJson(dynamic json) {
+  if (json == null) return false;
+  if (json is bool) return json;
+  if (json is num) return json != 0;
+  if (json is String) {
+    final lower = json.trim().toLowerCase();
+    return lower == 'true' || lower == '1';
+  }
+  return false;
+}

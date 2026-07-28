@@ -18,6 +18,7 @@ import '../widgets/pr_card.dart';
 import '../../../core/widgets/company_switcher.dart';
 import 'pr_approval_screen.dart';
 import '../../../core/utils/currency_utils.dart';
+import '../../../core/utils/json_utils.dart';
 import '../../../core/utils/excel_download_helper.dart';
 import '../../../core/api/dio_client.dart';
 import '../../../core/config/app_config.dart';
@@ -1497,8 +1498,8 @@ class _ComparisonItemCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       item.warehouseName != null
-                          ? '[${item.warehouseCode}] ${item.warehouseName}'
-                          : (item.warehouseCode ?? 'Unknown Warehouse'),
+                          ? '[${item.warehouseCode}] ${item.warehouseName}${item.warehouseAreaName != null && item.warehouseAreaName!.isNotEmpty ? " - Area: ${item.warehouseAreaName}" : ""}'
+                          : '${item.warehouseCode ?? "Unknown Warehouse"}${item.warehouseAreaName != null && item.warehouseAreaName!.isNotEmpty ? " - Area: ${item.warehouseAreaName}" : ""}',
                       style: TextStyle(
                         fontSize: 12,
                         color: labelColor.withValues(alpha: 0.8),
@@ -1853,8 +1854,8 @@ class _ComparisonItemDetailViewState
                   _FieldBox(
                     label: 'Warehouse Penerima',
                     value: item.warehouseName != null
-                        ? '[${item.warehouseCode}] ${item.warehouseName}'
-                        : (item.warehouseCode ?? '-'),
+                        ? '[${item.warehouseCode}] ${item.warehouseName}${item.warehouseAreaName != null && item.warehouseAreaName!.isNotEmpty ? " - Area: ${item.warehouseAreaName}" : ""}'
+                        : '${item.warehouseCode ?? "-"}${item.warehouseAreaName != null && item.warehouseAreaName!.isNotEmpty ? " - Area: ${item.warehouseAreaName}" : ""}',
                   ),
                   Builder(
                     builder: (ctx) {
@@ -1862,11 +1863,15 @@ class _ComparisonItemDetailViewState
                       final itemWarehouse = warehouses.where((w) => w.code == item.warehouseCode).firstOrNull;
                       final areas = itemWarehouse?.areas.where((a) => a.isActive).toList() ?? [];
                       
-                      if (areas.isEmpty) {
+                      final selectedArea = areas.where((a) => a.id == _selectedAreaId).firstOrNull;
+                      final selectedAreaName = selectedArea?.name ?? item.warehouseAreaName;
+                      
+                      if (areas.isEmpty && selectedAreaName == null) {
                         return const SizedBox.shrink();
                       }
 
-                      final selectedArea = areas.where((a) => a.id == _selectedAreaId).firstOrNull;
+                      final isWaitingBod = item.status?.toLowerCase() == 'waiting_bod_approval' || pr.status.toLowerCase() == 'waiting_bod_approval';
+                      final canEditArea = !isWaitingBod;
 
                       return Padding(
                         padding: const EdgeInsets.only(top: 8.0),
@@ -1878,7 +1883,7 @@ class _ComparisonItemDetailViewState
                             ),
                             const SizedBox(width: 8),
                             GestureDetector(
-                              onTap: () async {
+                              onTap: canEditArea ? () async {
                                 await showCupertinoModalPopup<void>(
                                   context: ctx,
                                   builder: (BuildContext sheetCtx) {
@@ -1917,7 +1922,7 @@ class _ComparisonItemDetailViewState
                                     );
                                   },
                                 );
-                              },
+                              } : null,
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
@@ -1928,15 +1933,17 @@ class _ComparisonItemDetailViewState
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(
-                                      selectedArea?.name ?? 'Pilih Area...',
+                                      selectedAreaName ?? 'Pilih Area...',
                                       style: TextStyle(
                                         fontSize: 13,
-                                        color: selectedArea != null ? CupertinoColors.activeBlue : CupertinoColors.secondaryLabel.resolveFrom(ctx),
+                                        color: selectedAreaName != null ? CupertinoColors.activeBlue : CupertinoColors.secondaryLabel.resolveFrom(ctx),
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
-                                    const SizedBox(width: 4),
-                                    Icon(CupertinoIcons.chevron_down, size: 10, color: CupertinoColors.secondaryLabel.resolveFrom(ctx)),
+                                    if (canEditArea) ...[
+                                      const SizedBox(width: 4),
+                                      Icon(CupertinoIcons.chevron_down, size: 10, color: CupertinoColors.secondaryLabel.resolveFrom(ctx)),
+                                    ],
                                   ],
                                 ),
                               ),
@@ -2055,7 +2062,31 @@ class _ComparisonItemDetailViewState
                               textColor: const Color(0xFF1D4ED8)),
                           const SizedBox(width: 8),
                         ],
-                        if (canRemove)
+                        if (canRemove) ...[
+                          CupertinoButton(
+                            padding: const EdgeInsets.only(right: 8),
+                            minSize: 0,
+                            onPressed: () => _openAssignVendorModal(
+                              context,
+                              entry: widget.entry,
+                              onAssigned: () => ref.invalidate(purchaseRequestsProvider),
+                              initialSupplierId: comp.supplierId,
+                              initialSupplierName: comp.supplierName,
+                              initialPrice: compDetail.offeredUnitPrice,
+                              initialLeadTime: comp.leadTimeDays,
+                              initialShippingTerms: comp.shippingTerms,
+                              initialIsDp: comp.isAdvancePayment,
+                              initialDpPct: comp.dpPercentage,
+                              initialNotes: comp.notes,
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(CupertinoIcons.pencil, size: 14, color: CupertinoColors.activeBlue),
+                                SizedBox(width: 4),
+                                Text('Edit', style: TextStyle(fontSize: 12, color: CupertinoColors.activeBlue, fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          ),
                           CupertinoButton(
                             padding: EdgeInsets.zero,
                             minSize: 0,
@@ -2066,29 +2097,56 @@ class _ComparisonItemDetailViewState
                               color: CupertinoColors.destructiveRed,
                             ),
                           ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 10),
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
                       children: [
                         _MetaChip(
-                          icon: CupertinoIcons.money_dollar,
+                          icon: CupertinoIcons.tag,
                           label: formatWithCurrency(compDetail.offeredUnitPrice, 'IDR'),
                           strong: true,
                         ),
-                        const SizedBox(width: 8),
                         _MetaChip(
                           icon: CupertinoIcons.clock,
                           label: '${comp.leadTimeDays} days',
                         ),
+                        if (comp.shippingTerms.isNotEmpty)
+                          _MetaChip(
+                            icon: CupertinoIcons.bus,
+                            label: _formatShippingTerms(comp.shippingTerms),
+                            color: const Color(0xFFF0FDF4),
+                            textColor: const Color(0xFF15803D),
+                          ),
+                        if (comp.isAdvancePayment)
+                          _MetaChip(
+                            icon: CupertinoIcons.creditcard,
+                            label: comp.dpPercentage != null && comp.dpPercentage! > 0
+                                ? 'DP ${comp.dpPercentage!.toStringAsFixed(0)}%${comp.dpAmount != null && comp.dpAmount! > 0 ? " (${formatWithCurrency(comp.dpAmount!, 'IDR')})" : ""}'
+                                : 'Perlu DP',
+                            color: const Color(0xFFFEF3C7),
+                            textColor: const Color(0xFFB45309),
+                          ),
                       ],
                     ),
                     if (comp.notes != null && comp.notes!.isNotEmpty) ...[
                       const SizedBox(height: 8),
-                      Text(
-                        comp.notes!,
-                        style: TextStyle(
-                            fontSize: 12, color: secondaryLabel, fontStyle: FontStyle.italic),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(CupertinoIcons.info, size: 13, color: secondaryLabel),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'Catatan: ${comp.notes!}',
+                              style: TextStyle(
+                                  fontSize: 12, color: secondaryLabel, fontStyle: FontStyle.italic),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ],
@@ -2182,34 +2240,7 @@ class _AssignVendorButton extends StatelessWidget {
       minSize: 0,
       color: CupertinoColors.activeBlue,
       borderRadius: BorderRadius.circular(8),
-      onPressed: () {
-        showCupertinoModalPopup(
-          context: context,
-          builder: (popupContext) => Container(
-            height: MediaQuery.of(context).size.height * 0.85,
-            decoration: BoxDecoration(
-              color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: CupertinoPageScaffold(
-              navigationBar: CupertinoNavigationBar(
-                middle: const Text('Assign Vendor'),
-                trailing: CupertinoButton(
-                  padding: EdgeInsets.zero,
-                  child: const Text('Tutup'),
-                  onPressed: () => Navigator.pop(popupContext),
-                ),
-              ),
-              child: SafeArea(
-                child: _AssignVendorSheet(
-                  entry: entry,
-                  onAssigned: onAssigned,
-                ),
-              ),
-            ),
-          ),
-        );
-      },
+      onPressed: () => _openAssignVendorModal(context, entry: entry, onAssigned: onAssigned),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -2225,13 +2256,148 @@ class _AssignVendorButton extends StatelessWidget {
   }
 }
 
+void _openAssignVendorModal(
+  BuildContext context, {
+  required _ItemWithPr entry,
+  VoidCallback? onAssigned,
+  int? initialSupplierId,
+  String? initialSupplierName,
+  double? initialPrice,
+  int? initialLeadTime,
+  String? initialShippingTerms,
+  bool? initialIsDp,
+  double? initialDpPct,
+  String? initialNotes,
+}) {
+  final isWide = MediaQuery.of(context).size.width >= 768;
+  if (isWide) {
+    showCupertinoDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (popupContext) {
+        final bgColor = CupertinoColors.systemGroupedBackground.resolveFrom(context);
+        final navBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+
+        return CupertinoTheme(
+          data: CupertinoTheme.of(context),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: 640,
+                maxHeight: MediaQuery.of(context).size.height * 0.85,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: CupertinoColors.black.withValues(alpha: 0.25),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: CupertinoPageScaffold(
+                    backgroundColor: bgColor,
+                    navigationBar: CupertinoNavigationBar(
+                      backgroundColor: navBg,
+                      middle: Text(initialSupplierId != null ? 'Edit Vendor Assignment' : 'Assign Vendor'),
+                      trailing: CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        child: const Text('Tutup'),
+                        onPressed: () => Navigator.pop(popupContext),
+                      ),
+                    ),
+                    child: SafeArea(
+                      child: _AssignVendorSheet(
+                        entry: entry,
+                        onAssigned: onAssigned,
+                        initialSupplierId: initialSupplierId,
+                        initialSupplierName: initialSupplierName,
+                        initialPrice: initialPrice,
+                        initialLeadTime: initialLeadTime,
+                        initialShippingTerms: initialShippingTerms,
+                        initialIsDp: initialIsDp,
+                        initialDpPct: initialDpPct,
+                        initialNotes: initialNotes,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  } else {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (popupContext) => Container(
+        height: MediaQuery.of(context).size.height * 0.85,
+        decoration: BoxDecoration(
+          color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: CupertinoPageScaffold(
+          backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+          navigationBar: CupertinoNavigationBar(
+            middle: Text(initialSupplierId != null ? 'Edit Vendor Assignment' : 'Assign Vendor'),
+            trailing: CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: const Text('Tutup'),
+              onPressed: () => Navigator.pop(popupContext),
+            ),
+          ),
+          child: SafeArea(
+            child: _AssignVendorSheet(
+              entry: entry,
+              onAssigned: onAssigned,
+              initialSupplierId: initialSupplierId,
+              initialSupplierName: initialSupplierName,
+              initialPrice: initialPrice,
+              initialLeadTime: initialLeadTime,
+              initialShippingTerms: initialShippingTerms,
+              initialIsDp: initialIsDp,
+              initialDpPct: initialDpPct,
+              initialNotes: initialNotes,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ─── Assign Vendor Sheet ──────────────────────────────────────────────────────
 
 class _AssignVendorSheet extends ConsumerStatefulWidget {
   final _ItemWithPr entry;
   final VoidCallback? onAssigned;
+  final int? initialSupplierId;
+  final String? initialSupplierName;
+  final double? initialPrice;
+  final int? initialLeadTime;
+  final String? initialShippingTerms;
+  final bool? initialIsDp;
+  final double? initialDpPct;
+  final String? initialNotes;
 
-  const _AssignVendorSheet({required this.entry, this.onAssigned});
+  const _AssignVendorSheet({
+    required this.entry,
+    this.onAssigned,
+    this.initialSupplierId,
+    this.initialSupplierName,
+    this.initialPrice,
+    this.initialLeadTime,
+    this.initialShippingTerms,
+    this.initialIsDp,
+    this.initialDpPct,
+    this.initialNotes,
+  });
 
   @override
   ConsumerState<_AssignVendorSheet> createState() => _AssignVendorSheetState();
@@ -2246,14 +2412,49 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet> {
   Supplier? _selectedSupplier;
   final _priceController = TextEditingController();
   final _leadTimeController = TextEditingController(text: '7');
+  String _shippingTerms = 'franco';
+  bool _isAdvancePayment = false;
+  final _dpPercentageController = TextEditingController(text: '20');
   final _notesController = TextEditingController();
   bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialSupplierId != null) {
+      _selectedSupplier = Supplier(
+        id: widget.initialSupplierId!,
+        name: widget.initialSupplierName ?? 'Vendor',
+        code: '',
+      );
+      if (widget.initialPrice != null) {
+        _priceController.text = widget.initialPrice!.toStringAsFixed(0);
+      }
+      if (widget.initialLeadTime != null) {
+        _leadTimeController.text = widget.initialLeadTime!.toString();
+      }
+      if (widget.initialShippingTerms != null) {
+        _shippingTerms = widget.initialShippingTerms!;
+      }
+      if (widget.initialIsDp != null) {
+        _isAdvancePayment = widget.initialIsDp!;
+      }
+      if (widget.initialDpPct != null) {
+        _dpPercentageController.text = widget.initialDpPct!.toStringAsFixed(0);
+      }
+      if (widget.initialNotes != null) {
+        _notesController.text = widget.initialNotes!;
+      }
+      _selectedTabIndex = 1;
+    }
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
     _priceController.dispose();
     _leadTimeController.dispose();
+    _dpPercentageController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -2262,6 +2463,9 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet> {
     required int supplierId,
     required double price,
     int leadTimeDays = 7,
+    String? shippingTerms,
+    bool isAdvancePayment = false,
+    double? dpPercentage,
     String? notes,
   }) async {
     setState(() => _isSubmitting = true);
@@ -2270,6 +2474,9 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet> {
         widget.entry.pr.id,
         supplierId: supplierId,
         leadTimeDays: leadTimeDays,
+        shippingTerms: shippingTerms,
+        isAdvancePayment: isAdvancePayment,
+        dpPercentage: dpPercentage,
         notes: notes,
         items: [
           {
@@ -2300,8 +2507,10 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet> {
     final suggestionsAsync = ref.watch(prItemSuggestionsProvider(widget.entry.pr.id));
     final scrollController = ScrollController();
 
-    return Column(
-      children: [
+    return Container(
+      color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+      child: Column(
+        children: [
         const SizedBox(height: 16),
         // Header info
         Padding(
@@ -2364,8 +2573,9 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet> {
               : _buildNewVendorTab(context, scrollController),
         ),
       ],
-    );
-  }
+    ),
+  );
+}
 
   // ── Historical Data tab ────────────────────────────────────────────────────
 
@@ -2397,7 +2607,28 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet> {
             if (currentComparisons.isNotEmpty) ...[
               const _SectionHeader('Sudah Ditetapkan'),
               const SizedBox(height: 8),
-              ...currentComparisons.map((c) => _CurrentComparisonTile(c)),
+              ...currentComparisons.map((c) => _CurrentComparisonTile(
+                    c,
+                    onTap: () {
+                      final supplierId = c['supplier_id'] as int?;
+                      if (supplierId != null) {
+                        setState(() {
+                          _selectedSupplier = Supplier(
+                            id: supplierId,
+                            name: c['supplier_name'] ?? 'Vendor',
+                            code: '',
+                          );
+                          _priceController.text = (c['price'] as num?)?.toStringAsFixed(0) ?? '';
+                          _leadTimeController.text = (c['lead_time_days'] as num?)?.toString() ?? '7';
+                          _shippingTerms = c['shipping_terms'] as String? ?? 'franco';
+                          _isAdvancePayment = boolFromJson(c['is_advance_payment']);
+                          _dpPercentageController.text = (c['dp_percentage'] as num?)?.toStringAsFixed(0) ?? '20';
+                          _notesController.text = c['notes'] as String? ?? '';
+                          _selectedTabIndex = 1;
+                        });
+                      }
+                    },
+                  )),
               const SizedBox(height: 20),
             ],
 
@@ -2414,10 +2645,13 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet> {
                 date: lastVendor['last_purchased_at'] as String?,
                 accentColor: CupertinoColors.activeBlue,
                 isSubmitting: _isSubmitting,
-                onAssign: (price, leadTime) => _submitAssignment(
+                onAssign: (price, leadTime, shippingTerms, isAdvancePayment, dpPercentage) => _submitAssignment(
                   supplierId: lastVendor['supplier_id'] as int,
                   price: price,
                   leadTimeDays: leadTime,
+                  shippingTerms: shippingTerms,
+                  isAdvancePayment: isAdvancePayment,
+                  dpPercentage: dpPercentage,
                 ),
               ),
               const SizedBox(height: 16),
@@ -2427,7 +2661,7 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet> {
               const _SectionHeader('Vendor Termurah (Historis)'),
               const SizedBox(height: 8),
               _HistoricalVendorCard(
-                icon: CupertinoIcons.money_dollar,
+                icon: CupertinoIcons.tag,
                 supplierName: cheapestVendor['supplier_name'] ?? 'Tidak Diketahui',
                 price: cheapestVendor['price'] != null
                     ? (cheapestVendor['price'] as num).toDouble()
@@ -2435,10 +2669,13 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet> {
                 leadTimeDays: cheapestVendor['lead_time_days'] as int? ?? 7,
                 accentColor: CupertinoColors.activeGreen,
                 isSubmitting: _isSubmitting,
-                onAssign: (price, leadTime) => _submitAssignment(
+                onAssign: (price, leadTime, shippingTerms, isAdvancePayment, dpPercentage) => _submitAssignment(
                   supplierId: cheapestVendor['supplier_id'] as int,
                   price: price,
                   leadTimeDays: leadTime,
+                  shippingTerms: shippingTerms,
+                  isAdvancePayment: isAdvancePayment,
+                  dpPercentage: dpPercentage,
                 ),
               ),
               const SizedBox(height: 16),
@@ -2550,6 +2787,67 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet> {
           ),
           const SizedBox(height: 12),
           
+          const Text('Ketentuan Pengiriman', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              {'label': 'Franco', 'value': 'franco'},
+              {'label': 'Loco', 'value': 'loco'},
+              {'label': 'FOB', 'value': 'fob'},
+              {'label': 'CIF', 'value': 'cif'},
+              {'label': 'Ex-Works', 'value': 'ex_works'},
+            ].map((opt) {
+              final isSel = _shippingTerms == opt['value'];
+              return GestureDetector(
+                onTap: () => setState(() => _shippingTerms = opt['value']!),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isSel ? CupertinoColors.activeBlue : CupertinoColors.tertiarySystemFill.resolveFrom(context),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    opt['label']!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                      color: isSel ? CupertinoColors.white : labelColor,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 14),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Butuh Uang Muka (DP)?', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+              CupertinoSwitch(
+                value: _isAdvancePayment,
+                onChanged: (val) => setState(() => _isAdvancePayment = val),
+              ),
+            ],
+          ),
+          if (_isAdvancePayment) ...[
+            const SizedBox(height: 8),
+            const Text('Persentase DP (%)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+            const SizedBox(height: 6),
+            CupertinoTextField(
+              controller: _dpPercentageController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              suffix: const Padding(
+                padding: EdgeInsets.only(right: 10),
+                child: Text('%', style: TextStyle(color: CupertinoColors.placeholderText)),
+              ),
+              placeholder: '20',
+            ),
+          ],
+          const SizedBox(height: 12),
+
           const Text('Notes (optional)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
           const SizedBox(height: 6),
           CupertinoTextField(
@@ -2656,11 +2954,15 @@ class _AssignVendorSheetState extends ConsumerState<_AssignVendorSheet> {
     }
     final leadTime = int.tryParse(_leadTimeController.text.trim()) ?? 7;
     final notes = _notesController.text.trim();
+    final dpPct = _isAdvancePayment ? double.tryParse(_dpPercentageController.text.trim()) : null;
 
     _submitAssignment(
       supplierId: supplier.id,
       price: price,
       leadTimeDays: leadTime,
+      shippingTerms: _shippingTerms,
+      isAdvancePayment: _isAdvancePayment,
+      dpPercentage: dpPct,
       notes: notes.isEmpty ? null : notes,
     );
   }
@@ -2676,7 +2978,7 @@ class _HistoricalVendorCard extends StatefulWidget {
   final String? date;
   final Color accentColor;
   final bool isSubmitting;
-  final void Function(double price, int leadTime) onAssign;
+  final void Function(double price, int leadTime, String shippingTerms, bool isAdvancePayment, double? dpPercentage) onAssign;
 
   const _HistoricalVendorCard({
     required this.icon,
@@ -2696,6 +2998,9 @@ class _HistoricalVendorCard extends StatefulWidget {
 class _HistoricalVendorCardState extends State<_HistoricalVendorCard> {
   late TextEditingController _priceCtrl;
   late TextEditingController _leadTimeCtrl;
+  String _shippingTerms = 'franco';
+  bool _isAdvancePayment = false;
+  late TextEditingController _dpPercentageCtrl;
   bool _editing = false;
 
   @override
@@ -2703,12 +3008,14 @@ class _HistoricalVendorCardState extends State<_HistoricalVendorCard> {
     super.initState();
     _priceCtrl = TextEditingController(text: widget.price?.toStringAsFixed(0) ?? '');
     _leadTimeCtrl = TextEditingController(text: widget.leadTimeDays.toString());
+    _dpPercentageCtrl = TextEditingController(text: '20');
   }
 
   @override
   void dispose() {
     _priceCtrl.dispose();
     _leadTimeCtrl.dispose();
+    _dpPercentageCtrl.dispose();
     super.dispose();
   }
 
@@ -2727,7 +3034,7 @@ class _HistoricalVendorCardState extends State<_HistoricalVendorCard> {
         border: Border.all(color: separatorColor, width: 0.5),
         boxShadow: [
           BoxShadow(
-            color: CupertinoColors.black.withOpacity(0.02),
+            color: CupertinoColors.black.withValues(alpha: 0.02),
             blurRadius: 8,
             offset: const Offset(0, 2),
           )
@@ -2792,6 +3099,65 @@ class _HistoricalVendorCardState extends State<_HistoricalVendorCard> {
                 child: Text('days', style: TextStyle(color: CupertinoColors.placeholderText)),
               ),
             ),
+            const SizedBox(height: 8),
+            const Text('Ketentuan Pengiriman', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+            const SizedBox(height: 4),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                {'label': 'Franco', 'value': 'franco'},
+                {'label': 'Loco', 'value': 'loco'},
+                {'label': 'FOB', 'value': 'fob'},
+                {'label': 'CIF', 'value': 'cif'},
+                {'label': 'Ex-Works', 'value': 'ex_works'},
+              ].map((opt) {
+                final isSel = _shippingTerms == opt['value'];
+                return GestureDetector(
+                  onTap: () => setState(() => _shippingTerms = opt['value']!),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isSel ? CupertinoColors.activeBlue : CupertinoColors.tertiarySystemFill.resolveFrom(context),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      opt['label']!,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                        color: isSel ? CupertinoColors.white : labelColor,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Butuh Uang Muka (DP)?', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+                CupertinoSwitch(
+                  value: _isAdvancePayment,
+                  onChanged: (val) => setState(() => _isAdvancePayment = val),
+                ),
+              ],
+            ),
+            if (_isAdvancePayment) ...[
+              const SizedBox(height: 6),
+              const Text('Persentase DP (%)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+              const SizedBox(height: 4),
+              CupertinoTextField(
+                controller: _dpPercentageCtrl,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                suffix: const Padding(
+                  padding: EdgeInsets.only(right: 10),
+                  child: Text('%', style: TextStyle(color: CupertinoColors.placeholderText)),
+                ),
+                placeholder: '20',
+              ),
+            ],
           ],
           const SizedBox(height: 12),
           SizedBox(
@@ -2805,7 +3171,8 @@ class _HistoricalVendorCardState extends State<_HistoricalVendorCard> {
                   : () {
                       final price = double.tryParse(_priceCtrl.text.replaceAll(',', '.')) ?? widget.price ?? 0.0;
                       final leadTime = int.tryParse(_leadTimeCtrl.text) ?? widget.leadTimeDays;
-                      widget.onAssign(price, leadTime);
+                      final dpPct = _isAdvancePayment ? double.tryParse(_dpPercentageCtrl.text.trim()) : null;
+                      widget.onAssign(price, leadTime, _shippingTerms, _isAdvancePayment, dpPct);
                     },
               child: widget.isSubmitting
                   ? const CupertinoActivityIndicator(color: CupertinoColors.white)
@@ -2903,45 +3270,120 @@ class _SupplierTile extends StatelessWidget {
 
 // ─── Current Comparison Tile ──────────────────────────────────────────────────
 
+String _formatShippingTerms(String terms) {
+  switch (terms.toLowerCase()) {
+    case 'franco':
+    case 'franco_gudang':
+      return 'Franco (Penjual Ongkir)';
+    case 'loco':
+      return 'Loco (Pembeli Ongkir)';
+    case 'fob':
+      return 'FOB';
+    case 'cif':
+      return 'CIF';
+    case 'ex_works':
+      return 'Ex-Works';
+    default:
+      return terms.toUpperCase();
+  }
+}
+
 class _CurrentComparisonTile extends StatelessWidget {
   final dynamic data;
-  const _CurrentComparisonTile(this.data);
+  final VoidCallback? onTap;
+
+  const _CurrentComparisonTile(this.data, {this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final name = data['supplier_name'] ?? 'Unknown';
     final price = data['price'] != null ? (data['price'] as num).toDouble() : null;
     final lead = data['lead_time_days'] as int? ?? 0;
-    
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFBBF7D0), width: 0.5),
-      ),
-      child: Row(
-        children: [
-          const Icon(CupertinoIcons.check_mark_circled, size: 16, color: Color(0xFF16A34A)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(name,
-                style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                    color: Color(0xFF166534))),
-          ),
-          if (price != null)
-            Text(formatWithCurrency(price, 'IDR'),
-                style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF16A34A),
-                    fontWeight: FontWeight.bold)),
-          const SizedBox(width: 8),
-          Text('$lead d',
-              style: TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel.resolveFrom(context))),
-        ],
+    final shippingTerms = data['shipping_terms'] as String? ?? 'franco';
+    final isDp = data['is_advance_payment'] == true;
+    final dpPct = (data['dp_percentage'] as num?)?.toDouble() ?? 0.0;
+    final notes = data['notes'] as String?;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0FDF4),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFBBF7D0), width: 0.5),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(CupertinoIcons.check_mark_circled, size: 16, color: Color(0xFF16A34A)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: Color(0xFF166534),
+                    ),
+                  ),
+                ),
+                if (price != null)
+                  Text(
+                    formatWithCurrency(price, 'IDR'),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF16A34A),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                const SizedBox(width: 8),
+                Text(
+                  '$lead d',
+                  style: TextStyle(fontSize: 11, color: CupertinoColors.secondaryLabel.resolveFrom(context)),
+                ),
+                if (onTap != null) ...[
+                  const SizedBox(width: 6),
+                  const Icon(CupertinoIcons.pencil_circle, size: 16, color: Color(0xFF16A34A)),
+                ],
+              ],
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                _MetaChip(
+                  icon: CupertinoIcons.bus,
+                  label: _formatShippingTerms(shippingTerms),
+                  color: const Color(0xFFDCFCE7),
+                  textColor: const Color(0xFF15803D),
+                ),
+                if (isDp)
+                  _MetaChip(
+                    icon: CupertinoIcons.creditcard,
+                    label: dpPct > 0 ? 'DP ${dpPct.toStringAsFixed(0)}%' : 'Perlu DP',
+                    color: const Color(0xFFFEF3C7),
+                    textColor: const Color(0xFFB45309),
+                  ),
+              ],
+            ),
+            if (notes != null && notes.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Catatan: $notes',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontStyle: FontStyle.italic,
+                  color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -3887,9 +4329,36 @@ class _WaitingBodItemDetailViewState
                   _FieldBox(
                     label: 'Warehouse Penerima',
                     value: item.warehouseName != null
-                        ? '[${item.warehouseCode}] ${item.warehouseName}'
-                        : (item.warehouseCode ?? '-'),
+                        ? '[${item.warehouseCode}] ${item.warehouseName}${item.warehouseAreaName != null && item.warehouseAreaName!.isNotEmpty ? " - Area: ${item.warehouseAreaName}" : ""}'
+                        : '${item.warehouseCode ?? "-"}${item.warehouseAreaName != null && item.warehouseAreaName!.isNotEmpty ? " - Area: ${item.warehouseAreaName}" : ""}',
                   ),
+                  if (item.warehouseAreaName != null && item.warehouseAreaName!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Text(
+                          'Area Tujuan: ',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            item.warehouseAreaName!,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: CupertinoColors.activeBlue,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
                 if (item.dtSpec != null && item.dtSpec!.isNotEmpty) ...[
                   const SizedBox(height: 10),
@@ -3956,7 +4425,7 @@ class _WaitingBodItemDetailViewState
                           Row(
                             children: [
                               _MetaChip(
-                                icon: CupertinoIcons.money_dollar,
+                                icon: CupertinoIcons.tag,
                                 label: formatWithCurrency(compDetail.offeredUnitPrice, 'IDR'),
                                 strong: true,
                               ),

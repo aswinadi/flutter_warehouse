@@ -243,7 +243,7 @@ final List<NavItemConfig> menuConfig = [
         requiredPermissions: ['view_payments'],
       ),
       NavItemConfig(
-        icon: CupertinoIcons.money_dollar_circle,
+        icon: CupertinoIcons.creditcard,
         labelBuilder: (l10n) => 'Buku Hutang & Piutang Vendor',
         path: '/supplier-debt-history',
         requiredPermissions: ['view_payments'],

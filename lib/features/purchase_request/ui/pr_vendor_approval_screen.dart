@@ -274,12 +274,16 @@ class _PRVendorApprovalScreenState extends ConsumerState<PRVendorApprovalScreen>
                                   final itemWarehouse = warehouses.where((w) => w.code == detail.warehouseCode).firstOrNull;
                                   final areas = itemWarehouse?.areas.where((a) => a.isActive).toList() ?? [];
                                   
-                                  if (areas.isEmpty) {
+                                  final selectedAreaId = _areaSelections[detail.id];
+                                  final selectedArea = areas.where((a) => a.id == selectedAreaId).firstOrNull;
+                                  final selectedAreaName = selectedArea?.name ?? detail.warehouseAreaName;
+                                  
+                                  if (areas.isEmpty && selectedAreaName == null) {
                                     return const SizedBox.shrink();
                                   }
 
-                                  final selectedAreaId = _areaSelections[detail.id];
-                                  final selectedArea = areas.where((a) => a.id == selectedAreaId).firstOrNull;
+                                  final isWaitingBod = detail.status?.toLowerCase() == 'waiting_bod_approval' || pr.status.toLowerCase() == 'waiting_bod_approval';
+                                  final canEditArea = canApproveNow && !isWaitingBod;
 
                                   return Padding(
                                     padding: const EdgeInsets.only(top: CupertinoSpacing.s),
@@ -291,7 +295,7 @@ class _PRVendorApprovalScreenState extends ConsumerState<PRVendorApprovalScreen>
                                         ),
                                         const SizedBox(width: CupertinoSpacing.xs),
                                         GestureDetector(
-                                          onTap: canApproveNow ? () async {
+                                          onTap: canEditArea ? () async {
                                             await showCupertinoModalPopup<void>(
                                               context: ctx,
                                               builder: (BuildContext sheetCtx) {
@@ -339,13 +343,13 @@ class _PRVendorApprovalScreenState extends ConsumerState<PRVendorApprovalScreen>
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 Text(
-                                                  selectedArea?.name ?? 'Pilih Area...',
+                                                  selectedAreaName ?? 'Pilih Area...',
                                                   style: context.footnote.copyWith(
-                                                    color: selectedArea != null ? CupertinoColors.activeBlue : secondaryLabel,
+                                                    color: selectedAreaName != null ? CupertinoColors.activeBlue : secondaryLabel,
                                                     fontWeight: FontWeight.w600,
                                                   ),
                                                 ),
-                                                if (canApproveNow) ...[
+                                                if (canEditArea) ...[
                                                   const SizedBox(width: 4),
                                                   Icon(CupertinoIcons.chevron_down, size: 10, color: secondaryLabel),
                                                 ],

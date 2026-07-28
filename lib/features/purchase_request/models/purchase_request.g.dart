@@ -67,7 +67,7 @@ _$PurchaseRequestComparisonImpl _$$PurchaseRequestComparisonImplFromJson(
       supplierName: json['supplier_name'] as String,
       totalAmount: doubleFromJson(json['total_amount']),
       leadTimeDays: (json['lead_time_days'] as num).toInt(),
-      isAdvancePayment: json['is_advance_payment'] as bool? ?? false,
+      isAdvancePayment: boolFromJson(json['is_advance_payment']),
       dpPercentage: doubleOrNullFromJson(json['dp_percentage']),
       dpAmount: doubleOrNullFromJson(json['dp_amount']),
       shippingTerms: json['shipping_terms'] as String? ?? 'franco_gudang',

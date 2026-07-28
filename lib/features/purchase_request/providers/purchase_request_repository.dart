@@ -103,7 +103,7 @@ class PurchaseRequestRepository {
       'lead_time_days': leadTimeDays,
       if (shippingTerms != null && shippingTerms.isNotEmpty) 'shipping_terms': shippingTerms,
       'is_advance_payment': isAdvancePayment,
-      if (isAdvancePayment && dpPercentage != null) 'dp_percentage': dpPercentage,
+      'dp_percentage': isAdvancePayment ? (dpPercentage ?? 0) : 0,
       if (notes != null && notes.isNotEmpty) 'notes': notes,
       'items': items,
     });

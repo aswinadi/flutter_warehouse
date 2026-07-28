@@ -6,7 +6,7 @@ class AppConfig {
   // Auto-detected from --dart-define=APP_ENV=production at build time.
   // Falls back to 'development' when not set (e.g. `flutter run` without flags).
   static const _flavorString =
-      String.fromEnvironment('APP_ENV', defaultValue: 'development');
+      String.fromEnvironment('APP_ENV', defaultValue: 'production');
 
   static final AppEnvironment environment = _flavorString == 'production'
       ? AppEnvironment.production

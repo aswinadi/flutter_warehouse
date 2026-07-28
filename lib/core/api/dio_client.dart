@@ -22,12 +22,12 @@ final dioProvider = Provider<Dio>((ref) {
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) async {
+        options.baseUrl = AppConfig.baseUrl;
         final token = await storage.getToken();
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
         
-
         
         return handler.next(options);
       },

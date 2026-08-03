@@ -69,8 +69,28 @@ class _FinancialReportsScreenState extends ConsumerState<FinancialReportsScreen>
     final currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
     return CupertinoPageScaffold(
-      navigationBar: const CupertinoNavigationBar(
-        middle: Text('Laporan Keuangan'),
+      navigationBar: CupertinoNavigationBar(
+        middle: const Text('Laporan Keuangan'),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: () {
+                // Export Excel / CSV
+              },
+              child: const Icon(CupertinoIcons.doc_text, size: 22),
+            ),
+            const SizedBox(width: 8),
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: () {
+                // Export PDF
+              },
+              child: const Icon(CupertinoIcons.arrow_down_doc, size: 22),
+            ),
+          ],
+        ),
       ),
       child: CupertinoMeshBackground(
         child: SafeArea(

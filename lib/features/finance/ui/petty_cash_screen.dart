@@ -103,7 +103,7 @@ class _PettyCashScreenState extends ConsumerState<PettyCashScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.between,
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
                                           currency.format(item.amount),
@@ -123,7 +123,7 @@ class _PettyCashScreenState extends ConsumerState<PettyCashScreen> {
                                     ),
                                     const SizedBox(height: 6),
                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.between,
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
                                           'Akun COA: ${item.coaCode}',

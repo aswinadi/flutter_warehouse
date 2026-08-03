@@ -163,11 +163,15 @@ class _FinancialReportsScreenState extends ConsumerState<FinancialReportsScreen>
               _summaryRow('Total Pendapatan (Revenue)', currency.format(totalRev), CupertinoColors.activeGreen),
               const SizedBox(height: 8),
               _summaryRow('Beban Pokok (COGS)', currency.format(totalCogs), CupertinoColors.systemRed),
-              const Divider(height: 24),
+              const SizedBox(height: 12),
+              Container(height: 1, color: CupertinoColors.separator),
+              const SizedBox(height: 12),
               _summaryRow('Laba Kotor (Gross Profit)', currency.format(grossProfit), CupertinoColors.activeBlue, isBold: true),
               const SizedBox(height: 8),
               _summaryRow('Beban Operasional', currency.format(totalExp), CupertinoColors.systemOrange),
-              const Divider(height: 24),
+              const SizedBox(height: 12),
+              Container(height: 1, color: CupertinoColors.separator),
+              const SizedBox(height: 12),
               _summaryRow('Laba Bersih (Net Profit)', currency.format(netProfit),
                   netProfit >= 0 ? CupertinoColors.activeGreen : CupertinoColors.systemRed,
                   isBold: true, fontSize: 18),
@@ -192,11 +196,15 @@ class _FinancialReportsScreenState extends ConsumerState<FinancialReportsScreen>
           child: Column(
             children: [
               _summaryRow('Total Aset (Assets)', currency.format(assets), CupertinoColors.activeBlue, isBold: true),
-              const Divider(height: 24),
+              const SizedBox(height: 12),
+              Container(height: 1, color: CupertinoColors.separator),
+              const SizedBox(height: 12),
               _summaryRow('Total Liabilitas (Kewajiban)', currency.format(liabilities), CupertinoColors.systemRed),
               const SizedBox(height: 8),
               _summaryRow('Total Ekuitas (Modal)', currency.format(equity), CupertinoColors.activeGreen),
-              const Divider(height: 24),
+              const SizedBox(height: 12),
+              Container(height: 1, color: CupertinoColors.separator),
+              const SizedBox(height: 12),
               _summaryRow('Liabilitas + Ekuitas', currency.format(liabilities + equity), CupertinoColors.label, isBold: true),
               const SizedBox(height: 12),
               Container(
@@ -244,7 +252,7 @@ class _FinancialReportsScreenState extends ConsumerState<FinancialReportsScreen>
               ),
               const SizedBox(height: 6),
               Row(
-                mainAxisAlignment: MainAxisAlignment.between,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('Grand Total Kredit', style: TextStyle(fontWeight: FontWeight.bold)),
                   Text(currency.format(grandCredit),
@@ -266,7 +274,7 @@ class _FinancialReportsScreenState extends ConsumerState<FinancialReportsScreen>
               padding: const EdgeInsets.all(12),
               borderRadius: 12,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.between,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(child: Text('$coaCode - $coaName', style: const TextStyle(fontSize: 14))),
                   Text(currency.format(balance),
@@ -282,7 +290,7 @@ class _FinancialReportsScreenState extends ConsumerState<FinancialReportsScreen>
 
   Widget _summaryRow(String label, String value, Color color, {bool isBold = false, double fontSize = 15}) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.between,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: TextStyle(fontSize: fontSize, fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
         Text(value, style: TextStyle(fontSize: fontSize, fontWeight: isBold ? FontWeight.bold : FontWeight.w600, color: color)),

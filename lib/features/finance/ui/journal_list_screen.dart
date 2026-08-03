@@ -100,7 +100,7 @@ class _JournalListScreenState extends ConsumerState<JournalListScreen> {
                     child: CupertinoGlassContainer(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       borderRadius: 20,
-                      opacity: isSelected ? 0.85 : 0.35,
+                      backgroundColor: isSelected ? CupertinoColors.activeBlue.withOpacity(0.2) : null,
                       borderColor: isSelected ? CupertinoColors.activeBlue : null,
                       child: Text(
                         type == 'ALL' ? 'Semua Tipe' : type,
@@ -137,7 +137,7 @@ class _JournalListScreenState extends ConsumerState<JournalListScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.between,
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
                                           journal.journalNumber,
@@ -189,7 +189,7 @@ class _JournalListScreenState extends ConsumerState<JournalListScreen> {
                                                 detail.debit > 0
                                                     ? currencyFormatter.format(detail.debit)
                                                     : currencyFormatter.format(detail.credit),
-                                                alignment: Alignment.centerRight,
+                                                textAlign: TextAlign.right,
                                                 style: TextStyle(
                                                   fontSize: 13,
                                                   fontWeight: FontWeight.w600,

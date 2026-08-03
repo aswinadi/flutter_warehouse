@@ -33,3 +33,7 @@ class SelectedCompany extends _$SelectedCompany {
     state = company;
   }
 }
+
+/// Alias for current company provider
+final currentCompanyProvider = selectedCompanyProvider;
+

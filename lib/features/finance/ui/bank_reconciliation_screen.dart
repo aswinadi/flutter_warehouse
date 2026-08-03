@@ -52,10 +52,10 @@ class _BankReconciliationScreenState extends ConsumerState<BankReconciliationScr
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.between,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      company?.name ?? 'Perusahaan',
+                      company?.companyName ?? 'Perusahaan',
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     CupertinoButton.filled(
@@ -90,7 +90,7 @@ class _BankReconciliationScreenState extends ConsumerState<BankReconciliationScr
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(CupertinoIcons.doc_checkmark_seal, size: 48, color: CupertinoColors.activeBlue),
+                    Icon(CupertinoIcons.checkmark_seal, size: 48, color: CupertinoColors.activeBlue),
                     SizedBox(height: 12),
                     Text(
                       'Belum ada sesi rekonsiliasi aktif.',

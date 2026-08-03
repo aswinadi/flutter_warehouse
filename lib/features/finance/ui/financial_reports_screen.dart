@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show Tooltip;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -22,8 +23,13 @@ class _FinancialReportsScreenState extends ConsumerState<FinancialReportsScreen>
   Map<String, dynamic>? _reportData;
   String? _errorMessage;
 
-  final int _year = DateTime.now().year;
-  final int _month = DateTime.now().month;
+  int _selectedYear = DateTime.now().year;
+  int _selectedMonth = DateTime.now().month;
+
+  static const List<String> _months = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+  ];
 
   @override
   void initState() {
@@ -45,11 +51,11 @@ class _FinancialReportsScreenState extends ConsumerState<FinancialReportsScreen>
       Map<String, dynamic> data;
 
       if (_selectedSegment == 0) {
-        data = await api.getIncomeStatement(company.id, _year, _month);
+        data = await api.getIncomeStatement(company.id, _selectedYear, _selectedMonth);
       } else if (_selectedSegment == 1) {
-        data = await api.getBalanceSheet(company.id, _year, _month);
+        data = await api.getBalanceSheet(company.id, _selectedYear, _selectedMonth);
       } else {
-        data = await api.getTrialBalance(company.id, _year, _month);
+        data = await api.getTrialBalance(company.id, _selectedYear, _selectedMonth);
       }
 
       setState(() {
@@ -64,6 +70,79 @@ class _FinancialReportsScreenState extends ConsumerState<FinancialReportsScreen>
     }
   }
 
+  void _showMonthPicker(BuildContext context) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => Container(
+        height: 250,
+        color: CupertinoColors.systemBackground.resolveFrom(context),
+        child: Column(
+          children: [
+            Container(
+              height: 44,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              alignment: Alignment.centerRight,
+              child: CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Selesai', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+            Expanded(
+              child: CupertinoPicker(
+                itemExtent: 36,
+                scrollController: FixedExtentScrollController(initialItem: _selectedMonth - 1),
+                onSelectedItemChanged: (index) {
+                  setState(() => _selectedMonth = index + 1);
+                  _fetchReport();
+                },
+                children: _months.map((m) => Center(child: Text(m))).toList(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showYearPicker(BuildContext context) {
+    final years = List.generate(5, (index) => DateTime.now().year - 2 + index);
+    final initialIndex = years.indexOf(_selectedYear);
+
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => Container(
+        height: 250,
+        color: CupertinoColors.systemBackground.resolveFrom(context),
+        child: Column(
+          children: [
+            Container(
+              height: 44,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              alignment: Alignment.centerRight,
+              child: CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Selesai', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+            Expanded(
+              child: CupertinoPicker(
+                itemExtent: 36,
+                scrollController: FixedExtentScrollController(initialItem: initialIndex >= 0 ? initialIndex : 2),
+                onSelectedItemChanged: (index) {
+                  setState(() => _selectedYear = years[index]);
+                  _fetchReport();
+                },
+                children: years.map((y) => Center(child: Text('$y'))).toList(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
@@ -74,20 +153,26 @@ class _FinancialReportsScreenState extends ConsumerState<FinancialReportsScreen>
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CupertinoButton(
-              padding: EdgeInsets.zero,
-              onPressed: () {
-                // Export Excel / CSV
-              },
-              child: const Icon(CupertinoIcons.doc_text, size: 22),
+            Tooltip(
+              message: 'Ekspor Excel (CSV)',
+              child: CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: () {
+                  // Export Excel / CSV
+                },
+                child: const Icon(CupertinoIcons.doc_text, size: 22),
+              ),
             ),
             const SizedBox(width: 8),
-            CupertinoButton(
-              padding: EdgeInsets.zero,
-              onPressed: () {
-                // Export PDF
-              },
-              child: const Icon(CupertinoIcons.arrow_down_doc, size: 22),
+            Tooltip(
+              message: 'Ekspor PDF',
+              child: CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: () {
+                  // Export PDF
+                },
+                child: const Icon(CupertinoIcons.arrow_down_doc, size: 22),
+              ),
             ),
           ],
         ),
@@ -122,6 +207,50 @@ class _FinancialReportsScreenState extends ConsumerState<FinancialReportsScreen>
                 1: Padding(padding: EdgeInsets.all(8), child: Text('Neraca')),
                 2: Padding(padding: EdgeInsets.all(8), child: Text('Trial Balance')),
               },
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Period Selector Bar
+          CupertinoGlassContainer(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            borderRadius: 16,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Row(
+                  children: [
+                    Icon(CupertinoIcons.calendar, size: 18, color: CupertinoColors.activeBlue),
+                    SizedBox(width: 8),
+                    Text('Periode:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  ],
+                ),
+                Row(
+                  children: [
+                    CupertinoButton(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      color: CupertinoColors.activeBlue.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(10),
+                      onPressed: () => _showMonthPicker(context),
+                      child: Text(
+                        _months[_selectedMonth - 1],
+                        style: const TextStyle(color: CupertinoColors.activeBlue, fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    CupertinoButton(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      color: CupertinoColors.activeBlue.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(10),
+                      onPressed: () => _showYearPicker(context),
+                      child: Text(
+                        '$_selectedYear',
+                        style: const TextStyle(color: CupertinoColors.activeBlue, fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),

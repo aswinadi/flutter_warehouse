@@ -63,7 +63,7 @@ class _JournalListScreenState extends ConsumerState<JournalListScreen> {
 
     return CupertinoPageScaffold(
       navigationBar: const CupertinoNavigationBar(
-        middle: Text('Jurnal Umum & Ledger'),
+        middle: Text('Jurnal Umum'),
       ),
       child: CupertinoMeshBackground(
         child: SafeArea(

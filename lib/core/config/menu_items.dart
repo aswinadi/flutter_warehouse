@@ -231,6 +231,30 @@ final List<NavItemConfig> menuConfig = [
         requiredPermissions: ['view_payments'],
       ),
       NavItemConfig(
+        icon: CupertinoIcons.book,
+        labelBuilder: (l10n) => 'Daftar Jurnal (GL)',
+        path: '/journals',
+        requiredPermissions: ['view_payments'],
+      ),
+      NavItemConfig(
+        icon: CupertinoIcons.chart_pie,
+        labelBuilder: (l10n) => 'Laporan Keuangan',
+        path: '/financial-reports',
+        requiredPermissions: ['view_payments'],
+      ),
+      NavItemConfig(
+        icon: CupertinoIcons.checkmark_seal,
+        labelBuilder: (l10n) => 'Rekonsiliasi Bank',
+        path: '/bank-reconciliations',
+        requiredPermissions: ['view_payments'],
+      ),
+      NavItemConfig(
+        icon: CupertinoIcons.money_dollar,
+        labelBuilder: (l10n) => 'Kas Kecil (Petty Cash)',
+        path: '/petty-cash',
+        requiredPermissions: ['view_payments'],
+      ),
+      NavItemConfig(
         icon: CupertinoIcons.chart_bar_square,
         labelBuilder: (l10n) => 'Valuasi Inventaris',
         path: '/inventory-valuation',

@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show SelectionArea;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:responsive_framework/responsive_framework.dart';
@@ -165,7 +166,9 @@ class _MainShellState extends ConsumerState<MainShell> {
                     child: Column(
                       children: [
                         Expanded(
-                          child: widget.child,
+                          child: SelectionArea(
+                            child: widget.child,
+                          ),
                         ),
                         if (!isDesktop)
                           _buildBottomNav(context, navItems, unreadCount),

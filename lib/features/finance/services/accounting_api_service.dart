@@ -133,4 +133,12 @@ class AccountingApiService {
     });
     return response.data['data'] as List<dynamic>;
   }
+
+  Future<Map<String, dynamic>> recalculateCogsLedger(int companyId, {String? fromDate}) async {
+    final response = await _dio.post('/v1/wh/accounting/recalculate-cogs-ledger', data: {
+      'company_id': companyId,
+      if (fromDate != null) 'from_date': fromDate,
+    });
+    return response.data as Map<String, dynamic>;
+  }
 }

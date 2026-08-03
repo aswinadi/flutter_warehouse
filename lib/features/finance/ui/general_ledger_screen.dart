@@ -212,6 +212,77 @@ class _GeneralLedgerScreenState extends ConsumerState<GeneralLedgerScreen> {
     );
   }
 
+  Future<void> _triggerRecalculation(BuildContext context) async {
+    final company = ref.read(currentCompanyProvider);
+    if (company == null) return;
+
+    final startStr = DateFormat('yyyy-MM-dd').format(_startDate);
+
+    final confirm = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Hitung Ulang HPP & Ledger'),
+        content: Text('Jalankan kalkulasi ulang transaksi HPP dan mutasi Buku Besar untuk ${company.companyName} mulai tanggal $startStr?'),
+        actions: [
+          CupertinoDialogAction(
+            isDestructiveAction: false,
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Proses'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isLoadingLedger = true);
+
+    try {
+      final api = ref.read(accountingApiServiceProvider);
+      final res = await api.recalculateCogsLedger(company.id, fromDate: startStr);
+      final msg = res['message'] as String? ?? 'Hitung ulang HPP dan Buku Besar berhasil diproses.';
+
+      if (mounted) {
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text('Kalkulasi Selesai'),
+            content: Text(msg),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+      await _fetchLedger();
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingLedger = false);
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text('Gagal'),
+            content: Text(e.toString()),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
@@ -219,13 +290,27 @@ class _GeneralLedgerScreenState extends ConsumerState<GeneralLedgerScreen> {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         middle: const Text('Buku Besar (General Ledger)'),
-        trailing: Tooltip(
-          message: 'Refresh Data',
-          child: CupertinoButton(
-            padding: EdgeInsets.zero,
-            onPressed: _fetchCoasAndLedger,
-            child: const Icon(CupertinoIcons.refresh, size: 22),
-          ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Tooltip(
+              message: 'Hitung Ulang HPP & Ledger',
+              child: CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: () => _triggerRecalculation(context),
+                child: const Icon(CupertinoIcons.arrow_2_circlepath_circle, size: 22, color: CupertinoColors.activeOrange),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Tooltip(
+              message: 'Refresh Data',
+              child: CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: _fetchCoasAndLedger,
+                child: const Icon(CupertinoIcons.refresh, size: 22),
+              ),
+            ),
+          ],
         ),
       ),
       child: CupertinoMeshBackground(

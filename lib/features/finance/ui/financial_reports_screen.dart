@@ -186,44 +186,99 @@ class _FinancialReportsScreenState extends ConsumerState<FinancialReportsScreen>
     final assets = (_reportData!['total_assets'] as num? ?? 0).toDouble();
     final liabilities = (_reportData!['total_liabilities'] as num? ?? 0).toDouble();
     final equity = (_reportData!['total_equity'] as num? ?? 0).toDouble();
+    final totalPasiva = liabilities + equity;
     final isBalanced = _reportData!['is_balanced'] as bool? ?? true;
+
+    final aktivaCard = CupertinoGlassContainer(
+      padding: const EdgeInsets.all(20),
+      borderRadius: 20,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: CupertinoColors.activeBlue.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Text('AKTIVA (ASET)', style: TextStyle(fontWeight: FontWeight.bold, color: CupertinoColors.activeBlue)),
+          ),
+          const SizedBox(height: 16),
+          _summaryRow('Total Aset (Assets)', currency.format(assets), CupertinoColors.activeBlue, isBold: true),
+          const SizedBox(height: 20),
+          Container(height: 1, color: CupertinoColors.separator),
+          const SizedBox(height: 12),
+          _summaryRow('TOTAL AKTIVA', currency.format(assets), CupertinoColors.activeBlue, isBold: true, fontSize: 16),
+        ],
+      ),
+    );
+
+    final pasivaCard = CupertinoGlassContainer(
+      padding: const EdgeInsets.all(20),
+      borderRadius: 20,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: CupertinoColors.systemIndigo.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Text('PASIVA (LIABILITAS & EKUITAS)', style: TextStyle(fontWeight: FontWeight.bold, color: CupertinoColors.systemIndigo)),
+          ),
+          const SizedBox(height: 16),
+          _summaryRow('Total Liabilitas (Kewajiban)', currency.format(liabilities), CupertinoColors.systemRed),
+          const SizedBox(height: 8),
+          _summaryRow('Total Ekuitas (Modal)', currency.format(equity), CupertinoColors.activeGreen),
+          const SizedBox(height: 12),
+          Container(height: 1, color: CupertinoColors.separator),
+          const SizedBox(height: 12),
+          _summaryRow('TOTAL PASIVA', currency.format(totalPasiva), CupertinoColors.label, isBold: true, fontSize: 16),
+        ],
+      ),
+    );
 
     return Column(
       children: [
-        CupertinoGlassContainer(
-          padding: const EdgeInsets.all(20),
-          borderRadius: 20,
-          child: Column(
-            children: [
-              _summaryRow('Total Aset (Assets)', currency.format(assets), CupertinoColors.activeBlue, isBold: true),
-              const SizedBox(height: 12),
-              Container(height: 1, color: CupertinoColors.separator),
-              const SizedBox(height: 12),
-              _summaryRow('Total Liabilitas (Kewajiban)', currency.format(liabilities), CupertinoColors.systemRed),
-              const SizedBox(height: 8),
-              _summaryRow('Total Ekuitas (Modal)', currency.format(equity), CupertinoColors.activeGreen),
-              const SizedBox(height: 12),
-              Container(height: 1, color: CupertinoColors.separator),
-              const SizedBox(height: 12),
-              _summaryRow('Liabilitas + Ekuitas', currency.format(liabilities + equity), CupertinoColors.label, isBold: true),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: isBalanced
-                      ? CupertinoColors.activeGreen.withOpacity(0.15)
-                      : CupertinoColors.systemRed.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  isBalanced ? '✓ Neraca Seimbang' : '⚠ Neraca Tidak Seimbang',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: isBalanced ? CupertinoColors.activeGreen : CupertinoColors.systemRed,
-                  ),
-                ),
-              ),
-            ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth > 600) {
+              // Skontro 2-column layout (Tablet / Web / Desktop)
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: aktivaCard),
+                  const SizedBox(width: 16),
+                  Expanded(child: pasivaCard),
+                ],
+              );
+            }
+            // Stacked layout (Mobile)
+            return Column(
+              children: [
+                aktivaCard,
+                const SizedBox(height: 16),
+                pasivaCard,
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: isBalanced
+                ? CupertinoColors.activeGreen.withOpacity(0.15)
+                : CupertinoColors.systemRed.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            isBalanced ? '✓ Status Skontro: Balance (Seimbang)' : '⚠ Status Skontro: Tidak Seimbang',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: isBalanced ? CupertinoColors.activeGreen : CupertinoColors.systemRed,
+            ),
           ),
         ),
       ],

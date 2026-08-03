@@ -158,9 +158,9 @@ class _POListScreenState extends ConsumerState<POListScreen> {
   @override
   void initState() {
     super.initState();
-    _datePreset = 'thisMonth';
-    _endDate = DateTime.now();
-    _startDate = DateTime(DateTime.now().year, DateTime.now().month, 1);
+    _datePreset = 'all';
+    _startDate = null;
+    _endDate = null;
     _scrollController.addListener(_onScroll);
   }
 

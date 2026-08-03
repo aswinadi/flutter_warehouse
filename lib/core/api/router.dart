@@ -31,6 +31,10 @@ import '../../features/transfer/ui/transfer_in_screen.dart';
 import '../../features/finance/ui/payment_transaction_list_screen.dart';
 import '../../features/finance/ui/payment_transaction_detail_screen.dart';
 import '../../features/finance/ui/payment_transaction_form_screen.dart';
+import '../../features/finance/ui/journal_list_screen.dart';
+import '../../features/finance/ui/financial_reports_screen.dart';
+import '../../features/finance/ui/bank_reconciliation_screen.dart';
+import '../../features/finance/ui/petty_cash_screen.dart';
 import '../../features/purchase_order/ui/po_approval_screen.dart';
 import '../../features/notifications/ui/notification_inbox_screen.dart';
 import '../widgets/pdf_preview_screen.dart';
@@ -312,6 +316,22 @@ final routerProvider = Provider<GoRouter>((ref) {
                 },
               ),
             ],
+          ),
+          GoRoute(
+            path: '/journals',
+            builder: (context, state) => const JournalListScreen(),
+          ),
+          GoRoute(
+            path: '/financial-reports',
+            builder: (context, state) => const FinancialReportsScreen(),
+          ),
+          GoRoute(
+            path: '/bank-reconciliations',
+            builder: (context, state) => const BankReconciliationScreen(),
+          ),
+          GoRoute(
+            path: '/petty-cash',
+            builder: (context, state) => const PettyCashScreen(),
           ),
           GoRoute(
             path: '/payment-requests',

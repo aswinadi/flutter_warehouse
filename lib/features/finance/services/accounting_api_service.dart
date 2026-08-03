@@ -110,4 +110,27 @@ class AccountingApiService {
     final response = await _dio.put('/v1/wh/accounting/petty-cash/$id/approve');
     return PettyCashTransaction.fromJson(response.data['data'] as Map<String, dynamic>);
   }
+
+  // ── General Ledger & COA ────────────────────────────────────────────────
+  Future<Map<String, dynamic>> getGeneralLedger(
+    int companyId,
+    String coaCode,
+    String startDate,
+    String endDate,
+  ) async {
+    final response = await _dio.get('/v1/wh/accounting/general-ledger', queryParameters: {
+      'company_id': companyId,
+      'coa_code': coaCode,
+      'start_date': startDate,
+      'end_date': endDate,
+    });
+    return response.data['data'] as Map<String, dynamic>;
+  }
+
+  Future<List<dynamic>> getCoas(int companyId) async {
+    final response = await _dio.get('/v1/wh/accounting/coa', queryParameters: {
+      'company_id': companyId,
+    });
+    return response.data['data'] as List<dynamic>;
+  }
 }

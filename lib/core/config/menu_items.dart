@@ -232,8 +232,14 @@ final List<NavItemConfig> menuConfig = [
       ),
       NavItemConfig(
         icon: CupertinoIcons.book,
-        labelBuilder: (l10n) => 'Daftar Jurnal (GL)',
+        labelBuilder: (l10n) => 'Jurnal Umum',
         path: '/journals',
+        requiredPermissions: ['view_payments'],
+      ),
+      NavItemConfig(
+        icon: CupertinoIcons.book_circle,
+        labelBuilder: (l10n) => 'Buku Besar (Ledger)',
+        path: '/general-ledger',
         requiredPermissions: ['view_payments'],
       ),
       NavItemConfig(

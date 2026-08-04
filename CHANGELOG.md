@@ -2,6 +2,22 @@
 
 All notable changes to the Maxmar Warehouse Flutter project will be documented in this file.
 
+## [1.6.7] - 2026-08-04
+
+### Added
+- **Profil Saya & Interactive Digital Signature Pad**:
+  - Built `ProfileScreen` adhering to iOS 26 Cupertino Liquid Glass design guidelines.
+  - Implemented interactive touch/mouse **Signature Drawing Canvas** with auto-crop bounding box algorithm + padding to ensure saved signature images fill preview and PDF containers tightly.
+  - Added option to pick signature image from device gallery (`image_picker`).
+  - Added **"Profil Saya"** item to desktop/tablet sidebar navigation (`menu_items.dart`) and `/profile` route in `router.dart`.
+- **FCM Push Notification Deep Linking & Inbox Management**:
+  - Implemented deep-linking navigation when tapping push notifications or inbox items to directly open target transaction screens (`PR`, `PO`, `Invoice`, `Payment Request`).
+  - Added **Swipe-to-Delete** (`Dismissible` widget) to remove individual notification items.
+  - Added **"Hapus Semua"** (Clear All) trailing action button with confirmation dialog in `NotificationInboxScreen`.
+  - Added **"Tandai Dibaca"** and **"Tandai Semua Dibaca"** actions.
+- **API Request Audit Tracking**:
+  - Added `X-Client-Platform: flutter_mobile` header in `dio_client.dart` for automated server-side audit middleware.
+
 ## [1.6.6] - 2026-07-15
 
 ### Fixed

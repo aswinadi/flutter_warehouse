@@ -129,13 +129,47 @@ class _NotificationInboxScreenState extends ConsumerState<NotificationInboxScree
                 width: 0.5,
               ),
             ),
-            trailing: CupertinoButton(
-              padding: EdgeInsets.zero,
-              child: const Icon(CupertinoIcons.checkmark_seal, size: 22),
-              onPressed: () {
-                ref.read(notificationsListProvider.notifier).markAllAsRead();
-                CupertinoGlassToast.showSuccess(context, 'Semua notifikasi ditandai sebagai dibaca.');
-              },
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CupertinoButton(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: const Icon(CupertinoIcons.checkmark_seal, size: 22),
+                  onPressed: () {
+                    ref.read(notificationsListProvider.notifier).markAllAsRead();
+                    CupertinoGlassToast.showSuccess(context, 'Semua notifikasi ditandai sebagai dibaca.');
+                  },
+                ),
+                CupertinoButton(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: const Icon(CupertinoIcons.trash, size: 20, color: CupertinoColors.systemRed),
+                  onPressed: () {
+                    showCupertinoDialog(
+                      context: context,
+                      builder: (dialogContext) => CupertinoAlertDialog(
+                        title: const Text('Hapus Semua Notifikasi'),
+                        content: const Text('Apakah Anda yakin ingin menghapus semua notifikasi dari daftar?'),
+                        actions: [
+                          CupertinoDialogAction(
+                            isDestructiveAction: true,
+                            onPressed: () {
+                              Navigator.pop(dialogContext);
+                              ref.read(notificationsListProvider.notifier).deleteAllNotifications();
+                              CupertinoGlassToast.showSuccess(context, 'Semua notifikasi berhasil dihapus.');
+                            },
+                            child: const Text('Hapus Semua'),
+                          ),
+                          CupertinoDialogAction(
+                            isDefaultAction: true,
+                            onPressed: () => Navigator.pop(dialogContext),
+                            child: const Text('Batal'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
           CupertinoSliverRefreshControl(
@@ -209,96 +243,121 @@ class _NotificationInboxScreenState extends ConsumerState<NotificationInboxScree
                       final notification = notifications[index];
                       final iconColor = _getColorForType(notification.type);
 
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: CupertinoSpacing.s),
-                        child: CupertinoGlassContainer(
-                          borderRadius: CupertinoSpacing.cardRadius,
-                          backgroundColor: notification.isRead 
-                              ? null 
-                              : CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.05),
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () => _handleNotificationTap(notification),
-                            child: Padding(
-                              padding: const EdgeInsets.all(CupertinoSpacing.l),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Unread Dot Indicator
-                                  if (!notification.isRead)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 6.0, right: 8.0),
-                                      child: Container(
-                                        width: 8,
-                                        height: 8,
-                                        decoration: const BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: CupertinoColors.activeBlue,
+                      return Dismissible(
+                        key: Key(notification.id),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 20),
+                          margin: const EdgeInsets.only(bottom: CupertinoSpacing.s),
+                          decoration: BoxDecoration(
+                            color: CupertinoColors.systemRed.resolveFrom(context),
+                            borderRadius: BorderRadius.circular(CupertinoSpacing.cardRadius),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisSize.min,
+                            children: [
+                              Icon(CupertinoIcons.trash, color: CupertinoColors.white, size: 22),
+                              SizedBox(width: 6),
+                              Text('Hapus', style: TextStyle(color: CupertinoColors.white, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                        onDismissed: (_) {
+                          ref.read(notificationsListProvider.notifier).deleteNotification(notification.id);
+                          CupertinoGlassToast.showSuccess(context, 'Notifikasi dihapus.');
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: CupertinoSpacing.s),
+                          child: CupertinoGlassContainer(
+                            borderRadius: CupertinoSpacing.cardRadius,
+                            backgroundColor: notification.isRead 
+                                ? null 
+                                : CupertinoColors.activeBlue.resolveFrom(context).withValues(alpha: 0.05),
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () => _handleNotificationTap(notification),
+                              child: Padding(
+                                padding: const EdgeInsets.all(CupertinoSpacing.l),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Unread Dot Indicator
+                                    if (!notification.isRead)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 6.0, right: 8.0),
+                                        child: Container(
+                                          width: 8,
+                                          height: 8,
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: CupertinoColors.activeBlue,
+                                          ),
                                         ),
                                       ),
+                                    // Notification Icon
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: iconColor.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Icon(
+                                        _getIconForType(notification.type),
+                                        color: iconColor,
+                                        size: 22,
+                                      ),
                                     ),
-                                  // Notification Icon
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: iconColor.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Icon(
-                                      _getIconForType(notification.type),
-                                      color: iconColor,
-                                      size: 22,
-                                    ),
-                                  ),
-                                  const SizedBox(width: CupertinoSpacing.m),
-                                  // Content
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                notification.title,
-                                                style: context.subhead.copyWith(
-                                                  fontWeight: notification.isRead 
-                                                      ? FontWeight.w600 
-                                                      : FontWeight.bold,
-                                                  color: labelColor,
+                                    const SizedBox(width: CupertinoSpacing.m),
+                                    // Content
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  notification.title,
+                                                  style: context.subhead.copyWith(
+                                                    fontWeight: notification.isRead 
+                                                        ? FontWeight.w600 
+                                                        : FontWeight.bold,
+                                                    color: labelColor,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
                                                 ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
                                               ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              notification.timeAgo,
-                                              style: context.caption2.copyWith(
-                                                color: secondaryLabelColor,
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                notification.timeAgo,
+                                                style: context.caption2.copyWith(
+                                                  color: secondaryLabelColor,
+                                                ),
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          notification.message,
-                                          style: context.footnote.copyWith(
-                                            color: notification.isRead 
-                                                ? secondaryLabelColor 
-                                                : labelColor,
-                                            fontWeight: notification.isRead 
-                                                ? FontWeight.normal 
-                                                : FontWeight.w500,
+                                            ],
                                           ),
-                                          maxLines: 3,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ],
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            notification.message,
+                                            style: context.footnote.copyWith(
+                                              color: notification.isRead 
+                                                  ? secondaryLabelColor 
+                                                  : labelColor,
+                                              fontWeight: notification.isRead 
+                                                  ? FontWeight.normal 
+                                                  : FontWeight.w500,
+                                            ),
+                                            maxLines: 3,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),

@@ -93,6 +93,34 @@ class NotificationsList extends _$NotificationsList {
       // ignore
     }
   }
+
+  Future<void> deleteNotification(String id) async {
+    final repository = ref.read(notificationRepositoryProvider);
+    try {
+      await repository.deleteNotification(id);
+      
+      if (state.hasValue) {
+        final updatedList = state.value!.where((n) => n.id != id).toList();
+        state = AsyncValue.data(updatedList);
+      }
+      
+      // Auto refresh unread badge count
+      ref.read(unreadNotificationCountProvider.notifier).refreshCount();
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  Future<void> deleteAllNotifications() async {
+    final repository = ref.read(notificationRepositoryProvider);
+    try {
+      await repository.deleteAllNotifications();
+      state = const AsyncValue.data([]);
+      ref.read(unreadNotificationCountProvider.notifier).refreshCount();
+    } catch (e) {
+      // ignore
+    }
+  }
 }
 
 @riverpod

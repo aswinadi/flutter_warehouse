@@ -94,4 +94,19 @@ class Auth extends _$Auth {
     
     state = const AsyncValue.data(AuthState.unauthenticated());
   }
+
+  Future<void> refreshUser() async {
+    final repository = AuthRepositoryImpl(ref.read(dioProvider));
+    final storage = ref.read(tokenProvider);
+    final token = await storage.getToken();
+
+    if (token != null) {
+      try {
+        final user = await repository.getCurrentUser();
+        if (user != null) {
+          state = AsyncValue.data(AuthState.authenticated(user: user, token: token));
+        }
+      } catch (_) {}
+    }
+  }
 }

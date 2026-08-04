@@ -423,6 +423,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 const SizedBox(height: CupertinoSpacing.xxl),
               ]),
+            ),
           ),
         ],
       ),

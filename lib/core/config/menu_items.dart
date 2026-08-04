@@ -29,6 +29,11 @@ final List<NavItemConfig> menuConfig = [
     path: '/notifications',
   ),
   NavItemConfig(
+    icon: CupertinoIcons.person_crop_circle,
+    labelBuilder: (l10n) => 'Profil Saya',
+    path: '/profile',
+  ),
+  NavItemConfig(
     icon: CupertinoIcons.checkmark_seal,
     labelBuilder: (l10n) => l10n.persetujuan,
     subItems: [

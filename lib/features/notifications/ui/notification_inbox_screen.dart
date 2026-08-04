@@ -255,7 +255,7 @@ class _NotificationInboxScreenState extends ConsumerState<NotificationInboxScree
                             borderRadius: BorderRadius.circular(CupertinoSpacing.cardRadius),
                           ),
                           child: const Row(
-                            mainAxisAlignment: MainAxisSize.min,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(CupertinoIcons.trash, color: CupertinoColors.white, size: 22),
                               SizedBox(width: 6),

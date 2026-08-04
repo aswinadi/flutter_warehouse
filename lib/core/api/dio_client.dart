@@ -13,6 +13,7 @@ final dioProvider = Provider<Dio>((ref) {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'X-Client-Platform': 'flutter_mobile',
         'ngrok-skip-browser-warning': 'true',
       },
     ),

@@ -555,7 +555,7 @@ mixin _$PurchaseRequestComparison {
   double get totalAmount => throw _privateConstructorUsedError;
   @JsonKey(name: 'lead_time_days')
   int get leadTimeDays => throw _privateConstructorUsedError;
-  @JsonKey(name: 'is_advance_payment')
+  @JsonKey(name: 'is_advance_payment', fromJson: boolFromJson)
   bool get isAdvancePayment => throw _privateConstructorUsedError;
   @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson)
   double? get dpPercentage => throw _privateConstructorUsedError;
@@ -588,7 +588,8 @@ abstract class $PurchaseRequestComparisonCopyWith<$Res> {
       @JsonKey(name: 'total_amount', fromJson: doubleFromJson)
       double totalAmount,
       @JsonKey(name: 'lead_time_days') int leadTimeDays,
-      @JsonKey(name: 'is_advance_payment') bool isAdvancePayment,
+      @JsonKey(name: 'is_advance_payment', fromJson: boolFromJson)
+      bool isAdvancePayment,
       @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson)
       double? dpPercentage,
       @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson)
@@ -702,7 +703,8 @@ abstract class _$$PurchaseRequestComparisonImplCopyWith<$Res>
       @JsonKey(name: 'total_amount', fromJson: doubleFromJson)
       double totalAmount,
       @JsonKey(name: 'lead_time_days') int leadTimeDays,
-      @JsonKey(name: 'is_advance_payment') bool isAdvancePayment,
+      @JsonKey(name: 'is_advance_payment', fromJson: boolFromJson)
+      bool isAdvancePayment,
       @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson)
       double? dpPercentage,
       @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson)
@@ -809,7 +811,8 @@ class _$PurchaseRequestComparisonImpl implements _PurchaseRequestComparison {
       @JsonKey(name: 'total_amount', fromJson: doubleFromJson)
       required this.totalAmount,
       @JsonKey(name: 'lead_time_days') required this.leadTimeDays,
-      @JsonKey(name: 'is_advance_payment') this.isAdvancePayment = false,
+      @JsonKey(name: 'is_advance_payment', fromJson: boolFromJson)
+      this.isAdvancePayment = false,
       @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson)
       this.dpPercentage,
       @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson) this.dpAmount,
@@ -839,7 +842,7 @@ class _$PurchaseRequestComparisonImpl implements _PurchaseRequestComparison {
   @JsonKey(name: 'lead_time_days')
   final int leadTimeDays;
   @override
-  @JsonKey(name: 'is_advance_payment')
+  @JsonKey(name: 'is_advance_payment', fromJson: boolFromJson)
   final bool isAdvancePayment;
   @override
   @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson)
@@ -941,7 +944,8 @@ abstract class _PurchaseRequestComparison implements PurchaseRequestComparison {
       @JsonKey(name: 'total_amount', fromJson: doubleFromJson)
       required final double totalAmount,
       @JsonKey(name: 'lead_time_days') required final int leadTimeDays,
-      @JsonKey(name: 'is_advance_payment') final bool isAdvancePayment,
+      @JsonKey(name: 'is_advance_payment', fromJson: boolFromJson)
+      final bool isAdvancePayment,
       @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson)
       final double? dpPercentage,
       @JsonKey(name: 'dp_amount', fromJson: doubleOrNullFromJson)
@@ -971,7 +975,7 @@ abstract class _PurchaseRequestComparison implements PurchaseRequestComparison {
   @JsonKey(name: 'lead_time_days')
   int get leadTimeDays;
   @override
-  @JsonKey(name: 'is_advance_payment')
+  @JsonKey(name: 'is_advance_payment', fromJson: boolFromJson)
   bool get isAdvancePayment;
   @override
   @JsonKey(name: 'dp_percentage', fromJson: doubleOrNullFromJson)

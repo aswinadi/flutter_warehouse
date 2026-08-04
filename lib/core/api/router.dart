@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/ui/login_screen.dart';
+import '../../features/auth/ui/profile_screen.dart';
 import '../widgets/main_shell.dart';
 import '../../features/purchase_request/ui/pr_list_screen.dart';
 import '../../features/purchase_request/ui/pr_approval_screen.dart';
@@ -102,6 +103,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/notifications',
             builder: (context, state) => const NotificationInboxScreen(),
+          ),
+          GoRoute(
+            path: '/profile',
+            builder: (context, state) => const ProfileScreen(),
           ),
           GoRoute(
             path: '/master/companies',

@@ -23,7 +23,14 @@ mixin _$User {
   int get id => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
+  String? get username => throw _privateConstructorUsedError;
+  @JsonKey(name: 'employee_id')
+  String? get employeeCode => throw _privateConstructorUsedError;
+  @JsonKey(name: 'position_name')
+  String? get positionName => throw _privateConstructorUsedError;
   String? get photoUrl => throw _privateConstructorUsedError;
+  @JsonKey(name: 'signature_url')
+  String? get signatureUrl => throw _privateConstructorUsedError;
   @JsonKey(name: 'company_id')
   int? get companyId => throw _privateConstructorUsedError;
   @JsonKey(name: 'approval_types')
@@ -45,7 +52,11 @@ abstract class $UserCopyWith<$Res> {
       {int id,
       String name,
       String email,
+      String? username,
+      @JsonKey(name: 'employee_id') String? employeeCode,
+      @JsonKey(name: 'position_name') String? positionName,
       String? photoUrl,
+      @JsonKey(name: 'signature_url') String? signatureUrl,
       @JsonKey(name: 'company_id') int? companyId,
       @JsonKey(name: 'approval_types') List<String> approvalTypes,
       List<String> roles,
@@ -68,7 +79,11 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
     Object? id = null,
     Object? name = null,
     Object? email = null,
+    Object? username = freezed,
+    Object? employeeCode = freezed,
+    Object? positionName = freezed,
     Object? photoUrl = freezed,
+    Object? signatureUrl = freezed,
     Object? companyId = freezed,
     Object? approvalTypes = null,
     Object? roles = null,
@@ -87,9 +102,25 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
           ? _value.email
           : email // ignore: cast_nullable_to_non_nullable
               as String,
+      username: freezed == username
+          ? _value.username
+          : username // ignore: cast_nullable_to_non_nullable
+              as String?,
+      employeeCode: freezed == employeeCode
+          ? _value.employeeCode
+          : employeeCode // ignore: cast_nullable_to_non_nullable
+              as String?,
+      positionName: freezed == positionName
+          ? _value.positionName
+          : positionName // ignore: cast_nullable_to_non_nullable
+              as String?,
       photoUrl: freezed == photoUrl
           ? _value.photoUrl
           : photoUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      signatureUrl: freezed == signatureUrl
+          ? _value.signatureUrl
+          : signatureUrl // ignore: cast_nullable_to_non_nullable
               as String?,
       companyId: freezed == companyId
           ? _value.companyId
@@ -122,7 +153,11 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
       {int id,
       String name,
       String email,
+      String? username,
+      @JsonKey(name: 'employee_id') String? employeeCode,
+      @JsonKey(name: 'position_name') String? positionName,
       String? photoUrl,
+      @JsonKey(name: 'signature_url') String? signatureUrl,
       @JsonKey(name: 'company_id') int? companyId,
       @JsonKey(name: 'approval_types') List<String> approvalTypes,
       List<String> roles,
@@ -142,7 +177,11 @@ class __$$UserImplCopyWithImpl<$Res>
     Object? id = null,
     Object? name = null,
     Object? email = null,
+    Object? username = freezed,
+    Object? employeeCode = freezed,
+    Object? positionName = freezed,
     Object? photoUrl = freezed,
+    Object? signatureUrl = freezed,
     Object? companyId = freezed,
     Object? approvalTypes = null,
     Object? roles = null,
@@ -161,9 +200,25 @@ class __$$UserImplCopyWithImpl<$Res>
           ? _value.email
           : email // ignore: cast_nullable_to_non_nullable
               as String,
+      username: freezed == username
+          ? _value.username
+          : username // ignore: cast_nullable_to_non_nullable
+              as String?,
+      employeeCode: freezed == employeeCode
+          ? _value.employeeCode
+          : employeeCode // ignore: cast_nullable_to_non_nullable
+              as String?,
+      positionName: freezed == positionName
+          ? _value.positionName
+          : positionName // ignore: cast_nullable_to_non_nullable
+              as String?,
       photoUrl: freezed == photoUrl
           ? _value.photoUrl
           : photoUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      signatureUrl: freezed == signatureUrl
+          ? _value.signatureUrl
+          : signatureUrl // ignore: cast_nullable_to_non_nullable
               as String?,
       companyId: freezed == companyId
           ? _value.companyId
@@ -192,7 +247,11 @@ class _$UserImpl extends _User {
       {required this.id,
       required this.name,
       required this.email,
+      this.username,
+      @JsonKey(name: 'employee_id') this.employeeCode,
+      @JsonKey(name: 'position_name') this.positionName,
       this.photoUrl,
+      @JsonKey(name: 'signature_url') this.signatureUrl,
       @JsonKey(name: 'company_id') this.companyId,
       @JsonKey(name: 'approval_types')
       final List<String> approvalTypes = const [],
@@ -213,7 +272,18 @@ class _$UserImpl extends _User {
   @override
   final String email;
   @override
+  final String? username;
+  @override
+  @JsonKey(name: 'employee_id')
+  final String? employeeCode;
+  @override
+  @JsonKey(name: 'position_name')
+  final String? positionName;
+  @override
   final String? photoUrl;
+  @override
+  @JsonKey(name: 'signature_url')
+  final String? signatureUrl;
   @override
   @JsonKey(name: 'company_id')
   final int? companyId;
@@ -246,7 +316,7 @@ class _$UserImpl extends _User {
 
   @override
   String toString() {
-    return 'User(id: $id, name: $name, email: $email, photoUrl: $photoUrl, companyId: $companyId, approvalTypes: $approvalTypes, roles: $roles, permissions: $permissions)';
+    return 'User(id: $id, name: $name, email: $email, username: $username, employeeCode: $employeeCode, positionName: $positionName, photoUrl: $photoUrl, signatureUrl: $signatureUrl, companyId: $companyId, approvalTypes: $approvalTypes, roles: $roles, permissions: $permissions)';
   }
 
   @override
@@ -257,8 +327,16 @@ class _$UserImpl extends _User {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.email, email) || other.email == email) &&
+            (identical(other.username, username) ||
+                other.username == username) &&
+            (identical(other.employeeCode, employeeCode) ||
+                other.employeeCode == employeeCode) &&
+            (identical(other.positionName, positionName) ||
+                other.positionName == positionName) &&
             (identical(other.photoUrl, photoUrl) ||
                 other.photoUrl == photoUrl) &&
+            (identical(other.signatureUrl, signatureUrl) ||
+                other.signatureUrl == signatureUrl) &&
             (identical(other.companyId, companyId) ||
                 other.companyId == companyId) &&
             const DeepCollectionEquality()
@@ -275,7 +353,11 @@ class _$UserImpl extends _User {
       id,
       name,
       email,
+      username,
+      employeeCode,
+      positionName,
       photoUrl,
+      signatureUrl,
       companyId,
       const DeepCollectionEquality().hash(_approvalTypes),
       const DeepCollectionEquality().hash(_roles),
@@ -300,7 +382,11 @@ abstract class _User extends User {
       {required final int id,
       required final String name,
       required final String email,
+      final String? username,
+      @JsonKey(name: 'employee_id') final String? employeeCode,
+      @JsonKey(name: 'position_name') final String? positionName,
       final String? photoUrl,
+      @JsonKey(name: 'signature_url') final String? signatureUrl,
       @JsonKey(name: 'company_id') final int? companyId,
       @JsonKey(name: 'approval_types') final List<String> approvalTypes,
       final List<String> roles,
@@ -316,7 +402,18 @@ abstract class _User extends User {
   @override
   String get email;
   @override
+  String? get username;
+  @override
+  @JsonKey(name: 'employee_id')
+  String? get employeeCode;
+  @override
+  @JsonKey(name: 'position_name')
+  String? get positionName;
+  @override
   String? get photoUrl;
+  @override
+  @JsonKey(name: 'signature_url')
+  String? get signatureUrl;
   @override
   @JsonKey(name: 'company_id')
   int? get companyId;

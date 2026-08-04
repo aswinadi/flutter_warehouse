@@ -63,20 +63,53 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     setState(() => _isSaving = true);
 
     try {
+      // Calculate tight bounding box of drawn strokes
+      double minX = double.infinity;
+      double minY = double.infinity;
+      double maxX = double.negativeInfinity;
+      double maxY = double.negativeInfinity;
+
+      for (final stroke in _strokes) {
+        for (final point in stroke) {
+          if (point.dx < minX) minX = point.dx;
+          if (point.dy < minY) minY = point.dy;
+          if (point.dx > maxX) maxX = point.dx;
+          if (point.dy > maxY) maxY = point.dy;
+        }
+      }
+
+      if (minX.isInfinite || minY.isInfinite) {
+        CupertinoGlassToast.showError(context, 'Silakan gambar tanda tangan terlebih dahulu pada kanvas.');
+        return;
+      }
+
+      // Add 20px padding around bounding box
+      const double padding = 20.0;
+      minX = (minX - padding).clamp(0.0, double.infinity);
+      minY = (minY - padding).clamp(0.0, double.infinity);
+      maxX += padding;
+      maxY += padding;
+
+      final double width = (maxX - minX).clamp(100.0, 2000.0);
+      final double height = (maxY - minY).clamp(50.0, 1000.0);
+
       final recorder = ui.PictureRecorder();
-      final canvas = Canvas(recorder, const Rect.fromLTWH(0, 0, 600, 300));
+      final canvas = Canvas(recorder, Rect.fromLTWH(0, 0, width, height));
+
+      // Draw white background
+      canvas.drawRect(
+        Rect.fromLTWH(0, 0, width, height),
+        Paint()..color = const Color(0xFFFFFFFF),
+      );
+
+      // Translate coordinates so signature fills the cropped box perfectly
+      canvas.translate(-minX, -minY);
 
       final paint = Paint()
         ..color = const Color(0xFF000000)
         ..strokeCap = StrokeCap.round
         ..strokeWidth = 4.0
         ..isAntiAlias = true;
-
-      // Draw white background
-      canvas.drawRect(
-        const Rect.fromLTWH(0, 0, 600, 300),
-        Paint()..color = const Color(0xFFFFFFFF),
-      );
 
       for (final stroke in _strokes) {
         for (int i = 0; i < stroke.length - 1; i++) {
@@ -85,7 +118,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       }
 
       final picture = recorder.endRecording();
-      final img = await picture.toImage(600, 300);
+      final img = await picture.toImage(width.toInt(), height.toInt());
       final ByteData? pngBytes = await img.toByteData(format: ui.ImageByteFormat.png);
 
       if (pngBytes != null) {

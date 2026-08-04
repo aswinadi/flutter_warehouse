@@ -36,6 +36,14 @@ class NotificationRepository {
   Future<void> markAllAsRead() async {
     await dio.post('auth/notifications/read-all');
   }
+
+  Future<void> deleteNotification(String id) async {
+    await dio.delete('auth/notifications/$id');
+  }
+
+  Future<void> deleteAllNotifications() async {
+    await dio.delete('auth/notifications');
+  }
 }
 
 @riverpod

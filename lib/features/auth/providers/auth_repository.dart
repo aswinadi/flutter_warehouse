@@ -7,6 +7,7 @@ abstract class AuthRepository {
   Future<User?> getCurrentUser();
   Future<void> registerDeviceToken(String token);
   Future<void> unregisterDeviceToken(String token);
+  Future<void> updateSignature(String signature);
 }
 
 class AuthRepositoryImpl implements AuthRepository {
@@ -93,5 +94,10 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await dio.delete('auth/device-token', data: {'token': token});
     } catch (_) {}
+  }
+
+  @override
+  Future<void> updateSignature(String signature) async {
+    await dio.post('auth/signature', data: {'signature': signature});
   }
 }

@@ -1,0 +1,43 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'notification_provider.dart';
+
+// **************************************************************************
+// RiverpodGenerator
+// **************************************************************************
+
+String _$notificationsListHash() => r'd71d1824d3e8318af511875c4d21e3e91f9c9b78';
+
+/// See also [NotificationsList].
+@ProviderFor(NotificationsList)
+final notificationsListProvider = AutoDisposeAsyncNotifierProvider<
+    NotificationsList, List<AppNotification>>.internal(
+  NotificationsList.new,
+  name: r'notificationsListProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$notificationsListHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$NotificationsList = AutoDisposeAsyncNotifier<List<AppNotification>>;
+String _$unreadNotificationCountHash() =>
+    r'e81c5d55091bf84277f7344407f71d52ea2ddc5a';
+
+/// See also [UnreadNotificationCount].
+@ProviderFor(UnreadNotificationCount)
+final unreadNotificationCountProvider =
+    AutoDisposeAsyncNotifierProvider<UnreadNotificationCount, int>.internal(
+  UnreadNotificationCount.new,
+  name: r'unreadNotificationCountProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$unreadNotificationCountHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$UnreadNotificationCount = AutoDisposeAsyncNotifier<int>;
+// ignore_for_file: type=lint
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

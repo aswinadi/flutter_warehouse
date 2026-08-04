@@ -98,6 +98,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> updateSignature(String signature) async {
-    await dio.post('auth/signature', data: {'signature': signature});
+    await dio.post('auth/signature', data: {
+      'signature': signature,
+      'signature_base64': signature,
+    });
   }
 }

@@ -325,7 +325,7 @@ class _GeneralLedgerScreenState extends ConsumerState<GeneralLedgerScreen> {
               child: CupertinoButton(
                 padding: EdgeInsets.zero,
                 onPressed: _exportGlCsv,
-                child: const Icon(CupertinoIcons.doc_arrow_down, size: 22, color: CupertinoColors.activeGreen),
+                child: const Icon(CupertinoIcons.arrow_down_square, size: 22, color: CupertinoColors.activeGreen),
               ),
             ),
             const SizedBox(width: 8),

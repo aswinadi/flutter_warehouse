@@ -141,4 +141,19 @@ class AccountingApiService {
     });
     return response.data as Map<String, dynamic>;
   }
+
+  Future<Map<String, dynamic>> getBudgetVsActual(
+    int companyId,
+    int year,
+    int month, {
+    String? costCentreCode,
+  }) async {
+    final response = await _dio.get('/v1/wh/accounting/budget-vs-actual', queryParameters: {
+      'company_id': companyId,
+      'year': year,
+      'month': month,
+      if (costCentreCode != null && costCentreCode.isNotEmpty) 'cost_centre_code': costCentreCode,
+    });
+    return response.data['data'] as Map<String, dynamic>;
+  }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show DataTable, DataColumn, DataRow, DataCell, Tooltip, WidgetStateProperty;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/providers/company_provider.dart';
 import '../../../core/widgets/adaptive_layout_builder.dart';
@@ -283,6 +284,32 @@ class _GeneralLedgerScreenState extends ConsumerState<GeneralLedgerScreen> {
     }
   }
 
+  Future<void> _exportGlCsv() async {
+    final company = ref.read(currentCompanyProvider);
+    if (company == null || _selectedCoaCode == null) return;
+    final startStr = DateFormat('yyyy-MM-dd').format(_startDate);
+    final endStr = DateFormat('yyyy-MM-dd').format(_endDate);
+
+    final url = Uri.parse('/api/v1/wh/accounting/reports/export-excel?company_id=${company.id}&report_type=general_ledger&coa_code=$_selectedCoaCode&start_date=$startStr&end_date=$endStr');
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _exportGlPdf() async {
+    final company = ref.read(currentCompanyProvider);
+    if (company == null || _selectedCoaCode == null) return;
+    final startStr = DateFormat('yyyy-MM-dd').format(_startDate);
+    final endStr = DateFormat('yyyy-MM-dd').format(_endDate);
+
+    final url = Uri.parse('/api/v1/wh/accounting/reports/export-pdf?company_id=${company.id}&report_type=general_ledger&coa_code=$_selectedCoaCode&start_date=$startStr&end_date=$endStr');
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
@@ -293,6 +320,24 @@ class _GeneralLedgerScreenState extends ConsumerState<GeneralLedgerScreen> {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Tooltip(
+              message: 'Ekspor Excel (CSV)',
+              child: CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: _exportGlCsv,
+                child: const Icon(CupertinoIcons.doc_arrow_down, size: 22, color: CupertinoColors.activeGreen),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Tooltip(
+              message: 'Ekspor PDF',
+              child: CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: _exportGlPdf,
+                child: const Icon(CupertinoIcons.doc_text, size: 22, color: CupertinoColors.systemRed),
+              ),
+            ),
+            const SizedBox(width: 8),
             Tooltip(
               message: 'Hitung Ulang HPP & Ledger',
               child: CupertinoButton(

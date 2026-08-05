@@ -44,6 +44,7 @@ import '../../features/finance/ui/inventory_valuation_screen.dart';
 import '../../features/finance/ui/invoice_biaya_list_screen.dart';
 import '../../features/finance/ui/invoice_biaya_detail_screen.dart';
 import '../../features/finance/ui/invoice_biaya_form_screen.dart';
+import '../../features/finance/ui/budget_vs_actual_screen.dart';
 import '../../features/finance/ui/supplier_debt_history_screen.dart';
 import '../../features/return_to_vendor/ui/return_to_vendor_list_screen.dart';
 import '../../features/payment_request/ui/payment_request_list_screen.dart';
@@ -334,6 +335,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/financial-reports',
             builder: (context, state) => const FinancialReportsScreen(),
+          ),
+          GoRoute(
+            path: '/budget-vs-actual',
+            builder: (context, state) => const BudgetVsActualScreen(),
           ),
           GoRoute(
             path: '/bank-reconciliations',

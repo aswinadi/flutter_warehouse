@@ -254,6 +254,12 @@ final List<NavItemConfig> menuConfig = [
         requiredPermissions: ['view_payments'],
       ),
       NavItemConfig(
+        icon: CupertinoIcons.chart_bar_alt_fill,
+        labelBuilder: (l10n) => 'Budget vs Actual',
+        path: '/budget-vs-actual',
+        requiredPermissions: ['view_payments'],
+      ),
+      NavItemConfig(
         icon: CupertinoIcons.checkmark_seal,
         labelBuilder: (l10n) => 'Rekonsiliasi Bank',
         path: '/bank-reconciliations',
